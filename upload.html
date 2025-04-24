@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Output Variation Excel File</title>
+</head>
+<body>
+    <h2>Upload Output Variation Excel File</h2>
+    <input type="file" id="excelFile" accept=".xlsx, .xls">
+    <button onclick="uploadFile()">Upload</button>
+
+    <div id="results"></div>
+
+    <script>
+        async function uploadFile() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Please select a file first.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch("https://back-end-wrxi.onrender.com/upload", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to upload file");
+                }
+
+                const results = await response.json();
+                displayResults(results);
+            } catch (error) {
+                alert("Error: " + error.message);
+            }
+        }
+
+        function displayResults(results) {
+            const container = document.getElementById("results");
+            container.innerHTML = "<h3>Results</h3>";
+
+            if (results.length === 0) {
+                container.innerHTML += "<p>No data found in the file.</p>";
+                return;
+            }
+
+            const table = document.createElement("table");
+            table.border = "1";
+            const header = table.insertRow();
+            ["Date", "Variation", "Within Tolerance", "Timestamp"].forEach(text => {
+                const cell = header.insertCell();
+                cell.textContent = text;
+            });
+
+            results.forEach(row => {
+                const tr = table.insertRow();
+                tr.insertCell().textContent = row.date;
+                tr.insertCell().textContent = row.variation;
+                tr.insertCell().textContent = row.within_tolerance ? "✅ Yes" : "❌ No";
+                tr.insertCell().textContent = row.timestamp;
+            });
+
+            container.appendChild(table);
+        }
+    </script>
+</body>
+</html>
