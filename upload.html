@@ -1,47 +1,41 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Upload Output Variation Excel File</title>
-</head>
-<body>
-    <h2>Upload Output Variation Excel File</h2>
-    <input type="file" id="excelFile" accept=".xlsx, .xls">
-    <button onclick="uploadFile()">Upload</button>
+<script>
+    async function uploadFile() {
+        const fileInput = document.getElementById('excelFile');
+        const file = fileInput.files[0];
 
-    <pre id="results" style="background: #f8f8f8; padding: 10px; border: 1px solid #ccc; margin-top: 20px;"></pre>
+        if (!file) {
+            alert("Please select a file first.");
+            return;
+        }
 
-    <script>
-        async function uploadFile() {
-            const fileInput = document.getElementById('excelFile');
-            const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append("file", file);
 
-            if (!file) {
-                alert("Please select a file first.");
+        try {
+            const response = await fetch("https://back-end-wrxi.onrender.com/upload", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                document.getElementById('results').textContent = "Error: " + data.error;
                 return;
             }
 
-            const formData = new FormData();
-            formData.append("file", file);
+            let resultText = "Evaluation Results:\n\n";
+            data.forEach(item => {
+                resultText += `Date: ${item.date}\n`;
+                resultText += `Variation: ${item.variation}\n`;
+                resultText += `Within Tolerance: ${item.within_tolerance ? '✅ Yes' : '❌ No'}\n\n`;
+            });
 
-            try {
-                const response = await fetch("https://back-end-wrxi.onrender.com/upload", {
-                    method: "POST",
-                    body: formData
-                });
+            document.getElementById('results').textContent = resultText;
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    alert("Error: " + (data.error || "Failed to upload file"));
-                    return;
-                }
-
-                document.getElementById('results').innerText = JSON.stringify(data, null, 2);
-
-            } catch (error) {
-                alert("Network Error: " + error.message);
-            }
+        } catch (error) {
+            document.getElementById('results').textContent = "Upload failed. Please try again.";
+            console.error("Upload error:", error);
         }
-    </script>
-</body>
-</html>
+    }
+</script>
