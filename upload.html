@@ -110,11 +110,11 @@
                 });
 
                 const data = await response.json();
-                console.log("Server response:", data);  // Optional debug
+                console.log("Server response:", data); // debug output
 
-                // ✅ Updated error check
-                if (!Array.isArray(data)) {
-                    document.getElementById('results').textContent = "Upload failed. Please try again.";
+                // ✅ Improved error check
+                if (!Array.isArray(data) || data.length === 0) {
+                    document.getElementById('results').textContent = "No data to display or upload failed.";
                     return;
                 }
 
@@ -150,13 +150,13 @@
                 html += `</tbody></table>`;
                 document.getElementById('results').innerHTML = html;
 
-                // Update summary
+                // Update summary counts
                 document.getElementById('totalCount').textContent = data.length;
                 document.getElementById('passCount').textContent = passCount;
                 document.getElementById('warningCount').textContent = warningCount;
                 document.getElementById('failCount').textContent = failCount;
 
-                // Render pie chart
+                // Draw pie chart
                 const ctx = document.getElementById('summaryChart').getContext('2d');
                 if (window.summaryChart) {
                     window.summaryChart.destroy();
