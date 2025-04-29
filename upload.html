@@ -23,15 +23,6 @@
         th {
             background-color: #f3f3f3;
         }
-        .pass {
-            color: green;
-        }
-        .warning {
-            color: orange;
-        }
-        .fail {
-            color: red;
-        }
     </style>
 </head>
 <body>
@@ -61,7 +52,7 @@
             .then(data => {
                 if (data.results) {
                     currentResults = data.results;
-                    displayResults(data.results);
+                    displayResults(currentResults);
                 } else {
                     alert(data.error || 'Unexpected error');
                 }
@@ -71,11 +62,12 @@
         function displayResults(results) {
             let html = '<table><tr><th>Date</th><th>Variation</th><th>Status</th></tr>';
             results.forEach(row => {
-                let className = row.status.toLowerCase();
+                const color = row.status === "Pass" ? "green" :
+                              row.status === "Warning" ? "orange" : "red";
                 html += `<tr>
                     <td>${row.date}</td>
-                    <td>${row.variation}</td>
-                    <td class="${className}">${row.status}</td>
+                    <td>${row.variation.toFixed(1)}%</td>
+                    <td style="color: ${color}; font-weight: bold;">${row.status}</td>
                 </tr>`;
             });
             html += '</table>';
