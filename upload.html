@@ -2,13 +2,60 @@
 <html>
 <head>
     <title>Upload Output Variation Excel File</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .within {
+            background-color: #e6f4ea;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+
+        .warning {
+            background-color: #fff9e6;
+            color: #f57f17;
+            border: 1px solid #ffe082;
+        }
+
+        .out {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+    </style>
 </head>
 <body>
     <h2>Upload Output Variation Excel File</h2>
     <input type="file" id="excelFile" accept=".xlsx, .xls">
     <button onclick="uploadFile()">Upload</button>
 
-    <pre id="results" style="background: #f8f8f8; padding: 10px; border: 1px solid #ccc; margin-top: 20px;"></pre>
+    <div id="results"></div>
 
     <script>
         async function uploadFile() {
@@ -36,17 +83,31 @@
                     return;
                 }
 
-                let resultText = "Evaluation Results:\n\n";
-                data.forEach(item => {
-                    let symbol = item.status === "Within Tolerance" ? "✅" :
-                                 item.status === "Warning" ? "⚠️" : "❌";
+                let html = `<table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Variation (%)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
 
-                    resultText += `Date: ${item.date}\n`;
-                    resultText += `Variation: ${item.variation}\n`;
-                    resultText += `Status: ${symbol} ${item.status}\n\n`;
+                data.forEach(item => {
+                    let badgeClass = item.status === "Within Tolerance" ? "within" :
+                                     item.status === "Warning" ? "warning" : "out";
+                    let badgeIcon = item.status === "Within Tolerance" ? "✅" :
+                                    item.status === "Warning" ? "⚠️" : "❌";
+
+                    html += `<tr>
+                        <td>${item.date}</td>
+                        <td>${item.variation}</td>
+                        <td><span class="badge ${badgeClass}">${badgeIcon} ${item.status}</span></td>
+                    </tr>`;
                 });
 
-                document.getElementById('results').textContent = resultText;
+                html += `</tbody></table>`;
+                document.getElementById('results').innerHTML = html;
 
             } catch (error) {
                 document.getElementById('results').textContent = "Upload failed. Please try again.";
