@@ -2,8 +2,8 @@
 <html>
 <head>
     <title>Upload Output Variation Excel File</title>
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- ✅ Fixed Chart.js version (UMD format) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         body {
             font-family: sans-serif;
@@ -110,9 +110,8 @@
                 });
 
                 const data = await response.json();
-                console.log("Server response:", data); // debug output
+                console.log("Server response:", data); // Debug
 
-                // ✅ Improved error check
                 if (!Array.isArray(data) || data.length === 0) {
                     document.getElementById('results').textContent = "No data to display or upload failed.";
                     return;
@@ -150,13 +149,13 @@
                 html += `</tbody></table>`;
                 document.getElementById('results').innerHTML = html;
 
-                // Update summary counts
+                // Update summary
                 document.getElementById('totalCount').textContent = data.length;
                 document.getElementById('passCount').textContent = passCount;
                 document.getElementById('warningCount').textContent = warningCount;
                 document.getElementById('failCount').textContent = failCount;
 
-                // Draw pie chart
+                // ✅ Fix Chart rendering
                 const ctx = document.getElementById('summaryChart').getContext('2d');
                 if (window.summaryChart) {
                     window.summaryChart.destroy();
