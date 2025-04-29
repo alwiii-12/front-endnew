@@ -31,23 +31,14 @@
 
                 const data = await response.json();
 
-                if (data.error) {
-                    document.getElementById('results').textContent = "Error: " + data.error;
-                    return;
+                if (response.ok) {
+                    localStorage.setItem("qa_results", JSON.stringify(data));
+                    window.location.href = "results.html";
+                } else {
+                    document.getElementById("results").textContent = "Error: " + data.error;
                 }
-
-                let resultText = "Evaluation Results:\n\n";
-                data.forEach(item => {
-                    resultText += `Date: ${item.date}\n`;
-                    resultText += `Variation: ${item.variation}\n`;
-                    resultText += `Within Tolerance: ${item.within_tolerance ? '✅ Yes' : '❌ No'}\n\n`;
-                });
-
-                document.getElementById('results').textContent = resultText;
-
             } catch (error) {
-                document.getElementById('results').textContent = "Upload failed. Please try again.";
-                console.error("Upload error:", error);
+                document.getElementById("results").textContent = "Upload failed: " + error.message;
             }
         }
     </script>
