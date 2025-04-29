@@ -38,9 +38,12 @@
 
                 let resultText = "Evaluation Results:\n\n";
                 data.forEach(item => {
+                    let symbol = item.status === "Within Tolerance" ? "✅" :
+                                 item.status === "Warning" ? "⚠️" : "❌";
+
                     resultText += `Date: ${item.date}\n`;
                     resultText += `Variation: ${item.variation}\n`;
-                    resultText += `Within Tolerance: ${item.within_tolerance ? '✅ Yes' : '❌ No'}\n\n`;
+                    resultText += `Status: ${symbol} ${item.status}\n\n`;
                 });
 
                 document.getElementById('results').textContent = resultText;
