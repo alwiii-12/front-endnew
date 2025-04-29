@@ -1,150 +1,114 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Upload Output Variation Excel File</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
         }
-
         h2 {
             color: #333;
         }
-
-        #resultsContainer {
-            margin-top: 20px;
-        }
-
         table {
             border-collapse: collapse;
             width: 100%;
+            margin-top: 15px;
         }
-
         th, td {
             border: 1px solid #ccc;
             padding: 10px;
             text-align: left;
         }
-
-        thead {
-            background-color: #f9f9f9;
+        th {
+            background-color: #f3f3f3;
         }
-
-        .status-pass {
+        .pass {
             color: green;
-            font-weight: bold;
         }
-
-        .status-warning {
+        .warning {
             color: orange;
-            font-weight: bold;
         }
-
-        .status-fail {
+        .fail {
             color: red;
-            font-weight: bold;
-        }
-
-        #downloadBtn {
-            margin-top: 15px;
-            display: none;
         }
     </style>
 </head>
 <body>
-
     <h2>Upload Output Variation Excel File</h2>
-    <input type="file" id="fileInput">
+    <input type="file" id="excelFile">
     <button onclick="uploadFile()">Upload</button>
-    <button id="downloadBtn" onclick="downloadCSV()">Download CSV</button>
+    <button onclick="downloadCurrentCSV()">Download CSV</button>
+    <button onclick="downloadSavedCSV()">Download Saved CSV</button>
 
-    <div id="resultsContainer">
-        <h3>Evaluation Results:</h3>
-    </div>
+    <h3>Evaluation Results:</h3>
+    <div id="results"></div>
 
     <script>
-        let latestResults = [];
+        let currentResults = [];
 
         function uploadFile() {
-            const fileInput = document.getElementById("fileInput");
-            const resultsContainer = document.getElementById("resultsContainer");
-            const downloadBtn = document.getElementById("downloadBtn");
-
-            if (!fileInput.files.length) {
-                alert("Please choose a file first.");
-                return;
-            }
-
+            const fileInput = document.getElementById('excelFile');
             const file = fileInput.files[0];
             const formData = new FormData();
-            formData.append("file", file);
+            formData.append('file', file);
 
-            fetch("https://back-end-wrxi.onrender.com/upload", {
-                method: "POST",
+            fetch('https://back-end-wrxi.onrender.com/upload', {
+                method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
-                if (data.results && data.results.length > 0) {
-                    latestResults = data.results;
-                    let tableHTML = `
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Variation</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
-
-                    data.results.forEach(result => {
-                        const statusClass = "status-" + result.Status.toLowerCase();
-                        tableHTML += `
-                            <tr>
-                                <td>${result.Date}</td>
-                                <td>${result.Variation}%</td>
-                                <td class="${statusClass}">${result.Status}</td>
-                            </tr>
-                        `;
-                    });
-
-                    tableHTML += "</tbody></table>";
-                    resultsContainer.innerHTML = "<h3>Evaluation Results:</h3>" + tableHTML;
-                    downloadBtn.style.display = "inline-block";
+                if (data.results) {
+                    currentResults = data.results;
+                    displayResults(data.results);
                 } else {
-                    resultsContainer.innerHTML = "<h3>Evaluation Results:</h3><p>No results found.</p>";
-                    downloadBtn.style.display = "none";
+                    alert(data.error || 'Unexpected error');
                 }
-            })
-            .catch(error => {
-                console.error("Error uploading file:", error);
-                resultsContainer.innerHTML = "<p style='color: red;'>Error processing the file.</p>";
-                downloadBtn.style.display = "none";
             });
         }
 
-        function downloadCSV() {
-            if (latestResults.length === 0) return;
+        function displayResults(results) {
+            let html = '<table><tr><th>Date</th><th>Variation</th><th>Status</th></tr>';
+            results.forEach(row => {
+                let className = row.status.toLowerCase();
+                html += `<tr>
+                    <td>${row.date}</td>
+                    <td>${row.variation}</td>
+                    <td class="${className}">${row.status}</td>
+                </tr>`;
+            });
+            html += '</table>';
+            document.getElementById('results').innerHTML = html;
+        }
 
-            const headers = ["Date", "Variation", "Status"];
-            const rows = latestResults.map(r => [r.Date, r.Variation + "%", r.Status]);
+        function downloadCurrentCSV() {
+            fetch('https://back-end-wrxi.onrender.com/download_csv', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ results: currentResults })
+            })
+            .then(res => res.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'evaluation_results.csv';
+                a.click();
+            });
+        }
 
-            let csvContent = "data:text/csv;charset=utf-8," 
-                           + [headers, ...rows].map(e => e.join(",")).join("\n");
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "evaluation_results.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+        function downloadSavedCSV() {
+            fetch('https://back-end-wrxi.onrender.com/download_saved_csv')
+            .then(res => res.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'saved_evaluation_results.csv';
+                a.click();
+            });
         }
     </script>
-
 </body>
 </html>
