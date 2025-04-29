@@ -2,6 +2,8 @@
 <html>
 <head>
     <title>Upload Output Variation Excel File</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: sans-serif;
@@ -79,6 +81,7 @@
 
         <!-- Summary container -->
         <div id="summary" class="summary-box">
+            <canvas id="summaryChart" width="200" height="200"></canvas>
             <h3>Summary</h3>
             <p><strong>Total Entries:</strong> <span id="totalCount">0</span></p>
             <p><strong>✅ Within Tolerance:</strong> <span id="passCount">0</span></p>
@@ -150,6 +153,34 @@
                 document.getElementById('passCount').textContent = passCount;
                 document.getElementById('warningCount').textContent = warningCount;
                 document.getElementById('failCount').textContent = failCount;
+
+                // Render pie chart
+                const ctx = document.getElementById('summaryChart').getContext('2d');
+                if (window.summaryChart) {
+                    window.summaryChart.destroy(); // clean previous chart
+                }
+                window.summaryChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
+                        datasets: [{
+                            data: [passCount, warningCount, failCount],
+                            backgroundColor: ['#a5d6a7', '#ffe082', '#ef9a9a']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Output Summary'
+                            }
+                        }
+                    }
+                });
 
             } catch (error) {
                 document.getElementById('results').textContent = "Upload failed. Please try again.";
