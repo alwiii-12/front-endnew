@@ -1,166 +1,190 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
   <title>LINAC Output Entry</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: Arial; margin: 20px; }
-    .month-nav { margin-bottom: 10px; }
-    .month-nav button { padding: 5px 10px; margin-right: 10px; }
-    #table-container {
-      width: 100%;
-      overflow-x: auto;
-    }
+    .container { display: flex; justify-content: space-between; align-items: flex-start; }
     .summary-box {
-      float: right;
-      width: 400px;
+      background: #f9f9f9;
       padding: 20px;
-      background-color: #f9f9f9;
       border-radius: 8px;
+      width: 400px;
+      height: 400px;
+    }
+    .summary-box h3 { margin-top: 0; }
+    #hot {
+      width: 100%;
+      min-height: 400px;
+    }
+    .month-nav {
+      margin-bottom: 10px;
+    }
+    .month-nav button {
+      padding: 5px 10px;
+      margin-right: 5px;
     }
   </style>
 </head>
 <body>
   <h2>LINAC Output Entry</h2>
   <div class="month-nav">
-    <button onclick="changeMonth(-1)">← Previous</button>
-    <span id="month-label"></span>
-    <button onclick="changeMonth(1)">Next →</button>
+    <button onclick="prevMonth()">← Previous</button>
+    <span id="month-label">Month Year</span>
+    <button onclick="nextMonth()">Next →</button>
   </div>
-  <div id="table-container">
+
+  <div class="container">
     <div id="hot"></div>
-  </div>
-  <div class="summary-box">
-    <canvas id="summaryChart" width="300" height="300"></canvas>
-    <h3>Summary</h3>
-    <p><strong>Total Entries:</strong> <span id="total">0</span></p>
-    <p style="color:green;"><strong>✔ Within Tolerance:</strong> <span id="within">0</span></p>
-    <p style="color:orange;"><strong>⚠ Warning:</strong> <span id="warning">0</span></p>
-    <p style="color:red;"><strong>✘ Out of Tolerance:</strong> <span id="out">0</span></p>
+    <div class="summary-box">
+      <canvas id="summaryChart" width="300" height="300"></canvas>
+      <h3>Summary</h3>
+      <p><strong>Total Entries:</strong> <span id="total">0</span></p>
+      <p style="color:green;"><strong>✔ Within Tolerance:</strong> <span id="within">0</span></p>
+      <p style="color:orange;"><strong>⚠ Warning:</strong> <span id="warning">0</span></p>
+      <p style="color:red;"><strong>✘ Out of Tolerance:</strong> <span id="out">0</span></p>
+    </div>
   </div>
 
   <script>
-    let currentMonth = new Date().getMonth();
-    let currentYear = new Date().getFullYear();
     let hot;
-    const energyRows = ['6X','10X','15X','6X FFF','10X FFF','6E','9E','12E','15E','18E'];
+    const container = document.getElementById('hot');
+    const backendUrl = 'https://back-end-wrxi.onrender.com'; // change if needed
+
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth();
 
     function updateMonthLabel() {
+      const label = document.getElementById('month-label');
       const date = new Date(currentYear, currentMonth);
-      document.getElementById("month-label").innerText = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+      label.textContent = date.toLocaleString('default', { month: 'long', year: 'numeric' });
     }
 
-    function generateHeaders(year, month) {
-      const days = new Date(year, month + 1, 0).getDate();
+    function prevMonth() {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      updateMonthLabel();
+      loadData();
+    }
+
+    function nextMonth() {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      updateMonthLabel();
+      loadData();
+    }
+
+    function getDateHeaders(year, month) {
       const headers = ['Energy'];
-      for (let d = 1; d <= days; d++) {
-        headers.push(`${year}-${String(month+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = new Date(year, month, day).toISOString().split('T')[0];
+        headers.push(dateStr);
       }
       return headers;
     }
 
-    function generateData(headers) {
-      return energyRows.map(row => {
-        const rowData = Array(headers.length).fill('');
-        rowData[0] = row;
-        return rowData;
+    function getDefaultData() {
+      const energies = ['6X', '10X', '15X', '6X FFF', '10X FFF', '6E', '9E', '12E', '15E', '18E'];
+      const days = new Date(currentYear, currentMonth + 1, 0).getDate();
+      return energies.map(energy => {
+        const row = [energy];
+        for (let i = 0; i < days; i++) row.push('');
+        return row;
       });
     }
 
-    async function loadData(year, month) {
-      const response = await fetch(`https://back-end-wrxi.onrender.com/get-data?year=${year}&month=${month+1}`);
-      const json = await response.json();
-      const headers = generateHeaders(year, month);
-      const data = generateData(headers);
-      for (const entry of json.data || []) {
-        const rowIndex = energyRows.indexOf(entry.energy);
-        const colIndex = headers.indexOf(entry.date);
-        if (rowIndex !== -1 && colIndex !== -1) {
-          data[rowIndex][colIndex] = entry.variation;
-        }
-      }
-      hot.updateSettings({ data, colHeaders: headers });
-      updateSummary(data);
+    function saveData(changes) {
+      if (!changes) return;
+      const headers = getDateHeaders(currentYear, currentMonth);
+      const dataToSave = hot.getData();
+      const payload = { year: currentYear, month: currentMonth + 1, headers, data: dataToSave };
+
+      fetch(`${backendUrl}/save-data`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
     }
 
-    function changeMonth(direction) {
-      currentMonth += direction;
-      if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear -= 1;
-      } else if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear += 1;
-      }
+    function loadData() {
       updateMonthLabel();
-      loadData(currentYear, currentMonth);
+      const headers = getDateHeaders(currentYear, currentMonth);
+      fetch(`${backendUrl}/get-data?year=${currentYear}&month=${currentMonth + 1}`)
+        .then(res => res.json())
+        .then(json => {
+          const data = json.data && json.data.length > 0 ? json.data : getDefaultData();
+          hot.updateSettings({
+            data: data,
+            colHeaders: headers
+          });
+          updateSummary(data);
+        })
+        .catch(() => {
+          const data = getDefaultData();
+          hot.updateSettings({
+            data: data,
+            colHeaders: headers
+          });
+          updateSummary(data);
+        });
     }
 
     function updateSummary(data) {
-      let total = 0, within = 0, warning = 0, out = 0;
-      for (let row of data) {
-        for (let i = 1; i < row.length; i++) {
-          const val = parseFloat(row[i]);
-          if (!isNaN(val)) {
-            total++;
-            if (Math.abs(val) <= 2) within++;
-            else if (Math.abs(val) <= 3) warning++;
+      let within = 0, warn = 0, out = 0;
+      data.forEach(row => {
+        row.slice(1).forEach(val => {
+          const num = parseFloat(val);
+          if (!isNaN(num)) {
+            if (Math.abs(num) <= 2) within++;
+            else if (Math.abs(num) <= 3) warn++;
             else out++;
           }
-        }
-      }
-      document.getElementById("total").innerText = total;
-      document.getElementById("within").innerText = within;
-      document.getElementById("warning").innerText = warning;
-      document.getElementById("out").innerText = out;
+        });
+      });
+      document.getElementById('total').textContent = within + warn + out;
+      document.getElementById('within').textContent = within;
+      document.getElementById('warning').textContent = warn;
+      document.getElementById('out').textContent = out;
 
-      new Chart(document.getElementById('summaryChart'), {
+      const ctx = document.getElementById('summaryChart').getContext('2d');
+      if (window.summaryChart) window.summaryChart.destroy();
+      window.summaryChart = new Chart(ctx, {
         type: 'pie',
         data: {
           labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
           datasets: [{
-            data: [within, warning, out],
-            backgroundColor: ['#90ee90', 'orange', '#ff6666']
+            data: [within, warn, out],
+            backgroundColor: ['#90ee90', '#ffd700', '#ff7f7f']
           }]
-        }
+        },
+        options: { responsive: true }
       });
     }
 
-    async function saveData(change) {
-      const headers = hot.getColHeader();
-      const row = hot.getDataAtRow(change[0][0]);
-      const date = headers[change[0][1]];
-      const variation = row[change[0][1]];
-      const energy = row[0];
-      if (!energy || !date || isNaN(parseFloat(variation))) return;
-
-      await fetch('https://back-end-wrxi.onrender.com/save-entry', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ date, energy, variation: parseFloat(variation) })
-      });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const container = document.getElementById('hot');
-      hot = new Handsontable(container, {
-        data: [],
-        rowHeaders: true,
-        licenseKey: 'non-commercial-and-evaluation',
-        colHeaders: [],
-        afterChange: (changes) => {
-          if (changes) {
-            changes.forEach(saveData);
-            updateSummary(hot.getData());
-          }
+    hot = new Handsontable(container, {
+      data: [],
+      colHeaders: [],
+      rowHeaders: true,
+      licenseKey: 'non-commercial-and-evaluation',
+      afterChange: (changes) => {
+        if (changes) {
+          changes.forEach(saveData);
+          updateSummary(hot.getData());
         }
-      });
-      updateMonthLabel();
-      loadData(currentYear, currentMonth);
+      }
     });
+
+    loadData();
   </script>
 </body>
 </html>
