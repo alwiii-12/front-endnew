@@ -12,6 +12,7 @@
     .month-nav { margin-bottom: 10px; }
     .month-nav button { padding: 5px 10px; }
     #table { overflow-x: auto; }
+    .out-of-tolerance { background-color: #ffcccc !important; }
   </style>
 </head>
 <body>
@@ -37,12 +38,13 @@
 
 <script>
 const container = document.getElementById('table');
-let hot = null;
+let hot;
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 const energyLabels = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
 const toleranceLimit = 2.0;
 const warningThreshold = 1.8;
+const baseURL = "https://back-end-wrxi.onrender.com";
 
 const ctx = document.getElementById('summaryChart').getContext('2d');
 const summaryChart = new Chart(ctx, {
@@ -76,24 +78,20 @@ function generateTableData(year, month) {
 }
 
 function updateSummary() {
-  if (!hot) return;
-
   let total = 0, within = 0, warning = 0, out = 0;
   const data = hot.getData();
-
   for (let r = 0; r < data.length; r++) {
     for (let c = 1; c < data[r].length; c++) {
       const val = parseFloat(data[r][c]);
       if (!isNaN(val)) {
         total++;
-        const absVal = Math.abs(val);
-        if (absVal > toleranceLimit) out++;
-        else if (absVal > warningThreshold) warning++;
-        else within++;
+        const abs = Math.abs(val);
+        if (abs <= 1.8) within++;
+        else if (abs <= 2.0) warning++;
+        else out++;
       }
     }
   }
-
   document.getElementById('total').innerText = total;
   document.getElementById('within').innerText = within;
   document.getElementById('warning').innerText = warning;
@@ -104,12 +102,17 @@ function updateSummary() {
 }
 
 function saveMonthData() {
-  if (!hot) return;
-  const monthKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
-  fetch('https://back-end-wrxi.onrender.com/save_month_data', {
+  const key = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+  fetch(`${baseURL}/save_month_data`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ month: monthKey, data: hot.getData() })
+    body: JSON.stringify({ month: key, data: hot.getData() })
+  })
+  .then(res => res.json())
+  .then(response => {
+    if (response.message && response.message.includes("saved")) {
+      console.log("Data saved.");
+    }
   });
 }
 
@@ -118,17 +121,33 @@ function renderTable(data, year, month) {
   if (hot) hot.destroy();
 
   hot = new Handsontable(container, {
-    data: data,
+    data,
     colHeaders: headers,
     rowHeaders: true,
     licenseKey: 'non-commercial-and-evaluation',
-    width: '100%',
     height: 400,
     afterChange: (changes) => {
       if (changes) {
+        for (const [row, colIndex, oldVal, newVal] of changes) {
+          const colName = hot.getColHeader(colIndex);
+          const value = parseFloat(newVal);
+          if (!isNaN(value) && Math.abs(value) > 2.0) {
+            alert(`❌ Alert: ${hot.getDataAtCell(row, 0)} on ${colName} = ${value}% is OUT OF TOLERANCE! Email alert sent.`);
+          }
+        }
         updateSummary();
         saveMonthData();
       }
+    },
+    cells: function (row, col) {
+      const cellProperties = {};
+      if (col === 0) return cellProperties;
+
+      const val = parseFloat(this.instance.getDataAtCell(row, col));
+      if (!isNaN(val) && Math.abs(val) > 2.0) {
+        cellProperties.className = 'out-of-tolerance';
+      }
+      return cellProperties;
     }
   });
 
@@ -136,20 +155,15 @@ function renderTable(data, year, month) {
 }
 
 function loadMonthData(year, month) {
-  const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+  const key = `${year}-${String(month + 1).padStart(2, '0')}`;
   document.getElementById('month-label').innerText =
     `${new Date(year, month).toLocaleString('default', { month: 'long' })} ${year}`;
 
-  fetch(`https://back-end-wrxi.onrender.com/load_month_data?month=${monthKey}`)
+  fetch(`${baseURL}/load_month_data?month=${key}`)
     .then(res => res.json())
     .then(res => {
       const data = res.data || generateTableData(year, month);
       renderTable(data, year, month);
-    })
-    .catch(err => {
-      console.error('Error loading data:', err);
-      const fallback = generateTableData(year, month);
-      renderTable(fallback, year, month);
     });
 }
 
