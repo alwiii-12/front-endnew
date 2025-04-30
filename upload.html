@@ -55,9 +55,13 @@
         { readOnly: true },
         ...dates.map(() => ({ type: 'numeric', numericFormat: { pattern: '0.0' } }))
       ],
-      afterChange: updateSummary,
       stretchH: 'all',
-      height: 'auto'
+      height: 'auto',
+      afterChange: function (changes, source) {
+        if (source === 'edit' || source === 'Autofill.fill') {
+          updateSummary();
+        }
+      }
     });
 
     const ctx = document.getElementById('pieChart').getContext('2d');
