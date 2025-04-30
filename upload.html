@@ -1,79 +1,17 @@
-<!DOCTYPE html>
-<html lang="="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>LINAC Output - Monthly Save</title>
-  <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-    }
-    #container {
-      width: 75%;
-    }
-    #summary-box {
-      width: 20%;
-      padding: 20px;
-      border-radius: 8px;
-      background-color: #f8f8f8;
-    }
-    canvas {
-      margin-bottom: 20px;
-    }
-    .nav-buttons {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
-    .nav-buttons button {
-      padding: 5px 10px;
-    }
-  </style>
-</head>
-<body>
-
-<div id="container">
-  <div class="nav-buttons">
-    <button onclick="prevMonth()">⬅ Prev</button>
-    <h3 id="monthTitle">March 2025</h3>
-    <button onclick="nextMonth()">Next ➡</button>
-  </div>
-  <div id="hot"></div>
-  <button onclick="saveToDatabase()" style="margin-top: 10px;">💾 Save to Database</button>
-  <p id="saveStatus" style="color: green; font-weight: bold;"></p>
-</div>
-
-<div id="summary-box">
-  <canvas id="summaryChart"></canvas>
-  <h3>Summary</h3>
-  <p><strong>Total Entries:</strong> <span id="totalCount">0</span></p>
-  <p style="color: green;"><strong>✔ Within Tolerance:</strong> <span id="passCount">0</span></p>
-  <p style="color: orange;"><strong>⚠ Warning:</strong> <span id="warningCount">0</span></p>
-  <p style="color: red;"><strong>✘ Out of Tolerance:</strong> <span id="failCount">0</span></p>
-</div>
-
 <script>
   const energies = ['6X', '10X', '15X', '6X FFF', '10X FFF', '6E', '9E', '12E', '15E', '18E'];
   const tolerance = 2;
   const warningRange = 0.1;
 
-  let currentMonthIndex = 2; // March
+  let currentMonthIndex = 2;
   const year = 2025;
-  const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+                      "July", "August", "September", "October", "November", "December"];
 
   const container = document.getElementById('hot');
   let hot = null;
   let summaryChart = null;
-  const monthlyData = {}; // 🧠 Memory store
+  const monthlyData = {};
 
   function getMonthKey() {
     return `${year}-${String(currentMonthIndex + 1).padStart(2, '0')}`;
@@ -86,67 +24,6 @@
       headers.push(`${d.toString().padStart(2, '0')}-${monthNames[monthIndex].slice(0, 3)}`);
     }
     return headers;
-  }
-
-  function generateEmptyData(headers) {
-    return energies.map(energy => [energy, ...Array(headers.length - 1).fill('')]);
-  }
-
-  function loadMonth(index) {
-    const key = getMonthKey();
-    const headers = generateHeaders(index);
-
-    if (!monthlyData[key]) {
-      monthlyData[key] = generateEmptyData(headers);
-    }
-
-    document.getElementById('monthTitle').innerText = `${monthNames[index]} ${year}`;
-
-    if (hot) {
-      hot.updateSettings({
-        data: monthlyData[key],
-        colHeaders: headers
-      });
-    } else {
-      hot = new Handsontable(container, {
-        data: monthlyData[key],
-        colHeaders: headers,
-        rowHeaders: true,
-        width: '100%',
-        height: 400,
-        licenseKey: 'non-commercial-and-evaluation',
-        stretchH: 'all',
-        afterChange: function (changes, source) {
-          if (['edit', 'Autofill.fill', 'paste', 'CopyPaste.paste'].includes(source)) {
-            updateSummary();
-          }
-        },
-        afterPaste: function () {
-          updateSummary();
-        }
-      });
-    }
-
-    updateSummary();
-  }
-
-  function prevMonth() {
-    saveCurrentData();
-    currentMonthIndex = (currentMonthIndex - 1 + 12) % 12;
-    loadMonth(currentMonthIndex);
-  }
-
-  function nextMonth() {
-    saveCurrentData();
-    currentMonthIndex = (currentMonthIndex + 1) % 12;
-    loadMonth(currentMonthIndex);
-  }
-
-  function saveCurrentData() {
-    if (hot) {
-      const key = getMonthKey();
-      monthlyData[key] = hot.getData();
-    }
   }
 
   function updateSummary() {
@@ -181,12 +58,7 @@
           backgroundColor: ['#8bc34a', '#ffeb3b', '#f44336']
         }]
       },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: 'top' }
-        }
-      }
+      options: { responsive: true, plugins: { legend: { position: 'top' } } }
     });
   }
 
@@ -205,18 +77,80 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     })
-      .then(res => res.json())
-      .then(result => {
-        document.getElementById("saveStatus").innerText = result.message || "Data saved.";
-      })
-      .catch(err => {
-        console.error("Save error:", err);
-        document.getElementById("saveStatus").innerText = "Error saving data.";
-      });
+    .then(res => res.json())
+    .then(result => {
+      console.log("Auto-saved:", result.message);
+    })
+    .catch(err => {
+      console.error("Auto-save failed:", err);
+    });
   }
 
-  // Load first month
+  function loadMonth(index) {
+    const key = getMonthKey();
+    const headers = generateHeaders(index);
+    document.getElementById('monthTitle').innerText = `${monthNames[index]} ${year}`;
+
+    fetch("https://back-end-wrxi.onrender.com/load", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ month: monthNames[index], year: year })
+    })
+    .then(res => res.json())
+    .then(loaded => {
+      const grid = energies.map(energy => {
+        const row = [energy];
+        const saved = loaded[energy] || {};
+        for (let i = 0; i < headers.length - 1; i++) {
+          const label = headers[i + 1];
+          row.push(saved[label] ?? '');
+        }
+        return row;
+      });
+
+      monthlyData[key] = grid;
+
+      if (hot) {
+        hot.updateSettings({ data: grid, colHeaders: headers });
+      } else {
+        hot = new Handsontable(container, {
+          data: grid,
+          colHeaders: headers,
+          rowHeaders: true,
+          width: '100%',
+          height: 400,
+          licenseKey: 'non-commercial-and-evaluation',
+          stretchH: 'all',
+          afterChange: function (changes, source) {
+            if (['edit', 'Autofill.fill', 'paste', 'CopyPaste.paste'].includes(source)) {
+              updateSummary();
+              saveToDatabase();  // 🚀 auto-save trigger
+            }
+          },
+          afterPaste: function () {
+            updateSummary();
+            saveToDatabase();  // 🚀 auto-save trigger
+          }
+        });
+      }
+
+      updateSummary();
+    })
+    .catch(err => {
+      console.error("Load error:", err);
+      alert("Failed to load saved data for this month.");
+    });
+  }
+
+  function prevMonth() {
+    currentMonthIndex = (currentMonthIndex - 1 + 12) % 12;
+    loadMonth(currentMonthIndex);
+  }
+
+  function nextMonth() {
+    currentMonthIndex = (currentMonthIndex + 1) % 12;
+    loadMonth(currentMonthIndex);
+  }
+
   loadMonth(currentMonthIndex);
 </script>
-</body>
-</html>
