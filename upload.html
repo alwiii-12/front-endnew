@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Upload LINAC Output</title>
+  <title>LINAC Output - Monthly View</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -10,10 +10,12 @@
     body {
       font-family: Arial;
       margin: 20px;
+    }
+    .layout {
       display: flex;
       justify-content: space-between;
     }
-    #table {
+    .table-box {
       width: 75%;
     }
     .summary-box {
@@ -25,44 +27,47 @@
     canvas {
       max-width: 100%;
     }
-    .status-pass { color: green; font-weight: bold; }
-    .status-warning { color: orange; font-weight: bold; }
-    .status-fail { color: red; font-weight: bold; }
+    .month-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .month-nav button {
+      padding: 5px 15px;
+      font-weight: bold;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
-  <div id="table"></div>
 
-  <div class="summary-box">
-    <canvas id="pieChart"></canvas>
-    <div id="summary" style="margin-top: 20px;"></div>
+  <div class="month-nav">
+    <button onclick="changeMonth(-1)">⬅ Previous</button>
+    <h2 id="monthLabel">March 2025</h2>
+    <button onclick="changeMonth(1)">Next ➡</button>
+  </div>
+
+  <div class="layout">
+    <div class="table-box">
+      <div id="table"></div>
+    </div>
+
+    <div class="summary-box">
+      <canvas id="pieChart"></canvas>
+      <div id="summary" style="margin-top: 20px;"></div>
+    </div>
   </div>
 
   <script>
     const tolerance = 2;
-    const dates = ["01-Mar", "02-Mar", "04-Mar", "05-Mar", "06-Mar", "07-Mar", "08-Mar", "10-Mar", "11-Mar", "12-Mar", "13-Mar", "14-Mar", "15-Mar", "17-Mar", "18-Mar", "19-Mar", "20-Mar", "21-Mar"];
     const energies = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
+    const dataStore = {}; // stores month-wise data
 
+    let currentMonth = 2; // March (0 = Jan, 1 = Feb, ...)
+    let currentYear = 2025;
+    let hot = null;
     const container = document.getElementById('table');
-    const data = energies.map(energy => [energy, ...Array(dates.length).fill(null)]);
-
-    const hot = new Handsontable(container, {
-      data,
-      colHeaders: ["Energy", ...dates],
-      rowHeaders: true,
-      licenseKey: 'non-commercial-and-evaluation',
-      columns: [
-        { readOnly: true },
-        ...dates.map(() => ({ type: 'numeric', numericFormat: { pattern: '0.0' } }))
-      ],
-      stretchH: 'all',
-      height: 'auto',
-      afterChange: function (changes, source) {
-        if (source === 'edit' || source === 'Autofill.fill') {
-          updateSummary();
-        }
-      }
-    });
 
     const ctx = document.getElementById('pieChart').getContext('2d');
     const pieChart = new Chart(ctx, {
@@ -76,10 +81,74 @@
       }
     });
 
+    function getDaysInMonth(month, year) {
+      const date = new Date(year, month, 1);
+      const days = [];
+      while (date.getMonth() === month) {
+        const d = date.getDate().toString().padStart(2, '0');
+        const m = date.toLocaleString('default', { month: 'short' });
+        days.push(`${d}-${m}`);
+        date.setDate(date.getDate() + 1);
+      }
+      return days;
+    }
+
+    function getMonthKey() {
+      return `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+    }
+
+    function loadMonth(month, year) {
+      const days = getDaysInMonth(month, year);
+      const key = getMonthKey();
+      if (!dataStore[key]) {
+        dataStore[key] = energies.map(energy => [energy, ...Array(days.length).fill(null)]);
+      }
+
+      const colHeaders = ["Energy", ...days];
+      const columns = [{ readOnly: true }, ...days.map(() => ({ type: 'numeric', numericFormat: { pattern: '0.0' } }))];
+
+      if (hot) {
+        hot.updateSettings({
+          data: dataStore[key],
+          colHeaders: colHeaders,
+          columns: columns
+        });
+      } else {
+        hot = new Handsontable(container, {
+          data: dataStore[key],
+          colHeaders: colHeaders,
+          rowHeaders: true,
+          licenseKey: 'non-commercial-and-evaluation',
+          columns: columns,
+          stretchH: 'all',
+          height: 'auto',
+          afterChange: function (changes, source) {
+            if (source === 'edit' || source === 'Autofill.fill') {
+              updateSummary();
+            }
+          }
+        });
+      }
+
+      document.getElementById("monthLabel").innerText = `${days[0].split('-')[1]} ${year}`;
+      updateSummary();
+    }
+
+    function changeMonth(offset) {
+      currentMonth += offset;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      } else if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      loadMonth(currentMonth, currentYear);
+    }
+
     function updateSummary() {
       let pass = 0, warn = 0, fail = 0;
       const updatedData = hot.getData();
-
       updatedData.forEach(row => {
         row.slice(1).forEach(val => {
           if (val === null || val === '') return;
@@ -103,7 +172,8 @@
       `;
     }
 
-    updateSummary();
+    // Initial load
+    loadMonth(currentMonth, currentYear);
   </script>
 </body>
 </html>
