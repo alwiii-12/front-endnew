@@ -9,7 +9,6 @@
     body { font-family: Arial; margin: 20px; }
     .container { display: flex; justify-content: space-between; align-items: flex-start; }
     .summary-box { background: #f9f9f9; padding: 20px; border-radius: 8px; width: 400px; }
-    .summary-box h3 { margin-top: 0; }
     .month-nav { margin-bottom: 10px; }
     .month-nav button { padding: 5px 10px; }
     #table { overflow-x: auto; }
@@ -26,7 +25,6 @@
 
 <div class="container">
   <div id="table"></div>
-
   <div class="summary-box">
     <canvas id="summaryChart" width="300" height="300"></canvas>
     <h3>Summary</h3>
@@ -39,7 +37,7 @@
 
 <script>
 const container = document.getElementById('table');
-let hot;
+let hot = null;
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 const energyLabels = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
@@ -56,10 +54,17 @@ const summaryChart = new Chart(ctx, {
       backgroundColor: ['green', 'orange', 'red']
     }]
   },
-  options: {
-    responsive: false
-  }
+  options: { responsive: false }
 });
+
+function getHeaderDates(year, month) {
+  const days = new Date(year, month + 1, 0).getDate();
+  const headers = ['Energy'];
+  for (let d = 1; d <= days; d++) {
+    headers.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
+  }
+  return headers;
+}
 
 function generateTableData(year, month) {
   const days = new Date(year, month + 1, 0).getDate();
@@ -70,38 +75,9 @@ function generateTableData(year, month) {
   });
 }
 
-function getHeaderDates(year, month) {
-  const days = new Date(year, month + 1, 0).getDate();
-  const headers = ["Energy"];
-  for (let d = 1; d <= days; d++) {
-    headers.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
-  }
-  return headers;
-}
-
-function renderTable(data, year, month) {
-  const colHeaders = getHeaderDates(year, month);
-
-  if (hot) hot.destroy();
-
-  hot = new Handsontable(container, {
-    data,
-    colHeaders,
-    rowHeaders: true,
-    manualColumnResize: true,
-    width: '100%',
-    height: 500,
-    licenseKey: 'non-commercial-and-evaluation',
-    afterChange: function () {
-      updateSummary();
-      saveCurrentMonth();
-    }
-  });
-
-  updateSummary();
-}
-
 function updateSummary() {
+  if (!hot) return;
+
   let total = 0, within = 0, warning = 0, out = 0;
   const data = hot.getData();
 
@@ -111,13 +87,9 @@ function updateSummary() {
       if (!isNaN(val)) {
         total++;
         const absVal = Math.abs(val);
-        if (absVal > toleranceLimit) {
-          out++;
-        } else if (absVal > warningThreshold && absVal <= toleranceLimit) {
-          warning++;
-        } else {
-          within++;
-        }
+        if (absVal > toleranceLimit) out++;
+        else if (absVal > warningThreshold) warning++;
+        else within++;
       }
     }
   }
@@ -131,7 +103,8 @@ function updateSummary() {
   summaryChart.update();
 }
 
-function saveCurrentMonth() {
+function saveMonthData() {
+  if (!hot) return;
   const monthKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
   fetch('https://back-end-wrxi.onrender.com/save_month_data', {
     method: 'POST',
@@ -140,9 +113,32 @@ function saveCurrentMonth() {
   });
 }
 
+function renderTable(data, year, month) {
+  const headers = getHeaderDates(year, month);
+  if (hot) hot.destroy();
+
+  hot = new Handsontable(container, {
+    data: data,
+    colHeaders: headers,
+    rowHeaders: true,
+    licenseKey: 'non-commercial-and-evaluation',
+    width: '100%',
+    height: 400,
+    afterChange: (changes) => {
+      if (changes) {
+        updateSummary();
+        saveMonthData();
+      }
+    }
+  });
+
+  updateSummary();
+}
+
 function loadMonthData(year, month) {
   const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
-  document.getElementById('month-label').innerText = `${new Date(year, month).toLocaleString('default', { month: 'long' })} ${year}`;
+  document.getElementById('month-label').innerText =
+    `${new Date(year, month).toLocaleString('default', { month: 'long' })} ${year}`;
 
   fetch(`https://back-end-wrxi.onrender.com/load_month_data?month=${monthKey}`)
     .then(res => res.json())
@@ -151,9 +147,9 @@ function loadMonthData(year, month) {
       renderTable(data, year, month);
     })
     .catch(err => {
-      console.error("Failed to load month data:", err);
-      const data = generateTableData(year, month);
-      renderTable(data, year, month);
+      console.error('Error loading data:', err);
+      const fallback = generateTableData(year, month);
+      renderTable(fallback, year, month);
     });
 }
 
