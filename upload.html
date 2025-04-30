@@ -8,183 +8,138 @@
   <style>
     body { font-family: Arial; margin: 20px; }
     .container { display: flex; justify-content: space-between; align-items: flex-start; }
-    .summary-box {
-      background: #f9f9f9;
-      padding: 20px;
-      border-radius: 8px;
-      width: 400px;
-      height: 400px;
-    }
+    .summary-box { background: #f9f9f9; padding: 20px; border-radius: 8px; width: 400px; }
     .summary-box h3 { margin-top: 0; }
-    #hot {
-      width: 100%;
-      min-height: 400px;
-    }
-    .month-nav {
-      margin-bottom: 10px;
-    }
-    .month-nav button {
-      padding: 5px 10px;
-      margin-right: 5px;
-    }
+    .month-nav { margin-bottom: 10px; }
+    .month-nav button { padding: 5px 10px; }
   </style>
 </head>
 <body>
   <h2>LINAC Output Entry</h2>
   <div class="month-nav">
     <button onclick="prevMonth()">← Previous</button>
-    <span id="month-label">Month Year</span>
+    <span id="month-label" style="margin: 0 10px;"></span>
     <button onclick="nextMonth()">Next →</button>
   </div>
-
   <div class="container">
-    <div id="hot"></div>
+    <div id="table"></div>
     <div class="summary-box">
       <canvas id="summaryChart" width="300" height="300"></canvas>
       <h3>Summary</h3>
       <p><strong>Total Entries:</strong> <span id="total">0</span></p>
-      <p style="color:green;"><strong>✔ Within Tolerance:</strong> <span id="within">0</span></p>
-      <p style="color:orange;"><strong>⚠ Warning:</strong> <span id="warning">0</span></p>
-      <p style="color:red;"><strong>✘ Out of Tolerance:</strong> <span id="out">0</span></p>
+      <p style="color:green;"><strong>✔</strong> Within Tolerance: <span id="within">0</span></p>
+      <p style="color:orange;"><strong>⚠</strong> Warning: <span id="warning">0</span></p>
+      <p style="color:red;"><strong>❌</strong> Out of Tolerance: <span id="out">0</span></p>
     </div>
   </div>
 
   <script>
-    let hot;
-    const container = document.getElementById('hot');
-    const backendUrl = 'https://back-end-wrxi.onrender.com'; // change if needed
+    const energies = ['6X', '10X', '15X', '6X FFF', '10X FFF', '6E', '9E', '12E', '15E', '18E'];
+    const tableDiv = document.getElementById('table');
+    const monthLabel = document.getElementById('month-label');
+    let hot, currentMonth = new Date().getMonth(), currentYear = new Date().getFullYear();
 
-    let currentYear = new Date().getFullYear();
-    let currentMonth = new Date().getMonth();
-
-    function updateMonthLabel() {
-      const label = document.getElementById('month-label');
-      const date = new Date(currentYear, currentMonth);
-      label.textContent = date.toLocaleString('default', { month: 'long', year: 'numeric' });
-    }
-
-    function prevMonth() {
-      currentMonth--;
-      if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-      }
-      updateMonthLabel();
-      loadData();
-    }
-
-    function nextMonth() {
-      currentMonth++;
-      if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-      }
-      updateMonthLabel();
-      loadData();
-    }
-
-    function getDateHeaders(year, month) {
+    function generateMonthHeaders(year, month) {
       const headers = ['Energy'];
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = new Date(year, month, day).toISOString().split('T')[0];
-        headers.push(dateStr);
+      const days = new Date(year, month + 1, 0).getDate();
+      for (let d = 1; d <= days; d++) {
+        headers.push(new Date(year, month, d).toISOString().split('T')[0]);
       }
       return headers;
     }
 
-    function getDefaultData() {
-      const energies = ['6X', '10X', '15X', '6X FFF', '10X FFF', '6E', '9E', '12E', '15E', '18E'];
-      const days = new Date(currentYear, currentMonth + 1, 0).getDate();
+    function generateMonthData(headers) {
       return energies.map(energy => {
-        const row = [energy];
-        for (let i = 0; i < days; i++) row.push('');
+        const row = Array(headers.length).fill('');
+        row[0] = energy;
         return row;
       });
     }
 
-    function saveData(changes) {
-      if (!changes) return;
-      const headers = getDateHeaders(currentYear, currentMonth);
-      const dataToSave = hot.getData();
-      const payload = { year: currentYear, month: currentMonth + 1, headers, data: dataToSave };
+    function updateSummary(data, headers) {
+      let total = 0, within = 0, warning = 0, out = 0;
+      data.forEach(row => {
+        for (let i = 1; i < headers.length; i++) {
+          const val = parseFloat(row[i]);
+          if (!isNaN(val)) {
+            total++;
+            if (Math.abs(val) <= 2) within++;
+            else if (Math.abs(val) <= 3) warning++;
+            else out++;
+          }
+        }
+      });
+      document.getElementById('total').textContent = total;
+      document.getElementById('within').textContent = within;
+      document.getElementById('warning').textContent = warning;
+      document.getElementById('out').textContent = out;
 
-      fetch(`${backendUrl}/save-data`, {
+      summaryChart.data.datasets[0].data = [within, warning, out];
+      summaryChart.update();
+    }
+
+    function saveData(data, headers) {
+      const payload = { month: `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}`, data, headers };
+      fetch('https://back-end-wrxi.onrender.com/save-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
     }
 
-    function loadData() {
-      updateMonthLabel();
-      const headers = getDateHeaders(currentYear, currentMonth);
-      fetch(`${backendUrl}/get-data?year=${currentYear}&month=${currentMonth + 1}`)
+    function loadMonth(year, month) {
+      const headers = generateMonthHeaders(year, month);
+      monthLabel.textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+
+      fetch(`https://back-end-wrxi.onrender.com/load-data?month=${year}-${(month + 1).toString().padStart(2, '0')}`)
         .then(res => res.json())
         .then(json => {
-          const data = json.data && json.data.length > 0 ? json.data : getDefaultData();
-          hot.updateSettings({
-            data: data,
-            colHeaders: headers
+          const data = json.data && json.data.length > 0 ? json.data : generateMonthData(headers);
+          if (hot) hot.destroy();
+          hot = new Handsontable(tableDiv, {
+            data, colHeaders: headers, rowHeaders: true, licenseKey: 'non-commercial-and-evaluation',
+            width: '100%', height: 400,
+            afterChange: () => {
+              updateSummary(hot.getData(), headers);
+              saveData(hot.getData(), headers);
+            }
           });
-          updateSummary(data);
-        })
-        .catch(() => {
-          const data = getDefaultData();
-          hot.updateSettings({
-            data: data,
-            colHeaders: headers
-          });
-          updateSummary(data);
+          updateSummary(data, headers);
         });
     }
 
-    function updateSummary(data) {
-      let within = 0, warn = 0, out = 0;
-      data.forEach(row => {
-        row.slice(1).forEach(val => {
-          const num = parseFloat(val);
-          if (!isNaN(num)) {
-            if (Math.abs(num) <= 2) within++;
-            else if (Math.abs(num) <= 3) warn++;
-            else out++;
-          }
-        });
-      });
-      document.getElementById('total').textContent = within + warn + out;
-      document.getElementById('within').textContent = within;
-      document.getElementById('warning').textContent = warn;
-      document.getElementById('out').textContent = out;
-
-      const ctx = document.getElementById('summaryChart').getContext('2d');
-      if (window.summaryChart) window.summaryChart.destroy();
-      window.summaryChart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-          labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
-          datasets: [{
-            data: [within, warn, out],
-            backgroundColor: ['#90ee90', '#ffd700', '#ff7f7f']
-          }]
-        },
-        options: { responsive: true }
-      });
+    function prevMonth() {
+      if (--currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      loadMonth(currentYear, currentMonth);
     }
 
-    hot = new Handsontable(container, {
-      data: [],
-      colHeaders: [],
-      rowHeaders: true,
-      licenseKey: 'non-commercial-and-evaluation',
-      afterChange: (changes) => {
-        if (changes) {
-          changes.forEach(saveData);
-          updateSummary(hot.getData());
-        }
+    function nextMonth() {
+      if (++currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      loadMonth(currentYear, currentMonth);
+    }
+
+    const summaryChart = new Chart(document.getElementById('summaryChart').getContext('2d'), {
+      type: 'pie',
+      data: {
+        labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
+        datasets: [{
+          data: [0, 0, 0],
+          backgroundColor: ['#8BC34A', '#FFEB3B', '#F44336']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'top' } }
       }
     });
 
-    loadData();
+    loadMonth(currentYear, currentMonth);
   </script>
 </body>
 </html>
