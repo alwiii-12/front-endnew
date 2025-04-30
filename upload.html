@@ -1,135 +1,105 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Upload LINAC Output Excel</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <meta charset="UTF-8" />
+  <title>Upload LINAC Output</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: sans-serif; margin: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; }
-    th { background-color: #f4f4f4; }
-    .badge { padding: 5px 10px; border-radius: 10px; font-weight: bold; display: inline-block; }
-    .within { background-color: #e6f4ea; color: #2e7d32; border: 1px solid #a5d6a7; }
-    .warning { background-color: #fff9e6; color: #f57f17; border: 1px solid #ffe082; }
-    .out { background-color: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
-    .container { display: flex; gap: 20px; margin-top: 20px; }
-    .summary-box { flex: 1; border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #fafafa; }
-    .results-table { flex: 3; }
-    h3 { margin-top: 0; }
+    body {
+      font-family: Arial;
+      margin: 20px;
+      display: flex;
+      justify-content: space-between;
+    }
+    #table {
+      width: 75%;
+    }
+    .summary-box {
+      width: 23%;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 10px;
+    }
+    canvas {
+      max-width: 100%;
+    }
+    .status-pass { color: green; font-weight: bold; }
+    .status-warning { color: orange; font-weight: bold; }
+    .status-fail { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h2>Upload LINAC Output Excel</h2>
-  <input type="file" id="excelFile" accept=".xlsx, .xls">
-  <button onclick="uploadFile()">Upload</button>
+  <div id="table"></div>
 
-  <div class="container">
-    <div id="results" class="results-table"></div>
-    <div id="summary" class="summary-box">
-      <canvas id="summaryChart" width="200" height="200"></canvas>
-      <h3>Summary</h3>
-      <p><strong>Total Entries:</strong> <span id="totalCount">0</span></p>
-      <p><strong>✅ Within Tolerance:</strong> <span id="passCount">0</span></p>
-      <p><strong>⚠️ Warning:</strong> <span id="warningCount">0</span></p>
-      <p><strong>❌ Out of Tolerance:</strong> <span id="failCount">0</span></p>
-    </div>
+  <div class="summary-box">
+    <canvas id="pieChart"></canvas>
+    <div id="summary" style="margin-top: 20px;"></div>
   </div>
 
   <script>
-    async function uploadFile() {
-      const fileInput = document.getElementById('excelFile');
-      const file = fileInput.files[0];
+    const tolerance = 2;
+    const dates = ["01-Mar", "02-Mar", "04-Mar", "05-Mar", "06-Mar", "07-Mar", "08-Mar", "10-Mar", "11-Mar", "12-Mar", "13-Mar", "14-Mar", "15-Mar", "17-Mar", "18-Mar", "19-Mar", "20-Mar", "21-Mar"];
+    const energies = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
 
-      if (!file) {
-        alert("Please select a file first.");
-        return;
+    const container = document.getElementById('table');
+    const data = energies.map(energy => [energy, ...Array(dates.length).fill(null)]);
+
+    const hot = new Handsontable(container, {
+      data,
+      colHeaders: ["Energy", ...dates],
+      rowHeaders: true,
+      licenseKey: 'non-commercial-and-evaluation',
+      columns: [
+        { readOnly: true },
+        ...dates.map(() => ({ type: 'numeric', numericFormat: { pattern: '0.0' } }))
+      ],
+      afterChange: updateSummary,
+      stretchH: 'all',
+      height: 'auto'
+    });
+
+    const ctx = document.getElementById('pieChart').getContext('2d');
+    const pieChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
+        datasets: [{
+          data: [0, 0, 0],
+          backgroundColor: ['#9be7a7', '#ffe082', '#ff8a80'],
+        }]
       }
+    });
 
-      const formData = new FormData();
-      formData.append("file", file);
+    function updateSummary() {
+      let pass = 0, warn = 0, fail = 0;
+      const updatedData = hot.getData();
 
-      try {
-        const response = await fetch("https://back-end-wrxi.onrender.com/upload", {
-          method: "POST",
-          body: formData
+      updatedData.forEach(row => {
+        row.slice(1).forEach(val => {
+          if (val === null || val === '') return;
+          const absVal = Math.abs(parseFloat(val));
+          if (absVal < tolerance) pass++;
+          else if (absVal === tolerance) warn++;
+          else fail++;
         });
+      });
 
-        const data = await response.json();
-        if (!Array.isArray(data) || data.length === 0) {
-          document.getElementById('results').textContent = "Upload failed or no data returned.";
-          return;
-        }
+      pieChart.data.datasets[0].data = [pass, warn, fail];
+      pieChart.update();
 
-        let html = '';
-        const grouped = {};
-        let passCount = 0, warningCount = 0, failCount = 0;
-
-        // Group by energy
-        data.forEach(entry => {
-          const { energy, date, variation, status } = entry;
-          if (!grouped[energy]) grouped[energy] = [];
-          grouped[energy].push({ date, variation, status });
-
-          if (status === "Within Tolerance") passCount++;
-          else if (status === "Warning") warningCount++;
-          else if (status === "Out of Tolerance") failCount++;
-        });
-
-        // Build grouped tables
-        for (let energy in grouped) {
-          html += `<h3>${energy}</h3><table>
-            <thead><tr><th>Date</th><th>Variation (%)</th><th>Status</th></tr></thead><tbody>`;
-          grouped[energy].forEach(entry => {
-            const badgeClass = entry.status === "Within Tolerance" ? "within"
-                               : entry.status === "Warning" ? "warning" : "out";
-            const badgeIcon = entry.status === "Within Tolerance" ? "✅"
-                               : entry.status === "Warning" ? "⚠️" : "❌";
-            html += `<tr>
-              <td>${entry.date}</td>
-              <td>${entry.variation ?? ""}</td>
-              <td><span class="badge ${badgeClass}">${badgeIcon} ${entry.status}</span></td>
-            </tr>`;
-          });
-          html += `</tbody></table>`;
-        }
-
-        document.getElementById('results').innerHTML = html;
-
-        // Update summary
-        const totalCount = passCount + warningCount + failCount;
-        document.getElementById('totalCount').textContent = totalCount;
-        document.getElementById('passCount').textContent = passCount;
-        document.getElementById('warningCount').textContent = warningCount;
-        document.getElementById('failCount').textContent = failCount;
-
-        // Chart
-        const ctx = document.getElementById('summaryChart').getContext('2d');
-        if (window._summaryChart instanceof Chart) {
-          window._summaryChart.destroy();
-        }
-        window._summaryChart = new Chart(ctx, {
-          type: 'pie',
-          data: {
-            labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
-            datasets: [{
-              data: [passCount, warningCount, failCount],
-              backgroundColor: ['#a5d6a7', '#ffe082', '#ef9a9a']
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { position: 'bottom' },
-              title: { display: true, text: 'Output Summary' }
-            }
-          }
-        });
-
-      } catch (error) {
-        console.error("Upload failed:", error);
-        document.getElementById('results').textContent = "Upload failed. Please try again.";
-      }
+      const total = pass + warn + fail;
+      document.getElementById('summary').innerHTML = `
+        <h3>Summary</h3>
+        <p><strong>Total Entries:</strong> ${total}</p>
+        <p style="color: green;"><strong>✔ Within Tolerance:</strong> ${pass}</p>
+        <p style="color: orange;"><strong>⚠ Warning:</strong> ${warn}</p>
+        <p style="color: red;"><strong>✖ Out of Tolerance:</strong> ${fail}</p>
+      `;
     }
+
+    updateSummary();
   </script>
 </body>
 </html>
