@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="="en">
 <head>
   <meta charset="UTF-8" />
-  <title>LINAC Output - Monthly Memory</title>
+  <title>LINAC Output - Monthly Save</title>
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -45,6 +45,8 @@
     <button onclick="nextMonth()">Next ➡</button>
   </div>
   <div id="hot"></div>
+  <button onclick="saveToDatabase()" style="margin-top: 10px;">💾 Save to Database</button>
+  <p id="saveStatus" style="color: green; font-weight: bold;"></p>
 </div>
 
 <div id="summary-box">
@@ -71,7 +73,7 @@
   const container = document.getElementById('hot');
   let hot = null;
   let summaryChart = null;
-  const monthlyData = {}; // 🔐 Per-month memory
+  const monthlyData = {}; // 🧠 Memory store
 
   function getMonthKey() {
     return `${year}-${String(currentMonthIndex + 1).padStart(2, '0')}`;
@@ -143,7 +145,7 @@
   function saveCurrentData() {
     if (hot) {
       const key = getMonthKey();
-      monthlyData[key] = hot.getData(); // 🧠 Save the grid
+      monthlyData[key] = hot.getData();
     }
   }
 
@@ -182,17 +184,39 @@
       options: {
         responsive: true,
         plugins: {
-          legend: {
-            position: 'top'
-          }
+          legend: { position: 'top' }
         }
       }
     });
   }
 
+  function saveToDatabase() {
+    const data = hot.getData();
+    const headers = hot.getColHeader();
+    const payload = {
+      month: monthNames[currentMonthIndex],
+      year: year,
+      headers: headers,
+      rows: data
+    };
+
+    fetch("https://back-end-wrxi.onrender.com/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+      .then(res => res.json())
+      .then(result => {
+        document.getElementById("saveStatus").innerText = result.message || "Data saved.";
+      })
+      .catch(err => {
+        console.error("Save error:", err);
+        document.getElementById("saveStatus").innerText = "Error saving data.";
+      });
+  }
+
   // Load first month
   loadMonth(currentMonthIndex);
 </script>
-
 </body>
 </html>
