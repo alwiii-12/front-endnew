@@ -72,25 +72,35 @@
     }
 
     function updateSummary() {
-      if (!hot) return;
-      const data = hot.getData();
-      let total = 0, within = 0, warning = 0, out = 0;
+  if (!hot) return;
+  const data = hot.getData();
+  let total = 0, within = 0, warning = 0, out = 0;
 
-      data.forEach(row => {
-        row.slice(1).forEach(cell => {
-          const value = parseFloat(cell);
-          if (!isNaN(value)) {
-            total++;
-            if (Math.abs(value) <= tolerance) {
-              within++;
-            } else if (Math.abs(value) <= tolerance + 1) {
-              warning++;
-            } else {
-              out++;
-            }
-          }
-        });
-      });
+  data.forEach(row => {
+    row.slice(1).forEach(cell => {
+      const value = parseFloat(cell);
+      if (!isNaN(value)) {
+        total++;
+        const absVal = Math.abs(value);
+        if (absVal <= 1.8) {
+          within++;
+        } else if (absVal <= 2.0) {
+          warning++;
+        } else {
+          out++;
+        }
+      }
+    });
+  });
+
+  document.getElementById("total").textContent = total;
+  document.getElementById("within").textContent = within;
+  document.getElementById("warning").textContent = warning;
+  document.getElementById("out").textContent = out;
+
+  updateChart(within, warning, out);
+}
+
 
       document.getElementById("total").textContent = total;
       document.getElementById("within").textContent = within;
