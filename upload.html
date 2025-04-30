@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Upload LINAC Output Data</title>
+  <title>LINAC Output - Monthly Memory</title>
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -61,46 +61,53 @@
   const tolerance = 2;
   const warningRange = 0.1;
 
-  let currentMonthIndex = 2; // 0 = Jan, 1 = Feb, 2 = March, etc.
+  let currentMonthIndex = 2; // March
   const year = 2025;
-
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
   ];
 
   const container = document.getElementById('hot');
-
   let hot = null;
   let summaryChart = null;
+  const monthlyData = {}; // 🔐 Per-month memory
 
-  function generateData(monthIndex) {
-    const days = new Date(year, monthIndex + 1, 0).getDate(); // days in month
+  function getMonthKey() {
+    return `${year}-${String(currentMonthIndex + 1).padStart(2, '0')}`;
+  }
+
+  function generateHeaders(monthIndex) {
+    const days = new Date(year, monthIndex + 1, 0).getDate();
     const headers = ['Energy'];
     for (let d = 1; d <= days; d++) {
       headers.push(`${d.toString().padStart(2, '0')}-${monthNames[monthIndex].slice(0, 3)}`);
     }
-
-    const data = energies.map(e => {
-      const row = [e];
-      for (let i = 1; i < headers.length; i++) {
-        row.push('');
-      }
-      return row;
-    });
-
-    return { data, headers };
+    return headers;
   }
 
-  function initTable() {
-    const { data, headers } = generateData(currentMonthIndex);
-    document.getElementById('monthTitle').innerText = `${monthNames[currentMonthIndex]} ${year}`;
+  function generateEmptyData(headers) {
+    return energies.map(energy => [energy, ...Array(headers.length - 1).fill('')]);
+  }
+
+  function loadMonth(index) {
+    const key = getMonthKey();
+    const headers = generateHeaders(index);
+
+    if (!monthlyData[key]) {
+      monthlyData[key] = generateEmptyData(headers);
+    }
+
+    document.getElementById('monthTitle').innerText = `${monthNames[index]} ${year}`;
 
     if (hot) {
-      hot.updateSettings({ data, colHeaders: headers });
+      hot.updateSettings({
+        data: monthlyData[key],
+        colHeaders: headers
+      });
     } else {
       hot = new Handsontable(container, {
-        data,
+        data: monthlyData[key],
         colHeaders: headers,
         rowHeaders: true,
         width: '100%',
@@ -117,25 +124,41 @@
         }
       });
     }
+
     updateSummary();
+  }
+
+  function prevMonth() {
+    saveCurrentData();
+    currentMonthIndex = (currentMonthIndex - 1 + 12) % 12;
+    loadMonth(currentMonthIndex);
+  }
+
+  function nextMonth() {
+    saveCurrentData();
+    currentMonthIndex = (currentMonthIndex + 1) % 12;
+    loadMonth(currentMonthIndex);
+  }
+
+  function saveCurrentData() {
+    if (hot) {
+      const key = getMonthKey();
+      monthlyData[key] = hot.getData(); // 🧠 Save the grid
+    }
   }
 
   function updateSummary() {
     let pass = 0, warn = 0, fail = 0, total = 0;
-
     const data = hot.getData();
+
     for (let r = 0; r < data.length; r++) {
       for (let c = 1; c < data[r].length; c++) {
         const val = parseFloat(data[r][c]);
         if (!isNaN(val)) {
           total++;
-          if (Math.abs(val) <= tolerance - warningRange) {
-            pass++;
-          } else if (Math.abs(val) <= tolerance) {
-            warn++;
-          } else {
-            fail++;
-          }
+          if (Math.abs(val) <= tolerance - warningRange) pass++;
+          else if (Math.abs(val) <= tolerance) warn++;
+          else fail++;
         }
       }
     }
@@ -167,18 +190,8 @@
     });
   }
 
-  function prevMonth() {
-    currentMonthIndex = (currentMonthIndex - 1 + 12) % 12;
-    initTable();
-  }
-
-  function nextMonth() {
-    currentMonthIndex = (currentMonthIndex + 1) % 12;
-    initTable();
-  }
-
-  // Initialize on load
-  initTable();
+  // Load first month
+  loadMonth(currentMonthIndex);
 </script>
 
 </body>
