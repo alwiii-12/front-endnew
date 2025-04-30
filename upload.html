@@ -2,178 +2,184 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>LINAC Output - Monthly View</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+  <title>Upload LINAC Output Data</title>
+  <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       margin: 20px;
-    }
-    .layout {
       display: flex;
+      flex-direction: row;
       justify-content: space-between;
     }
-    .table-box {
+    #container {
       width: 75%;
     }
-    .summary-box {
-      width: 23%;
-      padding: 15px;
-      background: #f9f9f9;
-      border-radius: 10px;
+    #summary-box {
+      width: 20%;
+      padding: 20px;
+      border-radius: 8px;
+      background-color: #f8f8f8;
     }
     canvas {
-      max-width: 100%;
+      margin-bottom: 20px;
     }
-    .month-nav {
+    .nav-buttons {
       display: flex;
-      align-items: center;
       justify-content: space-between;
       margin-bottom: 10px;
     }
-    .month-nav button {
-      padding: 5px 15px;
-      font-weight: bold;
-      font-size: 16px;
+    .nav-buttons button {
+      padding: 5px 10px;
     }
   </style>
 </head>
 <body>
 
-  <div class="month-nav">
-    <button onclick="changeMonth(-1)">⬅ Previous</button>
-    <h2 id="monthLabel">March 2025</h2>
-    <button onclick="changeMonth(1)">Next ➡</button>
+<div id="container">
+  <div class="nav-buttons">
+    <button onclick="prevMonth()">⬅ Prev</button>
+    <h3 id="monthTitle">March 2025</h3>
+    <button onclick="nextMonth()">Next ➡</button>
   </div>
+  <div id="hot"></div>
+</div>
 
-  <div class="layout">
-    <div class="table-box">
-      <div id="table"></div>
-    </div>
+<div id="summary-box">
+  <canvas id="summaryChart"></canvas>
+  <h3>Summary</h3>
+  <p><strong>Total Entries:</strong> <span id="totalCount">0</span></p>
+  <p style="color: green;"><strong>✔ Within Tolerance:</strong> <span id="passCount">0</span></p>
+  <p style="color: orange;"><strong>⚠ Warning:</strong> <span id="warningCount">0</span></p>
+  <p style="color: red;"><strong>✘ Out of Tolerance:</strong> <span id="failCount">0</span></p>
+</div>
 
-    <div class="summary-box">
-      <canvas id="pieChart"></canvas>
-      <div id="summary" style="margin-top: 20px;"></div>
-    </div>
-  </div>
+<script>
+  const energies = ['6X', '10X', '15X', '6X FFF', '10X FFF', '6E', '9E', '12E', '15E', '18E'];
+  const tolerance = 2;
+  const warningRange = 0.1;
 
-  <script>
-    const tolerance = 2;
-    const energies = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
-    const dataStore = {}; // stores month-wise data
+  let currentMonthIndex = 2; // 0 = Jan, 1 = Feb, 2 = March, etc.
+  const year = 2025;
 
-    let currentMonth = 2; // March (0 = Jan, 1 = Feb, ...)
-    let currentYear = 2025;
-    let hot = null;
-    const container = document.getElementById('table');
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
 
-    const ctx = document.getElementById('pieChart').getContext('2d');
-    const pieChart = new Chart(ctx, {
+  const container = document.getElementById('hot');
+
+  let hot = null;
+  let summaryChart = null;
+
+  function generateData(monthIndex) {
+    const days = new Date(year, monthIndex + 1, 0).getDate(); // days in month
+    const headers = ['Energy'];
+    for (let d = 1; d <= days; d++) {
+      headers.push(`${d.toString().padStart(2, '0')}-${monthNames[monthIndex].slice(0, 3)}`);
+    }
+
+    const data = energies.map(e => {
+      const row = [e];
+      for (let i = 1; i < headers.length; i++) {
+        row.push('');
+      }
+      return row;
+    });
+
+    return { data, headers };
+  }
+
+  function initTable() {
+    const { data, headers } = generateData(currentMonthIndex);
+    document.getElementById('monthTitle').innerText = `${monthNames[currentMonthIndex]} ${year}`;
+
+    if (hot) {
+      hot.updateSettings({ data, colHeaders: headers });
+    } else {
+      hot = new Handsontable(container, {
+        data,
+        colHeaders: headers,
+        rowHeaders: true,
+        width: '100%',
+        height: 400,
+        licenseKey: 'non-commercial-and-evaluation',
+        stretchH: 'all',
+        afterChange: function (changes, source) {
+          if (['edit', 'Autofill.fill', 'paste', 'CopyPaste.paste'].includes(source)) {
+            updateSummary();
+          }
+        },
+        afterPaste: function () {
+          updateSummary();
+        }
+      });
+    }
+    updateSummary();
+  }
+
+  function updateSummary() {
+    let pass = 0, warn = 0, fail = 0, total = 0;
+
+    const data = hot.getData();
+    for (let r = 0; r < data.length; r++) {
+      for (let c = 1; c < data[r].length; c++) {
+        const val = parseFloat(data[r][c]);
+        if (!isNaN(val)) {
+          total++;
+          if (Math.abs(val) <= tolerance - warningRange) {
+            pass++;
+          } else if (Math.abs(val) <= tolerance) {
+            warn++;
+          } else {
+            fail++;
+          }
+        }
+      }
+    }
+
+    document.getElementById('passCount').innerText = pass;
+    document.getElementById('failCount').innerText = fail;
+    document.getElementById('warningCount').innerText = warn;
+    document.getElementById('totalCount').innerText = total;
+
+    const ctx = document.getElementById('summaryChart').getContext('2d');
+    if (summaryChart) summaryChart.destroy();
+    summaryChart = new Chart(ctx, {
       type: 'pie',
       data: {
         labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
         datasets: [{
-          data: [0, 0, 0],
-          backgroundColor: ['#9be7a7', '#ffe082', '#ff8a80'],
+          data: [pass, warn, fail],
+          backgroundColor: ['#8bc34a', '#ffeb3b', '#f44336']
         }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top'
+          }
+        }
       }
     });
+  }
 
-    function getDaysInMonth(month, year) {
-      const date = new Date(year, month, 1);
-      const days = [];
-      while (date.getMonth() === month) {
-        const d = date.getDate().toString().padStart(2, '0');
-        const m = date.toLocaleString('default', { month: 'short' });
-        days.push(`${d}-${m}`);
-        date.setDate(date.getDate() + 1);
-      }
-      return days;
-    }
+  function prevMonth() {
+    currentMonthIndex = (currentMonthIndex - 1 + 12) % 12;
+    initTable();
+  }
 
-    function getMonthKey() {
-      return `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
-    }
+  function nextMonth() {
+    currentMonthIndex = (currentMonthIndex + 1) % 12;
+    initTable();
+  }
 
-    function loadMonth(month, year) {
-      const days = getDaysInMonth(month, year);
-      const key = getMonthKey();
-      if (!dataStore[key]) {
-        dataStore[key] = energies.map(energy => [energy, ...Array(days.length).fill(null)]);
-      }
+  // Initialize on load
+  initTable();
+</script>
 
-      const colHeaders = ["Energy", ...days];
-      const columns = [{ readOnly: true }, ...days.map(() => ({ type: 'numeric', numericFormat: { pattern: '0.0' } }))];
-
-      if (hot) {
-        hot.updateSettings({
-          data: dataStore[key],
-          colHeaders: colHeaders,
-          columns: columns
-        });
-      } else {
-        hot = new Handsontable(container, {
-          data: dataStore[key],
-          colHeaders: colHeaders,
-          rowHeaders: true,
-          licenseKey: 'non-commercial-and-evaluation',
-          columns: columns,
-          stretchH: 'all',
-          height: 'auto',
-          afterChange: function (changes, source) {
-            if (source === 'edit' || source === 'Autofill.fill') {
-              updateSummary();
-            }
-          }
-        });
-      }
-
-      document.getElementById("monthLabel").innerText = `${days[0].split('-')[1]} ${year}`;
-      updateSummary();
-    }
-
-    function changeMonth(offset) {
-      currentMonth += offset;
-      if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-      } else if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-      }
-      loadMonth(currentMonth, currentYear);
-    }
-
-    function updateSummary() {
-      let pass = 0, warn = 0, fail = 0;
-      const updatedData = hot.getData();
-      updatedData.forEach(row => {
-        row.slice(1).forEach(val => {
-          if (val === null || val === '') return;
-          const absVal = Math.abs(parseFloat(val));
-          if (absVal < tolerance) pass++;
-          else if (absVal === tolerance) warn++;
-          else fail++;
-        });
-      });
-
-      pieChart.data.datasets[0].data = [pass, warn, fail];
-      pieChart.update();
-
-      const total = pass + warn + fail;
-      document.getElementById('summary').innerHTML = `
-        <h3>Summary</h3>
-        <p><strong>Total Entries:</strong> ${total}</p>
-        <p style="color: green;"><strong>✔ Within Tolerance:</strong> ${pass}</p>
-        <p style="color: orange;"><strong>⚠ Warning:</strong> ${warn}</p>
-        <p style="color: red;"><strong>✖ Out of Tolerance:</strong> ${fail}</p>
-      `;
-    }
-
-    // Initial load
-    loadMonth(currentMonth, currentYear);
-  </script>
 </body>
 </html>
