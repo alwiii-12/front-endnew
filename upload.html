@@ -12,7 +12,12 @@
     #summaryChart { margin-top: 10px; }
     .month-nav { margin-bottom: 10px; }
     .month-nav button { padding: 5px 10px; }
-    .htCell.out-of-tolerance { background-color: #ffcccc !important; }
+    
+    /* Styling for out-of-tolerance cells */
+    .htCell.out-of-tolerance {
+      background-color: #ffcccc !important;  /* Red background */
+      color: white !important;  /* White text for better contrast */
+    }
   </style>
 </head>
 <body>
@@ -49,7 +54,7 @@
       const days = new Date(year, month + 1, 0).getDate();
       const dates = ["Energy"];
       for (let d = 1; d <= days; d++) {
-        dates.push(${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')});
+        dates.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
       }
       return dates;
     }
@@ -68,7 +73,7 @@
 
       let data = generateEmptyData(dates);
       try {
-        const response = await fetch(https://back-end-wrxi.onrender.com/data?month=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')});
+        const response = await fetch(`https://back-end-wrxi.onrender.com/data?month=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`);
         if (!response.ok) throw new Error("Fetch failed");
         const result = await response.json();
         if (result && Array.isArray(result.data) && result.data.length > 0) {
@@ -95,7 +100,9 @@
               if (col > 0) {
                 const num = parseFloat(value);
                 if (!isNaN(num) && Math.abs(num) > 2.0) {
-                  td.classList.add('out-of-tolerance');
+                  td.classList.add('out-of-tolerance');  // Add the class for out-of-tolerance
+                } else {
+                  td.classList.remove('out-of-tolerance');  // Remove the class for valid cells
                 }
               }
             }
@@ -107,7 +114,7 @@
 
           const payload = {
             data: changedData,
-            month: ${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}
+            month: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
           };
 
           const outValues = [];
