@@ -2,143 +2,105 @@
 <html>
 <head>
   <title>LINAC Output Entry</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f8;
       margin: 0;
       padding: 0;
-      background-color: #f5f7fa;
-      color: #333;
       display: flex;
-      min-height: 100vh;
+      height: 100vh;
     }
 
     .sidebar {
-      background: #1f2937;
+      background: #2c3e50;
       color: white;
       padding: 20px;
       width: 220px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .sidebar h2 {
-      font-size: 18px;
-      margin-bottom: 20px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
     }
 
     .sidebar button {
-      background-color: #3b82f6;
-      border: none;
+      background: #34495e;
       color: white;
-      padding: 8px 12px;
-      margin: 5px;
-      border-radius: 6px;
+      border: none;
+      padding: 10px;
+      margin: 10px 0;
+      width: 100%;
       cursor: pointer;
+      border-radius: 5px;
     }
 
     .sidebar button:hover {
-      background-color: #2563eb;
+      background: #1abc9c;
     }
 
-    .main-content {
+    .main {
       flex: 1;
       padding: 20px;
-      display: flex;
-      flex-direction: column;
+      overflow: auto;
     }
 
-    .header {
+    .content {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .dark-toggle {
-      cursor: pointer;
-      padding: 5px 10px;
-      border: none;
-      background: #e5e7eb;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-
-    .container {
-      display: flex;
-      justify-content: space-between;
+      gap: 20px;
       align-items: flex-start;
-      margin-top: 20px;
     }
 
     .summary-box {
       background: white;
+      border-radius: 12px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       padding: 20px;
-      border-radius: 12px;
-      width: 360px;
+      width: 350px;
     }
 
-    #summaryChart {
+    canvas {
       display: block;
       margin: 0 auto 15px auto;
-      width: 300px;
-      height: 300px;
     }
 
     .htCell.out-of-tolerance {
       background-color: #ffcccc !important;
     }
 
-    /* Dark Mode */
-    body.dark {
-      background-color: #111827;
-      color: #e5e7eb;
+    h2 {
+      margin-top: 0;
     }
 
-    body.dark .summary-box {
-      background-color: #1f2937;
-      color: #e5e7eb;
+    #table-container {
+      overflow-x: auto;
+      max-width: 100%;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
 
-    body.dark .sidebar {
-      background-color: #0f172a;
-    }
-
-    body.dark .sidebar button {
-      background-color: #475569;
-    }
-
-    body.dark .sidebar button:hover {
-      background-color: #334155;
-    }
-
-    body.dark .dark-toggle {
-      background-color: #334155;
-      color: white;
+    #table {
+      min-width: 800px;
     }
   </style>
 </head>
 <body>
+
   <div class="sidebar">
     <h2>Month</h2>
     <button onclick="changeMonth(-1)">← Previous</button>
-    <span id="month-label" style="margin: 10px 0; font-weight: bold;"></span>
+    <div id="month-label" style="margin: 10px 0; font-weight: bold;"></div>
     <button onclick="changeMonth(1)">Next →</button>
-    <button class="dark-toggle" onclick="toggleDarkMode()">Toggle Dark Mode</button>
   </div>
 
-  <div class="main-content">
-    <div class="header">
-      <h2>LINAC Output Entry</h2>
-    </div>
-
-    <div class="container">
-      <div id="table"></div>
+  <div class="main">
+    <h2>LINAC Output Entry</h2>
+    <div class="content">
+      <div id="table-container">
+        <div id="table"></div>
+      </div>
       <div class="summary-box">
         <canvas id="summaryChart" width="300" height="300"></canvas>
         <h3>Summary</h3>
@@ -199,22 +161,25 @@
         data,
         rowHeaders: true,
         colHeaders: dates,
-        stretchH: 'all',
+        stretchH: 'none',
         width: '100%',
         height: 500,
         licenseKey: 'non-commercial-and-evaluation',
-        cells: (row, col) => ({
-          renderer: function(instance, td, row, col, prop, value, cellProperties) {
-            Handsontable.renderers.TextRenderer.apply(this, arguments);
-            if (col > 0) {
-              const num = parseFloat(value);
-              td.classList.remove('out-of-tolerance');
-              if (!isNaN(num) && Math.abs(num) > 2.0) {
-                td.classList.add('out-of-tolerance');
+        cells: (row, col) => {
+          return {
+            renderer: function(instance, td, row, col, prop, value, cellProperties) {
+              Handsontable.renderers.TextRenderer.apply(this, arguments);
+              if (col > 0) {
+                const num = parseFloat(value);
+                if (!isNaN(num) && Math.abs(num) > 2.0) {
+                  td.classList.add('out-of-tolerance');
+                } else {
+                  td.classList.remove('out-of-tolerance');
+                }
               }
             }
-          }
-        }),
+          };
+        },
         afterChange: async () => {
           const changedData = hot.getData();
           updateSummaryAndChart(changedData);
@@ -271,10 +236,6 @@
     function changeMonth(offset) {
       currentDate.setMonth(currentDate.getMonth() + offset);
       loadTable();
-    }
-
-    function toggleDarkMode() {
-      document.body.classList.toggle('dark');
     }
 
     window.onload = loadTable;
