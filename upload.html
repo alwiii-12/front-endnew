@@ -12,12 +12,8 @@
     #summaryChart { margin-top: 10px; }
     .month-nav { margin-bottom: 10px; }
     .month-nav button { padding: 5px 10px; }
-
-    /* Styling for out-of-tolerance cells */
-    .htCell.out-of-tolerance {
-      background-color: #ffcccc !important;  /* Red background */
-      color: white !important;  /* White text for better contrast */
-    }
+    /* CSS for highlighting cells with out-of-tolerance values */
+    .htCell.out-of-tolerance { background-color: #ffcccc !important; }
   </style>
 </head>
 <body>
@@ -97,16 +93,12 @@
           return {
             renderer: function(instance, td, row, col, prop, value, cellProperties) {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
-              
-              // Ensure we don't apply the class to the first column (Energy)
               if (col > 0) {
                 const num = parseFloat(value);
-                
-                // Check for 'out-of-tolerance' and highlight cell
                 if (!isNaN(num) && Math.abs(num) > 2.0) {
-                  td.classList.add('out-of-tolerance');  // Apply the red background
+                  td.classList.add('out-of-tolerance');
                 } else {
-                  td.classList.remove('out-of-tolerance');  // Remove the red background if within tolerance
+                  td.classList.remove('out-of-tolerance');
                 }
               }
             }
