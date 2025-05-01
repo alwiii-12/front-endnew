@@ -12,7 +12,8 @@
     #summaryChart {
       display: block;
       margin: 0 auto 15px auto;
-      max-width: 200px;
+      width: 300px; /* Adjusted size */
+      height: 300px; /* Adjusted size */
     }
     .month-nav { margin-bottom: 10px; }
     .month-nav button { padding: 5px 10px; }
@@ -30,7 +31,7 @@
   <div class="container">
     <div id="table"></div>
     <div class="summary-box">
-      <canvas id="summaryChart" width="200" height="200"></canvas>
+      <canvas id="summaryChart" width="300" height="300"></canvas>
       <h3>Summary</h3>
       <p><strong>Total Entries:</strong> <span id="total">0</span></p>
       <p style="color:green;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
