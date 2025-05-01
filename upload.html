@@ -3,23 +3,24 @@
 <head>
   <title>LINAC Output Entry</title>
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: Arial; margin: 20px; }
     .container { display: flex; justify-content: space-between; align-items: flex-start; }
     .summary-box { background: #f9f9f9; padding: 20px; border-radius: 8px; width: 400px; }
-    .summary-box h3 { margin-top: 0; }
+    #summaryChart { margin-top: 10px; }
     .month-nav { margin-bottom: 10px; }
     .month-nav button { padding: 5px 10px; }
+    .htCell.out-of-tolerance { background-color: #ffcccc !important; }
   </style>
 </head>
 <body>
   <h2>LINAC Output Entry</h2>
   <div class="month-nav">
-    <button onclick="prevMonth()">← Previous</button>
+    <button onclick="changeMonth(-1)">← Previous</button>
     <span id="month-label" style="margin: 0 10px;"></span>
-    <button onclick="nextMonth()">Next →</button>
+    <button onclick="changeMonth(1)">Next →</button>
   </div>
 
   <div class="container">
@@ -28,169 +29,148 @@
       <canvas id="summaryChart" width="300" height="300"></canvas>
       <h3>Summary</h3>
       <p><strong>Total Entries:</strong> <span id="total">0</span></p>
-      <p style="color:green;"><strong>✔ Within Tolerance:</strong> <span id="within">0</span></p>
-      <p style="color:orange;"><strong>⚠ Warning:</strong> <span id="warning">0</span></p>
-      <p style="color:red;"><strong>✘ Out of Tolerance:</strong> <span id="out">0</span></p>
+      <p style="color:green;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
+      <p style="color:orange;">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
+      <p style="color:red;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
     </div>
   </div>
 
   <script>
-    let hot;
-    const energyTypes = ['6X', '10X', '15X', '6X FFF', '10X FFF', '6E', '9E', '12E', '15E', '18E'];
-    let currentDate = new Date();
+    let hot, summaryChart;
+    const container = document.getElementById('table');
     const monthLabel = document.getElementById('month-label');
+    const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
+    let currentDate = new Date();
+    currentDate.setDate(1);
 
-    function getDaysInMonth(year, month) {
-      return new Date(year, month + 1, 0).getDate();
-    }
-
-    function generateTableData(year, month) {
-      const days = getDaysInMonth(year, month);
-      const dateHeaders = [];
+    function getMonthDates(date) {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const days = new Date(year, month + 1, 0).getDate();
+      const dates = ["Energy"];
       for (let d = 1; d <= days; d++) {
-        const date = new Date(year, month, d);
-        dateHeaders.push(date.toISOString().slice(0, 10));
+        dates.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
       }
-      const data = energyTypes.map(e => [e, ...new Array(days).fill('')]);
-      return { headers: ['Energy', ...dateHeaders], data };
+      return dates;
     }
 
-    function updateMonthLabel() {
-      const options = { year: 'numeric', month: 'long' };
-      monthLabel.innerText = currentDate.toLocaleDateString('en-US', options);
+    function generateEmptyData(dates) {
+      const data = energyTypes.map(e => {
+        const row = new Array(dates.length).fill('');
+        row[0] = e;
+        return row;
+      });
+      return data;
     }
 
-    async function loadTable(year, month) {
-      updateMonthLabel();
-      const { headers, data } = generateTableData(year, month);
-      try {
-        const response = await fetch(`https://back-end-wrxi.onrender.com/load_data?year=${year}&month=${month + 1}`);
-        let result = {};
-        try {
-          result = await response.json();
-        } catch (e) {
-          console.error('Failed to parse JSON from backend', e);
-          result.data = {};
-        }
+    async function loadTable() {
+      const dates = getMonthDates(currentDate);
+      monthLabel.textContent = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
-        const existingData = result.data || {};
+      const response = await fetch(`https://back-end-wrxi.onrender.com/data?month=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`);
+      const result = await response.json();
+      const data = result.data.length ? result.data : generateEmptyData(dates);
 
-        data.forEach((row, i) => {
-          headers.slice(1).forEach((date, j) => {
-            const key = `${date}_${row[0]}`;
-            if (existingData[key] !== undefined) {
-              row[j + 1] = existingData[key];
-            }
-          });
-        });
+      if (hot) hot.destroy();
 
-        const container = document.getElementById('table');
-        if (hot) hot.destroy();
-
-        hot = new Handsontable(container, {
-          data,
-          colHeaders: headers,
-          rowHeaders: true,
-          licenseKey: 'non-commercial-and-evaluation',
-          columns: [{ readOnly: true }, ...headers.slice(1).map(() => ({ type: 'numeric' }))],
-          width: '100%',
-          height: 400,
-          afterChange: function(changes, source) {
-            if (source === 'loadData') return;
-            saveData(year, month);
-            updateSummary();
-          },
-          cells: function(row, col) {
-            const cellProperties = {};
-            const value = this.instance.getDataAtCell(row, col);
-            const num = parseFloat(value);
-            if (col > 0 && !isNaN(num)) {
-              if (Math.abs(num) > 2.0) {
-                cellProperties.renderer = redRenderer;
+      hot = new Handsontable(container, {
+        data,
+        rowHeaders: true,
+        colHeaders: dates,
+        stretchH: 'all',
+        width: '100%',
+        height: 500,
+        licenseKey: 'non-commercial-and-evaluation',
+        cells: (row, col) => {
+          return {
+            renderer: function(instance, td, row, col, prop, value, cellProperties) {
+              Handsontable.renderers.TextRenderer.apply(this, arguments);
+              if (col > 0) {
+                const num = parseFloat(value);
+                if (!isNaN(num) && Math.abs(num) > 2.0) {
+                  td.classList.add('out-of-tolerance');
+                }
               }
             }
-            return cellProperties;
+          };
+        },
+        afterChange: async () => {
+          const changedData = hot.getData();
+          updateSummaryAndChart(changedData);
+
+          const payload = {
+            data: changedData,
+            month: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
+          };
+
+          const outValues = [];
+          for (let r = 0; r < changedData.length; r++) {
+            for (let c = 1; c < changedData[r].length; c++) {
+              const val = parseFloat(changedData[r][c]);
+              if (!isNaN(val) && Math.abs(val) > 2.0) {
+                outValues.push({ energy: changedData[r][0], date: hot.getColHeader(c), value: val });
+              }
+            }
           }
-        });
 
-        updateSummary();
-
-      } catch (error) {
-        console.error('Error loading table:', error);
-      }
-    }
-
-    function redRenderer(instance, td, row, col, prop, value, cellProperties) {
-      Handsontable.renderers.TextRenderer.apply(this, arguments);
-      td.style.color = 'red';
-    }
-
-    function updateSummary() {
-      const data = hot.getData();
-      let within = 0, warning = 0, out = 0;
-      data.forEach(row => {
-        row.slice(1).forEach(val => {
-          const v = parseFloat(val);
-          if (!isNaN(v)) {
-            if (Math.abs(v) <= 1.8) within++;
-            else if (Math.abs(v) > 1.8 && Math.abs(v) <= 2.0) warning++;
-            else out++;
+          if (outValues.length > 0) {
+            await fetch('https://back-end-wrxi.onrender.com/send-alert', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ outValues })
+            });
           }
-        });
+
+          await fetch('https://back-end-wrxi.onrender.com/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        }
       });
 
-      document.getElementById('within').innerText = within;
-      document.getElementById('warning').innerText = warning;
-      document.getElementById('out').innerText = out;
-      document.getElementById('total').innerText = within + warning + out;
+      updateSummaryAndChart(data);
+    }
+
+    function updateSummaryAndChart(data) {
+      let total = 0, within = 0, warning = 0, out = 0;
+      for (let r = 0; r < data.length; r++) {
+        for (let c = 1; c < data[r].length; c++) {
+          let val = parseFloat(data[r][c]);
+          if (!isNaN(val)) {
+            total++;
+            if (Math.abs(val) <= 1.8) within++;
+            else if (Math.abs(val) <= 2.0) warning++;
+            else out++;
+          }
+        }
+      }
+
+      document.getElementById("total").textContent = total;
+      document.getElementById("within").textContent = within;
+      document.getElementById("warning").textContent = warning;
+      document.getElementById("out").textContent = out;
 
       const ctx = document.getElementById('summaryChart').getContext('2d');
-      if (window.summaryChart) window.summaryChart.destroy();
-      window.summaryChart = new Chart(ctx, {
+      if (summaryChart) summaryChart.destroy();
+      summaryChart = new Chart(ctx, {
         type: 'pie',
         data: {
           labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
           datasets: [{
             data: [within, warning, out],
-            backgroundColor: ['green', 'orange', 'red']
+            backgroundColor: ['#66cc66', '#ffe066', '#ff6666']
           }]
         }
       });
     }
 
-    async function saveData(year, month) {
-      const data = hot.getData();
-      const headers = hot.getColHeader();
-      const payload = {};
-      data.forEach(row => {
-        const energy = row[0];
-        headers.slice(1).forEach((date, i) => {
-          const value = row[i + 1];
-          if (value !== null && value !== '') {
-            payload[`${date}_${energy}`] = value;
-          }
-        });
-      });
-
-      await fetch('https://back-end-wrxi.onrender.com/save_data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ year, month: month + 1, data: payload })
-      });
+    function changeMonth(offset) {
+      currentDate.setMonth(currentDate.getMonth() + offset);
+      loadTable();
     }
 
-    function prevMonth() {
-      currentDate.setMonth(currentDate.getMonth() - 1);
-      loadTable(currentDate.getFullYear(), currentDate.getMonth());
-    }
-
-    function nextMonth() {
-      currentDate.setMonth(currentDate.getMonth() + 1);
-      loadTable(currentDate.getFullYear(), currentDate.getMonth());
-    }
-
-    // Initialize
-    loadTable(currentDate.getFullYear(), currentDate.getMonth());
+    window.onload = loadTable;
   </script>
 </body>
 </html>
