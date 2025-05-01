@@ -9,7 +9,7 @@
     body { font-family: Arial; margin: 20px; }
     .container { display: flex; justify-content: space-between; align-items: flex-start; }
     .summary-box { background: #f9f9f9; padding: 20px; border-radius: 8px; width: 400px; }
-    #summaryChart { display: block; margin: 0 auto 15px auto; width: 300px; height: 300px; }
+    #summaryChart { margin-top: 10px; }
     .month-nav { margin-bottom: 10px; }
     .month-nav button { padding: 5px 10px; }
     .htCell.out-of-tolerance { background-color: #ffcccc !important; }
@@ -66,17 +66,9 @@
       const dates = getMonthDates(currentDate);
       monthLabel.textContent = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
-      let data = generateEmptyData(dates);
-      try {
-        const response = await fetch(`https://back-end-wrxi.onrender.com/data?month=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`);
-        if (!response.ok) throw new Error("Fetch failed");
-        const result = await response.json();
-        if (result && Array.isArray(result.data) && result.data.length > 0) {
-          data = result.data;
-        }
-      } catch (err) {
-        console.error("Failed to fetch data from backend:", err);
-      }
+      const response = await fetch(`https://back-end-wrxi.onrender.com/data?month=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`);
+      const result = await response.json();
+      const data = result.data.length ? result.data : generateEmptyData(dates);
 
       if (hot) hot.destroy();
 
@@ -90,16 +82,13 @@
         licenseKey: 'non-commercial-and-evaluation',
         cells: (row, col) => {
           return {
-            renderer: function(instance, td, row, col, prop, value, cellProperties) {
+            renderer: function (instance, td, row, col, prop, value, cellProperties) {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
-
-              // Add the highlight logic here
+              td.classList.remove('out-of-tolerance');
               if (col > 0) {
                 const num = parseFloat(value);
                 if (!isNaN(num) && Math.abs(num) > 2.0) {
-                  td.classList.add('out-of-tolerance'); // Red color for out of tolerance
-                } else {
-                  td.classList.remove('out-of-tolerance'); // Remove class if within tolerance
+                  td.classList.add('out-of-tolerance');
                 }
               }
             }
@@ -109,10 +98,26 @@
           const changedData = hot.getData();
           updateSummaryAndChart(changedData);
 
-          const payload = {
-            data: changedData,
-            month: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
-          };
+          const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+          const payload = { data: changedData, month: monthKey };
+
+          const outValues = [];
+          for (let r = 0; r < changedData.length; r++) {
+            for (let c = 1; c < changedData[r].length; c++) {
+              const val = parseFloat(changedData[r][c]);
+              if (!isNaN(val) && Math.abs(val) > 2.0) {
+                outValues.push({ energy: changedData[r][0], date: hot.getColHeader(c), value: val });
+              }
+            }
+          }
+
+          if (outValues.length > 0) {
+            await fetch('https://back-end-wrxi.onrender.com/send-alert', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ outValues })
+            });
+          }
 
           await fetch('https://back-end-wrxi.onrender.com/save', {
             method: 'POST',
@@ -129,7 +134,7 @@
       let total = 0, within = 0, warning = 0, out = 0;
       for (let r = 0; r < data.length; r++) {
         for (let c = 1; c < data[r].length; c++) {
-          let val = parseFloat(data[r][c]);
+          const val = parseFloat(data[r][c]);
           if (!isNaN(val)) {
             total++;
             if (Math.abs(val) <= 1.8) within++;
@@ -152,7 +157,7 @@
           labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
           datasets: [{
             data: [within, warning, out],
-            backgroundColor: ['#66cc66', '#ffe066', '#ff6666']
+            backgroundColor: ['#66cc66', '#ffcc66', '#ff6666']
           }]
         }
       });
