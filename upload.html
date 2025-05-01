@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>LINAC Output Entry</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css">
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
@@ -10,8 +10,8 @@
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #1f1f2e, #292940);
-      color: #ffffff;
+      background: #f9f9f9;
+      color: #000;
       display: flex;
       height: 100vh;
       overflow: hidden;
@@ -19,17 +19,18 @@
 
     .sidebar {
       width: 220px;
-      background: #181828;
+      background: #ffffff;
       padding: 20px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      border-right: 1px solid #333;
+      border-right: 1px solid #ccc;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
     }
 
     .sidebar h2 {
       font-size: 20px;
-      color: #00ffff;
+      color: #007acc;
       margin-bottom: 30px;
     }
 
@@ -42,17 +43,17 @@
     }
 
     .month-nav button {
-      background-color: #00ffff;
+      background-color: #007acc;
       border: none;
       padding: 6px 12px;
-      color: #000;
+      color: #fff;
       font-weight: bold;
       border-radius: 4px;
       cursor: pointer;
     }
 
     .month-nav button:hover {
-      background-color: #00cccc;
+      background-color: #005f99;
     }
 
     .main-content {
@@ -69,16 +70,15 @@
     }
 
     .summary-box {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
+      background: #ffffff;
       border-radius: 10px;
       padding: 20px;
       width: 350px;
-      box-shadow: 0 0 15px #00ffff33;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
 
     .summary-box h3 {
-      border-bottom: 1px solid #444;
+      border-bottom: 1px solid #ccc;
       padding-bottom: 8px;
       margin-bottom: 15px;
     }
@@ -100,18 +100,10 @@
     #table {
       flex-grow: 1;
       overflow-x: auto;
-      width: 100%;
-      background-color: #ffffff; /* White background for the table */
-      color: #000000; /* Black text for readability */
-    }
-
-    .htCore {
-      width: max-content; /* Allow table content to stretch horizontally */
-    }
-
-    .ht_master .htCell {
-      background-color: #ffffff !important; /* Ensuring cell background is white */
-      color: #000; /* Black text for cells */
+      background: #fff;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
   </style>
 </head>
@@ -125,7 +117,7 @@
         <button onclick="changeMonth(1)">→</button>
       </div>
     </div>
-    <p style="font-size: 12px; color: #999;">© 2025 QA Dashboard</p>
+    <p style="font-size: 12px; color: #666;">© 2025 QA Dashboard</p>
   </div>
 
   <div class="main-content">
@@ -135,9 +127,9 @@
         <canvas id="summaryChart" width="300" height="300"></canvas>
         <h3>Summary</h3>
         <p><strong>Total Entries:</strong> <span id="total">0</span></p>
-        <p style="color:#66ff66;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
-        <p style="color:#ffcc00;">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
-        <p style="color:#ff6666;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
+        <p style="color:#28a745;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
+        <p style="color:#ffc107;">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
+        <p style="color:#dc3545;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
       </div>
     </div>
   </div>
@@ -266,7 +258,7 @@
           labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
           datasets: [{
             data: [within, warning, out],
-            backgroundColor: ['#66ff66', '#ffcc00', '#ff4d4d']
+            backgroundColor: ['#28a745', '#ffc107', '#dc3545']
           }]
         }
       });
