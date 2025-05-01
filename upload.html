@@ -113,24 +113,6 @@
             month: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
           };
 
-          const outValues = [];
-          for (let r = 0; r < changedData.length; r++) {
-            for (let c = 1; c < changedData[r].length; c++) {
-              const val = parseFloat(changedData[r][c]);
-              if (!isNaN(val) && Math.abs(val) > 2.0) {
-                outValues.push({ energy: changedData[r][0], date: hot.getColHeader(c), value: val });
-              }
-            }
-          }
-
-          if (outValues.length > 0) {
-            await fetch('https://back-end-wrxi.onrender.com/send-alert', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ outValues })
-            });
-          }
-
           await fetch('https://back-end-wrxi.onrender.com/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
