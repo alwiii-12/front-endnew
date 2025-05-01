@@ -92,13 +92,14 @@
           return {
             renderer: function(instance, td, row, col, prop, value, cellProperties) {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
-              // Ensure class is added when value exceeds ±2%
+
+              // Add the highlight logic here
               if (col > 0) {
                 const num = parseFloat(value);
                 if (!isNaN(num) && Math.abs(num) > 2.0) {
-                  td.classList.add('out-of-tolerance');
+                  td.classList.add('out-of-tolerance'); // Red color for out of tolerance
                 } else {
-                  td.classList.remove('out-of-tolerance');
+                  td.classList.remove('out-of-tolerance'); // Remove class if within tolerance
                 }
               }
             }
