@@ -15,6 +15,8 @@
       display: flex;
       height: 100vh;
       overflow: hidden;
+      justify-content: center; /* Center the main content */
+      align-items: center; /* Vertically center */
     }
 
     .sidebar {
@@ -59,13 +61,10 @@
       flex-grow: 1;
       padding: 20px;
       overflow: auto;
-    }
-
-    .container {
+      width: 100%;
+      max-width: 1200px; /* Maximum width for the content */
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      gap: 20px;
     }
 
     .summary-box {
@@ -86,6 +85,7 @@
     .summary-box p {
       margin: 6px 0;
       font-size: 14px;
+      color: #ffffff; /* Ensured text visibility in summary */
     }
 
     canvas {
@@ -100,6 +100,11 @@
     #table {
       flex-grow: 1;
       overflow-x: auto;
+      padding: 20px;
+      margin-top: 20px;
+      max-width: 900px; /* Constrained table width */
+      background-color: rgba(255, 255, 255, 0.1); /* Slight background contrast */
+      border-radius: 10px;
     }
   </style>
 </head>
@@ -117,16 +122,14 @@
   </div>
 
   <div class="main-content">
-    <div class="container">
-      <div id="table"></div>
-      <div class="summary-box">
-        <canvas id="summaryChart" width="300" height="300"></canvas>
-        <h3>Summary</h3>
-        <p><strong>Total Entries:</strong> <span id="total">0</span></p>
-        <p style="color:#66ff66;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
-        <p style="color:#ffcc00;">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
-        <p style="color:#ff6666;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
-      </div>
+    <div id="table"></div>
+    <div class="summary-box">
+      <canvas id="summaryChart" width="300" height="300"></canvas>
+      <h3>Summary</h3>
+      <p><strong>Total Entries:</strong> <span id="total">0</span></p>
+      <p style="color:#66ff66;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
+      <p style="color:#ffcc00;">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
+      <p style="color:#ff6666;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
     </div>
   </div>
 
