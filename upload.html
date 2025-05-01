@@ -2,37 +2,36 @@
 <html>
 <head>
   <title>LINAC Output Entry</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.jsdelivr.net/npm/handsontable@12.3.3/dist/handsontable.full.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@12.3.3/dist/handsontable.full.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: Arial; margin: 20px; }
-    .container { display: flex; justify-content: space-between; }
-    .summary-box { background: #f4f4f4; padding: 20px; border-radius: 10px; width: 350px; }
+    .container { display: flex; justify-content: space-between; align-items: flex-start; }
+    .summary-box { background: #f9f9f9; padding: 20px; border-radius: 8px; width: 400px; }
+    #summaryChart { display: block; margin: 0 auto 15px auto; width: 300px; height: 300px; }
     .month-nav { margin-bottom: 10px; }
-    .month-nav button { padding: 6px 12px; margin: 0 5px; }
-    #summaryChart { margin-top: 20px; width: 250px !important; height: 250px !important; }
-    .htInvalid { background-color: #ff9999 !important; }
+    .month-nav button { padding: 5px 10px; }
+    .htCell.out-of-tolerance { background-color: #ffcccc !important; }
   </style>
 </head>
 <body>
   <h2>LINAC Output Entry</h2>
   <div class="month-nav">
     <button onclick="changeMonth(-1)">← Previous</button>
-    <span id="month-label"></span>
+    <span id="month-label" style="margin: 0 10px;"></span>
     <button onclick="changeMonth(1)">Next →</button>
   </div>
 
   <div class="container">
-    <div id="table" style="flex: 1;"></div>
+    <div id="table"></div>
     <div class="summary-box">
-      <canvas id="summaryChart"></canvas>
+      <canvas id="summaryChart" width="300" height="300"></canvas>
       <h3>Summary</h3>
       <p><strong>Total Entries:</strong> <span id="total">0</span></p>
-      <p style="color:green;">✓ Within Tolerance: <span id="within">0</span></p>
-      <p style="color:orange;">⚠ Warning: <span id="warning">0</span></p>
-      <p style="color:red;">✗ Out of Tolerance: <span id="out">0</span></p>
+      <p style="color:green;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
+      <p style="color:orange;">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
+      <p style="color:red;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
     </div>
   </div>
 
@@ -70,12 +69,13 @@
       let data = generateEmptyData(dates);
       try {
         const response = await fetch(`https://back-end-wrxi.onrender.com/data?month=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`);
+        if (!response.ok) throw new Error("Fetch failed");
         const result = await response.json();
         if (result && Array.isArray(result.data) && result.data.length > 0) {
           data = result.data;
         }
       } catch (err) {
-        console.warn("No backend data found, using empty table.");
+        console.error("Failed to fetch data from backend:", err);
       }
 
       if (hot) hot.destroy();
@@ -85,17 +85,21 @@
         rowHeaders: true,
         colHeaders: dates,
         stretchH: 'all',
+        width: '100%',
         height: 500,
         licenseKey: 'non-commercial-and-evaluation',
         cells: (row, col) => {
           return {
             renderer: function(instance, td, row, col, prop, value, cellProperties) {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
-              td.classList.remove('htInvalid');
+
+              // Add the highlight logic here
               if (col > 0) {
                 const num = parseFloat(value);
                 if (!isNaN(num) && Math.abs(num) > 2.0) {
-                  td.classList.add('htInvalid');
+                  td.classList.add('out-of-tolerance'); // Red color for out of tolerance
+                } else {
+                  td.classList.remove('out-of-tolerance'); // Remove class if within tolerance
                 }
               }
             }
@@ -105,31 +109,15 @@
           const changedData = hot.getData();
           updateSummaryAndChart(changedData);
 
-          const outValues = [];
-          for (let r = 0; r < changedData.length; r++) {
-            for (let c = 1; c < changedData[r].length; c++) {
-              const val = parseFloat(changedData[r][c]);
-              if (!isNaN(val) && Math.abs(val) > 2.0) {
-                outValues.push({ energy: changedData[r][0], date: hot.getColHeader(c), value: val });
-              }
-            }
-          }
-
-          if (outValues.length > 0) {
-            await fetch('https://back-end-wrxi.onrender.com/send-alert', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ outValues })
-            });
-          }
+          const payload = {
+            data: changedData,
+            month: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
+          };
 
           await fetch('https://back-end-wrxi.onrender.com/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              data: changedData,
-              month: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
-            })
+            body: JSON.stringify(payload)
           });
         }
       });
@@ -164,7 +152,7 @@
           labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
           datasets: [{
             data: [within, warning, out],
-            backgroundColor: ['#66cc66', '#ffcc66', '#ff6666']
+            backgroundColor: ['#66cc66', '#ffe066', '#ff6666']
           }]
         }
       });
