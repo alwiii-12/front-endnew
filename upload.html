@@ -12,8 +12,8 @@
     #summaryChart {
       display: block;
       margin: 0 auto 15px auto;
-      width: 300px; /* Adjusted size */
-      height: 300px; /* Adjusted size */
+      width: 300px;
+      height: 300px;
     }
     .month-nav { margin-bottom: 10px; }
     .month-nav button { padding: 5px 10px; }
@@ -97,10 +97,13 @@
           return {
             renderer: function(instance, td, row, col, prop, value, cellProperties) {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
+              // Ensure class is added when value exceeds ±2%
               if (col > 0) {
                 const num = parseFloat(value);
                 if (!isNaN(num) && Math.abs(num) > 2.0) {
                   td.classList.add('out-of-tolerance');
+                } else {
+                  td.classList.remove('out-of-tolerance');
                 }
               }
             }
