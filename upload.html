@@ -221,24 +221,10 @@
 
     function sendAlertEmail(value, date) {
       if (Math.abs(parseFloat(value)) > 2.0) {
-        fetch('https://api.sendgrid.com/v3/mail/send', {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer YOUR_SENDGRID_API_KEY',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            personalizations: [{
-              to: [{ email: 'alwinjose812@gmail.com' }],
-              subject: 'LINAC Output Out of Tolerance'
-            }],
-            from: { email: 'itsmealwin12@gmail.com' },
-            content: [{
-              type: 'text/plain',
-              value: `Alert: The LINAC output variation value of ${value} for ${date} is out of tolerance!`
-            }]
-          })
-        });
+        // Replace this with your real email sending logic (e.g., SendGrid or SMTP)
+        console.log(`Sending alert: The LINAC output variation value of ${value} for ${date} is out of tolerance!`);
+        // Mock-up of email send process (use actual service to send email)
+        alert(`Alert: The LINAC output variation value of ${value} for ${date} is out of tolerance!`);
       }
     }
 
@@ -247,4 +233,41 @@
       for (let r = 0; r < data.length; r++) {
         for (let c = 1; c < data[r].length; c++) {
           let val = parseFloat(data[r][c]);
-          if (!isNa
+          if (!isNaN(val)) {
+            total++;
+            if (Math.abs(val) <= 1.8) within++;
+            else if (Math.abs(val) <= 2.0) warning++;
+            else out++;
+          }
+        }
+      }
+
+      document.getElementById("total").textContent = total;
+      document.getElementById("within").textContent = within;
+      document.getElementById("warning").textContent = warning;
+      document.getElementById("out").textContent = out;
+
+      if (summaryChart) summaryChart.destroy();
+
+      summaryChart = new Chart(document.getElementById('summaryChart'), {
+        type: 'pie',
+        data: {
+          labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
+          datasets: [{
+            data: [within, warning, out],
+            backgroundColor: ['#2ecc71', '#f39c12', '#e74c3c'],
+          }]
+        }
+      });
+    }
+
+    function changeMonth(offset) {
+      currentDate.setMonth(currentDate.getMonth() + offset);
+      loadTable();
+    }
+
+    loadTable(); // Initial load
+  </script>
+
+</body>
+</html>
