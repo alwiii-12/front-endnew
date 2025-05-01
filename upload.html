@@ -1,20 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LINAC Output Entry</title>
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: Arial; margin: 20px; }
-    .container { display: flex; justify-content: space-between; align-items: flex-start; }
-    .summary-box { background: #f9f9f9; padding: 20px; border-radius: 8px; width: 400px; }
+    .container { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; }
+    .summary-box { background: #f9f9f9; padding: 20px; border-radius: 8px; width: 350px; margin-top: 20px; }
     #summaryChart { margin-top: 10px; }
     .month-nav { margin-bottom: 10px; }
     .month-nav button { padding: 5px 10px; }
-    .htCell.out-of-tolerance { background-color: #ffcccc !important; }
+    .htInvalid { background-color: #ffcccc !important; }
   </style>
-  <link rel="icon" href="data:;base64,iVBORw0KGgo="> <!-- avoids favicon 404 -->
 </head>
 <body>
   <h2>LINAC Output Entry</h2>
@@ -25,7 +26,7 @@
   </div>
 
   <div class="container">
-    <div id="table"></div>
+    <div id="table" style="flex-grow: 1;"></div>
     <div class="summary-box">
       <canvas id="summaryChart" width="300" height="300"></canvas>
       <h3>Summary</h3>
@@ -70,13 +71,14 @@
       let data = generateEmptyData(dates);
       try {
         const response = await fetch(`https://back-end-wrxi.onrender.com/data?month=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`);
-        if (!response.ok) throw new Error("Fetch failed");
-        const result = await response.json();
-        if (result && Array.isArray(result.data) && result.data.length > 0) {
-          data = result.data;
+        if (response.ok) {
+          const result = await response.json();
+          if (Array.isArray(result.data) && result.data.length > 0) {
+            data = result.data;
+          }
         }
       } catch (err) {
-        console.error("Failed to fetch data from backend:", err);
+        console.error("Failed to fetch data:", err);
       }
 
       if (hot) hot.destroy();
@@ -89,21 +91,21 @@
         width: '100%',
         height: 500,
         licenseKey: 'non-commercial-and-evaluation',
-        cells: function (row, col) {
+        cells: (row, col) => {
           return {
-            renderer: function (instance, td, row, col, prop, value, cellProperties) {
+            renderer: function(instance, td, row, col, prop, value, cellProperties) {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
-              td.classList.remove('out-of-tolerance');
-              if (col === 0) return;
-              const num = parseFloat(value);
-              if (!isNaN(num) && Math.abs(num) > 2.0) {
-                td.classList.add('out-of-tolerance');
+              td.classList.remove('htInvalid');
+              if (col > 0) {
+                const num = parseFloat(value);
+                if (!isNaN(num) && Math.abs(num) > 2.0) {
+                  td.classList.add('htInvalid');
+                }
               }
             }
           };
         },
         afterChange: async () => {
-          if (!hot) return;
           const changedData = hot.getData();
           updateSummaryAndChart(changedData);
 
@@ -135,6 +137,8 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
+
+          hot.render(); // FORCE RE-RENDER TO APPLY HIGHLIGHTING
         }
       });
 
