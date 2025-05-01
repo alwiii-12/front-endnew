@@ -55,21 +55,28 @@
     }
 
     function generateEmptyData(dates) {
-      const data = energyTypes.map(e => {
+      return energyTypes.map(e => {
         const row = new Array(dates.length).fill('');
         row[0] = e;
         return row;
       });
-      return data;
     }
 
     async function loadTable() {
       const dates = getMonthDates(currentDate);
       monthLabel.textContent = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
-      const response = await fetch(`https://back-end-wrxi.onrender.com/data?month=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`);
-      const result = await response.json();
-      const data = result.data.length ? result.data : generateEmptyData(dates);
+      let data = generateEmptyData(dates);
+      try {
+        const response = await fetch(`https://back-end-wrxi.onrender.com/data?month=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`);
+        if (!response.ok) throw new Error("Fetch failed");
+        const result = await response.json();
+        if (result && Array.isArray(result.data) && result.data.length > 0) {
+          data = result.data;
+        }
+      } catch (err) {
+        console.error("Failed to fetch data from backend:", err);
+      }
 
       if (hot) hot.destroy();
 
