@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>LINAC Output Entry</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -9,11 +10,10 @@
     body { font-family: Arial; margin: 20px; }
     .container { display: flex; justify-content: space-between; align-items: flex-start; }
     .summary-box { background: #f9f9f9; padding: 20px; border-radius: 8px; width: 400px; }
-    #summaryChart { margin-top: 10px; }
     .month-nav { margin-bottom: 10px; }
     .month-nav button { padding: 5px 10px; }
-    .htCell.out-of-tolerance { background-color: #ffcccc !important; }
-    /* Remove deprecated ms-high-contrast */
+    #summaryChart { margin-top: 10px; width: 300px !important; height: 300px !important; }
+    .htInvalid { background-color: #ffcccc !important; }
   </style>
 </head>
 <body>
@@ -27,7 +27,7 @@
   <div class="container">
     <div id="table"></div>
     <div class="summary-box">
-      <canvas id="summaryChart" width="300" height="300"></canvas>
+      <canvas id="summaryChart"></canvas>
       <h3>Summary</h3>
       <p><strong>Total Entries:</strong> <span id="total">0</span></p>
       <p style="color:green;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
@@ -93,18 +93,17 @@
           return {
             renderer: function(instance, td, row, col, prop, value, cellProperties) {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
+              td.classList.remove('htInvalid');
               if (col > 0) {
                 const num = parseFloat(value);
                 if (!isNaN(num) && Math.abs(num) > 2.0) {
-                  td.classList.add('out-of-tolerance');
+                  td.classList.add('htInvalid');
                 }
               }
             }
           };
         },
         afterChange: async () => {
-          if (!hot) return; // Prevent errors if hot is not initialized
-          
           const changedData = hot.getData();
           updateSummaryAndChart(changedData);
 
