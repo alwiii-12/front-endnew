@@ -93,13 +93,13 @@
             renderer: function(instance, td, row, col, prop, value, cellProperties) {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
 
-              // Add the highlight logic here
+              // Highlight out of tolerance values
               if (col > 0) {
                 const num = parseFloat(value);
                 if (!isNaN(num) && Math.abs(num) > 2.0) {
-                  td.classList.add('out-of-tolerance'); // Red color for out of tolerance
+                  td.classList.add('out-of-tolerance');
                 } else {
-                  td.classList.remove('out-of-tolerance'); // Remove class if within tolerance
+                  td.classList.remove('out-of-tolerance');
                 }
               }
             }
@@ -109,12 +109,24 @@
           const changedData = hot.getData();
           updateSummaryAndChart(changedData);
 
+          // Alert system for out-of-tolerance values
+          const threshold = 2.0; // Tolerance threshold
+          for (let r = 0; r < changedData.length; r++) {
+            for (let c = 1; c < changedData[r].length; c++) {
+              const value = parseFloat(changedData[r][c]);
+              if (!isNaN(value) && Math.abs(value) > threshold) {
+                // Send email alert if out of tolerance
+                await sendAlertEmail(value);
+                break; // Exit after the first out-of-tolerance alert
+              }
+            }
+          }
+
           const payload = {
             data: changedData,
             month: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
           };
 
-          // Saving the data to backend
           await fetch('https://back-end-wrxi.onrender.com/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -126,30 +138,6 @@
       updateSummaryAndChart(data);
     }
 
-    async function sendAlert(value, row, col) {
-      const emailPayload = {
-        to: "alwinjose812@gmail.com",
-        from: "itsmealwin12@gmail.com",
-        subject: "LINAC Output Data Alert",
-        message: `Alert: The data at Row ${row + 1}, Column ${col + 1} has exceeded the ±2.0% tolerance. The value is ${value}.`
-      };
-
-      try {
-        const response = await fetch('https://back-end-wrxi.onrender.com/send-alert', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(emailPayload)
-        });
-        if (response.ok) {
-          console.log("Alert email sent successfully!");
-        } else {
-          console.error("Failed to send alert email");
-        }
-      } catch (err) {
-        console.error("Error in sending alert email:", err);
-      }
-    }
-
     function updateSummaryAndChart(data) {
       let total = 0, within = 0, warning = 0, out = 0;
       for (let r = 0; r < data.length; r++) {
@@ -159,10 +147,7 @@
             total++;
             if (Math.abs(val) <= 1.8) within++;
             else if (Math.abs(val) <= 2.0) warning++;
-            else {
-              out++;
-              sendAlert(val, r, c);  // Trigger alert if out of tolerance
-            }
+            else out++;
           }
         }
       }
@@ -183,6 +168,20 @@
             backgroundColor: ['#66cc66', '#ffe066', '#ff6666']
           }]
         }
+      });
+    }
+
+    async function sendAlertEmail(value) {
+      const payload = {
+        to: 'alwinjose812@gmail.com',
+        subject: 'LINAC QA Alert: Out of Tolerance',
+        body: `Alert: A value of ${value} exceeds the tolerance limit of ±2.0%.`
+      };
+
+      await fetch('https://your-email-api.com/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
     }
 
