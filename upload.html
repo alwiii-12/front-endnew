@@ -66,11 +66,11 @@
     .container {
       display: flex;
       gap: 20px;
+      align-items: flex-start;
     }
 
     #table {
-      max-width: calc(100% - 320px);
-      overflow: auto;
+      flex-grow: 1;
     }
 
     .summary-box {
@@ -87,6 +87,10 @@
 
     .htCell.out-of-tolerance {
       background-color: #ffcccc !important;
+    }
+
+    #save-section {
+      margin-top: 20px;
     }
 
     body.dark {
@@ -126,14 +130,9 @@
 
   <div class="main">
     <div class="header" id="header"></div>
+
     <div class="container">
-      <div>
-        <div id="table"></div>
-        <div style="margin-top: 10px;">
-          <button onclick="manualSave()" style="padding: 6px 14px; font-weight: bold;">💾 Save</button>
-          <span id="lastSaved" style="margin-left: 15px; font-size: 14px; color: gray;"></span>
-        </div>
-      </div>
+      <div id="table"></div>
       <div class="summary-box">
         <canvas id="summaryChart" width="280" height="280"></canvas>
         <h3>Summary</h3>
@@ -143,6 +142,11 @@
         <p style="color:red;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
       </div>
     </div>
+
+    <div id="save-section">
+      <button onclick="manualSave()" style="padding: 6px 14px; font-weight: bold;">💾 Save</button>
+      <span id="lastSaved" style="margin-left: 15px; font-size: 14px; color: gray;"></span>
+    </div>
   </div>
 
   <script>
@@ -151,10 +155,10 @@
     const monthsDiv = document.getElementById('months');
     const header = document.getElementById('header');
     const yearLabel = document.getElementById('year');
+    const lastSaved = document.getElementById('lastSaved');
 
     let currentDate = new Date();
     currentDate.setDate(1);
-
     const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
 
     function getMonthDates(date) {
@@ -192,7 +196,7 @@
         data,
         rowHeaders: true,
         colHeaders: dates,
-        stretchH: 'none',
+        stretchH: 'all',
         width: '100%',
         height: 500,
         licenseKey: 'non-commercial-and-evaluation',
@@ -208,61 +212,12 @@
             }
           };
         },
-        afterChange: async () => {
-          const changedData = hot.getData();
-          updateSummaryAndChart(changedData);
-          const payload = {
-            data: changedData,
-            month: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
-          };
-
-          const outValues = [];
-          for (let r = 0; r < changedData.length; r++) {
-            for (let c = 1; c < changedData[r].length; c++) {
-              const val = parseFloat(changedData[r][c]);
-              if (!isNaN(val) && Math.abs(val) > 2.0) {
-                outValues.push({ energy: changedData[r][0], date: hot.getColHeader(c), value: val });
-              }
-            }
-          }
-
-          if (outValues.length > 0) {
-            await fetch('https://back-end-wrxi.onrender.com/send-alert', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ outValues })
-            });
-          }
-
-          await fetch('https://back-end-wrxi.onrender.com/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
+        afterChange: () => {
+          updateSummaryAndChart(hot.getData());
         }
       });
 
       updateSummaryAndChart(data);
-    }
-
-    function manualSave() {
-      const changedData = hot.getData();
-      const payload = {
-        data: changedData,
-        month: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
-      };
-
-      fetch('https://back-end-wrxi.onrender.com/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).then(res => {
-        if (res.ok) {
-          const now = new Date();
-          const formatted = now.toLocaleString();
-          document.getElementById("lastSaved").textContent = `Last saved at ${formatted}`;
-        }
-      });
     }
 
     function updateSummaryAndChart(data) {
@@ -298,6 +253,39 @@
       });
     }
 
+    async function manualSave() {
+      const changedData = hot.getData();
+      const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+      const payload = { data: changedData, month };
+
+      await fetch('https://back-end-wrxi.onrender.com/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const outValues = [];
+      for (let r = 0; r < changedData.length; r++) {
+        for (let c = 1; c < changedData[r].length; c++) {
+          const val = parseFloat(changedData[r][c]);
+          if (!isNaN(val) && Math.abs(val) > 2.0) {
+            outValues.push({ energy: changedData[r][0], date: hot.getColHeader(c), value: val });
+          }
+        }
+      }
+
+      if (outValues.length > 0) {
+        await fetch('https://back-end-wrxi.onrender.com/send-alert', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ outValues })
+        });
+      }
+
+      const now = new Date();
+      lastSaved.textContent = `Last saved: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+    }
+
     function changeMonth(m) {
       currentDate.setMonth(m);
       loadTable();
@@ -313,10 +301,7 @@
     }
 
     function buildMonthButtons() {
-      const months = [
-        'January','February','March','April','May','June',
-        'July','August','September','October','November','December'
-      ];
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
       monthsDiv.innerHTML = '';
       months.forEach((m, i) => {
         const btn = document.createElement('button');
