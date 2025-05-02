@@ -48,6 +48,15 @@
       background-color: #e0e0e0;
     }
 
+    .sidebar button.settings {
+      background-color: #000000; /* Black color for Settings button */
+      color: white; /* White text */
+    }
+
+    .sidebar button.settings:hover {
+      background-color: #333333; /* Dark gray on hover for Settings button */
+    }
+
     .main {
       flex-grow: 1;
       padding: 20px;
@@ -148,7 +157,7 @@
       <button onclick="changeYear(1)">→</button>
     </div>
     <div id="months"></div>
-    <button onclick="openSettings()">Settings</button>
+    <button class="settings" onclick="openSettings()">Settings</button>
     <p style="font-size: 12px; margin-top: auto;">© 2025 QA Dashboard</p>
   </div>
 
