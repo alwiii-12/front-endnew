@@ -10,8 +10,8 @@
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #1f1f2e, #292940);
-      color: #ffffff;
+      background: #f8f9fa;
+      color: #333;
       display: flex;
       height: 100vh;
       overflow: hidden;
@@ -19,17 +19,18 @@
 
     .sidebar {
       width: 220px;
-      background: #181828;
+      background: #ffffff;
       padding: 20px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      border-right: 1px solid #333;
+      border-right: 1px solid #ccc;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
     }
 
     .sidebar h2 {
       font-size: 20px;
-      color: #00ffff;
+      color: #007BFF;
       margin-bottom: 30px;
     }
 
@@ -42,17 +43,17 @@
     }
 
     .month-nav button {
-      background-color: #00ffff;
+      background-color: #007BFF;
       border: none;
       padding: 6px 12px;
-      color: #000;
+      color: #fff;
       font-weight: bold;
       border-radius: 4px;
       cursor: pointer;
     }
 
     .month-nav button:hover {
-      background-color: #00cccc;
+      background-color: #0056b3;
     }
 
     .main-content {
@@ -66,19 +67,19 @@
       justify-content: space-between;
       align-items: flex-start;
       gap: 20px;
+      flex-wrap: wrap;
     }
 
     .summary-box {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
+      background: #ffffff;
       border-radius: 10px;
       padding: 20px;
       width: 350px;
-      box-shadow: 0 0 15px #00ffff33;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
 
     .summary-box h3 {
-      border-bottom: 1px solid #444;
+      border-bottom: 1px solid #ddd;
       padding-bottom: 8px;
       margin-bottom: 15px;
     }
@@ -93,8 +94,8 @@
     }
 
     .ht_master .htCell.out-of-tolerance {
-      background-color: #ff4d4d !important;
-      color: #fff !important;
+      background-color: #ffcccc !important;
+      color: #000 !important;
     }
 
     #table {
@@ -113,7 +114,7 @@
         <button onclick="changeMonth(1)">→</button>
       </div>
     </div>
-    <p style="font-size: 12px; color: #999;">© 2025 QA Dashboard</p>
+    <p style="font-size: 12px; color: #888;">© 2025 QA Dashboard</p>
   </div>
 
   <div class="main-content">
@@ -123,9 +124,9 @@
         <canvas id="summaryChart" width="300" height="300"></canvas>
         <h3>Summary</h3>
         <p><strong>Total Entries:</strong> <span id="total">0</span></p>
-        <p style="color:#66ff66;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
-        <p style="color:#ffcc00;">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
-        <p style="color:#ff6666;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
+        <p style="color:#28a745;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
+        <p style="color:#ffc107;">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
+        <p style="color:#dc3545;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
       </div>
     </div>
   </div>
@@ -179,9 +180,9 @@
           return {
             renderer: function(instance, td, row, col, prop, value, cellProperties) {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
+              td.classList.remove('out-of-tolerance');
               if (col > 0) {
                 const num = parseFloat(value);
-                td.classList.remove('out-of-tolerance');
                 if (!isNaN(num) && Math.abs(num) > 2.0) {
                   td.classList.add('out-of-tolerance');
                 }
@@ -254,7 +255,7 @@
           labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
           datasets: [{
             data: [within, warning, out],
-            backgroundColor: ['#66ff66', '#ffcc00', '#ff4d4d']
+            backgroundColor: ['#28a745', '#ffc107', '#dc3545']
           }]
         }
       });
