@@ -1,272 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>LINAC Output Entry</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LINAC QA Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.min.css"/>
   <style>
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: #f8f9fa;
-      color: #333;
+      background: radial-gradient(ellipse at center, #121212 0%, #0a0a0a 100%);
+      color: #f0f0f0;
       display: flex;
       height: 100vh;
-      overflow: hidden;
     }
 
     .sidebar {
       width: 220px;
-      background: #ffffff;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      border-right: 1px solid #ccc;
-      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+      background: rgba(20, 20, 20, 0.6);
+      backdrop-filter: blur(12px);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 30px 20px;
+      box-shadow: 2px 0 10px rgba(0, 255, 255, 0.1);
     }
 
     .sidebar h2 {
-      font-size: 20px;
-      color: #007BFF;
-      margin-bottom: 30px;
+      font-size: 18px;
+      margin-bottom: 20px;
+      color: #00ffff;
     }
 
-    .month-nav {
+    .month-select {
       display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: 20px;
-      gap: 10px;
+      flex-direction: column;
+      gap: 12px;
     }
 
-    .month-nav button {
-      background-color: #007BFF;
-      border: none;
-      padding: 6px 12px;
+    .month-button {
+      background: rgba(255, 255, 255, 0.05);
       color: #fff;
-      font-weight: bold;
-      border-radius: 4px;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
       cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
     }
 
-    .month-nav button:hover {
-      background-color: #0056b3;
+    .month-button:hover {
+      background: rgba(0, 255, 255, 0.1);
+      transform: scale(1.02);
     }
 
     .main-content {
       flex-grow: 1;
-      padding: 20px;
+      padding: 40px 20px 20px;
       overflow: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     .container {
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: flex-start;
       gap: 20px;
-      flex-wrap: wrap;
+      width: 100%;
+      max-width: 1600px;
     }
 
-    .summary-box {
-      background: #ffffff;
-      border-radius: 10px;
+    .table-section, .summary-section {
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.05);
       padding: 20px;
-      width: 350px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      flex: 1;
     }
 
-    .summary-box h3 {
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 8px;
-      margin-bottom: 15px;
+    .summary-section {
+      max-width: 300px;
+      color: #e0f7fa;
     }
 
-    .summary-box p {
-      margin: 6px 0;
-      font-size: 14px;
+    .summary-section h3 {
+      margin-top: 0;
+      border-bottom: 1px solid rgba(0,255,255,0.3);
+      padding-bottom: 10px;
     }
 
-    canvas {
-      background-color: transparent;
+    .summary-item {
+      margin: 15px 0;
+      font-size: 16px;
     }
 
-    .ht_master .htCell.out-of-tolerance {
-      background-color: #ffcccc !important;
-      color: #000 !important;
+    .hot-cell.within { background-color: rgba(0, 255, 0, 0.2); }
+    .hot-cell.warning { background-color: rgba(255, 165, 0, 0.3); }
+    .hot-cell.out { background-color: rgba(255, 0, 0, 0.4); }
+
+    .handsontable {
+      background: transparent;
+      color: #fff;
     }
 
-    #table {
-      flex-grow: 1;
-      overflow-x: auto;
+    .handsontable th, .handsontable td {
+      border-color: rgba(255, 255, 255, 0.1);
     }
+
   </style>
 </head>
 <body>
   <div class="sidebar">
-    <div>
-      <h2>LINAC QA</h2>
-      <div class="month-nav">
-        <button onclick="changeMonth(-1)">←</button>
-        <span id="month-label"></span>
-        <button onclick="changeMonth(1)">→</button>
-      </div>
+    <h2>Select Month</h2>
+    <div class="month-select">
+      <button class="month-button" onclick="loadMonth('2025-01')">January</button>
+      <button class="month-button" onclick="loadMonth('2025-02')">February</button>
+      <button class="month-button" onclick="loadMonth('2025-03')">March</button>
+      <button class="month-button" onclick="loadMonth('2025-04')">April</button>
+      <button class="month-button" onclick="loadMonth('2025-05')">May</button>
+      <!-- Add more months as needed -->
     </div>
-    <p style="font-size: 12px; color: #888;">© 2025 QA Dashboard</p>
   </div>
 
   <div class="main-content">
     <div class="container">
-      <div id="table"></div>
-      <div class="summary-box">
-        <canvas id="summaryChart" width="300" height="300"></canvas>
+      <div class="table-section">
+        <div id="hot"></div>
+      </div>
+      <div class="summary-section">
         <h3>Summary</h3>
-        <p><strong>Total Entries:</strong> <span id="total">0</span></p>
-        <p style="color:#28a745;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
-        <p style="color:#ffc107;">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
-        <p style="color:#dc3545;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
+        <div class="summary-item" id="within-count">Within Tolerance: 0</div>
+        <div class="summary-item" id="warning-count">Warning: 0</div>
+        <div class="summary-item" id="out-count">Out of Tolerance: 0</div>
       </div>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.min.js"></script>
   <script>
-    let hot, summaryChart;
-    const container = document.getElementById('table');
-    const monthLabel = document.getElementById('month-label');
-    const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
-    let currentDate = new Date();
-    currentDate.setDate(1);
+    const container = document.getElementById('hot');
+    let currentMonth = '2025-05';
+    let hot;
 
-    function getMonthDates(date) {
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const days = new Date(year, month + 1, 0).getDate();
-      const dates = ["Energy"];
-      for (let d = 1; d <= days; d++) {
-        dates.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
-      }
-      return dates;
-    }
-
-    function generateEmptyData(dates) {
-      return energyTypes.map(e => {
-        const row = new Array(dates.length).fill('');
-        row[0] = e;
-        return row;
-      });
-    }
-
-    async function loadTable() {
-      const dates = getMonthDates(currentDate);
-      monthLabel.textContent = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-
-      const response = await fetch(`https://back-end-wrxi.onrender.com/data?month=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`);
-      const result = await response.json();
-      const data = result.data.length ? result.data : generateEmptyData(dates);
-
+    function createTable(data, colHeaders) {
       if (hot) hot.destroy();
 
       hot = new Handsontable(container, {
-        data,
+        data: data,
+        colHeaders: colHeaders,
         rowHeaders: true,
-        colHeaders: dates,
-        stretchH: 'all',
+        licenseKey: 'non-commercial-and-evaluation',
         width: '100%',
         height: 500,
-        licenseKey: 'non-commercial-and-evaluation',
-        cells: (row, col) => {
-          return {
-            renderer: function(instance, td, row, col, prop, value, cellProperties) {
-              Handsontable.renderers.TextRenderer.apply(this, arguments);
-              td.classList.remove('out-of-tolerance');
-              if (col > 0) {
-                const num = parseFloat(value);
-                if (!isNaN(num) && Math.abs(num) > 2.0) {
-                  td.classList.add('out-of-tolerance');
-                }
-              }
-            }
-          };
-        },
-        afterChange: async () => {
-          const changedData = hot.getData();
-          updateSummaryAndChart(changedData);
-
-          const payload = {
-            data: changedData,
-            month: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
-          };
-
-          const outValues = [];
-          for (let r = 0; r < changedData.length; r++) {
-            for (let c = 1; c < changedData[r].length; c++) {
-              const val = parseFloat(changedData[r][c]);
-              if (!isNaN(val) && Math.abs(val) > 2.0) {
-                outValues.push({ energy: changedData[r][0], date: hot.getColHeader(c), value: val });
-              }
-            }
-          }
-
-          if (outValues.length > 0) {
-            await fetch('https://back-end-wrxi.onrender.com/send-alert', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ outValues })
-            });
-          }
-
-          await fetch('https://back-end-wrxi.onrender.com/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
+        stretchH: 'all',
+        afterChange: evaluateTable,
+        cells: function (row, col) {
+          return { className: 'hot-cell' };
         }
       });
 
-      updateSummaryAndChart(data);
+      evaluateTable();
     }
 
-    function updateSummaryAndChart(data) {
-      let total = 0, within = 0, warning = 0, out = 0;
+    function evaluateTable() {
+      const data = hot.getData();
+      let within = 0, warning = 0, out = 0;
+
       for (let r = 0; r < data.length; r++) {
         for (let c = 1; c < data[r].length; c++) {
-          let val = parseFloat(data[r][c]);
-          if (!isNaN(val)) {
-            total++;
-            if (Math.abs(val) <= 1.8) within++;
-            else if (Math.abs(val) <= 2.0) warning++;
-            else out++;
+          const cell = hot.getCell(r, c);
+          const val = parseFloat(data[r][c]);
+
+          if (isNaN(val)) continue;
+
+          if (Math.abs(val) <= 1.8) {
+            cell.className = 'hot-cell within';
+            within++;
+          } else if (Math.abs(val) <= 2.0) {
+            cell.className = 'hot-cell warning';
+            warning++;
+          } else {
+            cell.className = 'hot-cell out';
+            out++;
           }
         }
       }
 
-      document.getElementById("total").textContent = total;
-      document.getElementById("within").textContent = within;
-      document.getElementById("warning").textContent = warning;
-      document.getElementById("out").textContent = out;
-
-      const ctx = document.getElementById('summaryChart').getContext('2d');
-      if (summaryChart) summaryChart.destroy();
-      summaryChart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-          labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
-          datasets: [{
-            data: [within, warning, out],
-            backgroundColor: ['#28a745', '#ffc107', '#dc3545']
-          }]
-        }
-      });
+      document.getElementById('within-count').innerText = `Within Tolerance: ${within}`;
+      document.getElementById('warning-count').innerText = `Warning: ${warning}`;
+      document.getElementById('out-count').innerText = `Out of Tolerance: ${out}`;
     }
 
-    function changeMonth(offset) {
-      currentDate.setMonth(currentDate.getMonth() + offset);
-      loadTable();
+    function loadMonth(month) {
+      currentMonth = month;
+      fetch(`https://back-end-wrxi.onrender.com/api/data?month=${month}`)
+        .then(res => res.json())
+        .then(json => {
+          const colHeaders = json.headers;
+          const tableData = json.data;
+          createTable(tableData, colHeaders);
+        });
     }
 
-    window.onload = loadTable;
+    window.onload = () => {
+      loadMonth(currentMonth);
+    };
   </script>
 </body>
 </html>
