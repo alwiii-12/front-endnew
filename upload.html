@@ -118,7 +118,6 @@
       <button class="month-button" onclick="loadMonth('2025-03')">March</button>
       <button class="month-button" onclick="loadMonth('2025-04')">April</button>
       <button class="month-button" onclick="loadMonth('2025-05')">May</button>
-      <!-- Add more months as needed -->
     </div>
   </div>
 
@@ -194,16 +193,44 @@
     function loadMonth(month) {
       currentMonth = month;
       fetch(`https://back-end-wrxi.onrender.com/api/data?month=${month}`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`API request failed with status ${res.status}`);
+          }
+          return res.json();
+        })
         .then(json => {
+          if (!json.headers || !json.data) {
+            throw new Error("API response is missing 'headers' or 'data'");
+          }
           const colHeaders = json.headers;
           const tableData = json.data;
           createTable(tableData, colHeaders);
+        })
+        .catch(error => {
+          console.error("Error loading month data:", error);
+          alert("Failed to load data. Please try again later.");
         });
     }
 
+    // Mock data for testing in case the API fails:
+    function loadMockData() {
+      const mockHeaders = ["Date", "Parameter 1", "Parameter 2", "Parameter 3"];
+      const mockData = [
+        ["2025-05-01", "1.2", "2.1", "-1.5"],
+        ["2025-05-02", "1.8", "0.5", "2.3"],
+        ["2025-05-03", "0.9", "-1.0", "3.1"],
+      ];
+      createTable(mockData, mockHeaders);
+    }
+
     window.onload = () => {
-      loadMonth(currentMonth);
+      try {
+        loadMonth(currentMonth);
+      } catch (error) {
+        console.warn("Falling back to mock data due to loading error.");
+        loadMockData();
+      }
     };
   </script>
 </body>
