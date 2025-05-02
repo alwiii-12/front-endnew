@@ -1,10 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Welcome to LINAC QA Portal</title>
+  <meta charset="UTF-8">
+  <title>LINAC QA Portal</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9f9f9;
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .container {
+      text-align: center;
+      padding: 30px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 20px;
+      color: #007bff;
+    }
+
+    .button {
+      display: inline-block;
+      margin: 10px;
+      padding: 12px 24px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .button:hover {
+      background-color: #0056b3;
+    }
+
+    .footer {
+      position: absolute;
+      bottom: 10px;
+      font-size: 12px;
+      color: #999;
+    }
+
+    .toggle {
+      margin-top: 20px;
+    }
+
+    input[type="checkbox"] {
+      transform: scale(1.2);
+      margin-right: 8px;
+    }
+
+    body.dark {
+      background-color: #1e1e1e;
+      color: #eee;
+    }
+
+    body.dark .container {
+      background-color: #2c2c2c;
+      color: white;
+    }
+
+    body.dark .button {
+      background-color: #00bfff;
+      color: #000;
+    }
+
+    body.dark .button:hover {
+      background-color: #0099cc;
+    }
+
+    body.dark .footer {
+      color: #aaa;
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
     <h1>Welcome to LINAC QA Portal</h1>
-    <a href="/upload.html">Upload Output Variation Excel</a>
+    <a href="upload.html" class="button">Open QA Dashboard</a>
+    <a href="upload_excel.html" class="button">Upload Output Variation Excel</a>
+
+    <div class="toggle">
+      <label>
+        <input type="checkbox" onchange="toggleDarkMode()"> Dark Mode
+      </label>
+    </div>
+  </div>
+
+  <div class="footer">© 2025 QA Dashboard</div>
+
+  <script>
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark');
+    }
+  </script>
 </body>
 </html>
