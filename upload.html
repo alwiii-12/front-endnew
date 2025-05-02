@@ -7,7 +7,6 @@
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* Styles for the Dashboard */
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
@@ -49,6 +48,10 @@
       background-color: #e0e0e0;
     }
 
+    .sidebar input[type="checkbox"] {
+      margin-top: 10px;
+    }
+
     .main {
       flex-grow: 1;
       padding: 20px;
@@ -82,8 +85,33 @@
       margin-top: 0;
     }
 
+    .htCell.out-of-tolerance {
+      background-color: #ffcccc !important;
+    }
+
     #save-section {
       margin-top: 20px;
+    }
+
+    body.dark {
+      background-color: #1e1e1e;
+      color: white;
+    }
+
+    body.dark .sidebar {
+      background-color: #111;
+      color: white;
+    }
+
+    body.dark .sidebar button {
+      background-color: #333;
+      color: white;
+    }
+
+    body.dark .summary-box {
+      background-color: #2c2c2c;
+      color: white;
+      box-shadow: none;
     }
   </style>
 </head>
@@ -96,6 +124,7 @@
       <button onclick="changeYear(1)">→</button>
     </div>
     <div id="months"></div>
+    <label><input type="checkbox" id="darkToggle" onchange="toggleDarkMode()"> Dark Mode</label>
     <p style="font-size: 12px; margin-top: auto;">© 2025 QA Dashboard</p>
   </div>
 
@@ -175,6 +204,18 @@
           afterChange: (changes, source) => {
             if (!changes || source === 'loadData') return;
             updateSummaryAndChart(hot.getData());
+          },
+          cells: (row, col) => {
+            return {
+              renderer: function(instance, td, row, col, prop, value, cellProperties) {
+                Handsontable.renderers.TextRenderer.apply(this, arguments);
+                td.classList.remove('out-of-tolerance');
+                const num = parseFloat(value);
+                if (col > 0 && !isNaN(num) && Math.abs(num) > 2.0) {
+                  td.classList.add('out-of-tolerance');
+                }
+              }
+            };
           }
         });
 
@@ -255,9 +296,18 @@
       }
     }
 
+    function changeMonth(m) {
+      currentDate.setMonth(m);
+      loadTable();
+    }
+
     function changeYear(offset) {
       currentDate.setFullYear(currentDate.getFullYear() + offset);
       loadTable();
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark');
     }
 
     function buildMonthButtons() {
