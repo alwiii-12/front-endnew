@@ -1,116 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
   <title>LINAC QA Portal</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-    }
-
     body {
-      background: linear-gradient(to right, #e0f7fa, #ffffff);
-      height: 100vh;
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #e8f8ff, #fdfefe);
       display: flex;
       align-items: center;
       justify-content: center;
+      height: 100vh;
+      overflow: hidden;
     }
 
     .container {
       display: flex;
-      width: 90%;
-      max-width: 1200px;
-      background-color: #ffffff;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
       overflow: hidden;
+      width: 1000px;
+      max-width: 95%;
+      position: relative;
     }
 
-    .left-section {
+    .left {
       flex: 1;
-      padding: 40px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      background-color: #f9f9f9;
+      padding: 50px 40px;
+      background: #f8faff;
     }
 
-    .left-section h1 {
-      font-size: 36px;
+    .left h1 {
+      font-size: 32px;
       color: #007bff;
       margin-bottom: 20px;
     }
 
-    .left-section p {
-      font-size: 18px;
-      margin-bottom: 30px;
+    .left p {
+      font-size: 16px;
       color: #333;
+      margin-bottom: 30px;
+      line-height: 1.6;
     }
 
-    .upload-button {
+    .button {
       padding: 12px 24px;
       background-color: #007bff;
-      color: #ffffff;
-      text-decoration: none;
+      color: #fff;
+      border: none;
       border-radius: 6px;
+      text-decoration: none;
       font-size: 16px;
       transition: background-color 0.3s;
-      width: fit-content;
     }
 
-    .upload-button:hover {
+    .button:hover {
       background-color: #0056b3;
     }
 
-    .right-section {
+    .right {
       flex: 1;
-      background: url('blue-wavy-background.png') no-repeat center center;
-      background-size: cover;
       position: relative;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
+      background: #f4f9ff;
+    }
+
+    .wave-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('https://www.svgrepo.com/show/381671/wave-top.svg') no-repeat center center;
+      background-size: cover;
+      opacity: 0.15;
+      z-index: 0;
     }
 
     .linac-image {
-      max-width: 80%;
-      height: auto;
+      max-height: 300px;
+      z-index: 1;
+      position: relative;
     }
 
     @media (max-width: 768px) {
       .container {
         flex-direction: column;
+        height: auto;
       }
 
-      .right-section {
-        order: -1;
-      }
-
-      .left-section, .right-section {
-        flex: none;
+      .right, .left {
         width: 100%;
-        padding: 20px;
+        padding: 30px;
       }
 
       .linac-image {
-        max-width: 100%;
+        max-width: 90%;
+        height: auto;
       }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="left-section">
+    <div class="left">
       <h1>Welcome to LINAC QA Portal</h1>
       <p>Upload your LINAC QA data quickly and efficiently. Ensure daily safety and compliance is always within tolerance.</p>
-      <a href="upload.html" class="upload-button">Open QA Dashboard</a>
+      <a href="upload.html" class="button">Open QA Dashboard</a>
     </div>
-    <div class="right-section">
-      <img src="truebeam.png" alt="Varian TrueBeam LINAC" class="linac-image" />
+    <div class="right">
+      <div class="wave-bg"></div>
+      <img src="8057e814-177b-4435-bb50-f8f924f3b7e2.png" alt="Varian TrueBeam LINAC" class="linac-image" />
     </div>
   </div>
 </body>
