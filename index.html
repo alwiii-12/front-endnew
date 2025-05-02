@@ -7,115 +7,102 @@
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #e8f8ff, #fdfefe);
+      background: linear-gradient(to right, #e0f7fa, #ffffff);
+    }
+
+    .wrapper {
       display: flex;
+      flex-direction: row;
       align-items: center;
       justify-content: center;
       height: 100vh;
-      overflow: hidden;
+      padding: 20px;
+      background: url('wave-bg.png') no-repeat right center;
+      background-size: cover;
     }
 
-    .container {
+    .card {
+      background: #f5faff;
       display: flex;
-      background: #fff;
+      flex-direction: row;
       border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 30px rgba(0, 123, 255, 0.2);
       overflow: hidden;
-      width: 1000px;
-      max-width: 95%;
-      position: relative;
+      max-width: 1000px;
+      width: 100%;
     }
 
-    .left {
+    .left-panel {
       flex: 1;
-      padding: 50px 40px;
-      background: #f8faff;
+      padding: 40px;
     }
 
-    .left h1 {
-      font-size: 32px;
+    .left-panel h1 {
+      font-size: 30px;
       color: #007bff;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
 
-    .left p {
+    .left-panel p {
       font-size: 16px;
-      color: #333;
       margin-bottom: 30px;
-      line-height: 1.6;
+      color: #333;
     }
 
-    .button {
+    .left-panel a {
+      display: inline-block;
       padding: 12px 24px;
       background-color: #007bff;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
+      color: white;
       text-decoration: none;
-      font-size: 16px;
-      transition: background-color 0.3s;
+      font-weight: bold;
+      border-radius: 6px;
     }
 
-    .button:hover {
+    .left-panel a:hover {
       background-color: #0056b3;
     }
 
-    .right {
+    .right-panel {
       flex: 1;
-      position: relative;
-      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f4f9ff;
+      padding: 20px;
     }
 
-    .wave-bg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: url('https://www.svgrepo.com/show/381671/wave-top.svg') no-repeat center center;
-      background-size: cover;
-      opacity: 0.15;
-      z-index: 0;
-    }
-
-    .linac-image {
-      max-height: 300px;
-      z-index: 1;
-      position: relative;
+    .right-panel img {
+      max-width: 90%;
+      height: auto;
     }
 
     @media (max-width: 768px) {
-      .container {
+      .wrapper {
         flex-direction: column;
-        height: auto;
+        padding: 10px;
       }
 
-      .right, .left {
-        width: 100%;
-        padding: 30px;
+      .card {
+        flex-direction: column;
       }
 
-      .linac-image {
-        max-width: 90%;
-        height: auto;
+      .right-panel {
+        padding: 0;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="left">
-      <h1>Welcome to LINAC QA Portal</h1>
-      <p>Upload your LINAC QA data quickly and efficiently. Ensure daily safety and compliance is always within tolerance.</p>
-      <a href="upload.html" class="button">Open QA Dashboard</a>
-    </div>
-    <div class="right">
-      <div class="wave-bg"></div>
-      <img src="8057e814-177b-4435-bb50-f8f924f3b7e2.png" alt="Varian TrueBeam LINAC" class="linac-image" />
+  <div class="wrapper">
+    <div class="card">
+      <div class="left-panel">
+        <h1>Welcome to LINAC QA Portal</h1>
+        <p>Upload your LINAC QA data quickly and efficiently. Ensure daily safety and compliance is always within tolerance.</p>
+        <a href="upload.html">Open QA Dashboard</a>
+      </div>
+      <div class="right-panel">
+        <img src="linac.png" alt="Varian TrueBeam LINAC">
+      </div>
     </div>
   </div>
 </body>
