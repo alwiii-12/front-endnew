@@ -186,42 +186,48 @@
       header.textContent = `${monthStr} ${currentDate.getFullYear()}`;
       yearLabel.textContent = currentDate.getFullYear();
 
-      const res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`);
-      const result = await res.json();
-      const data = result.data.length ? result.data : generateEmptyData(dates);
+      try {
+        const res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`);
+        const result = await res.json();
+        const data = result.data.length ? result.data : generateEmptyData(dates);
 
-      if (hot) hot.destroy();
+        if (hot) hot.destroy();
 
-      hot = new Handsontable(container, {
-        data,
-        rowHeaders: true,
-        colHeaders: dates,
-        stretchH: 'all',
-        width: '100%',
-        height: 500,
-        licenseKey: 'non-commercial-and-evaluation',
-        cells: (row, col) => {
-          return {
-            renderer: function(instance, td, row, col, prop, value, cellProperties) {
-              Handsontable.renderers.TextRenderer.apply(this, arguments);
-              td.classList.remove('out-of-tolerance');
-              const num = parseFloat(value);
-              if (col > 0 && !isNaN(num) && Math.abs(num) > 2.0) {
-                td.classList.add('out-of-tolerance');
+        hot = new Handsontable(container, {
+          data,
+          rowHeaders: true,
+          colHeaders: dates,
+          stretchH: 'all',
+          width: '100%',
+          height: 500,
+          licenseKey: 'non-commercial-and-evaluation',
+          afterChange: (changes, source) => {
+            if (!changes || source === 'loadData') return;
+            updateSummaryAndChart(hot.getData());
+          },
+          cells: (row, col) => {
+            return {
+              renderer: function(instance, td, row, col, prop, value, cellProperties) {
+                Handsontable.renderers.TextRenderer.apply(this, arguments);
+                td.classList.remove('out-of-tolerance');
+                const num = parseFloat(value);
+                if (col > 0 && !isNaN(num) && Math.abs(num) > 2.0) {
+                  td.classList.add('out-of-tolerance');
+                }
               }
-            }
-          };
-        },
-        afterChange: () => {
-          updateSummaryAndChart(hot.getData());
-        }
-      });
+            };
+          }
+        });
 
-      updateSummaryAndChart(data);
+        updateSummaryAndChart(data);
+      } catch (error) {
+        console.error("Failed to load table data:", error);
+      }
     }
 
     function updateSummaryAndChart(data) {
       let total = 0, within = 0, warning = 0, out = 0;
+
       for (let r = 0; r < data.length; r++) {
         for (let c = 1; c < data[r].length; c++) {
           const val = parseFloat(data[r][c]);
@@ -258,32 +264,36 @@
       const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
       const payload = { data: changedData, month };
 
-      await fetch('https://back-end-wrxi.onrender.com/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const outValues = [];
-      for (let r = 0; r < changedData.length; r++) {
-        for (let c = 1; c < changedData[r].length; c++) {
-          const val = parseFloat(changedData[r][c]);
-          if (!isNaN(val) && Math.abs(val) > 2.0) {
-            outValues.push({ energy: changedData[r][0], date: hot.getColHeader(c), value: val });
-          }
-        }
-      }
-
-      if (outValues.length > 0) {
-        await fetch('https://back-end-wrxi.onrender.com/send-alert', {
+      try {
+        await fetch('https://back-end-wrxi.onrender.com/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ outValues })
+          body: JSON.stringify(payload)
         });
-      }
 
-      const now = new Date();
-      lastSaved.textContent = `Last saved: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+        const outValues = [];
+        for (let r = 0; r < changedData.length; r++) {
+          for (let c = 1; c < changedData[r].length; c++) {
+            const val = parseFloat(changedData[r][c]);
+            if (!isNaN(val) && Math.abs(val) > 2.0) {
+              outValues.push({ energy: changedData[r][0], date: hot.getColHeader(c), value: val });
+            }
+          }
+        }
+
+        if (outValues.length > 0) {
+          await fetch('https://back-end-wrxi.onrender.com/send-alert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ outValues })
+          });
+        }
+
+        const now = new Date();
+        lastSaved.textContent = `Last saved: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+      } catch (error) {
+        console.error("Failed to save data:", error);
+      }
     }
 
     function changeMonth(m) {
@@ -301,7 +311,7 @@
     }
 
     function buildMonthButtons() {
-      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
       monthsDiv.innerHTML = '';
       months.forEach((m, i) => {
         const btn = document.createElement('button');
