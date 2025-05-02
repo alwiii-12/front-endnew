@@ -7,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    /* Styles for the Dashboard */
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
@@ -48,15 +49,6 @@
       background-color: #e0e0e0;
     }
 
-    .sidebar button.settings {
-      background-color: #000000; /* Black color for Settings button */
-      color: white; /* White text */
-    }
-
-    .sidebar button.settings:hover {
-      background-color: #333333; /* Dark gray on hover for Settings button */
-    }
-
     .main {
       flex-grow: 1;
       padding: 20px;
@@ -93,59 +85,6 @@
     #save-section {
       margin-top: 20px;
     }
-
-    .modal {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-    }
-
-    .modal.active {
-      display: block;
-    }
-
-    .modal input {
-      width: 100%;
-      margin-bottom: 10px;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-
-    .modal button {
-      padding: 8px 16px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .modal button:hover {
-      background-color: #0056b3;
-    }
-
-    .backdrop {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 999;
-    }
-
-    .backdrop.active {
-      display: block;
-    }
   </style>
 </head>
 <body>
@@ -157,7 +96,6 @@
       <button onclick="changeYear(1)">→</button>
     </div>
     <div id="months"></div>
-    <button class="settings" onclick="openSettings()">Settings</button>
     <p style="font-size: 12px; margin-top: auto;">© 2025 QA Dashboard</p>
   </div>
 
@@ -170,9 +108,9 @@
         <canvas id="summaryChart" width="280" height="280"></canvas>
         <h3>Summary</h3>
         <p><strong>Total Entries:</strong> <span id="total">0</span></p>
-        <p style="color: green;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
-        <p style="color: orange;">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
-        <p style="color: red;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
+        <p style="color:green;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
+        <p style="color:orange;">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
+        <p style="color:red;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
       </div>
     </div>
 
@@ -182,29 +120,13 @@
     </div>
   </div>
 
-  <!-- Modal for Settings -->
-  <div class="modal" id="settingsModal">
-    <h3>Threshold Settings</h3>
-    <label for="warningThreshold">Warning Threshold (±):</label>
-    <input type="number" id="warningThreshold" step="0.1" />
-    <label for="outThreshold">Out of Tolerance Threshold (±):</label>
-    <input type="number" id="outThreshold" step="0.1" />
-    <button onclick="saveSettings()">Save</button>
-  </div>
-  <div class="backdrop" id="backdrop" onclick="closeSettings()"></div>
-
   <script>
     let hot, summaryChart;
-    let warningThreshold = 1.8;
-    let outThreshold = 2.0;
-
     const container = document.getElementById('table');
     const monthsDiv = document.getElementById('months');
     const header = document.getElementById('header');
     const yearLabel = document.getElementById('year');
     const lastSaved = document.getElementById('lastSaved');
-    const settingsModal = document.getElementById('settingsModal');
-    const backdrop = document.getElementById('backdrop');
 
     let currentDate = new Date();
     currentDate.setDate(1);
@@ -270,8 +192,8 @@
           const val = parseFloat(data[r][c]);
           if (!isNaN(val)) {
             total++;
-            if (Math.abs(val) <= warningThreshold) within++;
-            else if (Math.abs(val) <= outThreshold) warning++;
+            if (Math.abs(val) <= 1.8) within++;
+            else if (Math.abs(val) <= 2.0) warning++;
             else out++;
           }
         }
@@ -308,6 +230,24 @@
           body: JSON.stringify(payload)
         });
 
+        const outValues = [];
+        for (let r = 0; r < changedData.length; r++) {
+          for (let c = 1; c < changedData[r].length; c++) {
+            const val = parseFloat(changedData[r][c]);
+            if (!isNaN(val) && Math.abs(val) > 2.0) {
+              outValues.push({ energy: changedData[r][0], date: hot.getColHeader(c), value: val });
+            }
+          }
+        }
+
+        if (outValues.length > 0) {
+          await fetch('https://back-end-wrxi.onrender.com/send-alert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ outValues })
+          });
+        }
+
         const now = new Date();
         lastSaved.textContent = `Last saved: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
       } catch (error) {
@@ -315,34 +255,9 @@
       }
     }
 
-    function changeMonth(m) {
-      currentDate.setMonth(m);
-      loadTable();
-    }
-
     function changeYear(offset) {
       currentDate.setFullYear(currentDate.getFullYear() + offset);
       loadTable();
-    }
-
-    function openSettings() {
-      document.getElementById('warningThreshold').value = warningThreshold;
-      document.getElementById('outThreshold').value = outThreshold;
-      settingsModal.classList.add('active');
-      backdrop.classList.add('active');
-    }
-
-    function closeSettings() {
-      settingsModal.classList.remove('active');
-      backdrop.classList.remove('active');
-    }
-
-    function saveSettings() {
-      warningThreshold = parseFloat(document.getElementById('warningThreshold').value);
-      outThreshold = parseFloat(document.getElementById('outThreshold').value);
-      alert('Settings saved successfully!');
-      closeSettings();
-      if (hot) updateSummaryAndChart(hot.getData());
     }
 
     function buildMonthButtons() {
