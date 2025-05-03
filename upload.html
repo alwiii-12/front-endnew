@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>LINAC Output Entry</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Upload QA Data</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@12.3.2/dist/handsontable.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/handsontable@12.3.2/dist/handsontable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
@@ -15,6 +16,7 @@
       display: flex;
       height: 100vh;
       overflow: hidden;
+      transition: background-color 0.4s ease, color 0.4s ease;
     }
 
     .sidebar {
@@ -25,11 +27,18 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      animation: slideIn 0.6s ease;
     }
 
-    .sidebar h2 {
-      font-size: 18px;
-      margin-bottom: 10px;
+    @keyframes slideIn {
+      from {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
     }
 
     .sidebar button {
@@ -42,55 +51,75 @@
       font-weight: bold;
       border-radius: 5px;
       cursor: pointer;
+      transition: transform 0.2s ease, background-color 0.3s ease;
     }
 
     .sidebar button:hover {
       background-color: #e0e0e0;
-    }
-
-    .sidebar input[type="checkbox"] {
-      margin-top: 10px;
+      transform: scale(1.03);
     }
 
     .main {
       flex-grow: 1;
       padding: 20px;
       overflow: auto;
+      animation: fadeInMain 0.8s ease;
     }
 
-    .header {
-      font-size: 20px;
-      margin-bottom: 10px;
-    }
-
-    .container {
-      display: flex;
-      gap: 20px;
-      align-items: flex-start;
-    }
-
-    #table {
-      flex-grow: 1;
+    @keyframes fadeInMain {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
     }
 
     .summary-box {
-      width: 300px;
-      background-color: white;
+      margin-top: 20px;
       padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #ccc;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      transition: background-color 0.4s ease, color 0.4s ease;
     }
 
-    .summary-box h3 {
-      margin-top: 0;
+    .summary-box canvas {
+      margin-top: 15px;
+      animation: fadeInChart 1s ease;
+    }
+
+    @keyframes fadeInChart {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .hot-container {
+      overflow-x: auto;
+      max-width: 100%;
+      margin-bottom: 20px;
     }
 
     .htCell.out-of-tolerance {
       background-color: #ffcccc !important;
+      transition: background-color 0.3s ease;
+      animation: pulseCell 0.4s ease-in-out;
     }
 
-    #save-section {
-      margin-top: 20px;
+    @keyframes pulseCell {
+      0% {
+        background-color: #ffe5e5;
+      }
+      100% {
+        background-color: #ffcccc;
+      }
     }
 
     body.dark {
@@ -113,216 +142,189 @@
       color: white;
       box-shadow: none;
     }
+
+    /* Smooth transitions */
+    body, .sidebar, .sidebar button, .summary-box {
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
   </style>
 </head>
 <body>
   <div class="sidebar">
-    <h2>LINAC QA</h2>
-    <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
-      <button onclick="changeYear(-1)">←</button>
-      <span id="year" style="margin: 0 10px;">2025</span>
-      <button onclick="changeYear(1)">→</button>
-    </div>
-    <div id="months"></div>
-    <label><input type="checkbox" id="darkToggle" onchange="toggleDarkMode()"> Dark Mode</label>
-    <p style="font-size: 12px; margin-top: auto;">© 2025 QA Dashboard</p>
+    <h3>QA Data</h3>
+    <label for="yearSelect">Year:</label>
+    <select id="yearSelect"></select>
+    <label for="monthSelect">Month:</label>
+    <select id="monthSelect">
+      <option value="0">January</option>
+      <option value="1">February</option>
+      <option value="2">March</option>
+      <option value="3">April</option>
+      <option value="4">May</option>
+      <option value="5">June</option>
+      <option value="6">July</option>
+      <option value="7">August</option>
+      <option value="8">September</option>
+      <option value="9">October</option>
+      <option value="10">November</option>
+      <option value="11">December</option>
+    </select>
+    <button onclick="saveData()">Save</button>
+    <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
   </div>
 
   <div class="main">
-    <div class="header" id="header"></div>
-
-    <div class="container">
-      <div id="table"></div>
-      <div class="summary-box">
-        <canvas id="summaryChart" width="280" height="280"></canvas>
-        <h3>Summary</h3>
-        <p><strong>Total Entries:</strong> <span id="total">0</span></p>
-        <p style="color:green;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
-        <p style="color:orange;">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
-        <p style="color:red;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
-      </div>
-    </div>
-
-    <div id="save-section">
-      <button onclick="manualSave()" style="padding: 6px 14px; font-weight: bold;">💾 Save</button>
-      <span id="lastSaved" style="margin-left: 15px; font-size: 14px; color: gray;"></span>
+    <div class="hot-container" id="hot"></div>
+    <div class="summary-box">
+      <h3>Summary</h3>
+      <p id="withinTolerance"></p>
+      <p id="warning"></p>
+      <p id="outOfTolerance"></p>
+      <canvas id="summaryChart" width="400" height="200"></canvas>
     </div>
   </div>
 
   <script>
-    let hot, summaryChart;
-    const container = document.getElementById('table');
-    const monthsDiv = document.getElementById('months');
-    const header = document.getElementById('header');
-    const yearLabel = document.getElementById('year');
-    const lastSaved = document.getElementById('lastSaved');
+    const container = document.querySelector('#hot');
+    const hot = new Handsontable(container, {
+      data: [],
+      rowHeaders: true,
+      colHeaders: [],
+      width: '100%',
+      height: 320,
+      licenseKey: 'non-commercial-and-evaluation',
+      afterChange: evaluateTable
+    });
 
-    let currentDate = new Date();
-    currentDate.setDate(1);
-    const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
+    const currentDate = new Date();
+    document.getElementById('monthSelect').value = currentDate.getMonth();
 
-    function getMonthDates(date) {
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const days = new Date(year, month + 1, 0).getDate();
-      const dates = ["Energy"];
-      for (let d = 1; d <= days; d++) {
-        dates.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
-      }
-      return dates;
+    const yearSelect = document.getElementById('yearSelect');
+    for (let y = 2023; y <= 2030; y++) {
+      const option = document.createElement('option');
+      option.value = y;
+      option.text = y;
+      if (y === currentDate.getFullYear()) option.selected = true;
+      yearSelect.appendChild(option);
     }
 
-    function generateEmptyData(dates) {
-      return energyTypes.map(e => {
-        const row = new Array(dates.length).fill('');
-        row[0] = e;
-        return row;
+    document.getElementById('monthSelect').addEventListener('change', loadTable);
+    yearSelect.addEventListener('change', loadTable);
+
+    function generateTable(month, year) {
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const data = [['Output (%)']];
+      const colHeaders = [];
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        data[0].push('');
+        colHeaders.push(d.toString());
+      }
+
+      hot.updateSettings({
+        data: data,
+        colHeaders: colHeaders
       });
+
+      evaluateTable();
     }
 
-    async function loadTable() {
-      const dates = getMonthDates(currentDate);
-      const monthStr = currentDate.toLocaleString('default', { month: 'long' });
-      header.textContent = `${monthStr} ${currentDate.getFullYear()}`;
-      yearLabel.textContent = currentDate.getFullYear();
-
-      try {
-        const res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`);
-        const result = await res.json();
-        const data = result.data.length ? result.data : generateEmptyData(dates);
-
-        if (hot) hot.destroy();
-
-        hot = new Handsontable(container, {
-          data,
-          rowHeaders: true,
-          colHeaders: dates,
-          stretchH: 'all',
-          width: '100%',
-          height: 500,
-          licenseKey: 'non-commercial-and-evaluation',
-          afterChange: (changes, source) => {
-            if (!changes || source === 'loadData') return;
-            updateSummaryAndChart(hot.getData());
-          },
-          cells: (row, col) => {
-            return {
-              renderer: function(instance, td, row, col, prop, value, cellProperties) {
-                Handsontable.renderers.TextRenderer.apply(this, arguments);
-                td.classList.remove('out-of-tolerance');
-                const num = parseFloat(value);
-                if (col > 0 && !isNaN(num) && Math.abs(num) > 2.0) {
-                  td.classList.add('out-of-tolerance');
-                }
-              }
-            };
-          }
-        });
-
-        updateSummaryAndChart(data);
-      } catch (error) {
-        console.error("Failed to load table data:", error);
-      }
-    }
-
-    function updateSummaryAndChart(data) {
-      let total = 0, within = 0, warning = 0, out = 0;
+    function evaluateTable() {
+      const data = hot.getData();
+      let within = 0, warning = 0, out = 0;
 
       for (let r = 0; r < data.length; r++) {
-        for (let c = 1; c < data[r].length; c++) {
-          const val = parseFloat(data[r][c]);
-          if (!isNaN(val)) {
-            total++;
-            if (Math.abs(val) <= 1.8) within++;
-            else if (Math.abs(val) <= 2.0) warning++;
-            else out++;
+        for (let c = 0; c < data[r].length; c++) {
+          const value = parseFloat(data[r][c]);
+          const cellMeta = hot.getCellMeta(r, c);
+
+          if (!isNaN(value)) {
+            if (Math.abs(value) <= 1.8) {
+              within++;
+              cellMeta.className = '';
+            } else if (Math.abs(value) <= 2.0) {
+              warning++;
+              cellMeta.className = 'warning';
+            } else {
+              out++;
+              cellMeta.className = 'out-of-tolerance';
+              sendAlertEmail(value);
+            }
+          } else {
+            cellMeta.className = '';
           }
         }
       }
 
-      document.getElementById("total").textContent = total;
-      document.getElementById("within").textContent = within;
-      document.getElementById("warning").textContent = warning;
-      document.getElementById("out").textContent = out;
+      hot.render();
 
+      document.getElementById('withinTolerance').textContent = `Within Tolerance (≤ ±1.8%): ${within}`;
+      document.getElementById('warning').textContent = `Warning (>1.8% and ≤2.0%): ${warning}`;
+      document.getElementById('outOfTolerance').textContent = `Out of Tolerance (>2.0%): ${out}`;
+      updateChart(within, warning, out);
+    }
+
+    function updateChart(within, warning, out) {
       const ctx = document.getElementById('summaryChart').getContext('2d');
-      if (summaryChart) summaryChart.destroy();
-      summaryChart = new Chart(ctx, {
+      if (window.summaryChart) window.summaryChart.destroy();
+      window.summaryChart = new Chart(ctx, {
         type: 'pie',
         data: {
           labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
           datasets: [{
             data: [within, warning, out],
-            backgroundColor: ['#66cc66', '#ffcc00', '#ff6666']
+            backgroundColor: ['#28a745', '#ffc107', '#dc3545']
           }]
         }
       });
     }
 
-    async function manualSave() {
-      const changedData = hot.getData();
-      const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-      const payload = { data: changedData, month };
+    function saveData() {
+      const month = document.getElementById('monthSelect').value;
+      const year = document.getElementById('yearSelect').value;
+      const payload = {
+        month: parseInt(month),
+        year: parseInt(year),
+        data: hot.getData()
+      };
+      fetch('https://back-end-wrxi.onrender.com/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }
 
-      try {
-        await fetch('https://back-end-wrxi.onrender.com/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        const outValues = [];
-        for (let r = 0; r < changedData.length; r++) {
-          for (let c = 1; c < changedData[r].length; c++) {
-            const val = parseFloat(changedData[r][c]);
-            if (!isNaN(val) && Math.abs(val) > 2.0) {
-              outValues.push({ energy: changedData[r][0], date: hot.getColHeader(c), value: val });
-            }
+    function loadTable() {
+      const month = document.getElementById('monthSelect').value;
+      const year = document.getElementById('yearSelect').value;
+      fetch(`https://back-end-wrxi.onrender.com/load?month=${month}&year=${year}`)
+        .then(response => response.json())
+        .then(result => {
+          if (result && result.data) {
+            hot.updateSettings({
+              data: result.data,
+              colHeaders: result.data[0].slice(1).map((_, i) => (i + 1).toString())
+            });
+          } else {
+            generateTable(parseInt(month), parseInt(year));
           }
-        }
-
-        if (outValues.length > 0) {
-          await fetch('https://back-end-wrxi.onrender.com/send-alert', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ outValues })
-          });
-        }
-
-        const now = new Date();
-        lastSaved.textContent = `Last saved: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
-      } catch (error) {
-        console.error("Failed to save data:", error);
-      }
-    }
-
-    function changeMonth(m) {
-      currentDate.setMonth(m);
-      loadTable();
-    }
-
-    function changeYear(offset) {
-      currentDate.setFullYear(currentDate.getFullYear() + offset);
-      loadTable();
+          evaluateTable();
+        });
     }
 
     function toggleDarkMode() {
       document.body.classList.toggle('dark');
     }
 
-    function buildMonthButtons() {
-      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-      monthsDiv.innerHTML = '';
-      months.forEach((m, i) => {
-        const btn = document.createElement('button');
-        btn.textContent = m;
-        btn.onclick = () => changeMonth(i);
-        monthsDiv.appendChild(btn);
+    function sendAlertEmail(value) {
+      fetch('https://back-end-wrxi.onrender.com/send-alert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: value })
       });
     }
 
-    buildMonthButtons();
-    window.onload = loadTable;
+    loadTable(); // Initial load
   </script>
 </body>
 </html>
