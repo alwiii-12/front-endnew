@@ -48,6 +48,10 @@
       background-color: #e0e0e0;
     }
 
+    .sidebar input[type="checkbox"] {
+      margin-top: 10px;
+    }
+
     .main {
       flex-grow: 1;
       padding: 20px;
@@ -81,8 +85,33 @@
       margin-top: 0;
     }
 
+    .htCell.out-of-tolerance {
+      background-color: #ffcccc !important;
+    }
+
     #save-section {
       margin-top: 20px;
+    }
+
+    body.dark {
+      background-color: #1e1e1e;
+      color: white;
+    }
+
+    body.dark .sidebar {
+      background-color: #111;
+      color: white;
+    }
+
+    body.dark .sidebar button {
+      background-color: #333;
+      color: white;
+    }
+
+    body.dark .summary-box {
+      background-color: #2c2c2c;
+      color: white;
+      box-shadow: none;
     }
   </style>
 </head>
@@ -95,6 +124,7 @@
       <button onclick="changeYear(1)">→</button>
     </div>
     <div id="months"></div>
+    <label><input type="checkbox" id="darkToggle" onchange="toggleDarkMode()"> Dark Mode</label>
     <p style="font-size: 12px; margin-top: auto;">© 2025 QA Dashboard</p>
   </div>
 
@@ -177,7 +207,7 @@
           },
           cells: (row, col) => {
             return {
-              renderer: function (instance, td, row, col, prop, value, cellProperties) {
+              renderer: function(instance, td, row, col, prop, value, cellProperties) {
                 Handsontable.renderers.TextRenderer.apply(this, arguments);
                 td.classList.remove('out-of-tolerance');
                 const num = parseFloat(value);
@@ -241,6 +271,24 @@
           body: JSON.stringify(payload)
         });
 
+        const outValues = [];
+        for (let r = 0; r < changedData.length; r++) {
+          for (let c = 1; c < changedData[r].length; c++) {
+            const val = parseFloat(changedData[r][c]);
+            if (!isNaN(val) && Math.abs(val) > 2.0) {
+              outValues.push({ energy: changedData[r][0], date: hot.getColHeader(c), value: val });
+            }
+          }
+        }
+
+        if (outValues.length > 0) {
+          await fetch('https://back-end-wrxi.onrender.com/send-alert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ outValues })
+          });
+        }
+
         const now = new Date();
         lastSaved.textContent = `Last saved: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
       } catch (error) {
@@ -256,6 +304,10 @@
     function changeYear(offset) {
       currentDate.setFullYear(currentDate.getFullYear() + offset);
       loadTable();
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark');
     }
 
     function buildMonthButtons() {
