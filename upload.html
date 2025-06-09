@@ -86,12 +86,10 @@
     }
 
     .neon-outline {
-  border: 2px solid #ff004f !important;
-  background-color: #ffe6eb !important;
-  color: #000 !important;
-}
-
-
+      border: 2px solid #ff004f !important;
+      background-color: #ffe6eb !important;
+      color: #000 !important;
+    }
 
     #save-section {
       margin-top: 20px;
@@ -256,17 +254,13 @@
           cells: (row, col) => ({
             renderer: function (instance, td, row, col, prop, value, cellProperties) {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
-              td.classList.remove('neon-outline', 'warning-outline', 'tolerance-outline');
+              td.classList.remove('neon-outline');
               const num = parseFloat(value);
               if (col > 0 && !isNaN(num)) {
-                const absVal = Math.abs(num);
-                if (absVal > 2.0) {
+                if (Math.abs(num) > 2.0) {
                   td.classList.add('neon-outline');
-                } else if (absVal > 1.8) {
-                  td.classList.add('warning-outline');
-                } else {
-                  td.classList.add('tolerance-outline');
                 }
+                // no special styling for warning or within tolerance
               }
             }
           })
