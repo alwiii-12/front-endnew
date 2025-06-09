@@ -85,8 +85,23 @@
       margin-top: 0;
     }
 
-    .htCell.out-of-tolerance {
-      background-color: #ffcccc !important;
+    .neon-outline {
+      border: 2px solid #ff004f !important;
+      box-shadow: 0 0 10px #ff004f, 0 0 20px #ff004f;
+      color: #fff !important;
+      background-color: rgba(255, 0, 79, 0.15) !important;
+    }
+
+    .warning-outline {
+      border: 2px solid #ffae00 !important;
+      box-shadow: 0 0 8px #ffae00;
+      background-color: rgba(255, 174, 0, 0.1) !important;
+    }
+
+    .tolerance-outline {
+      border: 2px solid #00ff8c !important;
+      box-shadow: 0 0 6px #00ff8c;
+      background-color: rgba(0, 255, 140, 0.08) !important;
     }
 
     #save-section {
@@ -180,7 +195,6 @@
     </div>
   </div>
 
-  <!-- Loading Spinner -->
   <div id="loading-overlay">
     <div class="spinner"></div>
   </div>
@@ -253,10 +267,17 @@
           cells: (row, col) => ({
             renderer: function (instance, td, row, col, prop, value, cellProperties) {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
-              td.classList.remove('out-of-tolerance');
+              td.classList.remove('neon-outline', 'warning-outline', 'tolerance-outline');
               const num = parseFloat(value);
-              if (col > 0 && !isNaN(num) && Math.abs(num) > 2.0) {
-                td.classList.add('out-of-tolerance');
+              if (col > 0 && !isNaN(num)) {
+                const absVal = Math.abs(num);
+                if (absVal > 2.0) {
+                  td.classList.add('neon-outline');
+                } else if (absVal > 1.8) {
+                  td.classList.add('warning-outline');
+                } else {
+                  td.classList.add('tolerance-outline');
+                }
               }
             }
           })
@@ -272,7 +293,6 @@
 
     function updateSummaryAndChart(data) {
       let total = 0, within = 0, warning = 0, out = 0;
-
       for (let r = 0; r < data.length; r++) {
         for (let c = 1; c < data[r].length; c++) {
           const val = parseFloat(data[r][c]);
@@ -346,7 +366,6 @@
 
     async function saveToGoogleSheets() {
       if (!hot) return alert("Table not initialized");
-
       const data = hot.getData();
       const headers = hot.getColHeader();
 
