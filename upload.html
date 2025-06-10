@@ -376,15 +376,19 @@
       }
     }
 
-    function changeMonth(m) {
-      currentDate.setMonth(m);
-      loadTable();
-    }
+   function changeMonth(m) {
+  const year = currentDate.getFullYear(); // retain current year
+  currentDate = new Date(year, m, 1);     // create a new date with new month
+  loadTable();
+}
 
-    function changeYear(offset) {
-      currentDate.setFullYear(currentDate.getFullYear() + offset);
-      loadTable();
-    }
+function changeYear(offset) {
+  const month = currentDate.getMonth();   // retain current month
+  const year = currentDate.getFullYear() + offset;
+  currentDate = new Date(year, month, 1); // create a new date with new year
+  loadTable();
+}
+
 
     function toggleDarkMode() {
       document.body.classList.toggle('dark');
