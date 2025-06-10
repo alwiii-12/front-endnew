@@ -7,7 +7,155 @@
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* [Same styling code as before — unchanged for brevity] */
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f5f5;
+      color: #000;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 220px;
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .sidebar h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .sidebar button {
+      width: 100%;
+      margin: 5px 0;
+      padding: 8px;
+      background-color: white;
+      color: #007bff;
+      border: none;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .sidebar button:hover {
+      background-color: #e0e0e0;
+    }
+
+    .sidebar input[type="checkbox"] {
+      margin-top: 10px;
+    }
+
+    .main {
+      flex-grow: 1;
+      padding: 20px;
+      overflow: auto;
+    }
+
+    .header {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    .container {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    #table {
+      flex-grow: 1;
+    }
+
+    .summary-box {
+      width: 300px;
+      background-color: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+    }
+
+    .summary-box h3 {
+      margin-top: 0;
+    }
+
+    .neon-outline {
+  border: 2px solid #ff004f !important;
+  background-color: #ffe6eb !important;
+  color: #000 !important;
+}
+
+.warning-outline {
+  border: 2px solid #ffae00 !important;
+  background-color: #fff5e6 !important;
+  color: #000 !important;
+}
+
+.tolerance-outline {
+  border: 2px solid #00b37a !important;
+  background-color: #e6fff2 !important;
+  color: #000 !important;
+}
+
+
+    #save-section {
+      margin-top: 20px;
+    }
+
+    body.dark {
+      background-color: #1e1e1e;
+      color: white;
+    }
+
+    body.dark .sidebar {
+      background-color: #111;
+      color: white;
+    }
+
+    body.dark .sidebar button {
+      background-color: #333;
+      color: white;
+    }
+
+    body.dark .summary-box {
+      background-color: #2c2c2c;
+      color: white;
+      box-shadow: none;
+    }
+
+    #loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 9999;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 8px solid #ccc;
+      border-top-color: #007bff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
   </style>
 </head>
 <body>
@@ -119,11 +267,16 @@
           cells: (row, col) => ({
             renderer: function (instance, td, row, col, prop, value, cellProperties) {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
-              td.classList.remove('neon-outline');
+              td.classList.remove('neon-outline', 'warning-outline', 'tolerance-outline');
               const num = parseFloat(value);
               if (col > 0 && !isNaN(num)) {
-                if (Math.abs(num) > 2.0) {
+                const absVal = Math.abs(num);
+                if (absVal > 2.0) {
                   td.classList.add('neon-outline');
+                } else if (absVal > 1.8) {
+                  td.classList.add('warning-outline');
+                } else {
+                  td.classList.add('tolerance-outline');
                 }
               }
             }
@@ -216,12 +369,9 @@
       const data = hot.getData();
       const headers = hot.getColHeader();
 
-      const sheetName = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-
       const payload = {
         headers: headers,
         rows: data,
-        sheetName: sheetName
       };
 
       try {
@@ -233,12 +383,12 @@
 
         const result = await res.json();
         if (result.message) {
-          alert("✅ Data saved successfully to Google Sheets!");
+          alert("Data saved successfully to Google Sheets!");
         } else if (result.error) {
-          alert("⚠️ Error saving to Google Sheets: " + result.error);
+          alert("Error saving to Google Sheets: " + result.error);
         }
       } catch (error) {
-        alert("❌ Network or server error: " + error.message);
+        alert("Network or server error: " + error.message);
       }
     }
 
