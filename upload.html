@@ -1,3 +1,4 @@
+<!-- upload.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -143,6 +144,12 @@
         transform: rotate(360deg);
       }
     }
+
+    #lockedLabel {
+      font-size: 13px;
+      margin-top: 10px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -155,6 +162,7 @@
     </div>
     <div id="months"></div>
     <label><input type="checkbox" id="darkToggle" onchange="toggleDarkMode()"> Dark Mode</label>
+    <p id="lockedLabel">🔓 Editable</p>
     <p style="font-size: 12px; margin-top: auto;">© 2025 QA Dashboard</p>
   </div>
 
@@ -175,9 +183,6 @@
 
     <div id="save-section">
       <button onclick="manualSave()" style="padding: 6px 14px; font-weight: bold;">💾 Save</button>
-      <button onclick="saveToGoogleSheets()" style="padding: 6px 14px; font-weight: bold; margin-left: 10px; background-color:#28a745; color: white;">
-        📤 Save to Google Sheets
-      </button>
       <span id="lastSaved" style="margin-left: 15px; font-size: 14px; color: gray;"></span>
     </div>
   </div>
@@ -193,6 +198,8 @@
     const header = document.getElementById('header');
     const yearLabel = document.getElementById('year');
     const lastSaved = document.getElementById('lastSaved');
+    const lockedLabel = document.getElementById('lockedLabel');
+    let isLocked = false;
 
     let currentDate = new Date();
     currentDate.setDate(1);
@@ -231,16 +238,20 @@
       const monthStr = currentDate.toLocaleString('default', { month: 'long' });
       header.textContent = `${monthStr} ${currentDate.getFullYear()}`;
       yearLabel.textContent = currentDate.getFullYear();
+      const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
 
       try {
-        const res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`);
+        const res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}`);
         const result = await res.json();
         const data = result.data.length ? result.data : generateEmptyData(dates);
+        isLocked = result.locked || false;
+        lockedLabel.innerText = isLocked ? '🔒 Locked' : '🔓 Editable';
 
         if (hot) hot.destroy();
 
         hot = new Handsontable(container, {
           data,
+          readOnly: isLocked,
           rowHeaders: true,
           colHeaders: dates,
           stretchH: 'all',
@@ -256,10 +267,8 @@
               Handsontable.renderers.TextRenderer.apply(this, arguments);
               td.classList.remove('neon-outline');
               const num = parseFloat(value);
-              if (col > 0 && !isNaN(num)) {
-                if (Math.abs(num) > 2.0) {
-                  td.classList.add('neon-outline');
-                }
+              if (col > 0 && !isNaN(num) && Math.abs(num) > 2.0) {
+                td.classList.add('neon-outline');
               }
             }
           })
@@ -307,6 +316,11 @@
     }
 
     async function manualSave() {
+      if (isLocked) {
+        alert("This month's data is locked and cannot be modified.");
+        return;
+      }
+
       showLoader();
       const changedData = hot.getData();
       const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
@@ -341,54 +355,24 @@
         lastSaved.textContent = `Last saved: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
       } catch (error) {
         console.error("Failed to save data:", error);
+        alert("Failed to save. Check network or server.");
       } finally {
         hideLoader();
       }
     }
 
-    async function saveToGoogleSheets() {
-      if (!hot) return alert("Table not initialized");
-      const data = hot.getData();
-      const headers = hot.getColHeader();
-
-     const payload = {
-  headers: headers,
-  rows: data,
-  month: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
-};
-
-
-      try {
-        const res = await fetch('https://back-end-wrxi.onrender.com/save-google-sheets', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-
-        const result = await res.json();
-        if (result.message) {
-          alert("Data saved successfully to Google Sheets!");
-        } else if (result.error) {
-          alert("Error saving to Google Sheets: " + result.error);
-        }
-      } catch (error) {
-        alert("Network or server error: " + error.message);
-      }
+    function changeMonth(m) {
+      const year = currentDate.getFullYear();
+      currentDate = new Date(year, m, 1);
+      loadTable();
     }
 
-   function changeMonth(m) {
-  const year = currentDate.getFullYear(); // retain current year
-  currentDate = new Date(year, m, 1);     // create a new date with new month
-  loadTable();
-}
-
-function changeYear(offset) {
-  const month = currentDate.getMonth();   // retain current month
-  const year = currentDate.getFullYear() + offset;
-  currentDate = new Date(year, month, 1); // create a new date with new year
-  loadTable();
-}
-
+    function changeYear(offset) {
+      const month = currentDate.getMonth();
+      const year = currentDate.getFullYear() + offset;
+      currentDate = new Date(year, month, 1);
+      loadTable();
+    }
 
     function toggleDarkMode() {
       document.body.classList.toggle('dark');
