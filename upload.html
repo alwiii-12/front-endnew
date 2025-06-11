@@ -17,7 +17,6 @@
       height: 100vh;
       overflow: hidden;
     }
-
     .sidebar {
       width: 220px;
       background-color: #007bff;
@@ -27,12 +26,10 @@
       flex-direction: column;
       align-items: center;
     }
-
     .sidebar h2 {
       font-size: 18px;
       margin-bottom: 10px;
     }
-
     .sidebar button {
       width: 100%;
       margin: 5px 0;
@@ -44,36 +41,26 @@
       border-radius: 5px;
       cursor: pointer;
     }
-
+    .sidebar button.active {
+      background-color: #0056b3;
+      color: white;
+    }
     .sidebar button:hover {
       background-color: #e0e0e0;
     }
-
-    .sidebar input[type="checkbox"] {
-      margin-top: 10px;
-    }
-
     .main {
       flex-grow: 1;
       padding: 20px;
       overflow: auto;
     }
-
-    .header {
-      font-size: 20px;
-      margin-bottom: 10px;
-    }
-
     .container {
       display: flex;
       gap: 20px;
       align-items: flex-start;
     }
-
     #table {
       flex-grow: 1;
     }
-
     .summary-box {
       width: 300px;
       background-color: white;
@@ -81,42 +68,37 @@
       border-radius: 10px;
       box-shadow: 0 0 10px #ccc;
     }
-
     .summary-box h3 {
       margin-top: 0;
     }
-
     .neon-outline {
       border: 2px solid #ff004f !important;
       background-color: #ffe6eb !important;
       color: #000 !important;
     }
-
     #save-section {
       margin-top: 20px;
     }
-
     body.dark {
       background-color: #1e1e1e;
       color: white;
     }
-
     body.dark .sidebar {
       background-color: #111;
       color: white;
     }
-
     body.dark .sidebar button {
       background-color: #333;
       color: white;
     }
-
+    body.dark .sidebar button.active {
+      background-color: #444;
+    }
     body.dark .summary-box {
       background-color: #2c2c2c;
       color: white;
       box-shadow: none;
     }
-
     #loading-overlay {
       position: fixed;
       top: 0;
@@ -129,7 +111,6 @@
       justify-content: center;
       align-items: center;
     }
-
     .spinner {
       width: 60px;
       height: 60px;
@@ -138,13 +119,11 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-
     @keyframes spin {
       to {
         transform: rotate(360deg);
       }
     }
-
     #lockedLabel {
       font-size: 13px;
       margin-top: 10px;
@@ -168,7 +147,6 @@
 
   <div class="main">
     <div class="header" id="header"></div>
-
     <div class="container">
       <div id="table"></div>
       <div class="summary-box">
@@ -180,7 +158,6 @@
         <p style="color:red;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
       </div>
     </div>
-
     <div id="save-section">
       <button onclick="manualSave()" style="padding: 6px 14px; font-weight: bold;">💾 Save</button>
       <span id="lastSaved" style="margin-left: 15px; font-size: 14px; color: gray;"></span>
@@ -200,7 +177,6 @@
     const lastSaved = document.getElementById('lastSaved');
     const lockedLabel = document.getElementById('lockedLabel');
     let isLocked = false;
-
     let currentDate = new Date();
     currentDate.setDate(1);
     const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
@@ -238,8 +214,9 @@
       const monthStr = currentDate.toLocaleString('default', { month: 'long' });
       header.textContent = `${monthStr} ${currentDate.getFullYear()}`;
       yearLabel.textContent = currentDate.getFullYear();
-      const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+      highlightActiveMonth();
 
+      const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
       try {
         const res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}`);
         const result = await res.json();
@@ -248,7 +225,6 @@
         lockedLabel.innerText = isLocked ? '🔒 Locked' : '🔓 Editable';
 
         if (hot) hot.destroy();
-
         hot = new Handsontable(container, {
           data,
           readOnly: isLocked,
@@ -275,44 +251,11 @@
         });
 
         updateSummaryAndChart(data);
-      } catch (error) {
-        console.error("Failed to load table data:", error);
+      } catch (err) {
+        console.error("Error loading data:", err);
       } finally {
         hideLoader();
       }
-    }
-
-    function updateSummaryAndChart(data) {
-      let total = 0, within = 0, warning = 0, out = 0;
-      for (let r = 0; r < data.length; r++) {
-        for (let c = 1; c < data[r].length; c++) {
-          const val = parseFloat(data[r][c]);
-          if (!isNaN(val)) {
-            total++;
-            if (Math.abs(val) <= 1.8) within++;
-            else if (Math.abs(val) <= 2.0) warning++;
-            else out++;
-          }
-        }
-      }
-
-      document.getElementById("total").textContent = total;
-      document.getElementById("within").textContent = within;
-      document.getElementById("warning").textContent = warning;
-      document.getElementById("out").textContent = out;
-
-      const ctx = document.getElementById('summaryChart').getContext('2d');
-      if (summaryChart) summaryChart.destroy();
-      summaryChart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-          labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
-          datasets: [{
-            data: [within, warning, out],
-            backgroundColor: ['#66cc66', '#ffcc00', '#ff6666']
-          }]
-        }
-      });
     }
 
     async function manualSave() {
@@ -353,12 +296,46 @@
 
         const now = new Date();
         lastSaved.textContent = `Last saved: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
-      } catch (error) {
-        console.error("Failed to save data:", error);
-        alert("Failed to save. Check network or server.");
+        console.log("✅ Saved without refreshing table.");
+      } catch (err) {
+        console.error("Save failed:", err);
+        alert("Save failed. Please try again.");
       } finally {
         hideLoader();
       }
+    }
+
+    function updateSummaryAndChart(data) {
+      let total = 0, within = 0, warning = 0, out = 0;
+      for (let r = 0; r < data.length; r++) {
+        for (let c = 1; c < data[r].length; c++) {
+          const val = parseFloat(data[r][c]);
+          if (!isNaN(val)) {
+            total++;
+            if (Math.abs(val) <= 1.8) within++;
+            else if (Math.abs(val) <= 2.0) warning++;
+            else out++;
+          }
+        }
+      }
+
+      document.getElementById("total").textContent = total;
+      document.getElementById("within").textContent = within;
+      document.getElementById("warning").textContent = warning;
+      document.getElementById("out").textContent = out;
+
+      const ctx = document.getElementById('summaryChart').getContext('2d');
+      if (summaryChart) summaryChart.destroy();
+      summaryChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Within Tolerance', 'Warning', 'Out of Tolerance'],
+          datasets: [{
+            data: [within, warning, out],
+            backgroundColor: ['#66cc66', '#ffcc00', '#ff6666']
+          }]
+        }
+      });
     }
 
     function changeMonth(m) {
@@ -379,13 +356,22 @@
     }
 
     function buildMonthButtons() {
-      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
       monthsDiv.innerHTML = '';
       months.forEach((m, i) => {
         const btn = document.createElement('button');
         btn.textContent = m;
         btn.onclick = () => changeMonth(i);
+        btn.dataset.index = i;
         monthsDiv.appendChild(btn);
+      });
+      highlightActiveMonth();
+    }
+
+    function highlightActiveMonth() {
+      const buttons = monthsDiv.querySelectorAll('button');
+      buttons.forEach((btn, i) => {
+        btn.classList.toggle('active', i === currentDate.getMonth());
       });
     }
 
