@@ -209,7 +209,13 @@
       try {
         const res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}`);
         const result = await res.json();
-        const data = (result.data && result.data.length === energyTypes.length) ? result.data : generateEmptyData(dateCols);
+        let data;
+        if (Array.isArray(result.data) && result.data.length === energyTypes.length) {
+          data = result.data;
+        } else {
+          data = generateEmptyData(dateCols);
+        }
+
         isLocked = result.locked || false;
         lockedLabel.innerText = isLocked ? '🔒 Locked' : '🔓 Editable';
         lockToggleBtn.innerText = isLocked ? '🔓 Unlock Data' : '🔒 Lock Data';
@@ -256,11 +262,16 @@
       const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
 
       try {
-        await fetch('https://back-end-wrxi.onrender.com/save', {
+        const response = await fetch('https://back-end-wrxi.onrender.com/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ data: changedData, month })
         });
+
+        const resText = await response.text();
+        console.log("Backend save response:", resText);
+
+        if (!response.ok) throw new Error(resText);
 
         const outValues = [];
         for (let r = 0; r < changedData.length; r++) {
