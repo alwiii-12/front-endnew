@@ -7,20 +7,8 @@
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-    };
-    firebase.initializeApp(firebaseConfig);
-  </script>
-
   <style>
-    /* All your existing CSS here unchanged */
+    /* Keep your full CSS unchanged */
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
@@ -30,11 +18,11 @@
       height: 100vh;
       overflow: hidden;
     }
-    .sidebar { /* ... */ }
-    .sidebar h2 { /* ... */ }
-    .sidebar button { /* ... */ }
-    .sidebar button.active { /* ... */ }
-    .sidebar button:hover { /* ... */ }
+    .sidebar { width: 200px; background: #fff; padding: 20px; box-shadow: 2px 0 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+    .sidebar h2 { margin: 0 0 20px; }
+    .sidebar button { width: 100%; margin-bottom: 8px; padding: 8px; border: none; background: #eee; cursor: pointer; }
+    .sidebar button.active { background: #007bff; color: white; }
+    .sidebar button:hover { background: #ddd; }
     .main { flex-grow: 1; padding: 20px; overflow: auto; }
     .container { display: flex; gap: 20px; align-items: flex-start; }
     #table { flex-grow: 1; }
@@ -106,7 +94,14 @@
     const lastSaved = document.getElementById('lastSaved');
     let currentDate = new Date(); currentDate.setDate(1);
     const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
-    let currentUID = null;
+
+    const currentUID = localStorage.getItem("uid");
+    const currentHospital = localStorage.getItem("hospital");
+
+    if (!currentUID || !currentHospital) {
+      alert("Login session expired. Redirecting to login.");
+      window.location.href = "login.html";
+    }
 
     function getMonthDates(date) {
       const year = date.getFullYear(), month = date.getMonth();
@@ -137,7 +132,7 @@
       const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
 
       try {
-        const res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`);
+        const res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&hospital=${currentHospital}&uid=${currentUID}`);
         const result = await res.json();
         let data = (Array.isArray(result.data) && result.data.length === energyTypes.length)
           ? result.data.map(row => row.map(cell => cell === null || cell === "None" ? "" : cell))
@@ -189,7 +184,7 @@
         await fetch('https://back-end-wrxi.onrender.com/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: changedData, month, uid: currentUID })
+          body: JSON.stringify({ data: changedData, month, uid: currentUID, hospital: currentHospital })
         });
 
         const outValues = [];
@@ -206,7 +201,7 @@
           await fetch('https://back-end-wrxi.onrender.com/send-alert', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ outValues, uid: currentUID })
+            body: JSON.stringify({ outValues, uid: currentUID, hospital: currentHospital })
           });
         }
 
@@ -287,18 +282,7 @@
     }
 
     buildMonthButtons();
-
-    window.onload = () => {
-      firebase.auth().onAuthStateChanged(user => {
-        if (user) {
-          currentUID = user.uid;
-          loadTable();
-        } else {
-          alert("You are not logged in. Redirecting to login...");
-          window.location.href = "login.html"; // adjust as needed
-        }
-      });
-    };
+    loadTable();
   </script>
 </body>
 </html>
