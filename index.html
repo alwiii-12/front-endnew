@@ -49,8 +49,10 @@
       color: #333;
     }
 
-    .left-panel a {
+    .left-panel a.button {
       display: inline-block;
+      margin-right: 10px;
+      margin-top: 10px;
       padding: 12px 24px;
       background-color: #007bff;
       color: white;
@@ -59,7 +61,7 @@
       border-radius: 6px;
     }
 
-    .left-panel a:hover {
+    .left-panel a.button:hover {
       background-color: #0056b3;
     }
 
@@ -98,7 +100,8 @@
       <div class="left-panel">
         <h1>Welcome to LINAC QA Portal</h1>
         <p>Upload your LINAC QA data quickly and efficiently. Ensure daily safety and compliance is always within tolerance.</p>
-        <a href="upload.html">Open QA Dashboard</a>
+        <a href="upload.html" class="button">Open QA Dashboard</a>
+        <a href="signup.html" class="button">Sign Up</a>
       </div>
       <div class="right-panel">
         <img src="linac.png" alt="Varian TrueBeam LINAC">
