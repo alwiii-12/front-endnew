@@ -2,115 +2,97 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Signup | LINAC QA</title>
+  <title>Signup - LINAC QA</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f0f2f5;
+      background-color: #f0f0f0;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
     }
     .signup-box {
-      background: #fff;
+      background: white;
       padding: 30px;
       border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
+      box-shadow: 0 0 10px #ccc;
     }
-    h2 {
-      text-align: center;
-    }
-    label {
+    input {
       display: block;
-      margin-top: 15px;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    input, select {
       width: 100%;
+      margin: 10px 0;
       padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
     }
     button {
-      margin-top: 20px;
-      width: 100%;
-      padding: 12px;
-      background: #007BFF;
+      padding: 10px 20px;
+      background-color: #28a745;
       color: white;
       border: none;
-      border-radius: 5px;
-      font-size: 16px;
+      cursor: pointer;
     }
     button:hover {
-      background: #0056b3;
+      background-color: #218838;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <div class="signup-box">
-    <h2>Signup</h2>
-    <form id="signupForm">
-      <label for="name">Full Name:</label>
-      <input type="text" id="name" name="name" required>
 
-      <label for="email">Email:</label>
-      <input type="email" id="email" name="email" required>
+<div class="signup-box">
+  <h2>Signup to QA Dashboard</h2>
+  <input type="email" id="email" placeholder="Email" />
+  <input type="password" id="password" placeholder="Password" />
+  <input type="text" id="hospital" placeholder="Hospital Name" />
+  <button onclick="signup()">Sign Up</button>
+  <div id="error" class="error"></div>
+</div>
 
-      <label for="password">Password:</label>
-      <input type="password" id="password" name="password" required>
+<script>
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+  };
+  firebase.initializeApp(firebaseConfig);
 
-      <label for="confirm">Confirm Password:</label>
-      <input type="password" id="confirm" name="confirm" required>
+  function signup() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const hospital = document.getElementById("hospital").value;
 
-      <label for="hospital">Hospital Name:</label>
-      <input type="text" id="hospital" name="hospital" required>
+    if (!email || !password || !hospital) {
+      document.getElementById("error").textContent = "Please fill all fields.";
+      return;
+    }
 
-      <label for="role">Job Role:</label>
-      <select id="role" name="role" required>
-        <option value="">--Select--</option>
-        <option value="RSO">RSO</option>
-        <option value="Medical Physicist">Medical Physicist</option>
-      </select>
+    firebase.auth().createUserWithEmailAndPassword(email, password)
+      .then(userCredential => {
+        const uid = userCredential.user.uid;
 
-      <button type="submit">Sign Up</button>
-    </form>
-  </div>
-
-  <script>
-    document.getElementById('signupForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-
-      const name = document.getElementById('name').value;
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const confirm = document.getElementById('confirm').value;
-      const hospital = document.getElementById('hospital').value;
-      const role = document.getElementById('role').value;
-
-      if (password !== confirm) {
-        alert("Passwords do not match!");
-        return;
-      }
-
-      const res = await fetch('https://back-end-wrxi.onrender.com/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, hospital, role })
+        // Save hospital info to backend
+        return fetch("https://back-end-wrxi.onrender.com/signup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ uid, hospital })
+        });
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to register hospital in backend");
+        window.location.href = "upload.html";
+      })
+      .catch(error => {
+        document.getElementById("error").textContent = error.message;
       });
+  }
+</script>
 
-      const data = await res.json();
-      if (data.status === 'success') {
-        alert("Signup successful! Now you can login.");
-        window.location.href = "login.html";
-      } else {
-        alert("Signup failed: " + data.message);
-      }
-    });
-  </script>
 </body>
 </html>
