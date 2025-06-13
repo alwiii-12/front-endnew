@@ -189,7 +189,6 @@
     async function loadTable() {
       showLoader();
       const dateCols = getMonthDates(currentDate);
-      const colHeaders = ['Energy', ...dateCols];
       const monthStr = currentDate.toLocaleString('default', { month: 'long' });
       header.textContent = `${monthStr} ${currentDate.getFullYear()}`;
       yearLabel.textContent = currentDate.getFullYear();
@@ -209,8 +208,11 @@
         if (hot) hot.destroy();
         hot = new Handsontable(container, {
           data,
-          colHeaders,
-          columns: colHeaders.map(() => ({ type: 'text' })),
+          colHeaders: function(index) {
+            if (index === 0) return 'Energy';
+            return dateCols[index - 1] || '';
+          },
+          columns: new Array(dateCols.length + 1).fill({ type: 'text' }),
           readOnly: false,
           rowHeaders: true,
           stretchH: 'all',
