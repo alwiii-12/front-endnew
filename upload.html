@@ -121,11 +121,6 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
-    #lockedLabel {
-      font-size: 13px;
-      margin-top: 10px;
-      text-align: center;
-    }
   </style>
 </head>
 <body>
@@ -138,8 +133,6 @@
     </div>
     <div id="months"></div>
     <label><input type="checkbox" id="darkToggle" onchange="toggleDarkMode()"> Dark Mode</label>
-    <button onclick="toggleLock()" id="lockToggleBtn">🔒 Lock Data</button>
-    <p id="lockedLabel">🔓 Editable</p>
     <p style="font-size: 12px; margin-top: auto;">© 2025 QA Dashboard</p>
   </div>
 
@@ -171,9 +164,6 @@
     const header = document.getElementById('header');
     const yearLabel = document.getElementById('year');
     const lastSaved = document.getElementById('lastSaved');
-    const lockedLabel = document.getElementById('lockedLabel');
-    const lockToggleBtn = document.getElementById('lockToggleBtn');
-    let isLocked = false;
     let currentDate = new Date(); currentDate.setDate(1);
     const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
 
@@ -211,21 +201,17 @@
         const result = await res.json();
         let data;
         if (Array.isArray(result.data) && result.data.length === energyTypes.length) {
-          data = result.data;
+          data = result.data.map(row => row.map(cell => cell === null || cell === "None" ? "" : cell));
         } else {
           data = generateEmptyData(dateCols);
         }
-
-        isLocked = result.locked || false;
-        lockedLabel.innerText = isLocked ? '🔒 Locked' : '🔓 Editable';
-        lockToggleBtn.innerText = isLocked ? '🔓 Unlock Data' : '🔒 Lock Data';
 
         if (hot) hot.destroy();
         hot = new Handsontable(container, {
           data,
           colHeaders,
           columns: colHeaders.map(() => ({ type: 'text' })),
-          readOnly: isLocked,
+          readOnly: false,
           rowHeaders: true,
           stretchH: 'all',
           width: '100%',
@@ -256,7 +242,6 @@
     }
 
     async function manualSave() {
-      if (isLocked) return alert("This month's data is locked.");
       showLoader();
       const changedData = hot.getData();
       const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
@@ -332,27 +317,6 @@
           }]
         }
       });
-    }
-
-    async function toggleLock() {
-      const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-      const newLockState = !isLocked;
-      showLoader();
-      try {
-        await fetch('https://back-end-wrxi.onrender.com/lock', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ month, locked: newLockState })
-        });
-        isLocked = newLockState;
-        lockedLabel.innerText = isLocked ? '🔒 Locked' : '🔓 Editable';
-        lockToggleBtn.innerText = isLocked ? '🔓 Unlock Data' : '🔒 Lock Data';
-        loadTable();
-      } catch (err) {
-        alert("Failed to update lock status.");
-      } finally {
-        hideLoader();
-      }
     }
 
     function changeMonth(m) {
