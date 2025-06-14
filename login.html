@@ -82,14 +82,13 @@
     <div class="footer">© 2025 LINAC QA System</div>
   </div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
+  <!-- Firebase App (core SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <!-- Firebase Authentication -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 
   <script>
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-
+    // ✅ Initialize Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
       authDomain: "linac-qa-project.firebaseapp.com",
@@ -100,8 +99,9 @@
       measurementId: "G-HFJ2CGS664"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
 
     document.getElementById("loginForm").addEventListener("submit", function (e) {
       e.preventDefault();
@@ -109,15 +109,12 @@
       const password = document.getElementById("password").value;
       const errorMsg = document.getElementById("errorMsg");
 
-      signInWithEmailAndPassword(auth, email, password)
+      auth.signInWithEmailAndPassword(email, password)
         .then((userCredential) => {
-          // Save user to localStorage
+          // ✅ Store user info
           localStorage.setItem("userEmail", email);
-
-          // Optionally use a friendly hospital name instead of email
-          const hospitalName = email.includes('@') ? email.split('@')[0].replace(/\W+/g, ' ').toUpperCase() : email;
+          const hospitalName = email.split('@')[0].replace(/\W+/g, ' ').toUpperCase();
           localStorage.setItem("hospitalName", hospitalName);
-
           window.location.href = "upload.html";
         })
         .catch((error) => {
