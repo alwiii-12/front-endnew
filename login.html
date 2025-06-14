@@ -43,9 +43,9 @@
           // ✅ Save session data
           localStorage.setItem("uid", user.uid);
           localStorage.setItem("hospital", result.hospital);
+          localStorage.setItem("role", result.role);
 
-          alert("Login successful!");
-          // ✅ Redirect
+          // ✅ Redirect without alert
           window.location.href = "upload.html";
         } else {
           alert("Login failed: " + result.message);
