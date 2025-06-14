@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login - LINAC QA</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <style>
     body {
       margin: 0;
@@ -59,40 +61,54 @@
       font-size: 12px;
       color: #6b7280;
     }
+    .error {
+      color: red;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
   <div class="login-container">
     <h2>Login - LINAC QA</h2>
     <form id="loginForm">
+      <div class="error" id="errorMsg"></div>
       <label for="email">Email:</label>
-      <input type="email" id="email" name="email" required />
-      
+      <input type="email" id="email" required />
       <label for="password">Password:</label>
-      <input type="password" id="password" name="password" required />
-      
+      <input type="password" id="password" required />
       <button type="submit">Login</button>
     </form>
     <div class="footer">© 2025 LINAC QA System</div>
   </div>
 
   <script>
+    // ✅ Replace with your Firebase config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
     document.getElementById("loginForm").addEventListener("submit", function (e) {
       e.preventDefault();
-
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
+      const errorDiv = document.getElementById("errorMsg");
 
-      // ✅ You can use real login API here. For now, we simulate:
-      const uid = email.split("@")[0]; // Use email prefix as user id
-      const hospitalName = "Hospital of " + uid.charAt(0).toUpperCase() + uid.slice(1); // Fake hospital name
-
-      // ✅ Store login session
-      localStorage.setItem("uid", uid);
-      localStorage.setItem("hospital", hospitalName);
-
-      // ✅ Redirect
-      window.location.href = "upload.html";
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          window.location.href = "upload.html";
+        })
+        .catch((error) => {
+          errorDiv.textContent = "❌ " + error.message;
+        });
     });
   </script>
 </body>
