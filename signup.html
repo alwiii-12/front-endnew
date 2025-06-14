@@ -1,98 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Signup - LINAC QA</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .signup-box {
-      background: white;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #ccc;
-    }
-    input {
-      display: block;
-      width: 100%;
-      margin: 10px 0;
-      padding: 10px;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #28a745;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #218838;
-    }
-    .error {
-      color: red;
-      margin-top: 10px;
-    }
-  </style>
+  <script type="module">
+    // === Firebase Imports ===
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
+      authDomain: "linac-qa-project.firebaseapp.com",
+      projectId: "linac-qa-project",
+      storageBucket: "linac-qa-project.firebasestorage.app",
+      messagingSenderId: "850988733382",
+      appId: "1:850988733382:web:ef75d64e30deb7e37c18c7",
+      measurementId: "G-HFJ2CGS664"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // === Signup Logic ===
+    window.signup = async function () {
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const hospital = document.getElementById("hospital").value;
+      const role = document.getElementById("role").value;
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Send to backend
+        const response = await fetch("https://back-end-wrxi.onrender.com/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+            hospital,
+            role,
+            uid: user.uid
+          })
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          alert("Signup successful!");
+        } else {
+          alert("Signup failed: " + result.message);
+        }
+      } catch (error) {
+        alert("Error: " + error.message);
+      }
+    };
+  </script>
 </head>
 <body>
-
-<div class="signup-box">
-  <h2>Signup to QA Dashboard</h2>
-  <input type="email" id="email" placeholder="Email" />
-  <input type="password" id="password" placeholder="Password" />
-  <input type="text" id="hospital" placeholder="Hospital Name" />
-  <button onclick="signup()">Sign Up</button>
-  <div id="error" class="error"></div>
-</div>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-  };
-  firebase.initializeApp(firebaseConfig);
-
-  function signup() {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    const hospital = document.getElementById("hospital").value;
-
-    if (!email || !password || !hospital) {
-      document.getElementById("error").textContent = "Please fill all fields.";
-      return;
-    }
-
-    firebase.auth().createUserWithEmailAndPassword(email, password)
-      .then(userCredential => {
-        const uid = userCredential.user.uid;
-
-        // Save hospital info to backend
-        return fetch("https://back-end-wrxi.onrender.com/signup", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ uid, hospital })
-        });
-      })
-      .then(res => {
-        if (!res.ok) throw new Error("Failed to register hospital in backend");
-        window.location.href = "upload.html";
-      })
-      .catch(error => {
-        document.getElementById("error").textContent = error.message;
-      });
-  }
-</script>
-
+  <h2>Signup - LINAC QA</h2>
+  <form onsubmit="event.preventDefault(); signup();">
+    <label>Name: <input type="text" id="name" required></label><br><br>
+    <label>Email: <input type="email" id="email" required></label><br><br>
+    <label>Password: <input type="password" id="password" required></label><br><br>
+    <label>Hospital: <input type="text" id="hospital" required></label><br><br>
+    <label>Role:
+      <select id="role" required>
+        <option value="Physicist">Physicist</option>
+        <option value="Dosimetrist">Dosimetrist</option>
+        <option value="Admin">Admin</option>
+      </select>
+    </label><br><br>
+    <button type="submit">Sign Up</button>
+  </form>
 </body>
 </html>
