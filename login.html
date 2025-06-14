@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>Login - LINAC QA</title>
   <script type="module">
-    // === Firebase Auth Setup ===
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
 
@@ -42,9 +41,16 @@
         });
 
         const result = await response.json();
+
         if (response.ok) {
+          // ✅ Store UID and hospital in localStorage
+          localStorage.setItem("uid", user.uid);
+          localStorage.setItem("hospital", result.hospital);
+
           alert(`Login successful!\nRole: ${result.role}\nHospital: ${result.hospital}`);
-          // Redirect or store session info as needed
+
+          // ✅ Redirect to main upload page
+          window.location.href = "upload.html";
         } else {
           alert("Login failed: " + result.message);
         }
