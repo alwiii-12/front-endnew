@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     body {
       margin: 0;
@@ -21,9 +22,33 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      background: #f8f8f8;
       padding: 10px 20px;
-      background: #f0f0f0;
       border-bottom: 1px solid #ccc;
+      font-size: 16px;
+    }
+    .topbar span {
+      font-weight: bold;
+    }
+    .topbar button {
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    body.dark .topbar {
+      background-color: #222;
+      color: white;
+      border-bottom: 1px solid #444;
+    }
+    body.dark .topbar button {
+      background: #444;
+      color: white;
+      border: none;
+    }
+    .content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
     }
     .sidebar {
       width: 200px; background: #fff; padding: 20px;
@@ -33,7 +58,7 @@
     .sidebar button { width: 100%; margin-bottom: 8px; padding: 8px; border: none; background: #eee; cursor: pointer; }
     .sidebar button.active { background: #007bff; color: white; }
     .sidebar button:hover { background: #ddd; }
-    .main { flex-grow: 1; padding: 20px; overflow: auto; display: flex; flex-direction: column; }
+    .main { flex-grow: 1; padding: 20px; overflow: auto; }
     .container { display: flex; gap: 20px; align-items: flex-start; }
     #table { flex-grow: 1; }
     .summary-box {
@@ -47,7 +72,6 @@
     body.dark .sidebar button { background-color: #333; color: white; }
     body.dark .sidebar button.active { background-color: #444; }
     body.dark .summary-box { background-color: #2c2c2c; color: white; box-shadow: none; }
-    body.dark .topbar { background-color: #2c2c2c; color: white; border-color: #555; }
     #loading-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.3); z-index: 9999;
@@ -65,13 +89,12 @@
   </style>
 </head>
 <body>
-  <!-- ✅ Topbar: Hospital name + Logout -->
   <div class="topbar">
-    <div id="hospitalName" style="font-weight: bold; font-size: 18px;">Hospital: </div>
-    <button onclick="logout()" style="padding: 6px 12px; font-size: 14px;">Logout</button>
+    <span id="hospitalName">Hospital: </span>
+    <button onclick="logout()">Logout</button>
   </div>
 
-  <div style="display: flex; flex-grow: 1;">
+  <div class="content">
     <div class="sidebar">
       <h2>LINAC QA</h2>
       <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
@@ -112,6 +135,13 @@
 
     if (!currentUID || !currentHospital) {
       alert("Login session expired. Redirecting to login.");
+      window.location.href = "login.html";
+    }
+
+    document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
+
+    function logout() {
+      localStorage.clear();
       window.location.href = "login.html";
     }
 
@@ -300,18 +330,6 @@
       buttons.forEach((btn, i) => {
         btn.classList.toggle('active', i === currentDate.getMonth());
       });
-    }
-
-    // ✅ Show hospital name from localStorage
-    document.addEventListener("DOMContentLoaded", () => {
-      const hospital = localStorage.getItem("hospital") || "Unknown";
-      document.getElementById("hospitalName").textContent = `Hospital: ${hospital}`;
-    });
-
-    // ✅ Logout
-    function logout() {
-      localStorage.clear();
-      window.location.href = "login.html";
     }
 
     buildMonthButtons();
