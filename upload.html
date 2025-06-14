@@ -157,7 +157,6 @@
 
   <div id="loading-overlay"><div class="spinner"></div></div>
 
-  <!-- ✅ COMPLETE SCRIPT -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
@@ -231,16 +230,22 @@
 
         if (hot) hot.destroy();
         hot = new Handsontable(container, {
-          data, rowHeaders: false, stretchH: 'all', height: 500,
+          data,
+          rowHeaders: false,
+          stretchH: 'all',
+          height: 500,
           licenseKey: 'non-commercial-and-evaluation',
-          colHeaders: i => i===0 ? 'Energy' : dateCols[i-1] || '',
-          columns: Array(dateCols.length+1).fill({ type: 'text' }),
-          afterChange:(changes,source)=>{ if(!changes||source==='loadData')return; updateSummaryAndChart(hot.getData()); },
-          cells:(r,c)=>{
-            const props={};
-            if(c===0)return props;
-            const v=parseFloat(this.instance.getDataAtCell(r,c));
-            if(!isNaN(v)) {
+          colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
+          columns: Array(dateCols.length + 1).fill({ type: 'text' }),
+          afterChange: (changes, source) => {
+            if (!changes || source === 'loadData') return;
+            updateSummaryAndChart(hot.getData());
+          },
+          cells: function (r, c) {
+            const props = {};
+            if (c === 0) return props;
+            const v = parseFloat(this.instance.getDataAtCell(r, c));
+            if (!isNaN(v)) {
               props.className = Math.abs(v) <= 1.8 ? 'within' : (Math.abs(v) <= 2 ? 'warning' : 'out');
             }
             return props;
