@@ -79,8 +79,20 @@
   <script>
     document.getElementById("loginForm").addEventListener("submit", function (e) {
       e.preventDefault();
-      // You can add real validation here if needed
-      window.location.href = "upload.html"; // ✅ Redirect to your main page
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      // Mock login logic – replace with real backend or Firebase if needed
+      const uid = "mock-uid-" + Math.random().toString(36).substring(2, 10);
+      const hospital = email.split("@")[0] || "DefaultHospital";
+
+      // Store session in localStorage
+      localStorage.setItem("uid", uid);
+      localStorage.setItem("hospital", hospital);
+
+      // Redirect to main page
+      window.location.href = "upload.html";
     });
   </script>
 </body>
