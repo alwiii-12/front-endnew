@@ -157,8 +157,8 @@
 
   <div id="loading-overlay"><div class="spinner"></div></div>
 
+  <!-- ✅ COMPLETE SCRIPT -->
   <script>
-    // === Firebase Initialization ===
     const firebaseConfig = {
       apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
       authDomain: "linac-qa-project.firebaseapp.com",
@@ -172,12 +172,10 @@
     const auth = firebase.auth();
 
     let currentUID, currentHospital;
-
     auth.onAuthStateChanged(user => {
       if (user) {
         currentUID = user.uid;
-        const email = user.email || '';
-        currentHospital = email.split('@')[0].replace(/\W+/g, ' ').toUpperCase();
+        currentHospital = user.displayName || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
         localStorage.setItem("uid", currentUID);
         localStorage.setItem("hospital", currentHospital);
         document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
@@ -196,7 +194,6 @@
       });
     }
 
-    // Place your existing JavaScript logic from here onward without changes:
     let hot, summaryChart;
     const container = document.getElementById('table'), monthsDiv = document.getElementById('months');
     const header = document.getElementById('header'), yearLabel = document.getElementById('year');
@@ -238,10 +235,7 @@
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i===0 ? 'Energy' : dateCols[i-1] || '',
           columns: Array(dateCols.length+1).fill({ type: 'text' }),
-          afterChange:(changes,source)=>{
-            if(!changes||source==='loadData')return;
-            updateSummaryAndChart(hot.getData());
-          },
+          afterChange:(changes,source)=>{ if(!changes||source==='loadData')return; updateSummaryAndChart(hot.getData()); },
           cells:(r,c)=>{
             const props={};
             if(c===0)return props;
