@@ -1,4 +1,3 @@
-<!-- ✅ Updated upload.html (Ready to paste) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +6,6 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     body {
       margin: 0;
@@ -17,6 +15,15 @@
       display: flex;
       height: 100vh;
       overflow: hidden;
+      flex-direction: column;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      background: #f0f0f0;
+      border-bottom: 1px solid #ccc;
     }
     .sidebar {
       width: 200px; background: #fff; padding: 20px;
@@ -26,7 +33,7 @@
     .sidebar button { width: 100%; margin-bottom: 8px; padding: 8px; border: none; background: #eee; cursor: pointer; }
     .sidebar button.active { background: #007bff; color: white; }
     .sidebar button:hover { background: #ddd; }
-    .main { flex-grow: 1; padding: 20px; overflow: auto; }
+    .main { flex-grow: 1; padding: 20px; overflow: auto; display: flex; flex-direction: column; }
     .container { display: flex; gap: 20px; align-items: flex-start; }
     #table { flex-grow: 1; }
     .summary-box {
@@ -40,6 +47,7 @@
     body.dark .sidebar button { background-color: #333; color: white; }
     body.dark .sidebar button.active { background-color: #444; }
     body.dark .summary-box { background-color: #2c2c2c; color: white; box-shadow: none; }
+    body.dark .topbar { background-color: #2c2c2c; color: white; border-color: #555; }
     #loading-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.3); z-index: 9999;
@@ -57,41 +65,48 @@
   </style>
 </head>
 <body>
-  <div class="sidebar">
-    <h2>LINAC QA</h2>
-    <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
-      <button onclick="changeYear(-1)">←</button>
-      <span id="year" style="margin: 0 10px;">2025</span>
-      <button onclick="changeYear(1)">→</button>
-    </div>
-    <div id="months"></div>
-    <label><input type="checkbox" id="darkToggle" onchange="toggleDarkMode()"> Dark Mode</label>
-    <p style="font-size: 12px; margin-top: auto;">© 2025 QA Dashboard</p>
+  <!-- ✅ Topbar: Hospital name + Logout -->
+  <div class="topbar">
+    <div id="hospitalName" style="font-weight: bold; font-size: 18px;">Hospital: </div>
+    <button onclick="logout()" style="padding: 6px 12px; font-size: 14px;">Logout</button>
   </div>
 
-  <div class="main">
-    <div class="header" id="header"></div>
-    <div class="container">
-      <div id="table"></div>
-      <div class="summary-box">
-        <canvas id="summaryChart" width="280" height="280"></canvas>
-        <h3>Summary</h3>
-        <p><strong>Total Entries:</strong> <span id="total">0</span></p>
-        <p style="color:green;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
-        <p style="color:orange;">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
-        <p style="color:red;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
+  <div style="display: flex; flex-grow: 1;">
+    <div class="sidebar">
+      <h2>LINAC QA</h2>
+      <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
+        <button onclick="changeYear(-1)">←</button>
+        <span id="year" style="margin: 0 10px;">2025</span>
+        <button onclick="changeYear(1)">→</button>
       </div>
+      <div id="months"></div>
+      <label><input type="checkbox" id="darkToggle" onchange="toggleDarkMode()"> Dark Mode</label>
+      <p style="font-size: 12px; margin-top: auto;">© 2025 QA Dashboard</p>
     </div>
-    <div id="save-section">
-      <button onclick="manualSave()" style="padding: 6px 14px; font-weight: bold;">💾 Save</button>
-      <span id="lastSaved" style="margin-left: 15px; font-size: 14px; color: gray;"></span>
+
+    <div class="main">
+      <div class="header" id="header"></div>
+      <div class="container">
+        <div id="table"></div>
+        <div class="summary-box">
+          <canvas id="summaryChart" width="280" height="280"></canvas>
+          <h3>Summary</h3>
+          <p><strong>Total Entries:</strong> <span id="total">0</span></p>
+          <p style="color:green;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
+          <p style="color:orange;">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
+          <p style="color:red;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
+        </div>
+      </div>
+      <div id="save-section">
+        <button onclick="manualSave()" style="padding: 6px 14px; font-weight: bold;">💾 Save</button>
+        <span id="lastSaved" style="margin-left: 15px; font-size: 14px; color: gray;"></span>
+      </div>
     </div>
   </div>
 
   <div id="loading-overlay"><div class="spinner"></div></div>
 
   <script>
-    // ✅ Check Login Info
     const currentUID = localStorage.getItem("uid");
     const currentHospital = localStorage.getItem("hospital");
 
@@ -285,6 +300,18 @@
       buttons.forEach((btn, i) => {
         btn.classList.toggle('active', i === currentDate.getMonth());
       });
+    }
+
+    // ✅ Show hospital name from localStorage
+    document.addEventListener("DOMContentLoaded", () => {
+      const hospital = localStorage.getItem("hospital") || "Unknown";
+      document.getElementById("hospitalName").textContent = `Hospital: ${hospital}`;
+    });
+
+    // ✅ Logout
+    function logout() {
+      localStorage.clear();
+      window.location.href = "login.html";
     }
 
     buildMonthButtons();
