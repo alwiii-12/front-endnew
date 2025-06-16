@@ -178,7 +178,6 @@
         localStorage.setItem("uid", currentUID);
         localStorage.setItem("hospital", currentHospital);
         document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
-
         buildMonthButtons();
         loadTable();
       } else {
@@ -270,6 +269,7 @@
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ data: changedData, month, uid: currentUID })
         });
+        lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
       } catch(err){
         console.error(err);
         alert("Save failed.");
