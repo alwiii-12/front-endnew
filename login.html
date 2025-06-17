@@ -82,13 +82,15 @@
     <div class="footer">© 2025 LINAC QA System</div>
   </div>
 
-  <!-- Firebase App (core SDK) -->
+  <!-- Firebase App -->
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <!-- Firebase Authentication -->
+  <!-- Firebase Auth -->
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <!-- Firebase Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
-    // ✅ Initialize Firebase
+    // ✅ Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
       authDomain: "linac-qa-project.firebaseapp.com",
@@ -100,8 +102,8 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-
     const auth = firebase.auth();
+    const db = firebase.firestore();
 
     document.getElementById("loginForm").addEventListener("submit", function (e) {
       e.preventDefault();
@@ -110,12 +112,28 @@
       const errorMsg = document.getElementById("errorMsg");
 
       auth.signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-          // ✅ Store user info
+        .then(async (userCredential) => {
+          const user = userCredential.user;
           localStorage.setItem("userEmail", email);
-          const hospitalName = email.split('@')[0].replace(/\W+/g, ' ').toUpperCase();
-          localStorage.setItem("hospitalName", hospitalName);
-          window.location.href = "upload.html";
+
+          try {
+            // ✅ Fetch hospital name from Firestore
+            const docRef = db.collection("users").doc(user.uid);
+            const docSnap = await docRef.get();
+
+            if (docSnap.exists) {
+              const hospitalName = docSnap.data().hospital || "UNKNOWN HOSPITAL";
+              localStorage.setItem("hospitalName", hospitalName.toUpperCase());
+            } else {
+              localStorage.setItem("hospitalName", "UNKNOWN HOSPITAL");
+            }
+
+            window.location.href = "upload.html";
+          } catch (err) {
+            console.error("Error fetching hospital name:", err);
+            localStorage.setItem("hospitalName", "UNKNOWN HOSPITAL");
+            window.location.href = "upload.html";
+          }
         })
         .catch((error) => {
           errorMsg.textContent = "❌ Invalid email or password.";
