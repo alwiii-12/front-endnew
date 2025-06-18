@@ -178,8 +178,7 @@
         currentHospital = localStorage.getItem("hospitalName") || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
 
         localStorage.setItem("uid", currentUID);
-        // Note: "hospital" in localStorage is now "hospitalName" which is set by login.html
-        localStorage.setItem("hospital", currentHospital); // Keep this for consistency if other parts use "hospital" key
+        // localStorage.setItem("hospital", currentHospital); // REMOVED THIS LINE
         document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
         buildMonthButtons();
         loadTable();
