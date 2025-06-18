@@ -13,6 +13,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      position: relative; /* Added for absolute positioning of home link */
     }
     .login-container {
       background: #ffffffcc;
@@ -64,9 +65,27 @@
       font-size: 14px;
       margin-bottom: 10px;
     }
+    /* New CSS for the home link */
+    .home-link {
+        position: absolute; /* Position relative to the body */
+        top: 20px;
+        left: 20px;
+        font-size: 24px; /* Larger size for visibility */
+        text-decoration: none;
+        color: #007bff; /* Blue color */
+        padding: 5px;
+        border-radius: 5px;
+        transition: background-color 0.3s ease; /* Smooth hover effect */
+    }
+    .home-link:hover {
+        background-color: rgba(0, 123, 255, 0.1); /* Light blue background on hover */
+        color: #0056b3; /* Darker blue on hover */
+    }
   </style>
 </head>
 <body>
+  <a href="index.html" class="home-link" title="Go to Home Page">🏠</a>
+
   <div class="login-container">
     <h2>Login - LINAC QA</h2>
     <form id="loginForm">
@@ -82,11 +101,8 @@
     <div class="footer">© 2025 LINAC QA System</div>
   </div>
 
-  <!-- Firebase App -->
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <!-- Firebase Auth -->
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-  <!-- Firebase Firestore -->
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
