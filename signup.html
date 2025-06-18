@@ -1,3 +1,6 @@
+Here's the full `signup.html` with the suggested improvements for better UI feedback and accessibility labels:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,9 +35,18 @@
     .signup-container select {
       width: 100%;
       padding: 10px;
-      margin: 10px 0;
+      margin: 10px 0; /* Adjusted margin for labels */
       border-radius: 5px;
       border: 1px solid #ccc;
+      box-sizing: border-box; /* Ensures padding doesn't increase total width */
+    }
+
+    .signup-container label { /* Added style for labels */
+        display: block;
+        text-align: left;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #555;
     }
 
     .signup-container button {
@@ -46,6 +58,7 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      margin-top: 20px; /* Added margin-top for button */
     }
 
     .signup-container button:hover {
@@ -55,6 +68,7 @@
     .message {
       color: red;
       text-align: center;
+      margin-bottom: 10px; /* Added margin for message */
     }
   </style>
 </head>
@@ -62,10 +76,20 @@
   <div class="signup-container">
     <h2>LINAC QA Signup</h2>
     <div class="message" id="message"></div>
-    <input type="text" id="name" placeholder="Full Name" />
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
-    <input type="text" id="hospital" placeholder="Hospital Name" />
+
+    <label for="name">Full Name:</label>
+    <input type="text" id="name" placeholder="Enter your full name" />
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" placeholder="Enter your email" />
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" placeholder="Choose a password" />
+
+    <label for="hospital">Hospital Name:</label>
+    <input type="text" id="hospital" placeholder="Enter your hospital name" />
+
+    <label for="role">Select Role:</label>
     <select id="role">
       <option value="">Select Role</option>
       <option value="Admin">Admin</option>
@@ -75,7 +99,6 @@
     <button onclick="signup()">Sign Up</button>
   </div>
 
-  <!-- Firebase CDN -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
@@ -101,6 +124,7 @@
       const role = document.getElementById("role").value.trim();
       const messageDiv = document.getElementById("message");
       messageDiv.textContent = "";
+      messageDiv.style.color = "red"; // Reset color to red for errors
 
       if (!name || !email || !password || !hospital || !role) {
         messageDiv.textContent = "Please fill in all fields.";
@@ -127,8 +151,13 @@
 
         const data = await response.json();
         if (data.status === "success") {
-          alert("Signup successful!");
-          window.location.href = "login.html";
+          // Changed from alert to on-page message and delayed redirect
+          messageDiv.textContent = "Signup successful! Redirecting to login...";
+          messageDiv.style.color = "green"; // Make success message green
+          setTimeout(() => {
+            window.location.href = "login.html";
+          }, 1500); // Redirect after 1.5 seconds
+
         } else {
           messageDiv.textContent = "Signup failed: " + data.message;
         }
@@ -141,3 +170,4 @@
   </script>
 </body>
 </html>
+```
