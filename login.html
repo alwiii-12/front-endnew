@@ -65,26 +65,34 @@
       font-size: 14px;
       margin-bottom: 10px;
     }
-    /* New CSS for the home link */
+    /* Updated CSS for the home link to be more visible and theme-matching */
     .home-link {
         position: absolute; /* Position relative to the body */
         top: 20px;
         left: 20px;
-        font-size: 24px; /* Larger size for visibility */
-        text-decoration: none;
-        color: #007bff; /* Blue color */
-        padding: 5px;
-        border-radius: 5px;
-        transition: background-color 0.3s ease; /* Smooth hover effect */
+        font-size: 16px; /* Standard font size */
+        font-weight: bold; /* Make text bolder */
+        text-decoration: none; /* Remove underline */
+        color: white; /* White text for contrast */
+        background-color: #007bff; /* Primary blue button color */
+        padding: 8px 15px; /* More padding to look like a button */
+        border-radius: 6px; /* Rounded corners */
+        transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth hover and press effect */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow */
     }
     .home-link:hover {
-        background-color: rgba(0, 123, 255, 0.1); /* Light blue background on hover */
-        color: #0056b3; /* Darker blue on hover */
+        background-color: #0056b3; /* Darker blue on hover */
+        transform: translateY(-1px); /* Slight lift on hover */
+    }
+    .home-link:active {
+        background-color: #003d80; /* Even darker blue when pressed */
+        transform: translateY(0); /* Reset position when pressed */
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* Smaller shadow when pressed */
     }
   </style>
 </head>
 <body>
-  <a href="index.html" class="home-link" title="Go to Home Page">🏠</a>
+  <a href="index.html" class="home-link" title="Go to Home Page">Home</a>
 
   <div class="login-container">
     <h2>Login - LINAC QA</h2>
