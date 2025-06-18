@@ -53,7 +53,7 @@
       color: white;
       font-weight: bold;
       border: none;
-      border-radius: 5px;
+      border-radius: 5phx;
       cursor: pointer;
       margin-top: 20px; /* Added margin-top for button */
     }
@@ -117,7 +117,7 @@
       const name = document.getElementById("name").value.trim();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
-      const hospital = document.getElementById("hospital").value.trim();
+      const hospital = document.getElementById("hospital").value.trim(); // Get hospital value
       const role = document.getElementById("role").value.trim();
       const messageDiv = document.getElementById("message");
       messageDiv.textContent = "";
@@ -141,17 +141,20 @@
             uid,
             name,
             email,
-            hospital,
+            hospital, // Send hospital to backend
             role
           })
         });
 
         const data = await response.json();
         if (data.status === "success") {
+          // Store hospital name in localStorage after successful signup
+          localStorage.setItem("hospitalName", hospital.toUpperCase()); // Store it here!
+
           messageDiv.textContent = "Signup successful! Redirecting...";
           messageDiv.style.color = "green"; // Make success message green
           setTimeout(() => {
-            window.location.href = "upload.html"; // Changed redirect target
+            window.location.href = "upload.html"; // Redirect to the main dashboard page
           }, 1500); // Redirect after 1.5 seconds
 
         } else {
