@@ -72,19 +72,13 @@
       flex-grow: 1;
       padding: 20px;
       overflow: auto;
-      display: flex; /* Added for vertical flex layout */
-      flex-direction: column; /* Arrange children vertically */
     }
     .container {
       display: flex;
       gap: 20px;
       align-items: flex-start;
-      flex: 1; /* Allow container to grow vertically */
     }
-    #table {
-        flex-grow: 1; /* Allow table container to grow vertically */
-        min-height: 200px; /* Give it a minimum height if no data */
-    }
+    #table { flex-grow: 1; }
     .summary-box {
       width: 300px;
       background: white;
@@ -268,14 +262,11 @@
         hot = new Handsontable(container, {
           data,
           rowHeaders: false,
-          stretchH: 'all', // Kept for horizontal fitting
-          // height: 500, // REMOVED THIS LINE for vertical expansion
+          stretchH: 'all',
+          height: 500,
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
-          // Optional: Add colWidths and stretchH: 'last' for more precise horizontal control if needed
-          // colWidths: [80].concat(Array(dateCols.length).fill(null)),
-          // stretchH: 'last',
           afterChange: (changes, source) => {
             if (!changes || source === 'loadData') return;
             updateSummaryAndChart(hot.getData());
@@ -436,7 +427,7 @@
         const dataPoints = [];
         const labels = [];
         const currentYear = currentDate.getFullYear();
-        const currentMonth = currentDate.getMonth() + 1;
+        const currentMonth = currentDate.getMonth() + 1; // 1-indexed month
 
         const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
 
