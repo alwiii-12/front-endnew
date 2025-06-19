@@ -29,16 +29,16 @@
     }
 
     .signup-container input,
-    .signup-container select {
+    .signup-container select { /* Apply styles to select as well */
       width: 100%;
       padding: 10px;
-      margin: 10px 0; /* Adjusted margin for labels */
+      margin: 10px 0;
       border-radius: 5px;
       border: 1px solid #ccc;
-      box-sizing: border-box; /* Ensures padding doesn't increase total width */
+      box-sizing: border-box;
     }
 
-    .signup-container label { /* Added style for labels */
+    .signup-container label {
         display: block;
         text-align: left;
         margin-bottom: 5px;
@@ -53,9 +53,9 @@
       color: white;
       font-weight: bold;
       border: none;
-      border-radius: 5phx;
+      border-radius: 5px;
       cursor: pointer;
-      margin-top: 20px; /* Added margin-top for button */
+      margin-top: 20px;
     }
 
     .signup-container button:hover {
@@ -65,7 +65,7 @@
     .message {
       color: red;
       text-align: center;
-      margin-bottom: 10px; /* Added margin for message */
+      margin-bottom: 10px;
     }
   </style>
 </head>
@@ -83,8 +83,15 @@
     <label for="password">Password:</label>
     <input type="password" id="password" placeholder="Choose a password" />
 
-    <label for="hospital">Hospital Name:</label>
-    <input type="text" id="hospital" placeholder="Enter your hospital name" />
+    <label for="hospital">Select Hospital:</label>
+    <select id="hospital">
+      <option value="">-- Select Hospital --</option>
+      <option value="AOI GURUGRAM">AOI GURUGRAM</option>
+      <option value="Medanta Gurugram">Medanta Gurugram</option>
+      <option value="Fortis Hospital Delhi">Fortis Hospital Delhi</option>
+      <option value="Apollo Hospitals Chennai">Apollo Hospitals Chennai</option>
+      <option value="Max Healthcare Delhi">Max Healthcare Delhi</option>
+      </select>
 
     <label for="role">Select Role:</label>
     <select id="role">
@@ -117,13 +124,15 @@
       const name = document.getElementById("name").value.trim();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
-      const hospital = document.getElementById("hospital").value.trim(); // Get hospital value
+      // Changed: Get value from select element instead of text input
+      const hospital = document.getElementById("hospital").value.trim();
       const role = document.getElementById("role").value.trim();
       const messageDiv = document.getElementById("message");
       messageDiv.textContent = "";
       messageDiv.style.color = "red"; // Reset color to red for errors
 
-      if (!name || !email || !password || !hospital || !role) {
+      // Modified validation to also check if hospital is selected
+      if (!name || !email || !password || !hospital || hospital === "" || !role || role === "") {
         messageDiv.textContent = "Please fill in all fields.";
         return;
       }
@@ -141,7 +150,7 @@
             uid,
             name,
             email,
-            hospital, // Send hospital to backend
+            hospital,
             role
           })
         });
@@ -149,13 +158,13 @@
         const data = await response.json();
         if (data.status === "success") {
           // Store hospital name in localStorage after successful signup
-          localStorage.setItem("hospitalName", hospital.toUpperCase()); // Store it here!
+          localStorage.setItem("hospitalName", hospital.toUpperCase());
 
           messageDiv.textContent = "Signup successful! Redirecting...";
-          messageDiv.style.color = "green"; // Make success message green
+          messageDiv.style.color = "green";
           setTimeout(() => {
-            window.location.href = "upload.html"; // Redirect to the main dashboard page
-          }, 1500); // Redirect after 1.5 seconds
+            window.location.href = "upload.html";
+          }, 1500);
 
         } else {
           messageDiv.textContent = "Signup failed: " + data.message;
