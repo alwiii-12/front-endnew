@@ -10,11 +10,10 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(to bottom right, #dbeafe, #f0f9ff);
       display: flex;
-      flex-direction: column; /* Changed to column to stack login and home link */
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      /* Removed position: relative; */
     }
     .login-container {
       background: #ffffffcc;
@@ -24,7 +23,6 @@
       width: 100%;
       max-width: 360px;
       text-align: center;
-      /* Removed margin-bottom if it was here, replaced by home-link margin-top */
     }
     h2 {
       margin-bottom: 24px;
@@ -67,22 +65,26 @@
       font-size: 14px;
       margin-bottom: 10px;
     }
-    /* Updated CSS for the home link to be outside and below the container */
+    .success-message { /* New style for success messages */
+        color: green;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
     .home-link {
-        display: block; /* Make it a block element to take up space */
-        max-width: 120px; /* Set a reasonable max-width */
-        margin: 20px auto 0 auto; /* Top margin, and auto left/right margins to center */
+        display: block;
+        max-width: 120px;
+        margin: 20px auto 0 auto;
         font-size: 16px;
         font-weight: bold;
         text-decoration: none;
-        color: #007bff; /* Primary blue for the link text */
-        background-color: #e6f2ff; /* Light background for a subtle button look */
-        padding: 10px 20px; /* Padding for button look */
+        color: #007bff;
+        background-color: #e6f2ff;
+        padding: 10px 20px;
         border-radius: 6px;
         transition: background-color 0.3s ease, transform 0.2s ease;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        box-sizing: border-box; /* Include padding in width calculation */
-        text-align: center; /* Center the text inside the button */
+        box-sizing: border-box;
+        text-align: center;
     }
     .home-link:hover {
         background-color: #d0e7ff;
@@ -93,6 +95,18 @@
         transform: translateY(0);
         box-shadow: 0 0px 2px rgba(0, 0, 0, 0.1);
     }
+    .forgot-password-link { /* New style for forgot password link */
+        display: block;
+        text-align: right;
+        font-size: 14px;
+        margin-top: -15px; /* Adjust margin to align below password input */
+        margin-bottom: 15px;
+        color: #007bff;
+        text-decoration: none;
+    }
+    .forgot-password-link:hover {
+        text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -100,20 +114,18 @@
     <h2>Login - LINAC QA</h2>
     <form id="loginForm">
       <div class="error" id="errorMsg"></div>
-      <label for="email">Email:</label>
+      <div class="success-message" id="successMsg"></div> <label for="email">Email:</label>
       <input type="email" id="email" name="email" required />
 
       <label for="password">Password:</label>
       <input type="password" id="password" name="password" required />
 
-      <button type="submit">Login</button>
+      <a href="#" class="forgot-password-link" onclick="sendPasswordReset()">Forgot Password?</a> <button type="submit">Login</button>
     </form>
-
     <div class="footer">© 2025 LINAC QA System</div>
   </div>
 
   <a href="index.html" class="home-link" title="Go to Home Page">Home</a>
-
 
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -135,11 +147,21 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // Get message divs
+    const errorMsg = document.getElementById("errorMsg");
+    const successMsg = document.getElementById("successMsg"); // Get new success message div
+
+    function clearMessages() {
+        errorMsg.textContent = "";
+        successMsg.textContent = "";
+    }
+
     document.getElementById("loginForm").addEventListener("submit", function (e) {
       e.preventDefault();
+      clearMessages(); // Clear messages on new attempt
+
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
-      const errorMsg = document.getElementById("errorMsg");
 
       auth.signInWithEmailAndPassword(email, password)
         .then(async (userCredential) => {
@@ -147,7 +169,6 @@
           localStorage.setItem("userEmail", email);
 
           try {
-            // ✅ Fetch hospital name from Firestore
             const docRef = db.collection("users").doc(user.uid);
             const docSnap = await docRef.get();
 
@@ -167,8 +188,34 @@
         })
         .catch((error) => {
           errorMsg.textContent = "❌ Invalid email or password.";
+          console.error("Login error:", error);
         });
     });
+
+    // NEW FUNCTION: Send Password Reset Email
+    async function sendPasswordReset() {
+        clearMessages(); // Clear previous messages
+        const email = document.getElementById("email").value;
+
+        if (!email) {
+            errorMsg.textContent = "Please enter your email to reset password.";
+            return;
+        }
+
+        try {
+            await auth.sendPasswordResetEmail(email);
+            successMsg.textContent = "✅ Password reset email sent. Check your inbox!";
+        } catch (error) {
+            console.error("Password reset error:", error);
+            if (error.code === 'auth/user-not-found') {
+                errorMsg.textContent = "No user found with that email address.";
+            } else if (error.code === 'auth/invalid-email') {
+                errorMsg.textContent = "Please enter a valid email address.";
+            } else {
+                errorMsg.textContent = "Error sending password reset email: " + error.message;
+            }
+        }
+    }
   </script>
 </body>
 </html>
