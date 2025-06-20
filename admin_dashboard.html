@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        h1 { color: #007bff; }
+        .message { margin-top: 20px; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+    <h1>Welcome, Admin!</h1>
+    <p class="message">This is your exclusive admin dashboard. Features coming soon!</p>
+    <button onclick="logout()">Logout</button>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script>
+        // Firebase config (same as your other pages)
+        const firebaseConfig = { /* your firebaseConfig here */ };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        function logout() {
+            auth.signOut().then(() => {
+                localStorage.clear();
+                window.location.href = "login.html";
+            });
+        }
+
+        // Basic check to prevent non-admins from directly accessing (optional, but good)
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.href = "login.html";
+            } else {
+                const userRole = localStorage.getItem("userRole");
+                if (userRole !== "Admin") {
+                    alert("Access Denied: You are not authorized to view this page.");
+                    window.location.href = "upload.html"; // Redirect non-admins
+                }
+            }
+        });
+    </script>
+</body>
+</html>
