@@ -80,13 +80,10 @@
       gap: 20px;
       align-items: flex-start;
       flex: 1;
-      min-height: 200px;
     }
     #table {
         flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-        min-height: 250px;
+        min-height: 200px;
     }
     .summary-box {
       width: 300px;
@@ -263,16 +260,17 @@
       try {
         const res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`);
         const result = await res.json();
+        // The 'data' array passed to Handsontable is generated here:
         const data = Array.isArray(result.data) && result.data.length === energyTypes.length
           ? result.data.map(r=>r.map(c=> c===null||c==="None"?"":c))
-          : generateEmptyData(dateCols);
+          : generateEmptyData(dateCols); // If no data from backend, it uses empty data structure
 
         if (hot) hot.destroy();
         hot = new Handsontable(container, {
-          data,
+          data, // This 'data' is what Handsontable will display
           rowHeaders: false,
-          stretchH: 'all',
-          // height: 500, // This line was removed to allow vertical expansion
+          stretchH: 'all', // Kept for horizontal fitting
+          // height: 500, // REMOVED THIS LINE for vertical expansion
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
@@ -369,10 +367,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    outValues: outOfToleranceValues,
-                    hospitalName: currentHospital // Pass the hospital name
-                })
+                body: JSON.stringify({ outValues: outOfToleranceValues })
             });
 
             const alertResult = await alertResponse.json();
