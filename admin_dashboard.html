@@ -3,22 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Admin Dashboard | LINAC QA</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-        h1 { color: #007bff; }
-        .message { margin-top: 20px; font-size: 1.2em; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: linear-gradient(to bottom right, #dbeafe, #f0f9ff);
+        }
+        .admin-header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            font-size: 2em;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .admin-content {
+            flex-grow: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .admin-content h1 {
+            color: #1e3a8a;
+            margin-bottom: 20px;
+        }
+        .admin-content p {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .logout-button {
+            padding: 10px 20px;
+            background-color: #dc3545; /* Red for logout */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .logout-button:hover {
+            background-color: #c82333;
+        }
+        .admin-footer {
+            margin-top: auto; /* Pushes footer to the bottom */
+            padding: 15px;
+            font-size: 12px;
+            color: #6b7280;
+            background-color: #f8f8f8;
+            border-top: 1px solid #ccc;
+        }
     </style>
 </head>
 <body>
-    <h1>Welcome, Admin!</h1>
-    <p class="message">This is your exclusive admin dashboard. Features coming soon!</p>
-    <button onclick="logout()">Logout</button>
+    <div class="admin-header">
+        LINAC QA Admin Portal
+    </div>
+    <div class="admin-content">
+        <h1>Welcome, Administrator!</h1>
+        <p>This is your exclusive admin dashboard. Here you will be able to manage users, access aggregated data, and configure system settings.</p>
+        <p class="message">Further admin features are coming soon!</p>
+        <button onclick="logout()" class="logout-button">Logout</button>
+    </div>
+    <div class="admin-footer">
+        © 2025 LINAC QA System - Admin Access
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
     <script>
-        // Firebase config (same as your other pages)
-        const firebaseConfig = { /* your firebaseConfig here */ };
+        // Firebase config copied from login.html
+        const firebaseConfig = {
+          apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
+          authDomain: "linac-qa-project.firebaseapp.com",
+          projectId: "linac-qa-project",
+          storageBucket: "linac-qa-project.firebasestorage.app",
+          messagingSenderId: "850988733382",
+          appId: "1:850988733382:web:ef75d64e30deb7e37c18c7",
+          measurementId: "G-HFJ2CGS664"
+        };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
@@ -29,9 +102,9 @@
             });
         }
 
-        // Basic check to prevent non-admins from directly accessing (optional, but good)
+        // Basic check to prevent non-admins from directly accessing this page
         auth.onAuthStateChanged(user => {
-            if (!user) {
+            if (!user) { // No user logged in
                 window.location.href = "login.html";
             } else {
                 const userRole = localStorage.getItem("userRole");
