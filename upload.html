@@ -72,30 +72,22 @@
       flex-grow: 1;
       padding: 20px;
       overflow: auto;
-      display: flex; /* Added for vertical flex layout */
-      flex-direction: column; /* Arrange children vertically */
+      display: flex;
+      flex-direction: column;
     }
     .container {
       display: flex;
       gap: 20px;
       align-items: flex-start;
-      flex: 1; /* Allow container to grow vertically */
-      min-height: 200px; /* Give it a minimum height just in case */
+      flex: 1;
+      min-height: 200px;
     }
     #table {
         flex-grow: 1; /* Allows #table to grow within .container */
-        display: flex; /* Make #table a flex container too */
-        flex-direction: column; /* Stack Handsontable content vertically */
-        min-height: 250px; /* Give Handsontable container a visible minimum height */
-        align-items: flex-start; /* Align contents to the start, not stretched */
-        justify-content: flex-start; /* Align contents to the start, not stretched */
+        /* Simplified flex properties for #table */
+        min-height: 300px; /* Give it a guaranteed minimum height */
     }
-    /* New rule to ensure Handsontable's internal master container stretches */
-    #table .ht_master {
-        flex-grow: 1; /* Make the Handsontable core element grow */
-        display: flex; /* Make it a flex container */
-        flex-direction: column; /* Stack its internal elements vertically */
-    }
+    /* Removed the previous #table .ht_master rule */
     .summary-box {
       width: 300px;
       background: white;
@@ -282,6 +274,9 @@
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
+          // These options help with rendering in flexible layouts:
+          viewportColumnRenderingOffset: 10,
+          viewportRowRenderingOffset: 10,
           afterChange: (changes, source) => {
             if (!changes || source === 'loadData') return;
             updateSummaryAndChart(hot.getData());
