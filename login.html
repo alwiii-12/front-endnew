@@ -131,8 +131,11 @@
 
   <a href="index.html" class="home-link" title="Go to Home Page">Home</a>
 
+  <!-- Firebase App -->
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <!-- Firebase Auth -->
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <!-- Firebase Firestore -->
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
@@ -166,49 +169,64 @@
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
 
+      console.log("Login attempt for email:", email); // Log 1
+
       auth.signInWithEmailAndPassword(email, password)
         .then(async (userCredential) => {
           const user = userCredential.user;
+          console.log("Firebase Auth success. User UID:", user.uid); // Log 2
           localStorage.setItem("userEmail", email); // Store user email if needed
 
           try {
-            // Fetch user data from Firestore to get hospital and role
             const userDocRef = db.collection("users").doc(user.uid);
+            console.log("Attempting to fetch Firestore document for UID:", user.uid); // Log 3
             const userDocSnap = await userDocRef.get();
+
+            console.log("Firestore document exists:", userDocSnap.exists); // Log 4
 
             if (userDocSnap.exists) {
               const userData = userDocSnap.data();
+              console.log("Firestore user data fetched:", userData); // Log 5
               const hospitalName = userData.hospital || "UNKNOWN HOSPITAL";
               const userRole = userData.role; // Get the user's role
 
+              console.log("Hospital Name from Firestore:", hospitalName); // Log 6
+              console.log("User Role from Firestore:", userRole); // Log 7
+
               localStorage.setItem("hospitalName", hospitalName.toUpperCase());
               localStorage.setItem("userRole", userRole); // Store user's role in local storage
+              console.log("Role stored in localStorage:", localStorage.getItem("userRole")); // Log 8
 
               // Redirect based on role
               if (userRole === "Admin") {
+                console.log("Redirecting to admin_dashboard.html"); // Log 9
                 window.location.href = "admin_dashboard.html"; // Admin specific page
               } else {
+                console.log("Redirecting to upload.html (regular user)"); // Log 10
                 window.location.href = "upload.html"; // Regular user page
               }
 
             } else {
               // If user document doesn't exist in Firestore after Firebase Auth login
-              console.warn("User document not found in Firestore for UID:", user.uid);
+              console.warn("User document NOT found in Firestore for UID:", user.uid); // Log 11
               localStorage.setItem("hospitalName", "UNKNOWN HOSPITAL");
               localStorage.setItem("userRole", "unknown"); // Assign a default role
+              console.log("Role set to 'unknown' due to missing Firestore document."); // Log 12
               window.location.href = "upload.html"; // Default to regular user page
             }
           } catch (err) {
-            console.error("Error fetching user data from Firestore:", err);
-            // Fallback in case of Firestore error, still redirect to regular user page
+            console.error("Error fetching user data from Firestore:", err); // Log 13
+            console.error("Firestore fetch error details:", err.message, err.code); // Log 14
             localStorage.setItem("hospitalName", "UNKNOWN HOSPITAL");
             localStorage.setItem("userRole", "unknown");
+            console.log("Role set to 'unknown' due to Firestore fetch error."); // Log 15
             window.location.href = "upload.html";
           }
         })
         .catch((error) => {
           errorMsg.textContent = "❌ Invalid email or password.";
-          console.error("Login error:", error);
+          console.error("Firebase Auth login error:", error); // Log 16
+          console.error("Auth error details:", error.message, error.code); // Log 17
         });
     });
 
