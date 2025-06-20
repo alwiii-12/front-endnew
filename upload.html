@@ -72,18 +72,29 @@
       flex-grow: 1;
       padding: 20px;
       overflow: auto;
-      display: flex;
-      flex-direction: column;
+      display: flex; /* Added for vertical flex layout */
+      flex-direction: column; /* Arrange children vertically */
     }
     .container {
       display: flex;
       gap: 20px;
       align-items: flex-start;
-      flex: 1;
+      flex: 1; /* Allow container to grow vertically */
+      min-height: 200px; /* Give it a minimum height just in case */
     }
     #table {
-        flex-grow: 1;
-        min-height: 200px;
+        flex-grow: 1; /* Allows #table to grow within .container */
+        display: flex; /* Make #table a flex container too */
+        flex-direction: column; /* Stack Handsontable content vertically */
+        min-height: 250px; /* Give Handsontable container a visible minimum height */
+        align-items: flex-start; /* Align contents to the start, not stretched */
+        justify-content: flex-start; /* Align contents to the start, not stretched */
+    }
+    /* New rule to ensure Handsontable's internal master container stretches */
+    #table .ht_master {
+        flex-grow: 1; /* Make the Handsontable core element grow */
+        display: flex; /* Make it a flex container */
+        flex-direction: column; /* Stack its internal elements vertically */
     }
     .summary-box {
       width: 300px;
@@ -210,7 +221,6 @@
         currentHospital = localStorage.getItem("hospitalName") || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
 
         localStorage.setItem("uid", currentUID);
-        // localStorage.setItem("hospital", currentHospital); // Make sure this is GONE or COMMENTED OUT
         document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
         buildMonthButtons();
         loadTable();
@@ -260,23 +270,18 @@
       try {
         const res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`);
         const result = await res.json();
-        // The 'data' array passed to Handsontable is generated here:
         const data = Array.isArray(result.data) && result.data.length === energyTypes.length
           ? result.data.map(r=>r.map(c=> c===null||c==="None"?"":c))
-          : generateEmptyData(dateCols); // If no data from backend, it uses empty data structure
+          : generateEmptyData(dateCols);
 
         if (hot) hot.destroy();
         hot = new Handsontable(container, {
-          data, // This 'data' is what Handsontable will display
+          data,
           rowHeaders: false,
-          stretchH: 'all', // Kept for horizontal fitting
-          // height: 500, // REMOVED THIS LINE for vertical expansion
+          stretchH: 'all',
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
-          // Optional: Add colWidths and stretchH: 'last' for more precise horizontal control if needed
-          // colWidths: [80].concat(Array(dateCols.length).fill(null)),
-          // stretchH: 'last',
           afterChange: (changes, source) => {
             if (!changes || source === 'loadData') return;
             updateSummaryAndChart(hot.getData());
@@ -367,7 +372,10 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ outValues: outOfToleranceValues })
+                body: JSON.stringify({
+                    outValues: outOfToleranceValues,
+                    hospitalName: currentHospital
+                })
             });
 
             const alertResult = await alertResponse.json();
