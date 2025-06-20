@@ -29,7 +29,7 @@
     }
 
     .signup-container input,
-    .signup-container select { /* Apply styles to select as well */
+    .signup-container select {
       width: 100%;
       padding: 10px;
       margin: 10px 0;
@@ -96,7 +96,6 @@
     <label for="role">Select Role:</label>
     <select id="role">
       <option value="">Select Role</option>
-      <option value="Admin">Admin</option>
       <option value="Physicist">Physicist</option>
       <option value="Technologist">Technologist</option>
     </select>
@@ -124,14 +123,12 @@
       const name = document.getElementById("name").value.trim();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
-      // Changed: Get value from select element instead of text input
       const hospital = document.getElementById("hospital").value.trim();
       const role = document.getElementById("role").value.trim();
       const messageDiv = document.getElementById("message");
       messageDiv.textContent = "";
-      messageDiv.style.color = "red"; // Reset color to red for errors
+      messageDiv.style.color = "red";
 
-      // Modified validation to also check if hospital is selected
       if (!name || !email || !password || !hospital || hospital === "" || !role || role === "") {
         messageDiv.textContent = "Please fill in all fields.";
         return;
@@ -157,7 +154,6 @@
 
         const data = await response.json();
         if (data.status === "success") {
-          // Store hospital name in localStorage after successful signup
           localStorage.setItem("hospitalName", hospital.toUpperCase());
 
           messageDiv.textContent = "Signup successful! Redirecting...";
