@@ -86,11 +86,11 @@
     <label for="hospital">Select Hospital:</label>
     <select id="hospital">
       <option value="">-- Select Hospital --</option>
-      <option value="AOI GURUGRAM">AOI GURUGRAM</option>
-      <option value="Medanta Gurugram">Medanta Gurugram</option>
-      <option value="Fortis Hospital Delhi">Fortis Hospital Delhi</option>
-      <option value="Apollo Hospitals Chennai">Apollo Hospitals Chennai</option>
-      <option value="Max Healthcare Delhi">Max Healthcare Delhi</option>
+      <option value="aoi_gurugram">AOI GURUGRAM</option>
+      <option value="medanta_gurugram">Medanta Gurugram</option>
+      <option value="fortis_delhi">Fortis Hospital Delhi</option>
+      <option value="apollo_chennai">Apollo Hospitals Chennai</option>
+      <option value="max_delhi">Max Healthcare Delhi</option>
       </select>
 
     <label for="role">Select Role:</label>
@@ -138,32 +138,34 @@
         const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
         const uid = userCredential.user.uid;
 
+        // Send initial status as "pending" along with other user data to backend
         const response = await fetch("https://back-end-wrxi.onrender.com/signup", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            uid,
-            name,
-            email,
-            hospital,
-            role
-          })
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                uid,
+                name,
+                email,
+                hospital, // This is the centerId (value from dropdown)
+                role,
+                status: "pending" // Set initial status to pending
+            })
         });
 
         const data = await response.json();
         if (data.status === "success") {
-          localStorage.setItem("hospitalName", hospital.toUpperCase());
+            // Note: hospitalName is now the center ID from the dropdown,
+            // but we use it as hospitalName in localStorage for display consistency in upload.html
+            localStorage.setItem("hospitalName", hospital.toUpperCase());
 
-          messageDiv.textContent = "Signup successful! Redirecting...";
-          messageDiv.style.color = "green";
-          setTimeout(() => {
-            window.location.href = "upload.html";
-          }, 1500);
+            messageDiv.textContent = "Signup successful! Your account is awaiting approval. You will receive an email once approved.";
+            messageDiv.style.color = "green";
+            setTimeout(() => {
+                window.location.href = "awaiting_approval.html"; // Redirect to approval page
+            }, 3000);
 
         } else {
-          messageDiv.textContent = "Signup failed: " + data.message;
+            messageDiv.textContent = "Signup failed: " + data.message;
         }
 
       } catch (error) {
