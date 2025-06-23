@@ -22,18 +22,23 @@
     }
     .topbar {
       display: flex;
-      justify-content: space-between;
+      justify-content: space-between; /* Spreads items across the main axis */
       align-items: center;
       background: #f8f8f8;
       padding: 10px 20px;
       border-bottom: 1px solid #ccc;
     }
-    .topbar span { font-weight: bold; }
+    .topbar #hospitalName { /* Targeting the hospital name span specifically */
+        font-weight: bold;
+        /* No margin-right here, let the flex-grow span handle spacing */
+    }
     .topbar button {
       padding: 6px 12px;
       font-size: 14px;
       cursor: pointer;
-      margin-left: 10px; /* NEW: Add margin-left for spacing between buttons */
+      margin-left: 10px; /* Provides spacing between buttons */
+      /* Ensure no conflicting margin-right */
+      margin-right: 0;
     }
     body.dark .topbar {
       background-color: #222;
@@ -73,20 +78,16 @@
       flex-grow: 1;
       padding: 20px;
       overflow: auto;
-      /* Reverted flex properties for .main */
     }
     .container {
       display: flex;
       gap: 20px;
       align-items: flex-start;
-      /* Reverted flex property for .container */
     }
     #table {
-        flex-grow: 1; /* Reverted to original flex-grow */
-        height: 500px; /* Reverted: Added fixed height back */
-        /* Removed flex properties and min-height for #table */
+        flex-grow: 1;
+        height: 500px;
     }
-    /* Removed #table .ht_master rule */
     .summary-box {
       width: 300px;
       background: white;
@@ -144,6 +145,9 @@
 <body>
   <div class="topbar">
     <span id="hospitalName">Hospital: </span>
+    <!-- NEW: Spacer span to push buttons to the right -->
+    <span style="flex-grow: 1;"></span>
+    <!-- Moved My Profile button here -->
     <button onclick="window.location.href='my_profile.html'">My Profile</button>
     <button onclick="logout()">Logout</button>
   </div>
@@ -174,21 +178,25 @@
           <p style="color:red;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
         </div>
       </div>
+      <!-- SAVE SECTION IS HERE, ABOVE THE TREND CHART -->
       <div id="save-section">
         <button onclick="manualSave()" style="padding:6px 14px;font-weight:bold;">💾 Save</button>
         <span id="lastSaved" style="margin-left:15px;font-size:14px;color:gray;"></span>
       </div>
+      <!-- TREND CHART SECTION IS BELOW THE SAVE SECTION -->
       <div class="trend-chart-section" style="margin-top: 30px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
         <h3>Energy Trend Analysis (Current Month)</h3>
         <div style="margin-bottom: 15px;">
           <label for="trendEnergySelect" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
           <select id="trendEnergySelect" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
-            </select>
+            <!-- Options will be dynamically populated by JS -->
+          </select>
           <button onclick="updateTrendChart()" style="margin-left: 10px; padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Show Trend</button>
         </div>
         <canvas id="trendChart" style="max-height: 350px; width: 100%;"></canvas>
       </div>
-      </div>
+      <!-- END NEW SECTION -->
+    </div>
   </div>
 
   <div id="loading-overlay"><div class="spinner"></div></div>
@@ -299,7 +307,8 @@
 
         updateSummaryAndChart(data);
       } catch(e) {
-        console.error(e);
+        console.error("Error loading table data:", e); // Added more specific logging
+        alert("Could not load table data. Please try again.");
       } finally {
         hideLoader();
       }
