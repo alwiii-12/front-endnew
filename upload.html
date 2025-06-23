@@ -33,23 +33,30 @@
         /* No margin-right here, let the flex-grow span handle spacing */
     }
     .topbar button {
+      /* Common button styles moved inline for color control */
       padding: 6px 12px;
       font-size: 14px;
       cursor: pointer;
       margin-left: 10px; /* Provides spacing between buttons */
-      /* Ensure no conflicting margin-right */
       margin-right: 0;
+      border-radius: 5px; /* Added common border-radius here */
+      transition: background-color 0.3s ease; /* Added common transition here */
+    }
+    /* Specific hover effects for the new colored buttons */
+    .topbar button:hover {
+      opacity: 0.9; /* Slightly dim on hover for all buttons */
     }
     body.dark .topbar {
       background-color: #222;
       color: white;
       border-bottom: 1px solid #444;
     }
-    body.dark .topbar button {
+    /* Removed specific dark theme button styles as colors are now inline */
+    /* body.dark .topbar button {
       background: #444;
       color: white;
       border: none;
-    }
+    } */
     .content {
       display: flex;
       flex: 1;
@@ -147,9 +154,16 @@
     <span id="hospitalName">Hospital: </span>
     <!-- NEW: Spacer span to push buttons to the right -->
     <span style="flex-grow: 1;"></span>
-    <!-- Moved My Profile button here -->
-    <button onclick="window.location.href='my_profile.html'">My Profile</button>
-    <button onclick="logout()">Logout</button>
+    <!-- My Profile button with blue style -->
+    <button onclick="window.location.href='my_profile.html'"
+            style="background-color: #007bff; color: white; border: none;">
+      My Profile
+    </button>
+    <!-- Logout button with red style -->
+    <button onclick="logout()"
+            style="background-color: #dc3545; color: white; border: none;">
+      Logout
+    </button>
   </div>
 
   <div class="content">
@@ -286,7 +300,7 @@
           data,
           rowHeaders: false,
           stretchH: 'all',
-          height: 500, /* Reverted: Added fixed height back */
+          height: 500,
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
@@ -307,7 +321,7 @@
 
         updateSummaryAndChart(data);
       } catch(e) {
-        console.error("Error loading table data:", e); // Added more specific logging
+        console.error("Error loading table data:", e);
         alert("Could not load table data. Please try again.");
       } finally {
         hideLoader();
