@@ -29,6 +29,7 @@
       --background-light: #f5f5f5; /* Light grey body background */
       --background-white-card: #ffffff; /* Pure white for cards */
       --background-dark-card: #333; /* Dark grey for dark mode cards */
+      --background-off-white: #f8f8f8; /* Off-white for subtle distinction */
       --border-light: #ccc; /* Light grey border */
       --success-green: #28a745; /* Green for success */
       --warning-orange: #ffc107; /* Orange for warning */
@@ -65,20 +66,10 @@
         box-shadow: 0 1px 4px var(--shadow-light) inset; /* Inset shadow on click */
     }
 
-    /* Card/Panel Base Styling */
-    .card-panel {
-      border-radius: 16px; /* Consistent larger rounded corners */
-      box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium); /* Layered soft shadows */
-      background: var(--background-white-card); /* White background for cards */
-      border: 1px solid rgba(0,0,0,0.05); /* Very subtle border */
-      padding: 20px; /* Default padding for panels */
-      box-sizing: border-box; /* Include padding in element's total width/height */
-    }
-
     /* Topbar styling */
     .topbar {
       display: flex;
-      justify-content: space-between;
+      justify-content: space-between; /* Spreads items across the main axis */
       align-items: center;
       background: var(--background-white-card);
       padding: 10px 20px;
@@ -86,16 +77,17 @@
       box-shadow: 0 2px 4px var(--shadow-light);
       min-height: 50px; /* Ensure topbar has minimum height */
     }
-    .topbar #hospitalName {
-        font-weight: 500; /* Medium font weight */
+    .topbar #hospitalName { /* Targeting the hospital name span specifically */
+        font-weight: 500;
         font-size: 1.1em;
-        color: var(--primary-blue); /* Blue color for hospital name */
+        color: var(--primary-blue);
     }
     .topbar button {
       padding: 8px 15px; /* Increased padding for better clickability */
       font-size: 14px;
-      margin-left: 10px;
-      color: var(--text-light); /* White text */
+      margin-left: 10px; /* Provides spacing between buttons */
+      margin-right: 0;
+      color: var(--text-light); /* Default text color for topbar buttons */
       border-radius: 6px; /* Slightly smaller border radius than cards for buttons */
     }
     .topbar button:first-of-type { /* My Profile button */
@@ -109,6 +101,12 @@
     }
     .topbar button:last-of-type:hover {
         background-color: #bb2d3b; /* Darker red on hover */
+    }
+
+
+    body.dark .topbar {
+      background-color: #2a2a2a;
+      border-color: #444;
     }
 
     .content {
@@ -126,25 +124,26 @@
     }
     .sidebar h2 {
         margin: 0 0 20px;
-        color: var(--primary-blue); /* Blue color for sidebar heading */
-        font-weight: 600; /* Semi-bold */
+        color: var(--primary-blue);
+        font-weight: 600;
+        font-size: 1.5em;
     }
     .sidebar button {
       width: 100%;
       margin-bottom: 8px;
-      padding: 10px 8px; /* Increased padding */
-      border: none;
+      padding: 10px 8px;
       background: #eee; /* Light grey for inactive months */
-      color: var(--text-dark); /* Black text for months */
+      color: var(--text-dark); /* Ensure text is dark in light mode */
       font-weight: 500;
       text-align: center;
+      border-radius: 6px;
     }
     .sidebar button.active {
         background: var(--primary-blue);
-        color: var(--text-light);
+        color: var(--text-light); /* Active button text is white */
         box-shadow: 0 2px 6px var(--shadow-light);
     }
-    .sidebar button:hover:not(.active) { /* Hover for inactive month buttons */
+    .sidebar button:hover:not(.active) {
         background: #e0e0e0;
         transform: translateY(-1px);
         box-shadow: 0 2px 6px var(--shadow-light);
@@ -154,16 +153,16 @@
         align-items: center;
         margin-top: 15px;
         font-size: 0.95em;
-        color: var(--text-dark); /* Ensure it's dark in light mode */
+        color: var(--text-dark);
     }
     .sidebar input[type="checkbox"] { /* Dark Mode checkbox */
         margin-right: 8px;
-        transform: scale(1.2); /* Make checkbox slightly larger */
+        transform: scale(1.2);
     }
     .sidebar p { /* Copyright text */
         font-size: 0.8em;
         margin-top: auto;
-        color: #777; /* Softer grey */
+        color: #777;
     }
 
 
@@ -171,41 +170,40 @@
       flex-grow: 1;
       padding: 20px;
       overflow: auto;
-      display: flex; /* Make main a flex container to stack children */
-      flex-direction: column; /* Stack vertically */
-      gap: 20px; /* Spacing between main sections */
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
 
     /* Month Header Box */
-    .month-header-box { /* NEW: Style for the month header */
-        background: var(--primary-blue); /* Blue background for the header box */
-        color: var(--text-light); /* White text */
+    .month-header-box {
+        background: var(--primary-blue);
+        color: var(--text-light);
         padding: 15px 20px;
         text-align: center;
         font-size: 1.6em;
         font-weight: 600;
-        border-radius: 16px; /* Consistent border-radius */
-        box-shadow: 0 4px 12px var(--shadow-medium); /* Prominent shadow */
-        margin-bottom: 0px; /* Adjusted as main has gap now */
+        border-radius: 16px;
+        box-shadow: 0 4px 12px var(--shadow-medium);
     }
 
-    .container { /* This holds Handsontable and Summary Box */
+    .container {
       display: flex;
       gap: 20px;
       align-items: flex-start;
-      flex-wrap: wrap; /* Allow wrapping on smaller screens */
-      flex: 1; /* Allow container to grow vertically in main */
+      flex-wrap: wrap;
+      flex: 1;
     }
     #table {
         flex-grow: 1;
-        height: 500px; /* Fixed height for Handsontable as requested previously */
-        min-width: 400px; /* Ensure table has minimum width for small screens */
-        /* Apply card-panel styles */
+        height: 500px;
+        min-width: 400px;
+        /* Apply card-panel base styles */
         border-radius: 16px;
         box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium);
         background: var(--background-white-card);
         border: 1px solid rgba(0,0,0,0.05);
-        overflow: hidden; /* Ensure content respects border-radius */
+        overflow: hidden; /* Important for Handsontable to respect border-radius */
     }
     /* Handsontable specific overrides for cell background and text */
     #table .ht_master, #table .handsontable {
@@ -216,14 +214,14 @@
         border-color: #eee; /* Lighter borders for cells */
     }
     #table .handsontable .htPlaceholder {
-        background-color: var(--background-white-card) !important; /* Ensure empty cells are white */
+        background-color: var(--background-off-white) !important; /* Off-white for empty cells */
     }
 
     .summary-box {
       width: 300px;
-      min-width: 280px; /* Ensure minimum width */
-      padding: 20px; /* Consistent padding with card-panel */
-      /* Apply card-panel styles */
+      min-width: 280px;
+      padding: 20px;
+      /* Apply card-panel base styles */
       border-radius: 16px;
       box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium);
       background: var(--background-white-card);
@@ -231,7 +229,7 @@
     }
     .summary-box h3 {
         margin-top: 0;
-        color: var(--primary-blue); /* Blue heading */
+        color: var(--primary-blue);
         font-weight: 600;
         font-size: 1.4em;
         margin-bottom: 15px;
@@ -249,11 +247,11 @@
 
     #save-section {
       margin-top: 0px; /* No extra margin top as .main has gap */
-      text-align: center; /* Center the save button if needed */
+      text-align: center;
     }
     #save-section button {
-        padding: 12px 25px; /* Increased size */
-        font-size: 1.1em;
+        padding: 10px 20px; /* Adjusted size */
+        font-size: 1em; /* Adjusted size */
         font-weight: bold;
         background-color: var(--primary-blue);
         color: var(--text-light);
@@ -271,8 +269,8 @@
 
     .trend-chart-section {
         margin-top: 0px; /* No extra margin top as .main has gap */
-        padding: 20px; /* Consistent padding */
-        /* Apply card-panel styles */
+        padding: 20px;
+        /* Apply card-panel base styles */
         border-radius: 16px;
         box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium);
         background: var(--background-white-card);
@@ -287,17 +285,19 @@
         text-align: center;
     }
     .trend-chart-section label {
-        color: var(--text-dark); /* Ensure label text is dark */
+        color: var(--text-dark);
+        font-weight: 500; /* Consistent font weight */
     }
     .trend-chart-section select {
-        padding: 10px; /* Larger padding for select */
+        padding: 10px;
         border: 1px solid var(--border-light);
         background-color: var(--background-white-card);
         color: var(--text-dark);
         font-size: 0.95em;
+        border-radius: 6px; /* Consistent border-radius for select */
     }
     .trend-chart-section button {
-        padding: 10px 20px; /* Larger padding for button */
+        padding: 10px 20px;
         font-size: 0.95em;
         background-color: var(--primary-blue);
         color: var(--text-light);
@@ -308,23 +308,26 @@
 
     /* Dark Mode overrides */
     body.dark {
-      background-color: #1a1a1a; /* Even darker body background */
+      background-color: #1a1a1a;
       color: var(--text-light);
     }
-    body.dark .topbar, body.dark .sidebar, .sidebar button, body.dark .summary-box, body.dark .trend-chart-section, #table, body.dark .login-container, body.dark .signup-container, body.dark .message-container, body.dark .card {
-        background: #2a2a2a; /* Darker grey for all card-like elements in dark mode */
-        box-shadow: 0 0 15px rgba(0,0,0,0.6); /* Stronger shadow for contrast */
-        border-color: #444; /* Darker border */
+    body.dark .topbar, body.dark .sidebar, body.dark .summary-box, body.dark .trend-chart-section, #table, body.dark .login-container, body.dark .signup-container, body.dark .message-container, body.dark .card, body.dark .month-header-box { /* Apply dark background to all card-like elements */
+        background: #2a2a2a;
+        box-shadow: 0 0 15px rgba(0,0,0,0.6);
+        border-color: #444;
     }
     body.dark .topbar #hospitalName, body.dark h1, body.dark h2, body.dark h3, body.dark .user-info strong {
-        color: var(--primary-blue-light); /* Lighter blue for headings/names */
+        color: var(--primary-blue-light);
     }
     body.dark .sidebar button {
-        background: #3a3a3a; /* Darker background for inactive month buttons */
-        color: var(--text-light); /* White text for months */
+        background: #3a3a3a;
+        color: var(--text-light); /* Text white in dark mode */
     }
     body.dark .sidebar button.active {
         background: var(--primary-blue);
+    }
+    body.dark .sidebar button:hover:not(.active) {
+        background: #4a4a4a; /* Hover background in dark mode */
     }
     body.dark select, body.dark input {
         background-color: #3a3a3a;
@@ -332,17 +335,17 @@
         border-color: #555;
     }
     body.dark #table .ht_master, body.dark #table .handsontable {
-        background-color: #2a2a2a; /* Dark background for Handsontable body */
+        background-color: #2a2a2a;
         color: var(--text-light);
     }
     body.dark #table .handsontable td, body.dark #table .handsontable th {
-        border-color: #555; /* Darker borders for cells */
+        border-color: #555;
     }
     body.dark #table .handsontable .htPlaceholder {
-        background-color: #2a2a2a !important; /* Ensure empty cells are dark */
+        background-color: #2a2a2a !important; /* Ensure empty cells are dark in dark mode */
     }
-    body.dark .summary-box p, body.dark .sidebar label, body.dark .sidebar p {
-        color: #bbb; /* Lighter grey for general text in dark mode */
+    body.dark .summary-box p, body.dark .sidebar label, body.dark .sidebar p, body.dark .trend-chart-section label {
+        color: #bbb;
     }
 
 
@@ -350,7 +353,7 @@
     #loading-overlay {
       position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.6); /* Darker overlay */
+      background: rgba(0, 0, 0, 0.6);
       display: none;
       justify-content: center;
       align-items: center;
@@ -359,31 +362,28 @@
     .spinner {
       width: 60px;
       height: 60px;
-      border: 8px solid var(--background-white-card); /* White border */
-      border-top-color: var(--primary-blue); /* Blue spinner part */
+      border: 8px solid var(--background-white-card);
+      border-top-color: var(--primary-blue);
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Handsontable Cell Coloring */
-    .within { background-color: #d4edda !important; color: #155724 !important; } /* Light green, dark green text */
-    .warning { background-color: #fff3cd !important; color: #856404 !important; } /* Light yellow, dark yellow text */
-    .out { background-color: #f8d7da !important; color: #721c24 !important; } /* Light red, dark red text */
+    .within { background-color: #d4edda !important; color: #155724 !important; }
+    .warning { background-color: #fff3cd !important; color: #856404 !important; }
+    .out { background-color: #f8d7da !important; color: #721c24 !important; }
 
   </style>
 </head>
 <body>
   <div class="topbar">
     <span id="hospitalName">Hospital: </span>
-    <!-- NEW: Spacer span to push buttons to the right -->
     <span style="flex-grow: 1;"></span>
-    <!-- My Profile button with blue style -->
     <button onclick="window.location.href='my_profile.html'"
             style="background-color: var(--primary-blue); color: var(--text-light);">
       My Profile
     </button>
-    <!-- Logout button with red style -->
     <button onclick="logout()"
             style="background-color: var(--error-red); color: var(--text-light);">
       Logout
@@ -431,7 +431,7 @@
         <h3>Energy Trend Analysis (Current Month)</h3>
         <div style="margin-bottom: 15px;">
           <label for="trendEnergySelect" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
-          <select id="trendEnergySelect" style="padding: 8px; border: 1px solid var(--border-light);">
+          <select id="trendEnergySelect" style="padding: 8px; border: 1px var(--border-light) solid;">
             <!-- Options will be dynamically populated by JS -->
           </select>
           <button onclick="updateTrendChart()" style="background-color: var(--primary-blue); color: var(--text-light); margin-left: 10px;">
@@ -514,7 +514,6 @@
     async function loadTable() {
       showLoader();
       const dateCols = getMonthDates(currentDate);
-      // Header is now a div.month-header-box
       document.getElementById('header').textContent = `${currentDate.toLocaleString('default',{month:'long'})} ${currentDate.getFullYear()}`;
       yearLabel.textContent = currentDate.getFullYear();
       highlightActiveMonth();
@@ -532,7 +531,7 @@
           data,
           rowHeaders: false,
           stretchH: 'all',
-          height: 500, /* Fixed height as requested */
+          height: 500,
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
