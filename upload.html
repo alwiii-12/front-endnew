@@ -23,88 +23,92 @@
     :root {
       --primary-blue: #007bff; /* Main blue */
       --primary-blue-dark: #0056b3; /* Darker blue for hover */
-      --primary-blue-light: #e6f2ff; /* Very light blue for subtle backgrounds */
-      --text-dark: #333; /* Dark text */
-      --text-light: #fff; /* Light text */
-      --background-light: #f5f5f5; /* Light grey background */
-      --background-white: #ffffff; /* Pure white elements */
+      --primary-blue-light: #e0f7fa; /* Very light blue for subtle backgrounds (closer to e0f7fa) */
+      --text-dark: #333; /* Dark text (blackish) */
+      --text-light: #fff; /* Light text (white) */
+      --background-light: #f5f5f5; /* Light grey body background */
+      --background-white-card: #ffffff; /* Pure white for cards */
+      --background-dark-card: #333; /* Dark grey for dark mode cards */
       --border-light: #ccc; /* Light grey border */
       --success-green: #28a745; /* Green for success */
       --warning-orange: #ffc107; /* Orange for warning */
       --error-red: #dc3545; /* Red for error */
-      --shadow-light: rgba(0,0,0,0.1);
-      --shadow-medium: rgba(0,0,0,0.15);
-      --shadow-strong: rgba(0,0,0,0.2);
+      --shadow-light: rgba(0,0,0,0.08); /* Softer light shadow */
+      --shadow-medium: rgba(0,0,0,0.12); /* Slightly stronger shadow */
+      --shadow-strong: rgba(0,0,0,0.2); /* Stronger for dark mode/focus */
     }
 
     body {
       margin: 0;
-      font-family: 'Inter', sans-serif; /* Use Inter font */
-      background-color: var(--background-light); /* Use CSS variable */
-      color: var(--text-dark); /* Use CSS variable */
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-dark);
       display: flex;
       height: 100vh;
       overflow: hidden;
       flex-direction: column;
     }
+
     /* Global Micro-interaction */
-    button, a.button, select { /* Apply to common interactive elements */
+    button, a.button, select {
       transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease;
       border-radius: 8px; /* Consistent larger border-radius for buttons/select */
+      border: none; /* Remove default button border unless specified */
+      cursor: pointer;
     }
     button:hover, a.button:hover, select:hover {
         transform: translateY(-1px);
-        box-shadow: 0 4px 8px var(--shadow-light);
+        box-shadow: 0 4px 12px var(--shadow-light); /* Softer shadow on hover */
     }
     button:active, a.button:active, select:active {
         transform: translateY(0);
-        box-shadow: 0 2px 4px var(--shadow-light);
+        box-shadow: 0 1px 4px var(--shadow-light) inset; /* Inset shadow on click */
+    }
+
+    /* Card/Panel Base Styling */
+    .card-panel {
+      border-radius: 16px; /* Consistent larger rounded corners */
+      box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium); /* Layered soft shadows */
+      background: var(--background-white-card); /* White background for cards */
+      border: 1px solid rgba(0,0,0,0.05); /* Very subtle border */
+      padding: 20px; /* Default padding for panels */
+      box-sizing: border-box; /* Include padding in element's total width/height */
     }
 
     /* Topbar styling */
     .topbar {
       display: flex;
-      justify-content: space-between; /* Spreads items across the main axis */
+      justify-content: space-between;
       align-items: center;
-      background: var(--background-white); /* Use variable */
+      background: var(--background-white-card);
       padding: 10px 20px;
-      border-bottom: 1px solid var(--border-light); /* Use variable */
-      box-shadow: 0 2px 4px var(--shadow-light); /* Subtle shadow for topbar */
+      border-bottom: 1px solid var(--border-light);
+      box-shadow: 0 2px 4px var(--shadow-light);
+      min-height: 50px; /* Ensure topbar has minimum height */
     }
-    .topbar #hospitalName { /* Targeting the hospital name span specifically */
-        font-weight: bold;
+    .topbar #hospitalName {
+        font-weight: 500; /* Medium font weight */
+        font-size: 1.1em;
+        color: var(--primary-blue); /* Blue color for hospital name */
     }
     .topbar button {
-      padding: 6px 12px;
+      padding: 8px 15px; /* Increased padding for better clickability */
       font-size: 14px;
-      cursor: pointer;
-      margin-left: 10px; /* Provides spacing between buttons */
-      margin-right: 0; /* Ensure no conflicting margin-right */
-      border: none; /* Remove default button border */
-      color: var(--text-light); /* Default text color for topbar buttons */
+      margin-left: 10px;
+      color: var(--text-light); /* White text */
+      border-radius: 6px; /* Slightly smaller border radius than cards for buttons */
     }
-    /* Specific button colors for topbar */
-    .topbar button:nth-of-type(1) { /* My Profile button */
+    .topbar button:first-of-type { /* My Profile button */
         background-color: var(--primary-blue);
     }
-    .topbar button:nth-of-type(2) { /* Logout button */
+    .topbar button:first-of-type:hover {
+        background-color: var(--primary-blue-dark);
+    }
+    .topbar button:last-of-type { /* Logout button */
         background-color: var(--error-red);
     }
-    /* Hover effects for topbar buttons */
-    .topbar button:hover {
-      background-color: var(--primary-blue-dark); /* Default for My Profile */
-    }
-    .topbar button:nth-of-type(2):hover { /* Specific hover for Logout */
-        background-color: #bb2d3b; /* Darker red */
-    }
-
-
-    body.dark .topbar {
-      background-color: #2a2a2a; /* Darker grey for topbar/footer */
-      border-color: #444;
-    }
-    body.dark .topbar button {
-      /* Colors defined inline, so these might be overridden */
+    .topbar button:last-of-type:hover {
+        background-color: #bb2d3b; /* Darker red on hover */
     }
 
     .content {
@@ -114,143 +118,239 @@
     }
     .sidebar {
       width: 200px;
-      background: var(--background-white); /* Use variable */
+      background: var(--background-white-card);
       padding: 20px;
-      box-shadow: 2px 0 5px var(--shadow-light); /* Use variable */
+      box-shadow: 2px 0 5px var(--shadow-light);
       display: flex;
       flex-direction: column;
     }
-    .sidebar h2 { margin: 0 0 20px; }
+    .sidebar h2 {
+        margin: 0 0 20px;
+        color: var(--primary-blue); /* Blue color for sidebar heading */
+        font-weight: 600; /* Semi-bold */
+    }
     .sidebar button {
       width: 100%;
       margin-bottom: 8px;
-      padding: 8px;
+      padding: 10px 8px; /* Increased padding */
       border: none;
-      background: #eee;
-      cursor: pointer;
+      background: #eee; /* Light grey for inactive months */
+      color: var(--text-dark); /* Black text for months */
+      font-weight: 500;
+      text-align: center;
     }
-    .sidebar button.active { background: var(--primary-blue); color: var(--text-light); } /* Use variables */
-    .sidebar button:hover { background: #ddd; }
+    .sidebar button.active {
+        background: var(--primary-blue);
+        color: var(--text-light);
+        box-shadow: 0 2px 6px var(--shadow-light);
+    }
+    .sidebar button:hover:not(.active) { /* Hover for inactive month buttons */
+        background: #e0e0e0;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px var(--shadow-light);
+    }
+    .sidebar label { /* Dark Mode toggle label */
+        display: flex;
+        align-items: center;
+        margin-top: 15px;
+        font-size: 0.95em;
+        color: var(--text-dark); /* Ensure it's dark in light mode */
+    }
+    .sidebar input[type="checkbox"] { /* Dark Mode checkbox */
+        margin-right: 8px;
+        transform: scale(1.2); /* Make checkbox slightly larger */
+    }
+    .sidebar p { /* Copyright text */
+        font-size: 0.8em;
+        margin-top: auto;
+        color: #777; /* Softer grey */
+    }
+
+
     .main {
       flex-grow: 1;
       padding: 20px;
       overflow: auto;
+      display: flex; /* Make main a flex container to stack children */
+      flex-direction: column; /* Stack vertically */
+      gap: 20px; /* Spacing between main sections */
     }
-    .container {
+
+    /* Month Header Box */
+    .month-header-box { /* NEW: Style for the month header */
+        background: var(--primary-blue); /* Blue background for the header box */
+        color: var(--text-light); /* White text */
+        padding: 15px 20px;
+        text-align: center;
+        font-size: 1.6em;
+        font-weight: 600;
+        border-radius: 16px; /* Consistent border-radius */
+        box-shadow: 0 4px 12px var(--shadow-medium); /* Prominent shadow */
+        margin-bottom: 0px; /* Adjusted as main has gap now */
+    }
+
+    .container { /* This holds Handsontable and Summary Box */
       display: flex;
       gap: 20px;
       align-items: flex-start;
+      flex-wrap: wrap; /* Allow wrapping on smaller screens */
+      flex: 1; /* Allow container to grow vertically in main */
     }
     #table {
         flex-grow: 1;
-        height: 500px; /* Reverted: Added fixed height back */
-        /* Enhanced Card-Based Layout Depth for Handsontable container */
-        border-radius: 16px; /* Consistent larger border-radius */
-        box-shadow: 0 4px 12px var(--shadow-light), 0 8px 24px var(--shadow-medium); /* Multi-layered soft shadows */
-        background: var(--background-white); /* White background for the table area */
-        border: 1px solid rgba(0,0,0,0.05); /* Very subtle border */
+        height: 500px; /* Fixed height for Handsontable as requested previously */
+        min-width: 400px; /* Ensure table has minimum width for small screens */
+        /* Apply card-panel styles */
+        border-radius: 16px;
+        box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium);
+        background: var(--background-white-card);
+        border: 1px solid rgba(0,0,0,0.05);
         overflow: hidden; /* Ensure content respects border-radius */
     }
-    /* Removed #table .ht_master rule */
+    /* Handsontable specific overrides for cell background and text */
+    #table .ht_master, #table .handsontable {
+        background-color: var(--background-white-card); /* Ensure Handsontable area is white */
+        color: var(--text-dark);
+    }
+    #table .handsontable td, #table .handsontable th {
+        border-color: #eee; /* Lighter borders for cells */
+    }
+    #table .handsontable .htPlaceholder {
+        background-color: var(--background-white-card) !important; /* Ensure empty cells are white */
+    }
+
     .summary-box {
       width: 300px;
-      padding: 15px;
-      /* Enhanced Card-Based Layout Depth */
-      border-radius: 16px; /* Consistent larger border-radius */
-      box-shadow: 0 4px 12px var(--shadow-light), 0 8px 24px var(--shadow-medium); /* Multi-layered soft shadows */
-      background: var(--background-white); /* White background */
-      border: 1px solid rgba(0,0,0,0.05); /* Very subtle border */
+      min-width: 280px; /* Ensure minimum width */
+      padding: 20px; /* Consistent padding with card-panel */
+      /* Apply card-panel styles */
+      border-radius: 16px;
+      box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium);
+      background: var(--background-white-card);
+      border: 1px solid rgba(0,0,0,0.05);
     }
-    .summary-box h3 { margin-top: 0; }
-    #save-section { margin-top: 20px; }
+    .summary-box h3 {
+        margin-top: 0;
+        color: var(--primary-blue); /* Blue heading */
+        font-weight: 600;
+        font-size: 1.4em;
+        margin-bottom: 15px;
+    }
+    .summary-box p {
+        font-size: 1em;
+        margin-bottom: 8px;
+    }
+    .summary-box span {
+        font-weight: 500;
+    }
+    canvas {
+        margin-bottom: 15px;
+    }
 
-    /* Dark Mode (Update existing body.dark rule and specific elements) */
+    #save-section {
+      margin-top: 0px; /* No extra margin top as .main has gap */
+      text-align: center; /* Center the save button if needed */
+    }
+    #save-section button {
+        padding: 12px 25px; /* Increased size */
+        font-size: 1.1em;
+        font-weight: bold;
+        background-color: var(--primary-blue);
+        color: var(--text-light);
+        border-radius: 8px;
+        box-shadow: 0 2px 6px var(--shadow-light);
+    }
+    #save-section button:hover {
+        background-color: var(--primary-blue-dark);
+        box-shadow: 0 4px 10px var(--shadow-medium);
+    }
+    #save-section button:active {
+        box-shadow: 0 1px 3px var(--shadow-light) inset;
+    }
+
+
+    .trend-chart-section {
+        margin-top: 0px; /* No extra margin top as .main has gap */
+        padding: 20px; /* Consistent padding */
+        /* Apply card-panel styles */
+        border-radius: 16px;
+        box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium);
+        background: var(--background-white-card);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .trend-chart-section h3 {
+        margin-top: 0;
+        color: var(--primary-blue);
+        font-weight: 600;
+        font-size: 1.4em;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    .trend-chart-section label {
+        color: var(--text-dark); /* Ensure label text is dark */
+    }
+    .trend-chart-section select {
+        padding: 10px; /* Larger padding for select */
+        border: 1px solid var(--border-light);
+        background-color: var(--background-white-card);
+        color: var(--text-dark);
+        font-size: 0.95em;
+    }
+    .trend-chart-section button {
+        padding: 10px 20px; /* Larger padding for button */
+        font-size: 0.95em;
+        background-color: var(--primary-blue);
+        color: var(--text-light);
+        border-radius: 6px;
+        box-shadow: 0 2px 6px var(--shadow-light);
+    }
+
+
+    /* Dark Mode overrides */
     body.dark {
-      background-color: #1e1e1e;
+      background-color: #1a1a1a; /* Even darker body background */
       color: var(--text-light);
     }
-    body.dark .sidebar, body.dark .summary-box, body.dark .trend-chart-section, #table { /* Apply dark background to cards/containers */
-        background: #333;
-        box-shadow: 0 0 10px rgba(0,0,0,0.5); /* Stronger shadow for dark mode contrast */
-        border-color: #444; /* Darker border in dark mode */
+    body.dark .topbar, body.dark .sidebar, .sidebar button, body.dark .summary-box, body.dark .trend-chart-section, #table, body.dark .login-container, body.dark .signup-container, body.dark .message-container, body.dark .card {
+        background: #2a2a2a; /* Darker grey for all card-like elements in dark mode */
+        box-shadow: 0 0 15px rgba(0,0,0,0.6); /* Stronger shadow for contrast */
+        border-color: #444; /* Darker border */
     }
-    body.dark h1, body.dark h2, body.dark h3, body.dark #hospitalName { /* Lighter text for headings/hospital name */
-        color: var(--primary-blue-light);
+    body.dark .topbar #hospitalName, body.dark h1, body.dark h2, body.dark h3, body.dark .user-info strong {
+        color: var(--primary-blue-light); /* Lighter blue for headings/names */
     }
     body.dark .sidebar button {
-        background: #444;
-        color: var(--text-light);
+        background: #3a3a3a; /* Darker background for inactive month buttons */
+        color: var(--text-light); /* White text for months */
     }
     body.dark .sidebar button.active {
         background: var(--primary-blue);
     }
     body.dark select, body.dark input {
-        background-color: #444;
+        background-color: #3a3a3a;
         color: var(--text-light);
-        border-color: #666;
+        border-color: #555;
     }
-    /* Styles for Save/Trend buttons in dark mode - defined below in general button styles */
-
-    /* General button styles using variables (Apply to Save and Trend buttons too) */
-    button {
-        background-color: var(--primary-blue); /* Default blue for many buttons */
-        color: var(--text-light);
-        border: none;
-        border-radius: 8px; /* Consistent larger border-radius */
-        box-shadow: 0 2px 6px var(--shadow-light); /* Subtle shadow for buttons */
-    }
-    button:hover {
-        background-color: var(--primary-blue-dark);
-        box-shadow: 0 4px 10px var(--shadow-medium);
-    }
-    button:active {
-        background-color: var(--primary-blue-dark);
-        box-shadow: 0 1px 3px var(--shadow-light) inset; /* Inset shadow on click */
-    }
-
-    #save-section button { /* Specific styles for save button, if needed */
-        background-color: var(--primary-blue);
+    body.dark #table .ht_master, body.dark #table .handsontable {
+        background-color: #2a2a2a; /* Dark background for Handsontable body */
         color: var(--text-light);
     }
-    #save-section button:hover {
-        background-color: var(--primary-blue-dark);
+    body.dark #table .handsontable td, body.dark #table .handsontable th {
+        border-color: #555; /* Darker borders for cells */
+    }
+    body.dark #table .handsontable .htPlaceholder {
+        background-color: #2a2a2a !important; /* Ensure empty cells are dark */
+    }
+    body.dark .summary-box p, body.dark .sidebar label, body.dark .sidebar p {
+        color: #bbb; /* Lighter grey for general text in dark mode */
     }
 
 
-    /* New CSS for the trend chart section (Enhanced Card-Based Layout Depth) */
-    .trend-chart-section {
-        margin-top: 30px;
-        padding: 20px;
-        border-radius: 16px; /* Consistent larger border-radius */
-        box-shadow: 0 4px 12px var(--shadow-light), 0 8px 24px var(--shadow-medium); /* Multi-layered soft shadows */
-        background: var(--background-white); /* White background */
-        border: 1px solid rgba(0,0,0,0.05); /* Very subtle border */
-    }
-    .trend-chart-section h3 { margin-top: 0; }
-    .trend-chart-section select {
-        background-color: var(--background-white);
-        color: var(--text-dark);
-        border-color: var(--border-light);
-    }
-    .trend-chart-section button {
-        background-color: var(--primary-blue);
-        color: var(--text-light);
-        border: none;
-    }
-    body.dark .trend-chart-section select {
-        background-color: #444;
-        color: var(--text-light);
-        border-color: #666;
-    }
-    body.dark .trend-chart-section button {
-        background-color: var(--primary-blue); /* Keep blue for dark theme */
-        color: var(--text-light);
-    }
-
+    /* Loading Overlay & Spinner */
     #loading-overlay {
       position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.6); /* Darker overlay */
       display: none;
       justify-content: center;
       align-items: center;
@@ -259,15 +359,18 @@
     .spinner {
       width: 60px;
       height: 60px;
-      border: 8px solid #ccc;
-      border-top-color: var(--primary-blue); /* Use variable */
+      border: 8px solid var(--background-white-card); /* White border */
+      border-top-color: var(--primary-blue); /* Blue spinner part */
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .within { background-color: #d4edda !important; color: #155724 !important; }
-    .warning { background-color: #fff3cd !important; color: #856404 !important; }
-    .out { background-color: #f8d7da !important; color: #721c24 !important; }
+
+    /* Handsontable Cell Coloring */
+    .within { background-color: #d4edda !important; color: #155724 !important; } /* Light green, dark green text */
+    .warning { background-color: #fff3cd !important; color: #856404 !important; } /* Light yellow, dark yellow text */
+    .out { background-color: #f8d7da !important; color: #721c24 !important; } /* Light red, dark red text */
+
   </style>
 </head>
 <body>
@@ -301,16 +404,19 @@
     </div>
 
     <div class="main">
-      <div class="header" id="header"></div>
+      <!-- Month Header Box -->
+      <div class="month-header-box" id="header">
+        <!-- Content set by JS loadTable() -->
+      </div>
       <div class="container">
         <div id="table"></div>
         <div class="summary-box">
           <canvas id="summaryChart" width="280" height="280"></canvas>
           <h3>Summary</h3>
           <p><strong>Total Entries:</strong> <span id="total">0</span></p>
-          <p style="color:green;">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
-          <p style="color:orange;">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
-          <p style="color:red;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
+          <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
+          <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
+          <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
         </div>
       </div>
       <!-- SAVE SECTION IS HERE, ABOVE THE TREND CHART -->
@@ -408,7 +514,8 @@
     async function loadTable() {
       showLoader();
       const dateCols = getMonthDates(currentDate);
-      header.textContent = `${currentDate.toLocaleString('default',{month:'long'})} ${currentDate.getFullYear()}`;
+      // Header is now a div.month-header-box
+      document.getElementById('header').textContent = `${currentDate.toLocaleString('default',{month:'long'})} ${currentDate.getFullYear()}`;
       yearLabel.textContent = currentDate.getFullYear();
       highlightActiveMonth();
 
@@ -425,7 +532,7 @@
           data,
           rowHeaders: false,
           stretchH: 'all',
-          height: 500, /* Reverted: Added fixed height back */
+          height: 500, /* Fixed height as requested */
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
