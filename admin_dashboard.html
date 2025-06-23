@@ -135,7 +135,7 @@
     <div class="admin-content">
         <h1>Welcome, Administrator!</h1>
         <p>This is your exclusive admin dashboard. Here you will be able to manage users, access aggregated data, and configure system settings.</p>
-        <!-- Removed: <p class="message">Further admin features are coming soon!</p> -->
+        <button onclick="window.location.href='my_profile.html'" style="margin-right: 10px;">My Profile</button> <!-- NEW BUTTON -->
         <button onclick="logout()" class="logout-button">Logout</button>
 
         <!-- New Section for Pending Users -->
@@ -186,11 +186,15 @@
                 window.location.href = "login.html";
             } else {
                 const userRole = localStorage.getItem("userRole");
-                if (userRole !== "Admin") {
-                    alert("Access Denied: You are not authorized to view this page.");
-                    window.location.href = "upload.html"; // Redirect non-admins
+                // Check userStatus from localStorage (set by login.html)
+                const userStatus = localStorage.getItem("userStatus");
+
+                if (userRole !== "Admin" || userStatus !== "active") { // Ensure admin AND active
+                    alert("Access Denied: You are not authorized to view this page or your account is not active.");
+                    logout(); // Log out non-authorized users
+                    return;
                 } else {
-                    // If user is Admin, load pending users
+                    // If user is Admin AND active, load pending users
                     loadPendingUsers();
                 }
             }
