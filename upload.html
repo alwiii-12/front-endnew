@@ -33,6 +33,7 @@
       padding: 6px 12px;
       font-size: 14px;
       cursor: pointer;
+      margin-left: 10px; /* NEW: Add margin-left for spacing between buttons */
     }
     body.dark .topbar {
       background-color: #222;
@@ -143,7 +144,7 @@
 <body>
   <div class="topbar">
     <span id="hospitalName">Hospital: </span>
-    <button onclick="window.location.href='my_profile.html'" style="margin-right: 10px;">My Profile</button> <!-- NEW BUTTON -->
+    <button onclick="window.location.href='my_profile.html'">My Profile</button>
     <button onclick="logout()">Logout</button>
   </div>
 
@@ -173,25 +174,21 @@
           <p style="color:red;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
         </div>
       </div>
-      <!-- SAVE SECTION IS HERE, ABOVE THE TREND CHART -->
       <div id="save-section">
         <button onclick="manualSave()" style="padding:6px 14px;font-weight:bold;">💾 Save</button>
         <span id="lastSaved" style="margin-left:15px;font-size:14px;color:gray;"></span>
       </div>
-      <!-- TREND CHART SECTION IS BELOW THE SAVE SECTION -->
       <div class="trend-chart-section" style="margin-top: 30px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
         <h3>Energy Trend Analysis (Current Month)</h3>
         <div style="margin-bottom: 15px;">
           <label for="trendEnergySelect" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
           <select id="trendEnergySelect" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
-            <!-- Options will be dynamically populated by JS -->
-          </select>
+            </select>
           <button onclick="updateTrendChart()" style="margin-left: 10px; padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Show Trend</button>
         </div>
         <canvas id="trendChart" style="max-height: 350px; width: 100%;"></canvas>
       </div>
-      <!-- END NEW SECTION -->
-    </div>
+      </div>
   </div>
 
   <div id="loading-overlay"><div class="spinner"></div></div>
@@ -214,12 +211,11 @@
       if (user) {
         currentUID = user.uid;
         currentHospital = localStorage.getItem("hospitalName") || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
-        const userStatus = localStorage.getItem("userStatus"); // Get user status from local storage
+        const userStatus = localStorage.getItem("userStatus");
 
-        // Check if user is active, otherwise log out or redirect
         if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
             alert("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.");
-            logout(); // Log out non-active users
+            logout();
             return;
         }
 
@@ -286,7 +282,6 @@
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
-          // Removed viewportColumnRenderingOffset and viewportRowRenderingOffset
           afterChange: (changes, source) => {
             if (!changes || source === 'loadData') return;
             updateSummaryAndChart(hot.getData());
