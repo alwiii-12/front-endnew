@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | LINAC QA</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .topbar button {
+            padding: 8px 15px;
+            background-color: #dc3545; /* Red for logout */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .topbar button:hover {
+            background-color: #c82333;
+        }
+        .profile-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .profile-card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: left;
+        }
+        .profile-card h1 {
+            color: #007bff;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .profile-item {
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        .profile-item strong {
+            display: inline-block;
+            width: 120px; /* Aligns labels */
+            color: #333;
+        }
+        .profile-actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .profile-actions button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .profile-actions button:hover {
+            background-color: #218838;
+        }
+        .loading-message {
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <span>My Profile</span>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <div class="profile-container">
+        <div class="profile-card">
+            <h1>User Profile</h1>
+            <div id="profileDetails">
+                <p class="loading-message">Loading profile data...</p>
+            </div>
+            <div class="profile-actions">
+                <button onclick="window.location.href='upload.html'">Go to Dashboard</button>
+                </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Firebase config (Copy your actual config here from login.html/admin_dashboard.html)
+        const firebaseConfig = {
+          apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
+          authDomain: "linac-qa-project.firebaseapp.com",
+          projectId: "linac-qa-project",
+          storageBucket: "linac-qa-project.firebasestorage.app",
+          messagingSenderId: "850988733382",
+          appId: "1:850988733382:web:ef75d64e30deb7e37c18c7",
+          measurementId: "G-HFJ2CGS664"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        function logout() {
+            auth.signOut().then(() => {
+                localStorage.clear();
+                window.location.href = "login.html";
+            });
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Ensure the user is still active before loading profile
+                const userStatus = localStorage.getItem("userStatus"); // We'll need to store this in login.html
+                if (userStatus === 'pending' || userStatus === 'rejected') {
+                    alert("Your account is not active. Please await admin approval.");
+                    logout(); // Log out non-active users
+                    return;
+                }
+                loadProfile(user.uid);
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        async function loadProfile(uid) {
+            const profileDetailsDiv = document.getElementById('profileDetails');
+            profileDetailsDiv.innerHTML = '<p class="loading-message">Loading profile data...</p>';
+
+            try {
+                const userDocRef = db.collection("users").document(uid);
+                const userDocSnap = await userDocRef.get();
+
+                if (userDocSnap.exists) {
+                    const userData = userDocSnap.data();
+                    profileDetailsDiv.innerHTML = `
+                        <div class="profile-item"><strong>Name:</strong> ${userData.name || 'N/A'}</div>
+                        <div class="profile-item"><strong>Email:</strong> ${userData.email || 'N/A'}</div>
+                        <div class="profile-item"><strong>Hospital:</strong> ${userData.hospital || 'N/A'}</div>
+                        <div class="profile-item"><strong>Role:</strong> ${userData.role || 'N/A'}</div>
+                        <div class="profile-item"><strong>Account Status:</strong> <span style="color: ${userData.status === 'active' ? 'green' : 'orange'}; font-weight: bold;">${(userData.status || 'N/A').toUpperCase()}</span></div>
+                    `;
+                    // Update localStorage with latest status on profile page load (optional but good for consistency)
+                    localStorage.setItem("userStatus", userData.status);
+
+                } else {
+                    profileDetailsDiv.innerHTML = '<p class="loading-message" style="color: red;">Error: User profile not found in database.</p>';
+                    console.error("Profile Error: User document not found for UID:", uid);
+                }
+            } catch (error) {
+                console.error("Error loading profile:", error);
+                profileDetailsDiv.innerHTML = `<p class="loading-message" style="color: red;">Error: ${error.message || 'Could not load profile data.'}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
