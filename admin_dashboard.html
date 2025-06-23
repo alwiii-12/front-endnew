@@ -135,7 +135,7 @@
     <div class="admin-content">
         <h1>Welcome, Administrator!</h1>
         <p>This is your exclusive admin dashboard. Here you will be able to manage users, access aggregated data, and configure system settings.</p>
-        <button onclick="window.location.href='my_profile.html'" style="margin-right: 10px;">My Profile</button> <!-- NEW BUTTON -->
+        <!-- Removed: <button onclick="window.location.href='my_profile.html'" style="margin-right: 10px;">My Profile</button> -->
         <button onclick="logout()" class="logout-button">Logout</button>
 
         <!-- New Section for Pending Users -->
@@ -186,35 +186,30 @@
                 window.location.href = "login.html";
             } else {
                 const userRole = localStorage.getItem("userRole");
-                // Check userStatus from localStorage (set by login.html)
                 const userStatus = localStorage.getItem("userStatus");
 
-                if (userRole !== "Admin" || userStatus !== "active") { // Ensure admin AND active
+                if (userRole !== "Admin" || userStatus !== "active") {
                     alert("Access Denied: You are not authorized to view this page or your account is not active.");
-                    logout(); // Log out non-authorized users
+                    logout();
                     return;
                 } else {
-                    // If user is Admin AND active, load pending users
                     loadPendingUsers();
                 }
             }
         });
 
-        // NEW: Function to fetch and display pending users
         async function loadPendingUsers() {
             const pendingUsersListDiv = document.getElementById('pendingUsersList');
-            pendingUsersListDiv.innerHTML = '<p class="no-pending-users">Loading pending users...</p>'; // Show loading message
+            pendingUsersListDiv.innerHTML = '<p class="no-pending-users">Loading pending users...</p>';
 
             try {
-                // Ensure auth.currentUser is available and token is fresh
-                const idToken = await auth.currentUser.getIdToken(true); // Force refresh token
+                const idToken = await auth.currentUser.getIdToken(true);
 
-                // Fetch users with status "pending" from backend
                 const response = await fetch('https://back-end-wrxi.onrender.com/admin/pending-users', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${idToken}` // Send ID token for auth
+                        'Authorization': `Bearer ${idToken}`
                     }
                 });
 
@@ -228,7 +223,7 @@
                 if (users.length === 0) {
                     pendingUsersListDiv.innerHTML = '<p class="no-pending-users">No pending user accounts at this time.</p>';
                 } else {
-                    pendingUsersListDiv.innerHTML = ''; // Clear loading message
+                    pendingUsersListDiv.innerHTML = '';
                     users.forEach(user => {
                         const userItem = document.createElement('div');
                         userItem.className = 'user-item';
@@ -253,22 +248,19 @@
             }
         }
 
-        // NEW: Function to update user status (Approve/Reject)
         async function updateUserStatus(uid, newStatus) {
-            // Using a custom modal/dialog instead of alert for better UX
-            const confirmed = confirm(`Are you sure you want to set status of user ${uid} to ${newStatus}?`); // Placeholder for custom modal
+            const confirmed = confirm(`Are you sure you want to set status of user ${uid} to ${newStatus}?`);
             if (!confirmed) {
                 return;
             }
             try {
-                // Ensure auth.currentUser is available and token is fresh
-                const idToken = await auth.currentUser.getIdToken(true); // Force refresh token
+                const idToken = await auth.currentUser.getIdToken(true);
 
                 const response = await fetch('https://back-end-wrxi.onrender.com/admin/update-user-status', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${idToken}` // Send ID token
+                        'Authorization': `Bearer ${idToken}`
                     },
                     body: JSON.stringify({ uid, status: newStatus })
                 });
@@ -278,11 +270,11 @@
                     throw new Error(errorData.message || `Failed to update user status. Status: ${response.status}`);
                 }
 
-                alert(`User status updated to ${newStatus} successfully!`); // Use custom message box for final app
-                loadPendingUsers(); // Reload the list to reflect changes
+                alert(`User status updated to ${newStatus} successfully!`);
+                loadPendingUsers();
             } catch (error) {
                 console.error("Error updating user status:", error);
-                alert(`Failed to update user status: ${error.message}`); // Use custom message box for final app
+                alert(`Failed to update user status: ${error.message}`);
             }
         }
     </script>
