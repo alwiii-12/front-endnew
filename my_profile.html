@@ -106,15 +106,21 @@
             </div>
             <div class="profile-actions">
                 <button onclick="window.location.href='upload.html'">Go to Dashboard</button>
-                </div>
+                <!-- Optional: Add an "Edit Profile" button here later -->
+            </div>
         </div>
     </div>
 
+    <!-- Firebase CDN -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <!-- NEW: Import getFirestore and doc for correct v9 Firestore usage -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script type="module"> /* Use type="module" for v9 import syntax */
+        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js';
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js';
 
-    <script>
         // Firebase config (Copy your actual config here from login.html/admin_dashboard.html)
         const firebaseConfig = {
           apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
@@ -125,24 +131,25 @@
           appId: "1:850988733382:web:ef75d64e30deb7e37c18c7",
           measurementId: "G-HFJ2CGS664"
         };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app); // Get auth instance
+        const db = getFirestore(app); // Get firestore instance
 
-        function logout() {
-            auth.signOut().then(() => {
+        window.logout = function() { // Expose logout globally for onclick
+            signOut(auth).then(() => { // Use v9 signOut
                 localStorage.clear();
                 window.location.href = "login.html";
             });
         }
 
-        auth.onAuthStateChanged(user => {
+        onAuthStateChanged(auth, user => { // Use v9 onAuthStateChanged
             if (user) {
-                // Ensure the user is still active before loading profile
-                const userStatus = localStorage.getItem("userStatus"); // We'll need to store this in login.html
-                if (userStatus === 'pending' || userStatus === 'rejected') {
+                const userStatus = localStorage.getItem("userStatus");
+                if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
                     alert("Your account is not active. Please await admin approval.");
-                    logout(); // Log out non-active users
+                    window.logout(); // Use global logout
                     return;
                 }
                 loadProfile(user.uid);
@@ -156,10 +163,11 @@
             profileDetailsDiv.innerHTML = '<p class="loading-message">Loading profile data...</p>';
 
             try {
-                const userDocRef = db.collection("users").document(uid);
-                const userDocSnap = await userDocRef.get();
+                // Correct v9 way to get a document reference and fetch it
+                const userDocRef = doc(db, "users", uid); // Correct: doc(db, collectionName, docId)
+                const userDocSnap = await getDoc(userDocRef); // Correct: getDoc(docRef)
 
-                if (userDocSnap.exists) {
+                if (userDocSnap.exists()) { // Correct: userDocSnap.exists() is a method
                     const userData = userDocSnap.data();
                     profileDetailsDiv.innerHTML = `
                         <div class="profile-item"><strong>Name:</strong> ${userData.name || 'N/A'}</div>
@@ -168,7 +176,6 @@
                         <div class="profile-item"><strong>Role:</strong> ${userData.role || 'N/A'}</div>
                         <div class="profile-item"><strong>Account Status:</strong> <span style="color: ${userData.status === 'active' ? 'green' : 'orange'}; font-weight: bold;">${(userData.status || 'N/A').toUpperCase()}</span></div>
                     `;
-                    // Update localStorage with latest status on profile page load (optional but good for consistency)
                     localStorage.setItem("userStatus", userData.status);
 
                 } else {
