@@ -154,14 +154,14 @@
       margin-bottom: 8px;
       padding: 10px 8px;
       background: #eee;
-      color: var(--text-dark); /* Text explicitly dark in light mode */
+      color: var(--text-dark);
       font-weight: 500;
       text-align: center;
       border-radius: 6px;
     }
     .sidebar button.active {
         background: var(--primary-blue);
-        color: var(--text-light); /* Active button text white */
+        color: var(--text-light);
         box-shadow: 0 2px 6px var(--shadow-light);
     }
     .sidebar button:hover:not(.active) {
@@ -502,8 +502,8 @@
         }
 
         localStorage.setItem("uid", currentUID);
-        // Corrected: Set text content of span inside the new div
-        document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital; 
+        // Corrected: Set text content of span inside the new div (Hospital: will be in the HTML)
+        document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
         buildMonthButtons();
         loadTable();
         populateTrendEnergySelect();
@@ -575,8 +575,8 @@
             if (timestampDate && !isNaN(timestampDate.getTime())) { // Check if date is valid
                 lastSaved.textContent = `Last Saved: ${timestampDate.toLocaleString()}`;
             } else {
-                console.warn("Could not parse last_saved_at format:", result.last_saved_at);
-                lastSaved.textContent = "Last Saved: Invalid Date Format"; // More specific error
+                console.warn("Could not parse last_saved_at format, received:", result.last_saved_at);
+                lastSaved.textContent = "Last Saved: Invalid Date Format";
             }
         } else {
             lastSaved.textContent = "Last Saved: Never";
