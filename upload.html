@@ -69,12 +69,12 @@
 
     /* Card/Panel Base Styling */
     .card-panel {
-      border-radius: 16px; /* Consistent larger rounded corners */
-      box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium); /* Layered soft shadows */
-      background: var(--background-white-card); /* White background for cards */
-      border: 1px solid rgba(0,0,0,0.05); /* Very subtle border */
-      padding: 20px; /* Default padding for panels */
-      box-sizing: border-box; /* Include padding in element's total width/height */
+      border-radius: 16px;
+      box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium);
+      background: var(--background-white-card);
+      border: 1px solid rgba(0,0,0,0.05);
+      padding: 20px;
+      box-sizing: border-box;
     }
 
     /* Topbar styling */
@@ -88,11 +88,11 @@
       box-shadow: 0 2px 4px var(--shadow-light);
       min-height: 50px; /* Ensure topbar has minimum height */
     }
-    .hospital-info-box { /* NEW: Style for the hospital name box */
-        background-color: var(--primary-blue-light); /* Light blue background */
-        color: var(--primary-blue-dark); /* Darker blue text */
+    .hospital-info-box { /* Style for the hospital name box */
+        background-color: var(--primary-blue-light);
+        color: var(--primary-blue-dark);
         padding: 8px 15px;
-        border-radius: 8px; /* Slightly rounded corners */
+        border-radius: 8px;
         font-weight: 600;
         font-size: 0.95em;
         box-shadow: 0 1px 3px var(--shadow-light);
@@ -124,7 +124,7 @@
       background-color: #2a2a2a;
       border-color: #444;
     }
-    body.dark .hospital-info-box { /* Dark mode for hospital name box */
+    body.dark .hospital-info-box {
         background-color: var(--primary-blue-dark);
         color: var(--primary-blue-light);
         box-shadow: 0 1px 3px rgba(0,0,0,0.5);
@@ -154,14 +154,14 @@
       margin-bottom: 8px;
       padding: 10px 8px;
       background: #eee;
-      color: var(--text-dark); /* Ensure text is dark in light mode */
+      color: var(--text-dark); /* Text explicitly dark in light mode */
       font-weight: 500;
       text-align: center;
       border-radius: 6px;
     }
     .sidebar button.active {
         background: var(--primary-blue);
-        color: var(--text-light);
+        color: var(--text-light); /* Active button text white */
         box-shadow: 0 2px 6px var(--shadow-light);
     }
     .sidebar button:hover:not(.active) {
@@ -170,7 +170,7 @@
         box-shadow: 0 2px 6px var(--shadow-light);
     }
     .sidebar label {
-        display: flex; /* Ensures label and checkbox align */
+        display: flex;
         align-items: center;
         margin-top: 15px;
         font-size: 0.95em;
@@ -224,12 +224,12 @@
         box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium);
         background: var(--background-white-card);
         border: 1px solid rgba(0,0,0,0.05);
-        overflow: hidden; /* Important for Handsontable to respect border-radius */
+        overflow: hidden;
     }
     /* Handsontable specific overrides for cell background and text */
     #table .ht_master, #table .handsontable {
-        background-color: var(--background-white-card); /* Main table area white */
-        color: var(--text-dark); /* Default text dark */
+        background-color: var(--background-white-card);
+        color: var(--text-dark);
     }
     #table .handsontable td, #table .handsontable th {
         border-color: var(--border-darker); /* Darker borders for cells */
@@ -404,7 +404,7 @@
 </head>
 <body>
   <div class="topbar">
-    <!-- NEW: Hospital Info Box -->
+    <!-- Hospital Info Box -->
     <div id="hospitalInfoBox" class="hospital-info-box">
         <span id="hospitalName">Hospital: </span>
     </div>
@@ -502,7 +502,8 @@
         }
 
         localStorage.setItem("uid", currentUID);
-        document.getElementById("hospitalName").textContent = currentHospital;
+        // Corrected: Set text content of span inside the new div
+        document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital; 
         buildMonthButtons();
         loadTable();
         populateTrendEnergySelect();
@@ -557,8 +558,26 @@
 
         // Load last_saved_at timestamp
         if (result.last_saved_at) {
-            const timestamp = new Date(result.last_saved_at._seconds * 1000).toLocaleString();
-            lastSaved.textContent = `Last Saved: ${timestamp}`;
+            let timestampDate;
+            // Check if it's a Firestore Timestamp object ({_seconds: ..., _nanoseconds: ...})
+            if (result.last_saved_at._seconds !== undefined) {
+                timestampDate = new Date(result.last_saved_at._seconds * 1000);
+            }
+            // Check if it's an ISO string (from Python datetime or other sources)
+            else if (typeof result.last_saved_at === 'string') {
+                timestampDate = new Date(result.last_saved_at);
+            }
+            // If it's none of the above, it might be a direct Date object (less likely from JSON)
+            else if (result.last_saved_at instanceof Date) {
+                timestampDate = result.last_saved_at;
+            }
+            
+            if (timestampDate && !isNaN(timestampDate.getTime())) { // Check if date is valid
+                lastSaved.textContent = `Last Saved: ${timestampDate.toLocaleString()}`;
+            } else {
+                console.warn("Could not parse last_saved_at format:", result.last_saved_at);
+                lastSaved.textContent = "Last Saved: Invalid Date Format"; // More specific error
+            }
         } else {
             lastSaved.textContent = "Last Saved: Never";
         }
