@@ -31,7 +31,7 @@
       --background-dark-card: #333; /* Dark grey for dark mode cards */
       --background-off-white: #f8f8f8; /* Off-white for subtle distinction */
       --border-light: #ccc; /* Light grey border */
-      --border-darker: #aaa; /* NEW: Darker border for grid lines */
+      --border-darker: #aaa; /* Darker border for grid lines */
       --success-green: #28a745; /* Green for success */
       --warning-orange: #ffc107; /* Orange for warning */
       --error-red: #dc3545; /* Red for error */
@@ -103,6 +103,7 @@
       margin-left: 10px;
       margin-right: 0;
       color: var(--text-light);
+      border: none;
       border-radius: 6px;
     }
     .topbar button:first-of-type { /* My Profile button */
@@ -231,7 +232,7 @@
         color: var(--text-dark); /* Default text dark */
     }
     #table .handsontable td, #table .handsontable th {
-        border-color: var(--border-darker); /* NEW: Darker borders for cells */
+        border-color: var(--border-darker); /* Darker borders for cells */
     }
     #table .handsontable .htPlaceholder {
         background-color: var(--background-off-white) !important; /* Off-white for empty cells */
@@ -336,7 +337,7 @@
         box-shadow: 0 0 15px rgba(0,0,0,0.6);
         border-color: #444;
     }
-    body.dark .hospital-info-box { /* Dark mode for hospital name box */
+    body.dark .hospital-info-box {
         background-color: var(--primary-blue-dark);
         color: var(--primary-blue-light);
         box-shadow: 0 1px 3px rgba(0,0,0,0.5);
@@ -444,7 +445,7 @@
           <p><strong>Total Entries:</strong> <span id="total">0</span></p>
           <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
           <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
-          <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
+          <p style="color:red;">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
         </div>
       </div>
       <!-- SAVE SECTION IS HERE, ABOVE THE TREND CHART -->
@@ -501,7 +502,7 @@
         }
 
         localStorage.setItem("uid", currentUID);
-        document.getElementById("hospitalName").textContent = currentHospital; // Only set text content
+        document.getElementById("hospitalName").textContent = currentHospital;
         buildMonthButtons();
         loadTable();
         populateTrendEnergySelect();
@@ -656,7 +657,7 @@
 
         lastSaved.textContent = "Last Saved: Just now (reloading to confirm)";
         alert("Data saved successfully!");
-        loadTable(); // Reload to get updated timestamp from server
+        loadTable(); // Reload table to get the latest timestamp from server
 
         if (outOfToleranceValues.length > 0) {
             const alertResponse = await fetch('https://back-end-wrxi.onrender.com/send-alert', {
