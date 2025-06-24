@@ -54,39 +54,39 @@
     /* Global Micro-interaction */
     button, a.button, select {
       transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-      border-radius: 8px;
-      border: none;
+      border-radius: 8px; /* Consistent larger border-radius for buttons/select */
+      border: none; /* Remove default button border unless specified */
       cursor: pointer;
     }
     button:hover, a.button:hover, select:hover {
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px var(--shadow-light);
+        box-shadow: 0 4px 12px var(--shadow-light); /* Softer shadow on hover */
     }
     button:active, a.button:active, select:active {
         transform: translateY(0);
-        box-shadow: 0 1px 4px var(--shadow-light) inset;
+        box-shadow: 0 1px 4px var(--shadow-light) inset; /* Inset shadow on click */
     }
 
     /* Card/Panel Base Styling */
     .card-panel {
-      border-radius: 16px;
-      box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium);
-      background: var(--background-white-card);
-      border: 1px solid rgba(0,0,0,0.05);
-      padding: 20px;
-      box-sizing: border-box;
+      border-radius: 16px; /* Consistent larger rounded corners */
+      box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium); /* Layered soft shadows */
+      background: var(--background-white-card); /* White background for cards */
+      border: 1px solid rgba(0,0,0,0.05); /* Very subtle border */
+      padding: 20px; /* Default padding for panels */
+      box-sizing: border-box; /* Include padding in element's total width/height */
     }
 
     /* Topbar styling */
     .topbar {
       display: flex;
-      justify-content: space-between;
+      justify-content: space-between; /* Spreads items across the main axis */
       align-items: center;
       background: var(--background-white-card);
       padding: 10px 20px;
       border-bottom: 1px solid var(--border-light);
       box-shadow: 0 2px 4px var(--shadow-light);
-      min-height: 50px;
+      min-height: 50px; /* Ensure topbar has minimum height */
     }
     .hospital-info-box { /* NEW: Style for the hospital name box */
         background-color: var(--primary-blue-light); /* Light blue background */
@@ -105,13 +105,13 @@
       color: var(--text-light);
       border-radius: 6px;
     }
-    .topbar button:first-of-type {
+    .topbar button:first-of-type { /* My Profile button */
         background-color: var(--primary-blue);
     }
     .topbar button:first-of-type:hover {
         background-color: var(--primary-blue-dark);
     }
-    .topbar button:last-of-type {
+    .topbar button:last-of-type { /* Logout button */
         background-color: var(--error-red);
     }
     .topbar button:last-of-type:hover {
@@ -153,7 +153,7 @@
       margin-bottom: 8px;
       padding: 10px 8px;
       background: #eee;
-      color: var(--text-dark);
+      color: var(--text-dark); /* Ensure text is dark in light mode */
       font-weight: 500;
       text-align: center;
       border-radius: 6px;
@@ -310,7 +310,7 @@
     }
     .trend-chart-section select {
         padding: 10px;
-        border: 1px var(--border-light) solid; /* Ensure 'solid' keyword is there for consistency */
+        border: 1px var(--border-light) solid;
         background-color: var(--background-white-card);
         color: var(--text-dark);
         font-size: 0.95em;
@@ -501,7 +501,7 @@
         }
 
         localStorage.setItem("uid", currentUID);
-        document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
+        document.getElementById("hospitalName").textContent = currentHospital; // Only set text content
         buildMonthButtons();
         loadTable();
         populateTrendEnergySelect();
@@ -554,6 +554,14 @@
           ? result.data.map(r=>r.map(c=> c===null||c==="None"?"":c))
           : generateEmptyData(dateCols);
 
+        // Load last_saved_at timestamp
+        if (result.last_saved_at) {
+            const timestamp = new Date(result.last_saved_at._seconds * 1000).toLocaleString();
+            lastSaved.textContent = `Last Saved: ${timestamp}`;
+        } else {
+            lastSaved.textContent = "Last Saved: Never";
+        }
+
         if (hot) hot.destroy();
         hot = new Handsontable(container, {
           data,
@@ -582,6 +590,7 @@
       } catch(e) {
         console.error("Error loading table data:", e);
         alert("Could not load table data. Please try again.");
+        lastSaved.textContent = "Last Saved: Error loading";
       } finally {
         hideLoader();
       }
@@ -645,8 +654,9 @@
             throw new Error('Failed to save data: ' + saveResponse.statusText);
         }
 
-        lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
+        lastSaved.textContent = "Last Saved: Just now (reloading to confirm)";
         alert("Data saved successfully!");
+        loadTable(); // Reload to get updated timestamp from server
 
         if (outOfToleranceValues.length > 0) {
             const alertResponse = await fetch('https://back-end-wrxi.onrender.com/send-alert', {
@@ -672,6 +682,7 @@
       } catch(err){
         console.error("Operation failed:", err);
         alert("Operation failed: " + err.message);
+        lastSaved.textContent = "Last Saved: Save Failed";
       } finally{
         hideLoader();
       }
