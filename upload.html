@@ -221,28 +221,23 @@
         min-width: 400px;
         /* Apply card-panel base styles */
         border-radius: 16px;
-        box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium);
-        background: var(--background-white-card);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
+        background: #ffffff;
         border: 1px solid rgba(0,0,0,0.05);
         overflow: hidden;
     }
     /* Handsontable specific overrides for cell background and text */
     #table .ht_master, #table .handsontable {
-        background-color: var(--background-white-card);
-        color: var(--text-dark);
+        background-color: #ffffff;
+        color: #333;
     }
     #table .handsontable td, #table .handsontable th {
-        border-color: var(--border-darker);
+        border-color: #aaa;
     }
-    .summary-box p, .sidebar label, .sidebar p, .trend-chart-section label {
-        color: #bbb; /* Keeping this style as is */
-    }
-
-    /* Fixing potential issue with htPlaceholder background in dark mode, based on previous discussion */
+    /* Corrected: Use specific class for placeholder styling in dark mode */
     body.dark #table .handsontable .htPlaceholder {
         background-color: #2a2a2a !important;
     }
-
 
     .summary-box {
       width: 300px;
@@ -250,13 +245,13 @@
       padding: 20px;
       /* Apply card-panel base styles */
       border-radius: 16px;
-      box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium);
-      background: var(--background-white-card);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
+      background: #ffffff;
       border: 1px solid rgba(0,0,0,0.05);
     }
     .summary-box h3 {
         margin-top: 0;
-        color: var(--primary-blue);
+        color: #007bff;
         font-weight: 600;
         font-size: 1.4em;
         margin-bottom: 15px;
@@ -280,18 +275,18 @@
         padding: 10px 20px;
         font-size: 1em;
         font-weight: bold;
-        background-color: var(--primary-blue);
-        color: var(--text-light);
+        background-color: #007bff;
+        color: #fff;
         border-radius: 8px;
-        box-shadow: 0 2px 6px var(--shadow-light);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
     #save-section button:hover {
-        background-color: var(--primary-blue-dark);
-        box-shadow: 0 4px 10px var(--shadow-medium);
+        background-color: #0056b3;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.12);
     }
     button:active, a.button:active, select:active {
         transform: translateY(0);
-        box-shadow: 0 1px 4px var(--shadow-light) inset;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08) inset;
     }
 
 
@@ -300,44 +295,44 @@
         padding: 20px;
         /* Apply card-panel base styles */
         border-radius: 16px;
-        box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium);
-        background: var(--background-white-card);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
+        background: #ffffff;
         border: 1px solid rgba(0,0,0,0.05);
     }
     .trend-chart-section h3 {
         margin-top: 0;
-        color: var(--primary-blue);
+        color: #007bff;
         font-weight: 600;
         font-size: 1.4em;
         margin-bottom: 15px;
         text-align: center;
     }
     .trend-chart-section label {
-        color: var(--text-dark);
+        color: #333;
         font-weight: 500;
     }
     .trend-chart-section select {
         padding: 10px;
-        border: 1px var(--border-light) solid;
-        background-color: var(--background-white-card);
-        color: var(--text-dark);
+        border: 1px #ccc solid;
+        background-color: #ffffff;
+        color: #333;
         font-size: 0.95em;
         border-radius: 6px;
     }
     .trend-chart-section button {
         padding: 10px 20px;
         font-size: 0.95em;
-        background-color: var(--primary-blue);
-        color: var(--text-light);
+        background-color: #007bff;
+        color: #fff;
         border-radius: 6px;
-        box-shadow: 0 2px 6px var(--shadow-light);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
 
 
     /* Dark Mode overrides */
     body.dark {
       background-color: #1a1a1a;
-      color: var(--text-light);
+      color: #fff;
     }
     body.dark .topbar, body.dark .sidebar, body.dark .summary-box, body.dark .trend-chart-section, #table, body.dark .login-container, body.dark .signup-container, body.dark .message-container, body.dark .card, body.dark .month-header-box {
         background: #2a2a2a;
@@ -345,36 +340,36 @@
         border-color: #444;
     }
     body.dark .hospital-info-box {
-        background-color: var(--primary-blue-dark);
-        color: var(--primary-blue-light);
+        background-color: #0056b3;
+        color: #e0f7fa;
         box-shadow: 0 1px 3px rgba(0,0,0,0.5);
     }
     body.dark .topbar #hospitalName, body.dark h1, body.dark h2, body.dark h3, body.dark .user-info strong {
-        color: var(--primary-blue-light);
+        color: #e0f7fa;
     }
     body.dark .sidebar button {
         background: #3a3a3a;
-        color: var(--text-light);
+        color: #fff;
     }
     body.dark .sidebar button.active {
-        background: var(--primary-blue);
+        background: #007bff;
     }
     body.dark .sidebar button:hover:not(.active) {
         background: #4a4a4a;
     }
     body.dark select, body.dark input {
         background-color: #3a3a3a;
-        color: var(--text-light);
+        color: #fff;
         border-color: #555;
     }
     body.dark #table .ht_master, body.dark #table .handsontable {
         background-color: #2a2a2a;
-        color: var(--text-light);
+        color: #fff;
     }
     body.dark #table .handsontable td, body.dark #table .handsontable th {
         border-color: #555;
     }
-    /* Fixed potential issue with htPlaceholder background in dark mode, based on previous discussion */
+    /* Corrected: Using specific class for placeholder styling in dark mode */
     body.dark #table .handsontable .htPlaceholder {
         background-color: #2a2a2a !important;
     }
@@ -396,8 +391,8 @@
     .spinner {
       width: 60px;
       height: 60px;
-      border: 8px solid var(--background-white-card);
-      border-top-color: var(--primary-blue);
+      border: 8px solid #ffffff;
+      border-top-color: #007bff;
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -535,7 +530,7 @@
     function showLoader(){document.getElementById('loading-overlay').style.display='flex';}
     function hideLoader(){document.getElementById('loading-overlay').style.display='none';}
 
-    async function loadTable() { // async functions are fine
+    async function loadTable() { // async functions are fine even with old syntax
       showLoader();
       var dateCols = getMonthDates(currentDate);
       document.getElementById('header').textContent = `${currentDate.toLocaleString('default',{month:'long'})} ${currentDate.getFullYear()}`;
@@ -680,6 +675,16 @@
       }
     }
 
+    // Explicitly attach these functions to the window object to make them globally callable
+    // by inline HTML event attributes (e.g., onclick="logout()")
+    window.logout = function() { // Exposing logout globally
+      auth.signOut().then(() => {
+        localStorage.clear();
+        window.location.href = "login.html";
+      });
+    }
+
+    // All other functions are called via addEventListener, so they don't need to be on window.
     function changeMonth(m){ currentDate = new Date(currentDate.getFullYear(), m, 1); loadTable(); updateTrendChart(); }
     function changeYear(o){ currentDate = new Date(currentDate.getFullYear()+o, currentDate.getMonth(), 1); loadTable(); updateTrendChart(); }
     function toggleDarkMode(){ document.body.classList.toggle('dark'); }
@@ -826,8 +831,10 @@
     // This will prevent 'ReferenceError: X is not defined'.
     document.addEventListener('DOMContentLoaded', function() {
         // Event listeners for static buttons
+        // For buttons that are always present and not dynamically created,
+        // it's safe to attach listeners here.
         saveBtn.addEventListener('click', manualSave);
-        logoutBtn.addEventListener('click', logout);
+        logoutBtn.addEventListener('click', window.logout); // Use window.logout for consistency, though it's now global
         myProfileBtn.addEventListener('click', function() { window.location.href='my_profile.html'; });
         darkToggle.addEventListener('change', toggleDarkMode);
         prevYearBtn.addEventListener('click', function() { changeYear(-1); });
@@ -845,7 +852,7 @@
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
                     alert("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.");
                     // Ensure logout function is properly scoped
-                    logout();
+                    window.logout(); // Call the globally exposed logout
                     return;
                 }
 
