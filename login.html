@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - LINAC QA</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom right, #dbeafe, #f0f9ff);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-container {
+      background: #ffffffcc;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 24px;
+      color: #1e3a8a;
+    }
+    label {
+      display: block;
+      text-align: left;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .error {
+      color: red;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .success-message {
+        color: green;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+    .home-link {
+        display: block;
+        max-width: 120px;
+        margin: 20px auto 0 auto;
+        font-size: 16px;
+        font-weight: bold;
+        text-decoration: none;
+        color: #007bff;
+        background-color: #e6f2ff;
+        padding: 10px 20px;
+        border-radius: 6px;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        box-sizing: border-box;
+        text-align: center;
+    }
+    .home-link:hover {
+        background-color: #d0e7ff;
+        transform: translateY(-1px);
+    }
+    .home-link:active {
+        background-color: #b3d9ff;
+        transform: translateY(0);
+        box-shadow: 0 0px 2px rgba(0, 0, 0, 0.1);
+    }
+    .forgot-password-link {
+        display: block;
+        text-align: right;
+        font-size: 14px;
+        margin-top: -15px;
+        margin-bottom: 15px;
+        color: #007bff;
+        text-decoration: none;
+    }
+    .forgot-password-link:hover {
+        text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h2>Login - LINAC QA</h2>
+    <form id="loginForm">
+      <div class="error" id="errorMsg"></div>
+      <div class="success-message" id="successMsg"></div>
+
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required />
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required />
+
+      <a href="#" class="forgot-password-link" onclick="sendPasswordReset()">Forgot Password?</a>
+
+      <button type="submit">Login</button>
+    </form>
+    <div class="footer">© 2025 LINAC QA System</div>
+  </div>
+
+  <a href="index.html" class="home-link" title="Go to Home Page">Home</a>
+
+  <!-- Firebase App -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <!-- Firebase Auth -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <!-- Firebase Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+  <script>
+    // ✅ Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
+      authDomain: "linac-qa-project.firebaseapp.com",
+      projectId: "linac-qa-project",
+      storageBucket: "linac-qa-project.firebasestorage.app",
+      messagingSenderId: "850988733382",
+      appId: "1:850988733382:web:ef75d64e30deb7e37c18c7",
+      measurementId: "G-HFJ2CGS664"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const errorMsg = document.getElementById("errorMsg");
+    const successMsg = document.getElementById("successMsg");
+
+    function clearMessages() {
+        errorMsg.textContent = "";
+        successMsg.textContent = "";
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      clearMessages();
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      // console.log("Login attempt for email:", email); // Log 1 (Removed for brevity in full code)
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then(async (userCredential) => {
+          const user = userCredential.user;
+          // console.log("Firebase Auth success. User UID:", user.uid); // Log 2
+          localStorage.setItem("userEmail", email); // Store user email if needed
+
+          try {
+            // Fetch user data from Firestore to get hospital and role
+            const userDocRef = db.collection("users").doc(user.uid);
+            // console.log("Attempting to fetch Firestore document for UID:", user.uid); // Log 3
+            const userDocSnap = await userDocRef.get();
+
+            // console.log("Firestore document exists:", userDocSnap.exists); // Log 4
+
+            if (userDocSnap.exists) {
+              const userData = userDocSnap.data();
+              // console.log("Firestore user data fetched:", userData); // Log 5
+              const hospitalName = userData.hospital || "UNKNOWN HOSPITAL";
+              const userRole = userData.role; // Get the user's role
+              const userStatus = userData.status; // Get user status from Firestore
+
+              // console.log("Hospital Name from Firestore:", hospitalName); // Log 6
+              // console.log("User Role from Firestore:", userRole); // Log 7
+              // console.log("User Status from Firestore:", userStatus); // NEW Log
+
+              localStorage.setItem("hospitalName", hospitalName.toUpperCase());
+              localStorage.setItem("userRole", userRole); // Store user's role in local storage
+              localStorage.setItem("userStatus", userStatus); // NEW: Store user's status in local storage
+              // console.log("Role stored in localStorage:", localStorage.getItem("userRole")); // Log 8
+              // console.log("Status stored in localStorage:", localStorage.getItem("userStatus")); // NEW Log
+
+              // Redirect based on role and status
+              if (userRole === "Admin") {
+                // console.log("Redirecting to admin_dashboard.html"); // Log 9
+                window.location.href = "admin_dashboard.html"; // Admin specific page
+              } else if (userStatus === "active") { // Only active regular users go to upload
+                // console.log("Redirecting to upload.html (regular user - active)"); // Log 10
+                window.location.href = "upload.html"; // Regular user page
+              } else if (userStatus === "pending" || userStatus === "rejected") {
+                alert("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support."); // Inform user
+                window.location.href = "awaiting_approval.html"; // Redirect to approval page
+              } else { // Fallback for unknown/missing status
+                alert("Your account status is unknown. Please contact support.");
+                window.location.href = "awaiting_approval.html";
+              }
+
+            } else {
+              // If user document doesn't exist in Firestore after Firebase Auth login (e.g., deleted Firestore doc but not Auth user)
+              console.warn("User document NOT found in Firestore for UID:", user.uid); // Log 11
+              localStorage.setItem("hospitalName", "UNKNOWN HOSPITAL");
+              localStorage.setItem("userRole", "unknown"); // Assign a default role
+              localStorage.setItem("userStatus", "unknown"); // NEW: Assign default status
+              alert("Your profile data is incomplete. Please contact support.");
+              window.location.href = "awaiting_approval.html"; // Redirect to approval page
+            }
+          } catch (err) {
+            console.error("Error fetching user data from Firestore:", err); // Log 13
+            // console.error("Firestore fetch error details:", err.message, err.code); // Log 14
+            localStorage.setItem("hospitalName", "UNKNOWN HOSPITAL");
+            localStorage.setItem("userRole", "unknown");
+            localStorage.setItem("userStatus", "unknown"); // NEW: Set default status on error
+            alert("An error occurred fetching your profile. Please contact support.");
+            window.location.href = "awaiting_approval.html"; // Redirect to approval page on error
+          }
+        })
+        .catch((error) => {
+          errorMsg.textContent = "❌ Invalid email or password.";
+          // console.error("Firebase Auth login error:", error); // Log 16
+          // console.error("Auth error details:", error.message, error.code); // Log 17
+        });
+    });
+
+    async function sendPasswordReset() {
+        clearMessages();
+        const email = document.getElementById("email").value;
+
+        if (!email) {
+            errorMsg.textContent = "Please enter your email to reset password.";
+            return;
+        }
+
+        try {
+            await auth.sendPasswordResetEmail(email);
+            successMsg.textContent = "✅ Password reset email sent. Check your inbox!";
+        } catch (error) {
+            console.error("Password reset error:", error);
+            if (error.code === 'auth/user-not-found') {
+                errorMsg.textContent = "No user found with that email address.";
+            } else if (error.code === 'auth/invalid-email') {
+                errorMsg.textContent = "Please enter a valid email address.";
+            } else {
+                errorMsg.textContent = "Error sending password reset email: " + error.message;
+            }
+        }
+    }
+  </script>
+</body>
+</html>

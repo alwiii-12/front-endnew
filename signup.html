@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Signup | LINAC QA</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .signup-container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 400px;
+    }
+
+    .signup-container h2 {
+      margin-top: 0;
+      text-align: center;
+    }
+
+    .signup-container input,
+    .signup-container select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    .signup-container label {
+        display: block;
+        text-align: left;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #555;
+    }
+
+    .signup-container button {
+      width: 100%;
+      padding: 10px;
+      background-color: #2a9d8f;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .signup-container button:hover {
+      background-color: #21867a;
+    }
+
+    .message {
+      color: red;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="signup-container">
+    <h2>LINAC QA Signup</h2>
+    <div class="message" id="message"></div>
+
+    <label for="name">Full Name:</label>
+    <input type="text" id="name" placeholder="Enter your full name" />
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" placeholder="Enter your email" />
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" placeholder="Choose a password" />
+
+    <label for="hospital">Select Hospital:</label>
+    <select id="hospital">
+      <option value="">-- Select Hospital --</option>
+      <option value="aoi_gurugram">AOI GURUGRAM</option>
+      <option value="medanta_gurugram">Medanta Gurugram</option>
+      <option value="fortis_delhi">Fortis Hospital Delhi</option>
+      <option value="apollo_chennai">Apollo Hospitals Chennai</option>
+      <option value="max_delhi">Max Healthcare Delhi</option>
+      </select>
+
+    <label for="role">Select Role:</label>
+    <select id="role">
+      <option value="">Select Role</option>
+      <option value="Physicist">Physicist</option>
+      <option value="Technologist">Technologist</option>
+    </select>
+    <button onclick="signup()">Sign Up</button>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
+      authDomain: "linac-qa.firebaseapp.com",
+      projectId: "linac-qa",
+      storageBucket: "linac-qa.appspot.com",
+      messagingSenderId: "395443876940",
+      appId: "1:395443876940:web:8ed5b7b3d17693bd70b31c"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <script>
+    async function signup() {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const hospital = document.getElementById("hospital").value.trim();
+      const role = document.getElementById("role").value.trim();
+      const messageDiv = document.getElementById("message");
+      messageDiv.textContent = "";
+      messageDiv.style.color = "red";
+
+      if (!name || !email || !password || !hospital || hospital === "" || !role || role === "") {
+        messageDiv.textContent = "Please fill in all fields.";
+        return;
+      }
+
+      try {
+        const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+        const uid = userCredential.user.uid;
+
+        // Send initial status as "pending" along with other user data to backend
+        const response = await fetch("https://back-end-wrxi.onrender.com/signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                uid,
+                name,
+                email,
+                hospital, // This is the centerId (value from dropdown)
+                role,
+                status: "pending" // Set initial status to pending
+            })
+        });
+
+        const data = await response.json();
+        if (data.status === "success") {
+            // Note: hospitalName is now the center ID from the dropdown,
+            // but we use it as hospitalName in localStorage for display consistency in upload.html
+            localStorage.setItem("hospitalName", hospital.toUpperCase());
+
+            messageDiv.textContent = "Signup successful! Your account is awaiting approval. You will receive an email once approved.";
+            messageDiv.style.color = "green";
+            setTimeout(() => {
+                window.location.href = "awaiting_approval.html"; // Redirect to approval page
+            }, 3000);
+
+        } else {
+            messageDiv.textContent = "Signup failed: " + data.message;
+        }
+
+      } catch (error) {
+        console.error(error);
+        messageDiv.textContent = "Firebase signup error: " + error.message;
+      }
+    }
+  </script>
+</body>
+</html>
