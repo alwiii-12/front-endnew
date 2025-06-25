@@ -232,10 +232,10 @@
         color: var(--text-dark);
     }
     #table .handsontable td, #table .handsontable th {
-        border-color: var(--border-darker); /* Darker borders for cells */
+        border-color: var(--border-darker);
     }
     #table .handsontable .htPlaceholder {
-        background-color: var(--background-off-white) !important; /* Off-white for empty cells */
+        background-color: var(--background-off-white) !important;
     }
 
     .summary-box {
@@ -555,47 +555,8 @@
           ? result.data.map(r=>r.map(c=> c===null||c==="None"?"":c))
           : generateEmptyData(dateCols);
 
-        // Load last_saved_at timestamp
-        if (result.last_saved_at) {
-            let timestampDate;
-            // Check if it's a Firestore Timestamp object ({_seconds: ..., _nanoseconds: ...})
-            if (result.last_saved_at._seconds !== undefined) {
-                timestampDate = new Date(result.last_saved_at._seconds * 1000);
-            }
-            // Check if it's an ISO string (from Python datetime or other sources)
-            else if (typeof result.last_saved_at === 'string') {
-                let isoString = result.last_saved_at;
-                // If it ends with specific Python datetime string: '.microseconds+HH:MM' or '.microsecondsZ'
-                // JavaScript Date() constructor is sometimes finicky with exact format, especially microseconds + timezone
-                // Let's try to parse it more explicitly or simplify the string
-                const match = isoString.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\.(\d{1,6})(Z|(\+\d{2}:\d{2})?)$/);
-                if (match) {
-                    const base = match[1]; // "2025-06-25T05:23:19"
-                    const microseconds = match[2]; // "008418"
-                    // Take only first 3 digits for milliseconds (standard for JS Date)
-                    const milliseconds = microseconds.substring(0, 3);
-                    // Reconstruct a standard ISO string with 'Z' for UTC
-                    isoString = `${base}.${milliseconds}Z`;
-                    timestampDate = new Date(isoString);
-                } else {
-                    // Fallback to direct parse if regex fails (for other simple ISO formats)
-                    timestampDate = new Date(isoString);
-                }
-            }
-            // If it's none of the above, it might be a direct Date object (less likely from JSON)
-            else if (result.last_saved_at instanceof Date) {
-                timestampDate = result.last_saved_at;
-            }
-            
-            if (timestampDate && !isNaN(timestampDate.getTime())) { // Check if date is valid
-                lastSaved.textContent = `Last Saved: ${timestampDate.toLocaleString()}`;
-            } else {
-                console.warn("Could not parse last_saved_at format, received (original string):", result.last_saved_at);
-                lastSaved.textContent = "Last Saved: Invalid Date Format";
-            }
-        } else {
-            lastSaved.textContent = "Last Saved: Never";
-        }
+        // REMOVED: Load last_saved_at timestamp logic
+        lastSaved.textContent = ""; // Ensure it's cleared if no timestamp info
 
         if (hot) hot.destroy();
         hot = new Handsontable(container, {
@@ -689,9 +650,9 @@
             throw new Error('Failed to save data: ' + saveResponse.statusText);
         }
 
-        lastSaved.textContent = "Last Saved: Just now (reloading to confirm)";
+        lastSaved.textContent = "Last Saved: Just now"; // Simplified local update
         alert("Data saved successfully!");
-        loadTable(); // Reload table to get the latest timestamp from server
+        // Removed loadTable() call after save, as it's not strictly needed for this simplified timestamp
 
         if (outOfToleranceValues.length > 0) {
             const alertResponse = await fetch('https://back-end-wrxi.onrender.com/send-alert', {
