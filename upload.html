@@ -368,9 +368,6 @@
     body.dark #table .handsontable td, body.dark #table .handsontable th {
         border-color: #555;
     }
-    body.dark #table .handsontable .htPlaceholder {
-        background-color: #2a2a2a !important;
-    }
     body.dark .summary-box p, body.dark .sidebar label, body.dark .sidebar p, body.dark .trend-chart-section label {
         color: #bbb;
     }
@@ -470,11 +467,6 @@
   <div id="loading-overlay"><div class="spinner"></div></div>
 
   <script>
-    // Removed import statements because we are now using compat SDKs for global 'firebase' object
-    // import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js';
-    // import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js';
-    // import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js';
-
     // Firebase config (now using var instead of const, or directly using it in initializeApp)
     var firebaseConfig = {
       apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
@@ -730,28 +722,33 @@
 
         var monthKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}`; // Use var for local declarations
         try {
-            var res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`); // Use var for local declarations
-            var result = await res.json(); // Use var for local declarations
-            var monthData = result.data; // Use var for local declarations
+            // Fetch data directly from the backend for the current month and user
+            var res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`);
+            var result = await res.json();
+            var monthData = result.data;
 
             var energyRow = monthData.find(row => row[0] === selectedEnergy); // Use var for local declarations
 
             if (energyRow) {
-                for (let i = 0; i < daysInMonth; i++) { // `let` is fine inside blocks
-                    var value = energyRow[i + 1]; // Use var for local declarations
+                // Populate dataPoints and labels for all days of the month
+                for (let i = 0; i < daysInMonth; i++) {
+                    var value = energyRow[i + 1]; // Use var for local declarations (column 0 is energy type)
                     var n = parseFloat(value); // Use var for local declarations
-                    dataPoints.push(isNaN(n) ? null : n);
-                    labels.push(String(i + 1).padStart(2, '0'));
+                    dataPoints.push(isNaN(n) ? null : n); // Push null if not a number
+                    labels.push(String(i + 1).padStart(2, '0')); // Day of month as label
                 }
             } else {
-                for (let i = 0; i < daysInMonth; i++) { // `let` is fine inside blocks
+                // If energy type not found, push nulls for all days
+                for (let i = 0; i < daysInMonth; i++) {
                     dataPoints.push(null);
                     labels.push(String(i + 1).padStart(2, '0'));
                 }
             }
 
+            // Chart.js initialization/update
             var ctx = document.getElementById('trendChart').getContext('2d'); // Use var for local declarations
-            if (trendChart) trendChart.destroy();
+            if (trendChart) trendChart.destroy(); // Destroy previous chart instance
+
             trendChart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -762,8 +759,8 @@
                         borderColor: '#007bff',
                         backgroundColor: 'rgba(0, 123, 255, 0.2)',
                         fill: false,
-                        tension: 0.1,
-                        spanGaps: true
+                        tension: 0.1, // Smoothness of the line
+                        spanGaps: true // Crucial: Connects points across null data (gaps)
                     }]
                 },
                 options: {
@@ -776,8 +773,8 @@
                                 display: true,
                                 text: 'Output Value (%)'
                             },
-                            min: -3,
-                            max: 3,
+                            min: -3, // Set fixed min for consistency
+                            max: 3,  // Set fixed max for consistency
                             ticks: {
                                 callback: function(value, index, values) {
                                     return value.toFixed(1) + '%';
@@ -811,8 +808,15 @@
         }
     }
 
-    // Attach all event listeners here, after the DOM is fully loaded and before authentication check
+    // Attach all event listeners after the DOM is fully loaded.
+    // This ensures that all elements (like buttons) are available.
     document.addEventListener('DOMContentLoaded', (event) => {
+        // It's important to attach these *after* the DOM is ready
+        // and before any user interaction, but also considering Firebase auth state.
+        // We will move the Firebase auth check inside this DOMContentLoaded
+        // and ensure functions are callable.
+
+        // Event listeners for static buttons
         saveBtn.addEventListener('click', manualSave);
         logoutBtn.addEventListener('click', logout);
         myProfileBtn.addEventListener('click', () => { window.location.href='my_profile.html'; });
@@ -820,31 +824,31 @@
         prevYearBtn.addEventListener('click', () => changeYear(-1));
         nextYearBtn.addEventListener('click', () => changeYear(1));
         showTrendBtn.addEventListener('click', updateTrendChart);
-    });
 
 
-    // Firebase Auth State Listener (This needs to be last, after all functions are defined)
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        currentUID = user.uid;
-        currentHospital = localStorage.getItem("hospitalName") || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
-        var userStatus = localStorage.getItem("userStatus"); // Use var
+        // Firebase Auth State Listener
+        // This still needs to run when the user's login state changes
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUID = user.uid;
+                currentHospital = localStorage.getItem("hospitalName") || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
+                var userStatus = localStorage.getItem("userStatus");
 
-        if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
-            alert("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.");
-            logout();
-            return;
-        }
+                if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
+                    alert("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.");
+                    logout();
+                    return;
+                }
 
-        localStorage.setItem("uid", currentUID);
-        document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
-        buildMonthButtons();
-        loadTable();
-        populateTrendEnergySelect();
-
-      } else {
-        window.location.href = "login.html";
-      }
+                localStorage.setItem("uid", currentUID);
+                document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
+                buildMonthButtons(); // This builds month buttons, which attach their own event listeners
+                loadTable();
+                populateTrendEnergySelect(); // This populates and updates the trend chart initially
+            } else {
+                window.location.href = "login.html";
+            }
+        });
     });
 
   </script>
