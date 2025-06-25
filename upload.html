@@ -10,12 +10,10 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 
-  <!-- Google Font: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Font Awesome for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
   <style>
@@ -403,7 +401,6 @@
 </head>
 <body>
   <div class="topbar">
-    <!-- NEW: Hospital Info Box -->
     <div id="hospitalInfoBox" class="hospital-info-box">
         <span id="hospitalName">Hospital: </span>
     </div>
@@ -432,10 +429,8 @@
     </div>
 
     <div class="main">
-      <!-- Month Header Box -->
       <div class="month-header-box" id="header">
-        <!-- Content set by JS loadTable() -->
-      </div>
+        </div>
       <div class="container">
         <div id="table"></div>
         <div class="summary-box">
@@ -447,29 +442,23 @@
           <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
         </div>
       </div>
-      <!-- SAVE SECTION IS HERE, ABOVE THE TREND CHART -->
       <div id="save-section">
         <button onclick="manualSave()" style="font-weight:bold; background-color: var(--primary-blue); color: var(--text-light);">
-            <i class="fas fa-save"></i> Save <!-- Icon added -->
-        </button>
+            <i class="fas fa-save"></i> Save </button>
         <span id="lastSaved" style="margin-left:15px;font-size:14px;color:gray;"></span>
       </div>
-      <!-- TREND CHART SECTION IS BELOW THE SAVE SECTION -->
       <div class="trend-chart-section" style="margin-top: 30px;">
         <h3>Energy Trend Analysis (Current Month)</h3>
         <div style="margin-bottom: 15px;">
           <label for="trendEnergySelect" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
           <select id="trendEnergySelect" style="padding: 8px; border: 1px var(--border-light) solid;">
-            <!-- Options will be dynamically populated by JS -->
-          </select>
+            </select>
           <button onclick="updateTrendChart()" style="background-color: var(--primary-blue); color: var(--text-light); margin-left: 10px;">
-              <i class="fas fa-chart-line"></i> Show Trend <!-- Icon added -->
-          </button>
+              <i class="fas fa-chart-line"></i> Show Trend </button>
         </div>
         <canvas id="trendChart" style="max-height: 350px; width: 100%;"></canvas>
       </div>
-      <!-- END NEW SECTION -->
-    </div>
+      </div>
   </div>
 
   <div id="loading-overlay"><div class="spinner"></div></div>
@@ -524,7 +513,7 @@
     let currentDate = new Date(); currentDate.setDate(1);
     const energyTypes = ["6X","10X","15X","6X FFF","10X FFF","6E","9E","12E","15E","18E"];
 
-    let outOfToleranceValues = [];
+    let outOfToleranceValues = []; // This array holds the current out-of-tolerance values displayed in the table.
 
     function getMonthDates(date) {
       const y = date.getFullYear(), m = date.getMonth();
@@ -548,7 +537,7 @@
 
       const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
       try {
-        const res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`);
+        [cite_start]const res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`); [cite: 1]
         const result = await res.json();
         const data = Array.isArray(result.data) && result.data.length === energyTypes.length
           ? result.data.map(r=>r.map(c=> c===null||c==="None"?"":c))
@@ -589,7 +578,7 @@
 
     function updateSummaryAndChart(data) {
       let total=0, within=0, warning=0, out=0;
-      outOfToleranceValues = [];
+      outOfToleranceValues = []; // Clear and re-populate based on current table data
 
       const dateCols = getMonthDates(currentDate);
 
@@ -605,6 +594,7 @@
                 warning++;
             } else {
                 out++;
+                // Push all current out-of-tolerance values
                 outOfToleranceValues.push({
                     energy: energyType,
                     date: dateCols[colIndex],
@@ -635,7 +625,8 @@
       const changedData = hot.getData();
       const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
       try {
-        const saveResponse = await fetch('https://back-end-wrxi.onrender.com/save',{
+        // Save the LINAC QA data first
+        [cite_start]const saveResponse = await fetch('https://back-end-wrxi.onrender.com/save',{ [cite: 1]
           method:'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ data: changedData, month, uid: currentUID })
@@ -648,26 +639,46 @@
         lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
         alert("Data saved successfully!");
 
-        if (outOfToleranceValues.length > 0) {
-            const alertResponse = await fetch('https://back-end-wrxi.onrender.com/send-alert', {
+        // After saving, trigger the alert check on the backend.
+        // We always call it if there are current outOfToleranceValues,
+        // or if we have a lastSaved timestamp (implying data was present),
+        // so the backend can compare and potentially send a 'resolved' alert.
+        if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') {
+            [cite_start]const alertResponse = await fetch('https://back-end-wrxi.onrender.com/send-alert', { [cite: 1]
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     outValues: outOfToleranceValues,
-                    hospitalName: currentHospital
+                    hospitalName: currentHospital,
+                    uid: currentUID, // Pass UID to backend for context
+                    month: month      // Pass month to backend for context
                 })
             });
 
             const alertResult = await alertResponse.json();
             if (alertResult.status === 'alert sent') {
-                console.log("Email alert sent for out of tolerance values.");
+                console.log("Email alert sent for current out of tolerance values.");
+            } else if (alertResult.status === 'no_change') {
+                console.log("No new out-of-tolerance values or changes. Email not sent.");
+                // No need to show an alert to the user for 'no_change'
             } else {
                 console.warn("Could not send email alert:", alertResult.message || alertResult.status);
                 alert("Alert email could not be sent: " + (alertResult.message || "Unknown error. Check console."));
             }
+        } else {
+            console.log("No out-of-tolerance values to send for alert and no prior data to trigger a resolution check.");
+            // OPTIONAL: If you want to explicitly signal a 'clear' state to backend
+            // even when nothing was previously out-of-tolerance and nothing is now.
+            // This might be redundant as 'no_change' handles it.
+            // await fetch('https://back-end-wrxi.onrender.com/send-alert', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ outValues: [], hospitalName: currentHospital, uid: currentUID, month: month })
+            // });
         }
+
 
       } catch(err){
         console.error("Operation failed:", err);
@@ -733,7 +744,7 @@
 
         const monthKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
         try {
-            const res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`);
+            [cite_start]const res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`); [cite: 1]
             const result = await res.json();
             const monthData = result.data;
 
