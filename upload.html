@@ -871,7 +871,7 @@
                 console.log("No new out-of-tolerance values or changes. Email not sent.");
             } else {
                 console.warn("Could not send email alert:", alertResult.message || alertResult.status);
-                // Corrected the missing parenthesis here
+                // CORRECTED LINE: Added missing closing parenthesis for alert()
                 alert("Alert email could not be sent: " + (alertResult.message || "Unknown error."));
             }
         } else {
@@ -1048,8 +1048,6 @@
         var botResponse = "I'm sorry, I can only provide specific information. You can ask: 'Out of tolerance dates'";
         
         // --- Extract Energy Type and Date ---
-        // This is a simple regex that attempts to extract an energy type and a date from the message.
-        // It's a basic example and might need more robust parsing for real-world use.
         var energyMatch = message.match(/(6X|10X|15X|6X FFF|10X FFF|6E|9E|12E|15E|18E)/i);
         var dateMatch = message.match(/(\d{4}-\d{2}-\d{2})/); // YYYY-MM-DD format
 
