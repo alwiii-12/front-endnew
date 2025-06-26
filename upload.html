@@ -532,9 +532,15 @@
     // --- Core Functions ---
     // Move window.logout function definition to the very top to ensure it's globally available immediately
     window.logout = function() {
+      showLoader(); // Show loading overlay
       auth.signOut().then(() => {
         localStorage.clear();
+        hideLoader(); // Hide loading overlay
         window.location.href = "login.html";
+      }).catch((error) => {
+        console.error("Logout error:", error);
+        hideLoader(); // Hide loading overlay even on error
+        alert("Logout failed: " + error.message);
       });
     }
 
