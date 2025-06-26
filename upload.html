@@ -71,8 +71,8 @@
     /* Card/Panel Base Styling */
     .card-panel {
       border-radius: 16px;
-      box-shadow: 0 6px 18px var(--shadow-light), 0 10px 30px var(--shadow-medium);
-      background: var(--background-white-card);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
+      background: #ffffff;
       border: 1px solid rgba(0,0,0,0.05);
       padding: 20px;
       box-sizing: border-box;
@@ -83,37 +83,37 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: var(--background-white-card);
+      background: #ffffff;
       padding: 10px 20px;
-      border-bottom: 1px solid var(--border-light);
-      box-shadow: 0 2px 4px var(--shadow-light);
+      border-bottom: 1px solid #ccc;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
       min-height: 50px;
     }
     .hospital-info-box {
-        background-color: var(--primary-blue-light);
-        color: var(--primary-blue-dark);
+        background-color: #e0f7fa;
+        color: #0056b3;
         padding: 8px 15px;
         border-radius: 8px;
         font-weight: 600;
         font-size: 0.95em;
-        box-shadow: 0 1px 3px var(--shadow-light);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
     .topbar button {
       padding: 8px 15px;
       font-size: 14px;
       margin-left: 10px;
       margin-right: 0;
-      color: var(--text-light);
+      color: #fff;
       border-radius: 6px;
     }
     .topbar button:first-of-type {
-        background-color: var(--primary-blue);
+        background-color: #007bff;
     }
     .topbar button:first-of-type:hover {
-        background-color: var(--primary-blue-dark);
+        background-color: #0056b3;
     }
     .topbar button:last-of-type {
-        background-color: var(--error-red);
+        background-color: #dc3545;
     }
     .topbar button:last-of-type:hover {
         background-color: #bb2d3b;
@@ -125,8 +125,8 @@
       border-color: #444;
     }
     body.dark .hospital-info-box {
-        background-color: var(--primary-blue-dark);
-        color: var(--primary-blue-light);
+        background-color: #0056b3;
+        color: #e0f7fa;
         box-shadow: 0 1px 3px rgba(0,0,0,0.5);
     }
 
@@ -137,15 +137,15 @@
     }
     .sidebar {
       width: 200px;
-      background: var(--background-white-card);
+      background: #ffffff;
       padding: 20px;
-      box-shadow: 2px 0 5px var(--shadow-light);
+      box-shadow: 2px 0 5px rgba(0,0,0,0.08);
       display: flex;
       flex-direction: column;
     }
     .sidebar h2 {
         margin: 0 0 20px;
-        color: var(--primary-blue);
+        color: #007bff;
         font-weight: 600;
         font-size: 1.5em;
     }
@@ -154,27 +154,27 @@
       margin-bottom: 8px;
       padding: 10px 8px;
       background: #eee;
-      color: var(--text-dark);
+      color: #333;
       font-weight: 500;
       text-align: center;
       border-radius: 6px;
     }
     .sidebar button.active {
-        background: var(--primary-blue);
-        color: var(--text-light);
-        box-shadow: 0 2px 6px var(--shadow-light);
+        background: #007bff;
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
     .sidebar button:hover:not(.active) {
         background: #e0e0e0;
         transform: translateY(-1px);
-        box-shadow: 0 2px 6px var(--shadow-light);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
     .sidebar label {
         display: flex;
         align-items: center;
         margin-top: 15px;
         font-size: 0.95em;
-        color: var(--text-dark);
+        color: #333;
     }
     .sidebar input[type="checkbox"] {
         margin-right: 8px;
@@ -198,14 +198,14 @@
 
     /* Month Header Box */
     .month-header-box {
-        background: var(--primary-blue);
-        color: var(--text-light);
+        background: #007bff;
+        color: #fff;
         padding: 15px 20px;
         text-align: center;
         font-size: 1.6em;
         font-weight: 600;
         border-radius: 16px;
-        box-shadow: 0 4px 12px var(--shadow-medium);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     }
 
     .container {
@@ -517,6 +517,15 @@
     // --- Core Functions ---
     // All functions are declared with 'function' keyword, making them hoisted (available globally)
     // or within their function scope.
+
+    // Move window.logout function definition to the very top to ensure it's globally available immediately
+    window.logout = function() {
+      auth.signOut().then(() => {
+        localStorage.clear();
+        window.location.href = "login.html";
+      });
+    }
+
     function getMonthDates(date) {
       var y = date.getFullYear(), m = date.getMonth();
       var days = new Date(y, m + 1, 0).getDate();
@@ -675,16 +684,6 @@
       }
     }
 
-    // Explicitly attach these functions to the window object to make them globally callable
-    // by inline HTML event attributes (e.g., onclick="logout()")
-    window.logout = function() { // Exposing logout globally
-      auth.signOut().then(() => {
-        localStorage.clear();
-        window.location.href = "login.html";
-      });
-    }
-
-    // All other functions are called via addEventListener, so they don't need to be on window.
     function changeMonth(m){ currentDate = new Date(currentDate.getFullYear(), m, 1); loadTable(); updateTrendChart(); }
     function changeYear(o){ currentDate = new Date(currentDate.getFullYear()+o, currentDate.getMonth(), 1); loadTable(); updateTrendChart(); }
     function toggleDarkMode(){ document.body.classList.toggle('dark'); }
@@ -831,8 +830,6 @@
     // This will prevent 'ReferenceError: X is not defined'.
     document.addEventListener('DOMContentLoaded', function() {
         // Event listeners for static buttons
-        // For buttons that are always present and not dynamically created,
-        // it's safe to attach listeners here.
         saveBtn.addEventListener('click', manualSave);
         logoutBtn.addEventListener('click', window.logout); // Use window.logout for consistency, though it's now global
         myProfileBtn.addEventListener('click', function() { window.location.href='my_profile.html'; });
