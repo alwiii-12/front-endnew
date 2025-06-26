@@ -403,6 +403,17 @@
     .warning { background-color: #fff3cd !important; color: #856404 !important; }
     .out { background-color: #f8d7da !important; color: #721c24 !important; }
 
+    /* NEW CSS for Smooth Transitions */
+    .data-container {
+        transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out; /* Smooth transition for opacity and slight slide */
+        opacity: 1; /* Default visible state */
+        transform: translateY(0); /* Default position */
+    }
+
+    .data-container.loading-transition {
+        opacity: 0; /* Hidden state during transition */
+        transform: translateY(10px); /* Optional: slight slide down effect */
+    }
   </style>
 </head>
 <body>
@@ -438,8 +449,8 @@
       <div class="month-header-box" id="header">
         </div>
       <div class="container">
-        <div id="table"></div>
-        <div class="summary-box">
+        <div id="table" class="data-container"></div>
+        <div class="summary-box data-container">
           <canvas id="summaryChart" width="280" height="280"></canvas>
           <h3>Summary</h3>
           <p><strong>Total Entries:</strong> <span id="total">0</span></p>
@@ -454,7 +465,7 @@
         </button>
         <span id="lastSaved" style="margin-left:15px;font-size:14px;color:gray;"></span>
       </div>
-      <div class="trend-chart-section" style="margin-top: 30px;">
+      <div class="trend-chart-section data-container" style="margin-top: 30px;">
         <h3>Energy Trend Analysis (Current Month)</h3>
         <div style="margin-bottom: 15px;">
           <label for="trendEnergySelect" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
@@ -494,7 +505,6 @@
     var hot, summaryChart, trendChart;
 
     // Get references to DOM elements using their IDs
-    // These should be declared with 'var' at global scope (or within IIFE)
     var container = document.getElementById('table');
     var monthsDiv = document.getElementById('months');
     var header = document.getElementById('header');
@@ -508,6 +518,11 @@
     var nextYearBtn = document.getElementById('nextYearBtn');
     var showTrendBtn = document.getElementById('showTrendBtn');
 
+    // Get references for data containers to apply transitions
+    var tableContainer = document.getElementById('table'); // Already 'container' but for clarity
+    var summaryBox = document.querySelector('.summary-box');
+    var trendChartSection = document.querySelector('.trend-chart-section');
+
 
     var currentDate = new Date(); currentDate.setDate(1);
     var energyTypes = ["6X","10X","15X","6X FFF","10X FFF","6E","9E","12E","15E","18E"];
@@ -515,9 +530,6 @@
     var outOfToleranceValues = []; // This array holds the current out-of-tolerance values displayed in the table.
 
     // --- Core Functions ---
-    // All functions are declared with 'function' keyword, making them hoisted (available globally)
-    // or within their function scope.
-
     // Move window.logout function definition to the very top to ensure it's globally available immediately
     window.logout = function() {
       auth.signOut().then(() => {
@@ -539,8 +551,12 @@
     function showLoader(){document.getElementById('loading-overlay').style.display='flex';}
     function hideLoader(){document.getElementById('loading-overlay').style.display='none';}
 
-    async function loadTable() { // async functions are fine even with old syntax
+    async function loadTable() {
       showLoader();
+      // Add transition class before loading new data
+      if (tableContainer) tableContainer.classList.add('loading-transition');
+      if (summaryBox) summaryBox.classList.add('loading-transition');
+
       var dateCols = getMonthDates(currentDate);
       document.getElementById('header').textContent = `${currentDate.toLocaleString('default',{month:'long'})} ${currentDate.getFullYear()}`;
       yearLabel.textContent = currentDate.getFullYear();
@@ -584,6 +600,9 @@
         alert("Could not load table data. Please try again.");
       } finally {
         hideLoader();
+        // Remove transition class after data is loaded and rendered
+        if (tableContainer) tableContainer.classList.remove('loading-transition');
+        if (summaryBox) summaryBox.classList.remove('loading-transition');
       }
     }
 
@@ -723,10 +742,15 @@
 
     async function updateTrendChart() {
         showLoader();
+        // Add transition class before loading new data
+        if (trendChartSection) trendChartSection.classList.add('loading-transition');
+
         var selectedEnergy = document.getElementById('trendEnergySelect').value;
         if (!selectedEnergy) {
             hideLoader();
             alert("Please select an energy type for trend analysis.");
+            // Remove transition class if early exit
+            if (trendChartSection) trendChartSection.classList.remove('loading-transition');
             return;
         }
 
@@ -822,12 +846,13 @@
             alert("Could not load trend data. Please try again.");
         } finally {
             hideLoader();
+            // Remove transition class after data is loaded and rendered
+            if (trendChartSection) trendChartSection.classList.remove('loading-transition');
         }
     }
 
 
     // Attach all event listeners after the DOM is fully loaded and all functions are defined.
-    // This will prevent 'ReferenceError: X is not defined'.
     document.addEventListener('DOMContentLoaded', function() {
         // Event listeners for static buttons
         saveBtn.addEventListener('click', manualSave);
@@ -848,7 +873,6 @@
 
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
                     alert("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.");
-                    // Ensure logout function is properly scoped
                     window.logout(); // Call the globally exposed logout
                     return;
                 }
