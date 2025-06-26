@@ -414,6 +414,161 @@
         opacity: 0; /* Hidden state during transition */
         transform: translateY(10px); /* Optional: slight slide down effect */
     }
+
+    /* NEW CSS for Chatbot */
+    #chat-bubble {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: var(--primary-blue);
+        color: white;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.8em;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        z-index: 1000;
+    }
+    #chat-bubble:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+    }
+
+    #chat-window {
+        position: fixed;
+        bottom: 90px; /* Above the bubble */
+        right: 20px;
+        width: 350px;
+        height: 450px;
+        background-color: var(--background-white-card);
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 999;
+        transform: scale(0.8); /* Start smaller for transition */
+        opacity: 0;
+        visibility: hidden; /* Hidden by default */
+        transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s;
+    }
+    #chat-window.open {
+        transform: scale(1);
+        opacity: 1;
+        visibility: visible;
+    }
+
+    #chat-header {
+        background-color: var(--primary-blue);
+        color: white;
+        padding: 15px;
+        font-size: 1.1em;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+    #chat-header button {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2em;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 50%;
+    }
+    #chat-header button:hover {
+        background-color: rgba(255,255,255,0.2);
+    }
+
+    #chat-body {
+        flex-grow: 1;
+        padding: 15px;
+        overflow-y: auto;
+        background-color: var(--background-off-white);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .chat-message {
+        max-width: 80%;
+        padding: 10px 12px;
+        border-radius: 18px;
+        line-height: 1.4;
+        font-size: 0.95em;
+        word-wrap: break-word;
+    }
+    .chat-message.user {
+        align-self: flex-end;
+        background-color: #e6e6e6;
+        color: var(--text-dark);
+        border-bottom-right-radius: 2px;
+    }
+    .chat-message.bot {
+        align-self: flex-start;
+        background-color: var(--primary-blue-light);
+        color: var(--primary-blue-dark);
+        border-bottom-left-radius: 2px;
+    }
+    body.dark #chat-window {
+        background-color: #2a2a2a;
+    }
+    body.dark #chat-body {
+        background-color: #3a3a3a;
+        color: #fff;
+    }
+    body.dark .chat-message.user {
+        background-color: #555;
+        color: #eee;
+    }
+    body.dark .chat-message.bot {
+        background-color: var(--primary-blue-dark);
+        color: var(--primary-blue-light);
+    }
+
+
+    #chat-input-area {
+        padding: 10px 15px;
+        border-top: 1px solid var(--border-light);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    #chat-input-area input {
+        flex-grow: 1;
+        padding: 10px;
+        border: 1px solid var(--border-light);
+        border-radius: 20px;
+        font-size: 0.95em;
+        background-color: var(--background-white-card);
+        color: var(--text-dark);
+    }
+    body.dark #chat-input-area input {
+        background-color: #4a4a4a;
+        border-color: #666;
+        color: #eee;
+    }
+    #chat-input-area button {
+        background-color: var(--primary-blue);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 1.2em;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    #chat-input-area button:hover {
+        background-color: var(--primary-blue-dark);
+    }
   </style>
 </head>
 <body>
@@ -482,6 +637,23 @@
 
   <div id="loading-overlay"><div class="spinner"></div></div>
 
+  <div id="chat-bubble"><i class="fas fa-comment-dots"></i></div>
+  <div id="chat-window">
+      <div id="chat-header">
+          <span>QA Bot</span>
+          <button id="close-chat-btn"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="chat-body">
+          <div class="chat-message bot">Hello! How can I help you with your QA data today?</div>
+          <div class="chat-message bot">You can ask: "Out of tolerance dates"</div>
+      </div>
+      <div id="chat-input-area">
+          <input type="text" id="chat-input" placeholder="Type your question...">
+          <button id="send-chat-btn"><i class="fas fa-paper-plane"></i></button>
+      </div>
+  </div>
+
+
   <script>
     // Firebase config
     var firebaseConfig = {
@@ -519,9 +691,17 @@
     var showTrendBtn = document.getElementById('showTrendBtn');
 
     // Get references for data containers to apply transitions
-    var tableContainer = document.getElementById('table'); // Already 'container' but for clarity
+    var tableContainer = document.getElementById('table');
     var summaryBox = document.querySelector('.summary-box');
     var trendChartSection = document.querySelector('.trend-chart-section');
+
+    // NEW Chatbot UI element references
+    var chatBubble = document.getElementById('chat-bubble');
+    var chatWindow = document.getElementById('chat-window');
+    var closeChatBtn = document.getElementById('close-chat-btn');
+    var chatBody = document.getElementById('chat-body');
+    var chatInput = document.getElementById('chat-input');
+    var sendChatBtn = document.getElementById('send-chat-btn');
 
 
     var currentDate = new Date(); currentDate.setDate(1);
@@ -530,16 +710,15 @@
     var outOfToleranceValues = []; // This array holds the current out-of-tolerance values displayed in the table.
 
     // --- Core Functions ---
-    // Move window.logout function definition to the very top to ensure it's globally available immediately
     window.logout = function() {
-      showLoader(); // Show loading overlay
+      showLoader();
       auth.signOut().then(() => {
         localStorage.clear();
-        hideLoader(); // Hide loading overlay
+        hideLoader();
         window.location.href = "login.html";
       }).catch((error) => {
         console.error("Logout error:", error);
-        hideLoader(); // Hide loading overlay even on error
+        hideLoader();
         alert("Logout failed: " + error.message);
       });
     }
@@ -559,7 +738,6 @@
 
     async function loadTable() {
       showLoader();
-      // Add transition class before loading new data
       if (tableContainer) tableContainer.classList.add('loading-transition');
       if (summaryBox) summaryBox.classList.add('loading-transition');
 
@@ -606,7 +784,6 @@
         alert("Could not load table data. Please try again.");
       } finally {
         hideLoader();
-        // Remove transition class after data is loaded and rendered
         if (tableContainer) tableContainer.classList.remove('loading-transition');
         if (summaryBox) summaryBox.classList.remove('loading-transition');
       }
@@ -660,7 +837,6 @@
       var changedData = hot.getData();
       var month = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
       try {
-        // Save the LINAC QA data first
         var saveResponse = await fetch('https://back-end-wrxi.onrender.com/save',{
           method:'POST',
           headers: {'Content-Type':'application/json'},
@@ -683,8 +859,8 @@
                 body: JSON.stringify({
                     outValues: outOfToleranceValues,
                     hospitalName: currentHospital,
-                    uid: currentUID, // Pass UID to backend for context
-                    month: month      // Pass month to backend for context
+                    uid: currentUID,
+                    month: month
                 })
             });
 
@@ -719,7 +895,7 @@
       months.forEach((m,i)=>{
         var btn = document.createElement('button');
         btn.textContent = m;
-        btn.addEventListener('click', () => changeMonth(i)); // Attach listener for month change
+        btn.addEventListener('click', () => changeMonth(i));
         monthsDiv.appendChild(btn);
       });
       highlightActiveMonth();
@@ -742,20 +918,18 @@
         });
         if (energyTypes.length > 0) {
             select.value = energyTypes[0];
-            updateTrendChart(); // Initial chart update after populating select
+            updateTrendChart();
         }
     }
 
     async function updateTrendChart() {
         showLoader();
-        // Add transition class before loading new data
         if (trendChartSection) trendChartSection.classList.add('loading-transition');
 
         var selectedEnergy = document.getElementById('trendEnergySelect').value;
         if (!selectedEnergy) {
             hideLoader();
             alert("Please select an energy type for trend analysis.");
-            // Remove transition class if early exit
             if (trendChartSection) trendChartSection.classList.remove('loading-transition');
             return;
         }
@@ -769,7 +943,6 @@
 
         var monthKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
         try {
-            // Fetch data directly from the backend for the current month and user
             var res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`);
             var result = await res.json();
             var monthData = result.data;
@@ -777,24 +950,21 @@
             var energyRow = monthData.find(row => row[0] === selectedEnergy);
 
             if (energyRow) {
-                // Populate dataPoints and labels for all days of the month
                 for (let i = 0; i < daysInMonth; i++) {
-                    var value = energyRow[i + 1]; // column 0 is energy type
+                    var value = energyRow[i + 1];
                     var n = parseFloat(value);
-                    dataPoints.push(isNaN(n) ? null : n); // Push null if not a number
-                    labels.push(String(i + 1).padStart(2, '0')); // Day of month as label
+                    dataPoints.push(isNaN(n) ? null : n);
+                    labels.push(String(i + 1).padStart(2, '0'));
                 }
             } else {
-                // If energy type not found, push nulls for all days
                 for (let i = 0; i < daysInMonth; i++) {
                     dataPoints.push(null);
                     labels.push(String(i + 1).padStart(2, '0'));
                 }
             }
 
-            // Chart.js initialization/update
             var ctx = document.getElementById('trendChart').getContext('2d');
-            if (trendChart) trendChart.destroy(); // Destroy previous chart instance
+            if (trendChart) trendChart.destroy();
 
             trendChart = new Chart(ctx, {
                 type: 'line',
@@ -806,8 +976,8 @@
                         borderColor: '#007bff',
                         backgroundColor: 'rgba(0, 123, 255, 0.2)',
                         fill: false,
-                        tension: 0.1, // Smoothness of the line
-                        spanGaps: true // Crucial: Connects points across null data (gaps)
+                        tension: 0.1,
+                        spanGaps: true
                     }]
                 },
                 options: {
@@ -820,8 +990,8 @@
                                 display: true,
                                 text: 'Output Value (%)'
                             },
-                            min: -3, // Set fixed min for consistency
-                            max: 3,  // Set fixed max for consistency
+                            min: -3,
+                            max: 3,
                             ticks: {
                                 callback: function(value, index, values) {
                                     return value.toFixed(1) + '%';
@@ -852,9 +1022,59 @@
             alert("Could not load trend data. Please try again.");
         } finally {
             hideLoader();
-            // Remove transition class after data is loaded and rendered
             if (trendChartSection) trendChartSection.classList.remove('loading-transition');
         }
+    }
+
+    // NEW: Function to add message to chat window
+    function addChatMessage(message, sender) {
+        var messageElement = document.createElement('div');
+        messageElement.classList.add('chat-message', sender);
+        messageElement.textContent = message;
+        chatBody.appendChild(messageElement);
+        chatBody.scrollTop = chatBody.scrollHeight; // Scroll to bottom
+    }
+
+    // NEW: Function to handle sending chat messages (frontend logic only for now)
+    async function sendChatMessage() {
+        var message = chatInput.value.trim();
+        if (message === "") return;
+
+        addChatMessage(message, 'user');
+        chatInput.value = ''; // Clear input
+
+        // --- Basic rule-based response for now (this will be replaced by backend call) ---
+        var botResponse = "I'm sorry, I can only provide specific information. You can ask: 'Out of tolerance dates'";
+        if (message.toLowerCase().includes('out of tolerance dates')) {
+            botResponse = "Finding out of tolerance dates for current month...";
+            // This is where we'll make a backend call in the next step
+            try {
+                var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
+                var response = await fetch('https://back-end-wrxi.onrender.com/query-qa-data', { // NEW ENDPOINT
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: 'out_of_tolerance_dates',
+                        month: monthKey,
+                        uid: currentUID
+                    })
+                });
+                var result = await response.json();
+                if (result.status === 'success') {
+                    if (result.dates && result.dates.length > 0) {
+                        botResponse = "The following dates had data beyond tolerance: " + result.dates.join(', ');
+                    } else {
+                        botResponse = "Great news! No data went beyond tolerance levels this month.";
+                    }
+                } else {
+                    botResponse = "Sorry, I couldn't retrieve that information: " + (result.message || "Unknown error.");
+                }
+            } catch (error) {
+                console.error("Chatbot query error:", error);
+                botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+            }
+        }
+        addChatMessage(botResponse, 'bot');
     }
 
 
@@ -862,12 +1082,29 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Event listeners for static buttons
         saveBtn.addEventListener('click', manualSave);
-        logoutBtn.addEventListener('click', window.logout); // Use window.logout for consistency, though it's now global
+        logoutBtn.addEventListener('click', window.logout);
         myProfileBtn.addEventListener('click', function() { window.location.href='my_profile.html'; });
         darkToggle.addEventListener('change', toggleDarkMode);
         prevYearBtn.addEventListener('click', function() { changeYear(-1); });
         nextYearBtn.addEventListener('click', function() { changeYear(1); });
         showTrendBtn.addEventListener('click', updateTrendChart);
+
+        // NEW Chatbot Event Listeners
+        chatBubble.addEventListener('click', function() {
+            chatWindow.classList.toggle('open');
+            if (chatWindow.classList.contains('open')) {
+                chatInput.focus(); // Focus input when opened
+            }
+        });
+        closeChatBtn.addEventListener('click', function() {
+            chatWindow.classList.remove('open');
+        });
+        sendChatBtn.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
 
 
         // Firebase Auth State Listener - this should be the last logical step to kick off loading
@@ -879,15 +1116,15 @@
 
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
                     alert("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.");
-                    window.logout(); // Call the globally exposed logout
+                    window.logout();
                     return;
                 }
 
                 localStorage.setItem("uid", currentUID);
                 document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
-                buildMonthButtons(); // This builds month buttons, which attach their own event listeners
+                buildMonthButtons();
                 loadTable();
-                populateTrendEnergySelect(); // This populates and updates the trend chart initially
+                populateTrendEnergySelect();
             } else {
                 window.location.href = "login.html";
             }
