@@ -707,7 +707,7 @@
     var currentDate = new Date(); currentDate.setDate(1);
     var energyTypes = ["6X","10X","15X","6X FFF","10X FFF","6E","9E","12E","15E","18E"];
 
-    var outOfToleranceValues = [];
+    var outOfToleranceValues = []; // This array holds the current out-of-tolerance values displayed in the table.
 
     // --- Core Functions ---
     window.logout = function() {
@@ -871,7 +871,8 @@
                 console.log("No new out-of-tolerance values or changes. Email not sent.");
             } else {
                 console.warn("Could not send email alert:", alertResult.message || alertResult.status);
-                alert("Alert email could not be sent: " + (alertResult.message || "Unknown error.");
+                // Corrected the missing parenthesis here
+                alert("Alert email could not be sent: " + (alertResult.message || "Unknown error."));
             }
         } else {
             console.log("No out-of-tolerance values to send for alert and no prior save to trigger a resolution check.");
@@ -1046,12 +1047,22 @@
         // --- Basic rule-based response logic ---
         var botResponse = "I'm sorry, I can only provide specific information. You can ask: 'Out of tolerance dates'";
         
-        // Check for "Out of tolerance dates" query
+        // --- Extract Energy Type and Date ---
+        // This is a simple regex that attempts to extract an energy type and a date from the message.
+        // It's a basic example and might need more robust parsing for real-world use.
+        var energyMatch = message.match(/(6X|10X|15X|6X FFF|10X FFF|6E|9E|12E|15E|18E)/i);
+        var dateMatch = message.match(/(\d{4}-\d{2}-\d{2})/); // YYYY-MM-DD format
+
+        var extractedEnergyType = energyMatch ? energyMatch[0].toUpperCase() : null;
+        var extractedDate = dateMatch ? dateMatch[0] : null;
+        
+        var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
+
+
         if (message.toLowerCase().includes('out of tolerance dates')) {
-            addChatMessage("Finding out of tolerance dates for current month...", 'bot'); // Immediate bot feedback
+            addChatMessage("Finding out of tolerance dates for current month...", 'bot');
             try {
-                var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
-                var response = await fetch('https://back-end-wrxi.onrender.com/query-qa-data', { // NEW ENDPOINT
+                var response = await fetch('https://back-end-wrxi.onrender.com/query-qa-data', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1075,7 +1086,92 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
-        // Add final bot response
+        // NEW: "What is the value/status for [Energy Type] on [Date]?"
+        else if ((message.toLowerCase().includes('what is the value for') || message.toLowerCase().includes('what is the status for')) && extractedEnergyType && extractedDate) {
+            addChatMessage(`Looking up data for ${extractedEnergyType} on ${extractedDate}...`, 'bot');
+            try {
+                var response = await fetch('https://back-end-wrxi.onrender.com/query-qa-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: 'value_on_date',
+                        month: monthKey,
+                        uid: currentUID,
+                        energy_type: extractedEnergyType,
+                        date: extractedDate
+                    })
+                });
+                var result = await response.json();
+                if (result.status === 'success') {
+                    if (result.value !== undefined && result.value !== null) {
+                        botResponse = `For ${result.energy_type} on ${result.date}: Value is ${result.value}% (Status: ${result.data_status}).`;
+                    } else {
+                        botResponse = `No data found for ${extractedEnergyType} on ${extractedDate}.`;
+                    }
+                } else {
+                    botResponse = `Sorry, I couldn't retrieve that information: ${result.message || "Unknown error."}`;
+                }
+            } catch (error) {
+                console.error("Chatbot query error:", error);
+                botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+            }
+        }
+        // NEW: "Show me all [Energy Type] data for this month."
+        else if (message.toLowerCase().includes('show me all') && extractedEnergyType && message.toLowerCase().includes('data for this month')) {
+            addChatMessage(`Getting all data for ${extractedEnergyType} this month...`, 'bot');
+            try {
+                var response = await fetch('https://back-end-wrxi.onrender.com/query-qa-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: 'energy_data_for_month',
+                        month: monthKey,
+                        uid: currentUID,
+                        energy_type: extractedEnergyType
+                    })
+                });
+                var result = await response.json();
+                if (result.status === 'success' && result.data && result.data.length > 0) {
+                    let formattedData = result.data.map(item => `${item.date}: ${item.value}%`).join(', ');
+                    botResponse = `Here is the data for ${extractedEnergyType} this month: ${formattedData}.`;
+                } else {
+                    botResponse = result.message || `No data found for ${extractedEnergyType} this month.`;
+                }
+            } catch (error) {
+                console.error("Chatbot query error:", error);
+                botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+            }
+        }
+        // NEW: "List all warning values for [specific month]."
+        else if (message.toLowerCase().includes('list all warning values')) {
+            addChatMessage(`Getting warning values for this month...`, 'bot');
+            try {
+                var response = await fetch('https://back-end-wrxi.onrender.com/query-qa-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: 'warning_values_for_month',
+                        month: monthKey,
+                        uid: currentUID
+                    })
+                });
+                var result = await response.json();
+                if (result.status === 'success' && result.warning_entries && result.warning_entries.length > 0) {
+                    let formattedWarnings = result.warning_entries.map(item => `${item.energy} on ${item.date}: ${item.value}%`).join('; ');
+                    botResponse = `Warning values this month: ${formattedWarnings}.`;
+                } else {
+                    botResponse = "No warning values found this month. Great job!";
+                }
+            } catch (error) {
+                console.error("Chatbot query error:", error);
+                botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+            }
+        }
+        // --- Fallback for unrecognized commands ---
+        else {
+             botResponse = "I'm sorry, I don't understand that specific request. Please try rephrasing or ask about 'Out of tolerance dates', 'value for 6X on 2025-06-10', 'show me all 6X data for this month', or 'list all warning values'.";
+        }
+        
         addChatMessage(botResponse, 'bot');
     }
 
