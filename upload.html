@@ -8,6 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- IMPORTANT: Firebase Compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
@@ -604,7 +605,9 @@
       <div class="month-header-box" id="header">
         </div>
       <div class="container">
+        <!-- Added class="data-container" for transitions -->
         <div id="table" class="data-container"></div>
+        <!-- Added class="data-container" for transitions -->
         <div class="summary-box data-container">
           <canvas id="summaryChart" width="280" height="280"></canvas>
           <h3>Summary</h3>
@@ -620,6 +623,7 @@
         </button>
         <span id="lastSaved" style="margin-left:15px;font-size:14px;color:gray;"></span>
       </div>
+      <!-- Added class="data-container" for transitions -->
       <div class="trend-chart-section data-container" style="margin-top: 30px;">
         <h3>Energy Trend Analysis (Current Month)</h3>
         <div style="margin-bottom: 15px;">
@@ -637,6 +641,7 @@
 
   <div id="loading-overlay"><div class="spinner"></div></div>
 
+  <!-- NEW Chatbot UI Elements -->
   <div id="chat-bubble"><i class="fas fa-comment-dots"></i></div>
   <div id="chat-window">
       <div id="chat-header">
@@ -662,7 +667,7 @@
       projectId: "linac-qa-project",
       storageBucket: "linac-qa-project.appspot.com",
       messagingSenderId: "850988733382",
-      appId: "1:850988733382:web:ef75d64e30deb7e37c18c7",
+      appId: "1:395443876940:web:8ed5b7b3d17693bd70b31c", // Ensure this appId is correct. Check Firebase console for your actual project.
       measurementId: "G-HFJ2CGS664"
     };
 
