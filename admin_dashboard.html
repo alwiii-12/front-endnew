@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | LINAC QA</title>
-    <style>
+    <link rel="icon" href="/favicon.png" type="image/png"> <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             text-align: center;
@@ -135,25 +135,19 @@
     <div class="admin-content">
         <h1>Welcome, Administrator!</h1>
         <p>This is your exclusive admin dashboard. Here you will be able to manage users, access aggregated data, and configure system settings.</p>
-        <!-- Removed: <button onclick="window.location.href='my_profile.html'" style="margin-right: 10px;">My Profile</button> -->
         <button onclick="logout()" class="logout-button">Logout</button>
 
-        <!-- New Section for Pending Users -->
         <div class="pending-users-section">
             <h2>Pending User Accounts</h2>
             <div id="pendingUsersList">
-                <!-- Pending users will be loaded here by JavaScript -->
                 <p class="no-pending-users">Loading pending users...</p>
             </div>
         </div>
-        <!-- End New Section -->
-
-    </div>
+        </div>
     <div class="admin-footer">
         © 2025 LINAC QA System - Admin Access
     </div>
 
-    <!-- Firebase CDN -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
