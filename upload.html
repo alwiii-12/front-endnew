@@ -1035,66 +1035,7 @@
         chatBody.scrollTop = chatBody.scrollHeight; // Scroll to bottom
     }
 
-    // NEW Helper: Function to parse flexible date inputs
-    // Current year is assumed if not provided in natural language
-    function parseFlexibleDate(dateString) {
-        dateString = dateString.toLowerCase();
-        const currentYear = currentDate.getFullYear();
-        
-        // Month names mapping
-        const monthMap = {
-            'january': '01', 'jan': '01',
-            'february': '02', 'feb': '02',
-            'march': '03', 'mar': '03',
-            'april': '04', 'apr': '04',
-            'may': '05',
-            'june': '06', 'jun': '06',
-            'july': '07', 'jul': '07',
-            'august': '08', 'aug': '08',
-            'september': '09', 'sep': '09', 'sept': '09',
-            'october': '10', 'oct': '10',
-            'november': '11', 'nov': '11',
-            'december': '12', 'dec': '12'
-        };
-
-        // Try YYYY-MM-DD
-        let match = dateString.match(/(\d{4}-\d{2}-\d{2})/);
-        if (match) return match[0];
-
-        let day = null;
-        let monthNum = null;
-        let year = currentYear; // Assume current year by default
-
-        // Try "Month Day, Year" or "Day Month, Year" (e.g., June 6, 2025 or 6 June, 2025)
-        // or "Month Day" or "Day Month" (e.g., June 6 or 6 June)
-        // Regex: (?:day(st|nd|rd|th)?)? optional day with suffix, then optional space, month name, optional space, optional year
-        match = dateString.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]+)\s*(\d{4})?/i); // e.g., "6th june 2025", "6 june"
-        if (match) {
-            day = parseInt(match[1]);
-            monthNum = monthMap[match[2].toLowerCase()];
-            if (match[3]) year = parseInt(match[3]);
-        } else {
-            // Try "Month Day, Year" or "Month Day" (e.g., "June 6th 2025", "June 6")
-            match = dateString.match(/([a-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?\s*(\d{4})?/i); // e.g., "june 6th 2025", "june 6"
-            if (match) {
-                monthNum = monthMap[match[1].toLowerCase()];
-                day = parseInt(match[2]);
-                if (match[3]) year = parseInt(match[3]);
-            }
-        }
-        
-        if (day && monthNum) {
-            // Basic validation for day and month
-            if (day >= 1 && day <= 31 && monthNum) {
-                 return `${year}-${monthNum}-${String(day).padStart(2, '0')}`;
-            }
-        }
-
-        return null; // Return null if unable to parse
-    }
-
-
-    // Function to handle sending chat messages
+    // NEW: Function to handle sending chat messages
     async function sendChatMessage() {
         var message = chatInput.value.trim();
         if (message === "") return;
@@ -1102,12 +1043,13 @@
         addChatMessage(message, 'user');
         chatInput.value = ''; // Clear input
 
+        // Convert message to lowercase for easier matching
         var lowerCaseMessage = message.toLowerCase();
-        var botResponse = "";
+        var botResponse = ""; // Initialize botResponse here
 
         // --- NEW: Basic Greetings and Conversational Responses ---
         if (lowerCaseMessage.includes('hi') || lowerCaseMessage.includes('hello') || lowerCaseMessage.includes('hey')) {
-            botResponse = "Hello there! How can I assist you with your QA data today? You can ask: 'Out of tolerance dates', 'value for 6X on June 10', 'show me all 6X data for this month', or 'list all warning values'.";
+            botResponse = "Hello there! How can I assist you with your QA data today? You can ask: 'Out of tolerance dates', 'value for 6X on 2025-06-10', 'show me all 6X data for this month', or 'list all warning values'.";
         } else if (lowerCaseMessage.includes('how are you')) {
             botResponse = "I'm just a bot, but I'm doing great! How can I help you manage your LINAC QA?";
         } else if (lowerCaseMessage.includes('thank you') || lowerCaseMessage.includes('thanks')) {
@@ -1122,14 +1064,15 @@
         }
 
         // --- Extract Energy Type and Date (for data queries) ---
-        var extractedDate = parseFlexibleDate(lowerCaseMessage); // Use the new flexible parser
-
         var energyMatch = lowerCaseMessage.match(/(6X|10X|15X|6X FFF|10X FFF|6E|9E|12E|15E|18E)/i);
+        var dateMatch = lowerCaseMessage.match(/(\d{4}-\d{2}-\d{2})/); // YYYY-MM-DD format
+
         var extractedEnergyType = energyMatch ? energyMatch[0].toUpperCase() : null;
+        var extractedDate = dateMatch ? dateMatch[0] : null;
         
         var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
 
-
+        // --- Data Query Logic ---
         if (lowerCaseMessage.includes('out of tolerance dates')) {
             addChatMessage("Finding out of tolerance dates for current month...", 'bot');
             try {
@@ -1161,16 +1104,6 @@
         else if ((lowerCaseMessage.includes('what is the value for') || lowerCaseMessage.includes('what is the status for')) && extractedEnergyType && extractedDate) {
             addChatMessage(`Looking up data for ${extractedEnergyType} on ${extractedDate}...`, 'bot');
             try {
-                // IMPORTANT: Before sending to backend, verify extractedDate matches current monthKey
-                // The backend also validates this, but checking here gives faster feedback.
-                const extractedDateMonthKey = extractedDate.substring(0, 7); // Extract YYYY-MM
-                if (extractedDateMonthKey !== monthKey) {
-                    botResponse = `The date '${extractedDate}' you provided does not match the currently selected month (${monthKey}). Please switch month or provide a date within this month.`;
-                    addChatMessage(botResponse, 'bot');
-                    return; // Stop processing if month mismatch
-                }
-
-
                 var response = await fetch('https://back-end-wrxi.onrender.com/query-qa-data', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1198,7 +1131,7 @@
             }
         }
         // "Show me all [Energy Type] data for this month."
-        else if (lowerCaseMessage.includes('show me all') && extractedEnergyType && (lowerCaseMessage.includes('data for this month') || lowerCaseMessage.includes('data this month'))) {
+        else if (lowerCaseMessage.includes('show me all') && extractedEnergyType && lowerCaseMessage.includes('data for this month')) {
             addChatMessage(`Getting all data for ${extractedEnergyType} this month...`, 'bot');
             try {
                 var response = await fetch('https://back-end-wrxi.onrender.com/query-qa-data', {
@@ -1224,7 +1157,7 @@
             }
         }
         // "List all warning values for [specific month]."
-        else if (lowerCaseMessage.includes('list all warning values') || lowerCaseMessage.includes('show warning values') || lowerCaseMessage.includes('what are the warning values')) {
+        else if (lowerCaseMessage.includes('list all warning values') || lowerCaseMessage.includes('show warning values')) {
             addChatMessage(`Getting warning values for this month...`, 'bot');
             try {
                 var response = await fetch('https://back-end-wrxi.onrender.com/query-qa-data', {
@@ -1250,7 +1183,7 @@
         }
         // --- Fallback for unrecognized commands ---
         else {
-             botResponse = "I'm sorry, I don't understand that request. Please try rephrasing or ask about: 'Out of tolerance dates', 'value for 6X on June 10', 'show me all 6X data for this month', or 'list all warning values'.";
+             botResponse = "I'm sorry, I don't understand that request. Please try rephrasing or ask about 'Out of tolerance dates', 'value for 6X on 2025-06-10', 'show me all 6X data for this month', or 'list all warning values'.";
         }
         
         addChatMessage(botResponse, 'bot');
