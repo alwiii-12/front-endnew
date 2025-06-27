@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LINAC Output Entry</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
+  <link rel="icon" href="/favicon.png" type="image/png"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -1065,7 +1065,7 @@
 
         // --- Extract Energy Type and Date (for data queries) ---
         var energyMatch = lowerCaseMessage.match(/(6X|10X|15X|6X FFF|10X FFF|6E|9E|12E|15E|18E)/i);
-        var dateMatch = lowerCaseMessage.match(/(\d{4}-\d{2}-\d{2})/); // YYYY-MM-DD format
+        var dateMatch = lowerCaseMessage.match(/(\d{4}-\d{2}-\d{2})/); //YYYY-MM-DD format
 
         var extractedEnergyType = energyMatch ? energyMatch[0].toUpperCase() : null;
         var extractedDate = dateMatch ? dateMatch[0] : null;
