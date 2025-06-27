@@ -30,28 +30,28 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif; /* Changed from Arial to Inter */
-            background-color: var(--primary-blue-light); /* Light blue background */
+            font-family: 'Inter', sans-serif;
+            background-color: var(--primary-blue-light);
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
         }
 
         .signup-container {
-            background-color: var(--background-white-card); /* White card background */
+            background-color: var(--background-white-card);
             padding: 30px;
-            border-radius: 10px; /* Adjusted from 12px for subtle difference */
-            box-shadow: 0 0 10px rgba(0,0,0,0.1); /* Original shadow */
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
             width: 400px;
-            max-width: 90%; /* Ensure responsiveness */
+            max-width: 90%;
         }
 
         .signup-container h2 {
             margin-top: 0;
             text-align: center;
-            color: var(--primary-blue); /* Blue header text */
+            color: var(--primary-blue);
         }
 
         .signup-container input,
@@ -60,7 +60,7 @@
             padding: 10px;
             margin: 10px 0;
             border-radius: 5px;
-            border: 1px solid var(--border-light); /* Light grey border */
+            border: 1px solid var(--border-light);
             box-sizing: border-box;
         }
 
@@ -69,28 +69,28 @@
             text-align: left;
             margin-bottom: 5px;
             font-weight: bold;
-            color: var(--text-dark); /* Dark text for labels */
+            color: var(--text-dark);
         }
 
         .signup-container button {
             width: 100%;
             padding: 10px;
-            background-color: var(--primary-blue); /* Blue button */
-            color: var(--text-light); /* White text */
+            background-color: var(--primary-blue);
+            color: var(--text-light);
             font-weight: bold;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             margin-top: 20px;
-            transition: background-color 0.3s ease; /* Smooth hover */
+            transition: background-color 0.3s ease;
         }
 
         .signup-container button:hover {
-            background-color: var(--primary-blue-dark); /* Darker blue on hover */
+            background-color: var(--primary-blue-dark);
         }
 
         .message {
-            color: var(--error-red); /* Red for error messages */
+            color: var(--error-red);
             text-align: center;
             margin-bottom: 10px;
         }
@@ -123,9 +123,9 @@
     <label for="role">Select Role:</label>
     <select id="role">
       <option value="">Select Role</option>
-      <option value="Physicist">Physicist</option>
-      <option value="Technologist">Technologist</option>
-    </select>
+      <option value="Medical physicist">Medical physicist</option>
+      <option value="RSO">RSO</option>
+      </select>
     <button onclick="signup()">Sign Up</button>
     <p style="margin-top: 15px; text-align: center; font-size: 0.9em; color: var(--text-dark);">Already have an account? <a href="login.html" style="color: var(--primary-blue);">Log in</a></p>
   </div>
@@ -133,14 +133,14 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script>
-    // Firebase config (UNCHANGED)
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
-      authDomain: "linac-qa.firebaseapp.com", // This might need to match your actual Firebase project auth domain
-      projectId: "linac-qa", // This might need to match your actual Firebase project ID
-      storageBucket: "linac-qa.appspot.com", // This might need to match your actual Firebase project storage bucket
-      messagingSenderId: "395443876940", // This might need to match your actual Firebase project sender ID
-      appId: "1:395443876940:web:8ed5b7b3d17693bd70b31c" // This might need to match your actual Firebase project app ID
+      authDomain: "linac-qa.firebaseapp.com",
+      projectId: "linac-qa",
+      storageBucket: "linac-qa.appspot.com",
+      messagingSenderId: "395443876940",
+      appId: "1:395443876940:web:8ed5b7b3d17693bd70b31c"
     };
     firebase.initializeApp(firebaseConfig);
   </script>
@@ -197,7 +197,25 @@
 
       } catch (error) {
         console.error(error);
-        messageDiv.textContent = "Firebase signup error: " + error.message;
+        // Improved error handling messages based on Firebase Auth error codes
+        let errorMessage = "An unknown error occurred.";
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            errorMessage = "The email address is already registered. Please login or use a different email.";
+            break;
+          case 'auth/invalid-email':
+            errorMessage = "The email address format is invalid.";
+            break;
+          case 'auth/operation-not-allowed':
+            errorMessage = "Email/password accounts are not enabled. Please contact support.";
+            break;
+          case 'auth/weak-password':
+            errorMessage = "The password is too weak. Please choose a stronger password.";
+            break;
+          default:
+            errorMessage = "Firebase signup error: " + error.message;
+        }
+        messageDiv.textContent = errorMessage;
       }
     }
   </script>
