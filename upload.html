@@ -1061,49 +1061,34 @@
         let match = dateString.match(/(\d{4}-\d{2}-\d{2})/);
         if (match) return match[0];
 
+        let day = null;
+        let monthNum = null;
+        let year = currentYear; // Assume current year by default
+
         // Try "Month Day, Year" or "Day Month, Year" (e.g., June 6, 2025 or 6 June, 2025)
-        match = dateString.match(/(?:(\d{1,2})(?:st|nd|rd|th)?)?\s*([a-z]+)\s*(\d{4})?/); // "6th June 2025" or "June 6th 2025"
+        // or "Month Day" or "Day Month" (e.g., June 6 or 6 June)
+        // Regex: (?:day(st|nd|rd|th)?)? optional day with suffix, then optional space, month name, optional space, optional year
+        match = dateString.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]+)\s*(\d{4})?/i); // e.g., "6th june 2025", "6 june"
         if (match) {
-            let day = match[1] || "";
-            let monthName = match[2];
-            let year = match[3] || currentYear;
-            
-            if (!day && dateString.match(/([a-z]+)\s*(?:(\d{1,2})(?:st|nd|rd|th)?)?\s*(\d{4})?/)) { // June 6th 2025 format
-                let reverseMatch = dateString.match(/([a-z]+)\s*(?:(\d{1,2})(?:st|nd|rd|th)?)?\s*(\d{4})?/);
-                if (reverseMatch) {
-                    monthName = reverseMatch[1];
-                    day = reverseMatch[2] || "";
-                    year = reverseMatch[3] || currentYear;
-                }
-            }
-
-
-            const monthNum = monthMap[monthName.toLowerCase()];
-            if (monthNum && day) {
-                return `${year}-${monthNum}-${String(parseInt(day)).padStart(2, '0')}`;
+            day = parseInt(match[1]);
+            monthNum = monthMap[match[2].toLowerCase()];
+            if (match[3]) year = parseInt(match[3]);
+        } else {
+            // Try "Month Day, Year" or "Month Day" (e.g., "June 6th 2025", "June 6")
+            match = dateString.match(/([a-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?\s*(\d{4})?/i); // e.g., "june 6th 2025", "june 6"
+            if (match) {
+                monthNum = monthMap[match[1].toLowerCase()];
+                day = parseInt(match[2]);
+                if (match[3]) year = parseInt(match[3]);
             }
         }
         
-        // Try "Day Month" or "Month Day" (e.g., "6th June" or "June 6") - assumes current year
-        match = dateString.match(/(?:(\d{1,2})(?:st|nd|rd|th)?)?\s*([a-z]+)/); // "6th June" or "June 6"
-        if (match) {
-            let day = match[1] || "";
-            let monthName = match[2];
-
-            if (!day && dateString.match(/([a-z]+)\s*(?:(\d{1,2})(?:st|nd|rd|th)?)/)) { // June 6th format
-                let reverseMatch = dateString.match(/([a-z]+)\s*(?:(\d{1,2})(?:st|nd|rd|th)?)/);
-                if (reverseMatch) {
-                    monthName = reverseMatch[1];
-                    day = reverseMatch[2] || "";
-                }
-            }
-
-            const monthNum = monthMap[monthName.toLowerCase()];
-            if (monthNum && day) {
-                return `${currentYear}-${monthNum}-${String(parseInt(day)).padStart(2, '0')}`;
+        if (day && monthNum) {
+            // Basic validation for day and month
+            if (day >= 1 && day <= 31 && monthNum) {
+                 return `${year}-${monthNum}-${String(day).padStart(2, '0')}`;
             }
         }
-
 
         return null; // Return null if unable to parse
     }
@@ -1137,13 +1122,7 @@
         }
 
         // --- Extract Energy Type and Date (for data queries) ---
-        // Enhanced date parsing: Try to extract a flexible date first
-        var extractedDate = parseFlexibleDate(lowerCaseMessage);
-        // Fallback to strict YYYY-MM-DD if flexible parsing fails
-        if (!extractedDate) {
-            let strictDateMatch = lowerCaseMessage.match(/(\d{4}-\d{2}-\d{2})/);
-            if (strictDateMatch) extractedDate = strictDateMatch[0];
-        }
+        var extractedDate = parseFlexibleDate(lowerCaseMessage); // Use the new flexible parser
 
         var energyMatch = lowerCaseMessage.match(/(6X|10X|15X|6X FFF|10X FFF|6E|9E|12E|15E|18E)/i);
         var extractedEnergyType = energyMatch ? energyMatch[0].toUpperCase() : null;
@@ -1182,6 +1161,16 @@
         else if ((lowerCaseMessage.includes('what is the value for') || lowerCaseMessage.includes('what is the status for')) && extractedEnergyType && extractedDate) {
             addChatMessage(`Looking up data for ${extractedEnergyType} on ${extractedDate}...`, 'bot');
             try {
+                // IMPORTANT: Before sending to backend, verify extractedDate matches current monthKey
+                // The backend also validates this, but checking here gives faster feedback.
+                const extractedDateMonthKey = extractedDate.substring(0, 7); // Extract YYYY-MM
+                if (extractedDateMonthKey !== monthKey) {
+                    botResponse = `The date '${extractedDate}' you provided does not match the currently selected month (${monthKey}). Please switch month or provide a date within this month.`;
+                    addChatMessage(botResponse, 'bot');
+                    return; // Stop processing if month mismatch
+                }
+
+
                 var response = await fetch('https://back-end-wrxi.onrender.com/query-qa-data', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
