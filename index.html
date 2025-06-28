@@ -18,8 +18,11 @@
       justify-content: center;
       height: 100vh;
       padding: 20px;
-      background: url('wave-bg.png') no-repeat right center;
-      /* background-size: auto; OR simply remove the background-size line */
+      /* Explicitly setting background properties for clarity */
+      background-image: url('wave-bg.png');
+      background-repeat: no-repeat; /* Ensure it doesn't tile */
+      background-position: center center; /* Center both horizontally and vertically */
+      background-size: contain; /* This will make the entire image fit */
     }
 
     .card {
