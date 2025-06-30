@@ -13,7 +13,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html22canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 
@@ -343,7 +343,7 @@
     .trend-chart-section button {
         padding: 10px 20px;
         font-size: 0.95em;
-        background-color: #007bff;
+        background-color: var(--primary-blue);
         color: #fff;
         border-radius: 6px;
         box-shadow: 0 2px 6px rgba(0,0,0,0.08);
@@ -770,12 +770,12 @@
     var saveBtn = document.getElementById('saveBtn');
     var logoutBtn = document.getElementById('logoutBtn');
     var myProfileBtn = document.getElementById('myProfileBtn');
-    var prevYearBtn = document.getElementById('prevYearBtn'); // First (and only) declaration
+    var prevYearBtn = document.getElementById('prevYearBtn');
     var nextYearBtn = document.getElementById('nextYearBtn');
     var showTrendBtn = document.getElementById('showTrendBtn');
 
     // NEW: Get references to Export buttons
-    var exportExcelBtn = document.getElementById('exportExcelBtn'); // Correct, single declaration
+    var exportExcelBtn = document.getElementById('exportExcelBtn'); 
 
     // Get references for data containers to apply transitions
     var tableContainer = document.getElementById('table');
@@ -1263,128 +1263,58 @@
         }
         // --- Fallback for unrecognized commands ---
         else {
-             botResponse = "I'm sorry, I don't understand that request. Please try rephrasing or ask about:\n\n- \"Out of tolerance dates\"\n- \"Value for 6X on 2025-06-10\" (useYYYY-MM-DD format)\n- \"All 6X data this month\"\n- \"List all warning values\"";
+             botResponse = "I'm sorry, I don't understand that request. Please try rephrasing or ask about:\n\n- \"Out of tolerance dates\"\n- \"Value for 6X on 2025-06-10\" (useYYYY-MM-DD for dates).";
         }
         
         addChatMessage(botResponse, 'bot');
     }
 
-    // Export function for Excel (generates a CSV with .xlsx extension)
-    function exportToExcel() {
-        if (hot && hot.getPlugin) { // Check if hot exists and getPlugin method is available
-            const exportPlugin = hot.getPlugin('exportFile'); // Get the exportFile plugin instance
-            if (exportPlugin) {
-                exportPlugin.downloadFile('xlsx', { // Use the plugin's downloadFile method directly
-                    columnHeaders: true,
-                    rowHeaders: false,
-                    filename: `LINAC_QA_Data_${currentDate.getFullYear()}_${String(currentDate.getMonth()+1).padStart(2,'0')}`,
-                    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    encoding: 'utf-8',
-                    fileExtension: 'xlsx' // Ensure this is also passed to the method
-                });
+    // Export function for Excel (requests XLSX from backend)
+    async function exportToExcel() {
+        showLoader(); // Show loading indicator
+
+        var month = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
+        try {
+            const response = await fetch('https://back-end-wrxi.onrender.com/export-excel', { // <-- New backend endpoint
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    month: month,
+                    uid: currentUID // Send current user's UID
+                })
+            });
+
+            if (response.ok) {
+                // If the response is successful, get the Blob and create a download link
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `LINAC_QA_Data_${month}.xlsx`; // Set the desired filename
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url); // Clean up the URL object
+                alert("Excel file exported successfully!");
             } else {
-                alert("Handsontable ExportFile plugin not available.");
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to export Excel file.');
             }
-        } else {
-            alert("No data table available to export.");
+        } catch (error) {
+            console.error("Error exporting Excel:", error);
+            alert("Failed to export Excel: " + error.message);
+        } finally {
+            hideLoader(); // Hide loading indicator
         }
     }
 
     // This function for PDF export is now removed from usage, but kept for reference if needed
-    // async function exportDashboardToPdf() {
-    //     showLoader();
-    //     try {
-    //         const { jsPDF } = window.jspdf;
-    //         const dashboardContent = document.querySelector('.main');
-
-    //         const chatBubble = document.getElementById('chat-bubble');
-    //         const exportSection = document.getElementById('export-section');
-    //         const topbar = document.querySelector('.topbar');
-    //         const sidebar = document.querySelector('.sidebar');
-    //         if (chatBubble) chatBubble.style.display = 'none';
-    //         if (exportSection) exportSection.style.display = 'none';
-    //         if (topbar) topbar.style.display = 'none';
-    //         if (sidebar) sidebar.style.display = 'none';
-
-    //         const canvas = await html2canvas(dashboardContent, {
-    //             scale: 2,
-    //             useCORS: true,
-    //             logging: false
-    //         });
-
-    //         const imgData = canvas.toDataURL('image/png');
-    //         const imgWidth = 210;
-    //         const pageHeight = 297;
-    //         const imgHeight = canvas.height * imgWidth / canvas.width;
-    //         let heightLeft = imgHeight;
-
-    //         const pdf = new jsPDF('p', 'mm', 'a4');
-    //         let position = 0;
-
-    //         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    //         heightLeft -= pageHeight;
-
-    //         while (heightLeft >= 0) {
-    //             position = heightLeft - imgHeight;
-    //             pdf.addPage();
-    //             pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    //             heightLeft -= pageHeight;
-    //         }
-
-    //         pdf.save(`LINAC_QA_Dashboard_${currentDate.getFullYear()}_${String(currentDate.getMonth()+1).padStart(2,'0')}.pdf`);
-    //         alert("PDF exported successfully!");
-
-    //     } catch (error) {
-    //         console.error("Error exporting PDF:", error);
-    //         alert("Failed to export PDF: " + error.message);
-    //     } finally {
-    //         const chatBubble = document.getElementById('chat-bubble');
-    //         const exportSection = document.getElementById('export-section');
-    //         const topbar = document.querySelector('.topbar');
-    //         const sidebar = document.querySelector('.sidebar');
-    //         if (chatBubble) chatBubble.style.display = '';
-    //         if (exportSection) exportSection.style.display = '';
-    //         if (topbar) topbar.style.display = '';
-    //         if (sidebar) sidebar.style.display = '';
-    //         hideLoader();
-    //     }
-    // }
+    // async function exportDashboardToPdf() { /* ... */ }
 
     // This function for printing is now removed from usage, but kept for reference if needed
-    // function printDashboard() {
-    //     const sidebar = document.querySelector('.sidebar');
-    //     const topbar = document.querySelector('.topbar');
-    //     const chatBubble = document.getElementById('chat-bubble');
-    //     const chatWindow = document.getElementById('chat-window');
-    //     const saveSection = document.getElementById('save-section');
-    //     const trendEnergySelect = document.getElementById('trendEnergySelect');
-    //     const showTrendBtn = document.getElementById('showTrendBtn');
-    //     const exportSection = document.getElementById('export-section');
-
-
-    //     if (sidebar) sidebar.style.display = 'none';
-    //     if (topbar) topbar.style.display = 'none';
-    //     if (chatBubble) chatBubble.style.display = 'none';
-    //     if (chatWindow) chatWindow.style.display = 'none';
-    //     if (saveSection) saveSection.style.display = 'none';
-    //     if (trendEnergySelect) trendEnergySelect.style.display = 'none';
-    //     if (showTrendBtn) showTrendBtn.style.display = 'none';
-    //     if (exportSection) exportSection.style.display = 'none';
-
-
-    //     window.print();
-
-    //     setTimeout(() => {
-    //         if (sidebar) sidebar.style.display = '';
-    //         if (topbar) topbar.style.display = '';
-    //         if (chatBubble) chatBubble.style.display = '';
-    //         if (chatWindow) chatWindow.style.display = '';
-    //         if (saveSection) saveSection.style.display = '';
-    //         if (trendEnergySelect) trendEnergySelect.style.display = '';
-    //         if (showTrendBtn) showTrendBtn.style.display = '';
-    //         if (exportSection) exportSection.style.display = '';
-    //     }, 500);
-    // }
+    // function printDashboard() { /* ... */ }
 
 
     // Attach all event listeners after the DOM is fully loaded and all functions are defined.
@@ -1399,7 +1329,7 @@
         showTrendBtn.addEventListener('click', updateTrendChart);
 
         // NEW: Export Button Event Listeners
-        exportExcelBtn.addEventListener('click', exportToExcel);
+        exportExcelBtn.addEventListener('click', exportToExcel); 
 
         // Chatbot Event Listeners
         chatBubble.addEventListener('click', function() {
