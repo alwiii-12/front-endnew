@@ -13,7 +13,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html22canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 
@@ -760,7 +760,7 @@
     // Declare global variables that will hold Handsontable and Chart.js instances
     var hot, summaryChart, trendChart;
 
-    // Get references to DOM elements using their IDs
+    // Get references to DOM elements using their IDs - ALL DECLARED ONLY ONCE HERE
     var container = document.getElementById('table');
     var monthsDiv = document.getElementById('months');
     var header = document.getElementById('header');
@@ -770,13 +770,12 @@
     var saveBtn = document.getElementById('saveBtn');
     var logoutBtn = document.getElementById('logoutBtn');
     var myProfileBtn = document.getElementById('myProfileBtn');
-    var prevYearBtn = document.getElementById('prevYearBtn');
+    var prevYearBtn = document.getElementById('prevYearBtn'); // First (and only) declaration
     var nextYearBtn = document.getElementById('nextYearBtn');
     var showTrendBtn = document.getElementById('showTrendBtn');
 
     // NEW: Get references to Export buttons
-    // This is the correct, single declaration for exportExcelBtn.
-    [cite_start]var exportExcelBtn = document.getElementById('exportExcelBtn'); [cite: 1]
+    var exportExcelBtn = document.getElementById('exportExcelBtn'); // Correct, single declaration
 
     // Get references for data containers to apply transitions
     var tableContainer = document.getElementById('table');
@@ -1400,7 +1399,7 @@
         showTrendBtn.addEventListener('click', updateTrendChart);
 
         // NEW: Export Button Event Listeners
-        [cite_start]exportExcelBtn.addEventListener('click', exportToExcel); // [cite: 1]
+        exportExcelBtn.addEventListener('click', exportToExcel);
 
         // Chatbot Event Listeners
         chatBubble.addEventListener('click', function() {
