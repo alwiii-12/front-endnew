@@ -4,13 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LINAC Output Entry</title>
-  <link rel="icon" href="/favicon.png" type="image/png"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
+  <link rel="icon" href="/favicon.png" type="image/png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -287,6 +291,23 @@
     button:active, a.button:active, select:active {
         transform: translateY(0);
         box-shadow: 0 1px 4px rgba(0,0,0,0.08) inset;
+    }
+
+    /* NEW: Export Buttons Section Styling */
+    #export-section {
+        margin-top: 20px;
+        text-align: center;
+    }
+    #export-section button {
+        padding: 10px 15px;
+        font-size: 0.95em;
+        font-weight: bold;
+        border-radius: 8px;
+        margin: 0 5px; /* Spacing between buttons */
+        color: var(--text-light);
+    }
+    #export-section button:hover {
+        box-shadow: 0 4px 10px var(--shadow-light);
     }
 
 
@@ -569,6 +590,61 @@
     #chat-input-area button:hover {
         background-color: var(--primary-blue-dark);
     }
+
+    /* NEW: Print-Specific CSS */
+    @media print {
+        /* Hide elements not meant for print */
+        .topbar, .sidebar, #chat-bubble, #chat-window, #save-section button, #loading-overlay, #trendEnergySelect, #showTrendBtn, #export-section {
+            display: none !important;
+        }
+
+        /* Ensure main content takes full width and flows properly */
+        body {
+            display: block; /* Override flex for body */
+        }
+        .content {
+            flex-direction: column !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important; /* Allow content to flow across pages */
+            height: auto !important; /* Don't restrict height */
+        }
+        .main {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            overflow: visible !important;
+            height: auto !important;
+        }
+        .container {
+            flex-direction: column !important;
+            align-items: center !important; /* Center items for print */
+            gap: 20px; /* Maintain gap if desired */
+        }
+        #table, .summary-box, .trend-chart-section {
+            box-shadow: none !important; /* Remove shadows for cleaner print */
+            border: 1px solid #eee !important; /* Add light border if desired */
+            background: white !important;
+            width: 95% !important; /* Adjust width for print layout */
+            margin: 0 auto 20px auto !important; /* Center and add bottom margin */
+            page-break-inside: avoid; /* Prevent breaking these boxes across pages */
+        }
+        #table {
+            overflow: visible !important; /* Allow Handsontable to spill if wide */
+            height: auto !important; /* Don't restrict Handsontable height */
+        }
+        /* Make Handsontable cells print cleanly */
+        #table .handsontable td, #table .handsontable th {
+            white-space: normal !important; /* Allow text to wrap if needed */
+        }
+
+        /* Adjust chart canvas for printing if necessary */
+        canvas {
+            max-height: none !important; /* Allow chart to take full height */
+            width: 100% !important;
+        }
+    }
   </style>
 </head>
 <body>
@@ -620,6 +696,20 @@
         </button>
         <span id="lastSaved" style="margin-left:15px;font-size:14px;color:gray;"></span>
       </div>
+
+      <div id="export-section">
+          <button id="exportCsvBtn" style="background-color: #2196F3; color: white;">
+              <i class="fas fa-file-csv"></i> Export CSV
+          </button>
+          <button id="exportPdfBtn" style="background-color: #f44336; color: white;">
+              <i class="fas fa-file-pdf"></i> Export PDF
+          </button>
+          <button id="printDashboardBtn" style="background-color: #4CAF50; color: white;">
+              <i class="fas fa-print"></i> Print Dashboard
+          </button>
+      </div>
+
+
       <div class="trend-chart-section data-container" style="margin-top: 30px;">
         <h3>Energy Trend Analysis (Current Month)</h3>
         <div style="margin-bottom: 15px;">
@@ -690,12 +780,17 @@
     var nextYearBtn = document.getElementById('nextYearBtn');
     var showTrendBtn = document.getElementById('showTrendBtn');
 
+    // NEW: Get references to Export buttons
+    var exportCsvBtn = document.getElementById('exportCsvBtn');
+    var exportPdfBtn = document.getElementById('exportPdfBtn');
+    var printDashboardBtn = document.getElementById('printDashboardBtn');
+
     // Get references for data containers to apply transitions
     var tableContainer = document.getElementById('table');
     var summaryBox = document.querySelector('.summary-box');
     var trendChartSection = document.querySelector('.trend-chart-section');
 
-    // NEW Chatbot UI element references
+    // Chatbot UI element references
     var chatBubble = document.getElementById('chat-bubble');
     var chatWindow = document.getElementById('chat-window');
     var closeChatBtn = document.getElementById('close-chat-btn');
@@ -1048,8 +1143,6 @@
         var botResponse = ""; // Initialize botResponse here
 
         // --- Extract Energy Type and Date (for data queries) ---
-        // This array should ideally be derived from `energyTypes` dynamically.
-        // For robustness, allow variations like "6x", "10x fff"
         const energyTypesRegex = new RegExp(`(${energyTypes.join('|').replace(/ /g, '\\s*')})`, 'i');
         var energyMatch = lowerCaseMessage.match(energyTypesRegex);
         var dateMatch = lowerCaseMessage.match(/(\d{4}-\d{2}-\d{2})/); //YYYY-MM-DD format
@@ -1184,6 +1277,127 @@
         addChatMessage(botResponse, 'bot');
     }
 
+    // NEW: Export Functions
+    function exportHandsontableToCsv() {
+        if (hot) {
+            hot.updateSettings({
+                exportFile: {
+                    columnHeaders: true, // Include column headers
+                    rowHeaders: false,   // Exclude row headers (unless you want them)
+                    fileExtension: 'csv',
+                    filename: `LINAC_QA_Data_${currentDate.getFullYear()}_${String(currentDate.getMonth()+1).padStart(2,'0')}`,
+                    mimeType: 'text/csv',
+                    encoding: 'utf-8',
+                }
+            });
+            hot.exportFile.downloadFile();
+        } else {
+            alert("No data table available to export.");
+        }
+    }
+
+    async function exportDashboardToPdf() {
+        showLoader();
+        try {
+            const { jsPDF } = window.jspdf;
+            const dashboardContent = document.querySelector('.main'); // Target the main content area
+
+            // Temporarily hide elements not desired in PDF, e.g., chat bubble, export buttons, sidebar, topbar
+            const chatBubble = document.getElementById('chat-bubble');
+            const exportSection = document.getElementById('export-section');
+            const topbar = document.querySelector('.topbar');
+            const sidebar = document.querySelector('.sidebar');
+            if (chatBubble) chatBubble.style.display = 'none';
+            if (exportSection) exportSection.style.display = 'none';
+            if (topbar) topbar.style.display = 'none';
+            if (sidebar) sidebar.style.display = 'none';
+
+
+            // Generate image from HTML
+            const canvas = await html2canvas(dashboardContent, {
+                scale: 2, // Increase scale for better resolution in PDF
+                useCORS: true, // Important if you have images from other domains (e.g., linac.png or chart.js images)
+                logging: false // Set to true for debugging
+            });
+
+            // Determine optimal PDF dimensions
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = 210; // A4 width in mm
+            const pageHeight = 297; // A4 height in mm
+            const imgHeight = canvas.height * imgWidth / canvas.width;
+            let heightLeft = imgHeight;
+
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            let position = 0;
+
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            pdf.save(`LINAC_QA_Dashboard_${currentDate.getFullYear()}_${String(currentDate.getMonth()+1).padStart(2,'0')}.pdf`);
+            alert("PDF exported successfully!");
+
+        } catch (error) {
+            console.error("Error exporting PDF:", error);
+            alert("Failed to export PDF: " + error.message);
+        } finally {
+            // Restore hidden elements
+            const chatBubble = document.getElementById('chat-bubble');
+            const exportSection = document.getElementById('export-section');
+            const topbar = document.querySelector('.topbar');
+            const sidebar = document.querySelector('.sidebar');
+            if (chatBubble) chatBubble.style.display = '';
+            if (exportSection) exportSection.style.display = '';
+            if (topbar) topbar.style.display = '';
+            if (sidebar) sidebar.style.display = '';
+            hideLoader();
+        }
+    }
+
+    function printDashboard() {
+        // Temporarily hide elements not desired in print
+        const sidebar = document.querySelector('.sidebar');
+        const topbar = document.querySelector('.topbar');
+        const chatBubble = document.getElementById('chat-bubble');
+        const chatWindow = document.getElementById('chat-window');
+        const saveSection = document.getElementById('save-section');
+        const trendEnergySelect = document.getElementById('trendEnergySelect');
+        const showTrendBtn = document.getElementById('showTrendBtn');
+        const exportSection = document.getElementById('export-section');
+
+
+        if (sidebar) sidebar.style.display = 'none';
+        if (topbar) topbar.style.display = 'none';
+        if (chatBubble) chatBubble.style.display = 'none';
+        if (chatWindow) chatWindow.style.display = 'none'; // Hide if open
+        if (saveSection) saveSection.style.display = 'none';
+        if (trendEnergySelect) trendEnergySelect.style.display = 'none'; // Hide the select
+        if (showTrendBtn) showTrendBtn.style.display = 'none'; // Hide the button
+        if (exportSection) exportSection.style.display = 'none';
+
+
+        window.print(); // Trigger browser print dialog
+
+        // Restore elements after print dialog is closed
+        // This is a common, though imperfect, workaround as window.print() is blocking.
+        setTimeout(() => {
+            if (sidebar) sidebar.style.display = '';
+            if (topbar) topbar.style.display = '';
+            if (chatBubble) chatBubble.style.display = '';
+            if (chatWindow) chatWindow.style.display = '';
+            if (saveSection) saveSection.style.display = '';
+            if (trendEnergySelect) trendEnergySelect.style.display = '';
+            if (showTrendBtn) showTrendBtn.style.display = '';
+            if (exportSection) exportSection.style.display = '';
+        }, 500); // Small delay to allow print dialog to appear/disappear
+    }
+
 
     // Attach all event listeners after the DOM is fully loaded and all functions are defined.
     document.addEventListener('DOMContentLoaded', function() {
@@ -1196,7 +1410,12 @@
         nextYearBtn.addEventListener('click', function() { changeYear(1); });
         showTrendBtn.addEventListener('click', updateTrendChart);
 
-        // NEW Chatbot Event Listeners
+        // NEW: Export Button Event Listeners
+        exportCsvBtn.addEventListener('click', exportHandsontableToCsv);
+        exportPdfBtn.addEventListener('click', exportDashboardToPdf);
+        printDashboardBtn.addEventListener('click', printDashboard);
+
+        // Chatbot Event Listeners
         chatBubble.addEventListener('click', function() {
             chatWindow.classList.toggle('open');
             if (chatWindow.classList.contains('open')) {
