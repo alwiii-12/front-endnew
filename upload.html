@@ -698,11 +698,8 @@
       </div>
 
       <div id="export-section">
-          <button id="exportPdfBtn" style="background-color: #f44336; color: white;">
-              <i class="fas fa-file-pdf"></i> Export PDF
-          </button>
-          <button id="printDashboardBtn" style="background-color: #4CAF50; color: white;">
-              <i class="fas fa-print"></i> Print Dashboard
+          <button id="exportExcelBtn" style="background-color: #28a745; color: white;">
+              <i class="fas fa-file-excel"></i> Export Excel
           </button>
       </div>
 
@@ -732,7 +729,7 @@
       </div>
       <div id="chat-body">
           <div class="chat-message bot">Hello! How can I help you with your QA data today?</div>
-          <div class="chat-message bot">You can ask: "Out of tolerance dates", "Value for 6X on 2025-06-10", "All 6X data this month", or "List all warning values". (Please use YYYY-MM-DD for dates).</div>
+          <div class="chat-message bot">You can ask: "Out of tolerance dates", "Value for 6X on 2025-06-10", "All 6X data this month", or "List all warning values". (Please useYYYY-MM-DD for dates).</div>
       </div>
       <div id="chat-input-area">
           <input type="text" id="chat-input" placeholder="Type your question...">
@@ -778,8 +775,7 @@
     var showTrendBtn = document.getElementById('showTrendBtn');
 
     // NEW: Get references to Export buttons
-    var exportPdfBtn = document.getElementById('exportPdfBtn');
-    var printDashboardBtn = document.getElementById('printDashboardBtn');
+    var exportExcelBtn = document.getElementById('exportExcelBtn'); // Renamed from exportCsvBtn
 
     // Get references for data containers to apply transitions
     var tableContainer = document.getElementById('table');
@@ -1267,22 +1263,22 @@
         }
         // --- Fallback for unrecognized commands ---
         else {
-             botResponse = "I'm sorry, I don't understand that request. Please try rephrasing or ask about:\n\n- \"Out of tolerance dates\"\n- \"Value for 6X on 2025-06-10\" (use YYYY-MM-DD format)\n- \"All 6X data this month\"\n- \"List all warning values\"";
+             botResponse = "I'm sorry, I don't understand that request. Please try rephrasing or ask about:\n\n- \"Out of tolerance dates\"\n- \"Value for 6X on 2025-06-10\" (useYYYY-MM-DD format)\n- \"All 6X data this month\"\n- \"List all warning values\"";
         }
         
         addChatMessage(botResponse, 'bot');
     }
 
-    // NEW: Export Functions
-    function exportHandsontableToCsv() {
+    // Export function adapted for Excel (generates a CSV with .xlsx extension)
+    function exportToExcel() {
         if (hot) {
             hot.updateSettings({
                 exportFile: {
                     columnHeaders: true, // Include column headers
                     rowHeaders: false,   // Exclude row headers (unless you want them)
-                    fileExtension: 'csv',
+                    fileExtension: 'xlsx', // Change to .xlsx
                     filename: `LINAC_QA_Data_${currentDate.getFullYear()}_${String(currentDate.getMonth()+1).padStart(2,'0')}`,
-                    mimeType: 'text/csv',
+                    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // Changed MIME type for Excel
                     encoding: 'utf-8',
                 }
             });
@@ -1292,70 +1288,7 @@
         }
     }
 
-    async function exportDashboardToPdf() {
-        showLoader();
-        try {
-            const { jsPDF } = window.jspdf;
-            const dashboardContent = document.querySelector('.main'); // Target the main content area
-
-            // Temporarily hide elements not desired in PDF, e.g., chat bubble, export buttons, sidebar, topbar
-            const chatBubble = document.getElementById('chat-bubble');
-            const exportSection = document.getElementById('export-section');
-            const topbar = document.querySelector('.topbar');
-            const sidebar = document.querySelector('.sidebar');
-            if (chatBubble) chatBubble.style.display = 'none';
-            if (exportSection) exportSection.style.display = 'none';
-            if (topbar) topbar.style.display = 'none';
-            if (sidebar) sidebar.style.display = 'none';
-
-
-            // Generate image from HTML
-            const canvas = await html2canvas(dashboardContent, {
-                scale: 2, // Increase scale for better resolution in PDF
-                useCORS: true, // Important if you have images from other domains (e.g., linac.png or chart.js images)
-                logging: false // Set to true for debugging
-            });
-
-            // Determine optimal PDF dimensions
-            const imgData = canvas.toDataURL('image/png');
-            const imgWidth = 210; // A4 width in mm
-            const pageHeight = 297; // A4 height in mm
-            const imgHeight = canvas.height * imgWidth / canvas.width;
-            let heightLeft = imgHeight;
-
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            let position = 0;
-
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-
-            while (heightLeft >= 0) {
-                position = heightLeft - imgHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-            }
-
-            pdf.save(`LINAC_QA_Dashboard_${currentDate.getFullYear()}_${String(currentDate.getMonth()+1).padStart(2,'0')}.pdf`);
-            alert("PDF exported successfully!");
-
-        } catch (error) {
-            console.error("Error exporting PDF:", error);
-            alert("Failed to export PDF: " + error.message);
-        } finally {
-            // Restore hidden elements
-            const chatBubble = document.getElementById('chat-bubble');
-            const exportSection = document.getElementById('export-section');
-            const topbar = document.querySelector('.topbar');
-            const sidebar = document.querySelector('.sidebar');
-            if (chatBubble) chatBubble.style.display = '';
-            if (exportSection) exportSection.style.display = '';
-            if (topbar) topbar.style.display = '';
-            if (sidebar) sidebar.style.display = '';
-            hideLoader();
-        }
-    }
-
+    // Print Dashboard function remains the same
     function printDashboard() {
         // Temporarily hide elements not desired in print
         const sidebar = document.querySelector('.sidebar');
@@ -1407,8 +1340,7 @@
         showTrendBtn.addEventListener('click', updateTrendChart);
 
         // NEW: Export Button Event Listeners
-        exportPdfBtn.addEventListener('click', exportDashboardToPdf);
-        printDashboardBtn.addEventListener('click', printDashboard);
+        exportExcelBtn.addEventListener('click', exportToExcel); // Event listener for the new Excel button
 
         // Chatbot Event Listeners
         chatBubble.addEventListener('click', function() {
