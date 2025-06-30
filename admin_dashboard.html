@@ -4,16 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | LINAC QA</title>
-    <link rel="icon" href="/favicon.png" type="image/png"> <style>
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Base styles */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            text-align: center;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
             background: linear-gradient(to bottom right, #dbeafe, #f0f9ff);
+            color: #333;
         }
         .admin-header {
             background-color: #007bff;
@@ -22,24 +25,16 @@
             font-size: 2em;
             font-weight: bold;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .admin-content {
-            flex-grow: 1;
-            padding: 20px;
+            text-align: center;
             display: flex;
-            flex-direction: column;
-            justify-content: center; /* Adjust to flex-start if content grows */
+            justify-content: space-between;
             align-items: center;
         }
-        .admin-content h1 {
-            color: #1e3a8a;
-            margin-bottom: 20px;
-        }
-        .admin-content p {
-            font-size: 1.1em;
-            color: #333;
-            margin-bottom: 25px;
-            line-height: 1.6;
+        .admin-header h1 {
+            margin: 0;
+            font-size: 1.2em; /* Smaller for header */
+            flex-grow: 1; /* Allows it to take available space */
+            text-align: center;
         }
         .logout-button {
             padding: 10px 20px;
@@ -50,103 +45,349 @@
             font-size: 1em;
             cursor: pointer;
             transition: background-color 0.3s ease;
+            white-space: nowrap; /* Prevent button text from wrapping */
         }
         .logout-button:hover {
             background-color: #c82333;
         }
+        .admin-content {
+            flex-grow: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px; /* Spacing between sections */
+        }
+        .admin-content h1 {
+            color: #1e3a8a;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+        .admin-content p {
+            font-size: 1.1em;
+            color: #333;
+            line-height: 1.6;
+        }
         .admin-footer {
-            margin-top: auto; /* Pushes footer to the bottom */
+            margin-top: auto;
             padding: 15px;
             font-size: 12px;
             color: #6b7280;
             background-color: #f8f8f8;
             border-top: 1px solid #ccc;
+            text-align: center;
         }
 
-        /* New styles for Pending Users section */
-        .pending-users-section {
+        /* Card/Section Styling */
+        .card-section {
             background: white;
             padding: 25px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            margin-top: 30px;
-            width: 90%;
-            max-width: 800px;
-            text-align: left;
+            width: 95%;
+            max-width: 1000px; /* Wider for user table */
+            box-sizing: border-box;
         }
-        .pending-users-section h2 {
+        .card-section h2 {
             text-align: center;
             color: #007bff;
             margin-bottom: 20px;
             font-size: 1.5em;
         }
-        .user-item {
-            border: 1px solid #eee;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
+
+        /* Filter and Search */
+        .filter-search-container {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #f9f9f9;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
         }
-        .user-info {
-            flex-grow: 1;
+        .filter-search-container input[type="text"],
+        .filter-search-container select {
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 0.95em;
+            flex: 1; /* Allow items to grow */
+            min-width: 150px; /* Minimum width for inputs */
+        }
+        .filter-search-container button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
             font-size: 0.95em;
         }
-        .user-info strong {
-            color: #333;
+        .filter-search-container button:hover {
+            background-color: #0056b3;
         }
-        .user-actions button {
-            padding: 8px 15px;
+
+        /* User List Table */
+        .user-table-container {
+            max-height: 500px; /* Fixed height with scroll */
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .user-table th, .user-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .user-table th {
+            background-color: #e0f7fa;
+            color: #007bff;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .user-table tr:hover {
+            background-color: #f0f8ff;
+        }
+        .user-table .user-actions button {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            margin-left: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .user-table .approve-btn { background-color: #28a745; color: white; }
+        .user-table .approve-btn:hover { background-color: #218838; }
+        .user-table .reject-btn { background-color: #ffc107; color: #333; }
+        .user-table .reject-btn:hover { background-color: #e0a800; }
+        .user-table .edit-btn { background-color: #17a2b8; color: white; }
+        .user-table .edit-btn:hover { background-color: #138496; }
+
+
+        .no-users-message {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Loading Overlay & Spinner (re-used from upload.html) */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 8px solid #ffffff;
+            border-top-color: #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Modal Styling */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 10000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 30px;
+            border: 1px solid #888;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: #333;
+            text-decoration: none;
+        }
+        .modal h3 {
+            color: #007bff;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .modal label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        .modal input[type="text"],
+        .modal select {
+            width: calc(100% - 22px); /* Account for padding and border */
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .modal-buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            padding: 10px 20px;
+            margin: 0 10px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
             transition: background-color 0.3s ease;
-            margin-left: 10px;
         }
-        .approve-btn {
-            background-color: #28a745; /* Green */
+        .modal-buttons .save-btn {
+            background-color: #28a745;
             color: white;
         }
-        .approve-btn:hover {
+        .modal-buttons .save-btn:hover {
             background-color: #218838;
         }
-        .reject-btn {
-            background-color: #ffc107; /* Yellow/Orange */
-            color: #333;
+        .modal-buttons .cancel-btn {
+            background-color: #6c757d;
+            color: white;
         }
-        .reject-btn:hover {
-            background-color: #e0a800;
+        .modal-buttons .cancel-btn:hover {
+            background-color: #5a6268;
         }
-        .no-pending-users {
+        #modalErrorMsg {
+            color: red;
             text-align: center;
-            color: #666;
-            padding: 20px;
-            font-style: italic;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
     <div class="admin-header">
-        LINAC QA Admin Portal
-    </div>
-    <div class="admin-content">
-        <h1>Welcome, Administrator!</h1>
-        <p>This is your exclusive admin dashboard. Here you will be able to manage users, access aggregated data, and configure system settings.</p>
+        <h1>LINAC QA Admin Portal</h1>
         <button onclick="logout()" class="logout-button">Logout</button>
+    </div>
 
-        <div class="pending-users-section">
-            <h2>Pending User Accounts</h2>
-            <div id="pendingUsersList">
-                <p class="no-pending-users">Loading pending users...</p>
+    <div class="admin-content">
+        <div class="card-section">
+            <h2>Manage User Accounts</h2>
+            <div class="filter-search-container">
+                <input type="text" id="searchUserInput" placeholder="Search by name, email, hospital..." onkeyup="filterUsers()">
+                <select id="filterStatus" onchange="filterUsers()">
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="active">Active</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+                <select id="filterRole" onchange="filterUsers()">
+                    <option value="">All Roles</option>
+                    <option value="Medical physicist">Medical physicist</option>
+                    <option value="RSO">RSO</option>
+                    <option value="Admin">Admin</option>
+                </select>
+                <select id="filterHospital" onchange="filterUsers()">
+                    <option value="">All Hospitals</option>
+                    </select>
+                <button onclick="loadAllUsers()">Refresh</button>
+            </div>
+            <div class="user-table-container">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Hospital</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr><td colspan="6" class="no-users-message">Loading users...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
+
+        <div class="card-section" style="display: none;"> <h2>Pending User Accounts</h2>
+            <div id="pendingUsersList">
+                <p class="no-users-message">Loading pending users...</p>
+            </div>
         </div>
+    </div>
+
     <div class="admin-footer">
         © 2025 LINAC QA System - Admin Access
     </div>
+
+    <div id="loading-overlay"><div class="spinner"></div></div>
+
+    <div id="userEditModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeEditModal()">&times;</span>
+            <h3>Edit User Details</h3>
+            <div id="modalErrorMsg"></div>
+            <input type="hidden" id="editUserId">
+            <label for="editUserName">Name:</label>
+            <input type="text" id="editUserName" readonly>
+
+            <label for="editUserEmail">Email:</label>
+            <input type="text" id="editUserEmail" readonly>
+
+            <label for="editUserHospital">Hospital:</label>
+            <select id="editUserHospital">
+                </select>
+
+            <label for="editUserRole">Role:</label>
+            <select id="editUserRole">
+                <option value="Medical physicist">Medical physicist</option>
+                <option value="RSO">RSO</option>
+                <option value="Admin">Admin</option>
+            </select>
+
+            <label for="editUserStatus">Status:</label>
+            <select id="editUserStatus">
+                <option value="pending">Pending</option>
+                <option value="active">Active</option>
+                <option value="rejected">Rejected</option>
+            </select>
+
+            <div class="modal-buttons">
+                <button class="save-btn" onclick="saveUserChanges()">Save Changes</button>
+                <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
 
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -167,6 +408,29 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        let allUsersData = []; // Store the full list of users fetched from backend
+
+        // DOM elements for loading, filters, and modal
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const usersTableBody = document.getElementById('usersTableBody');
+        const searchUserInput = document.getElementById('searchUserInput');
+        const filterStatus = document.getElementById('filterStatus');
+        const filterRole = document.getElementById('filterRole');
+        const filterHospital = document.getElementById('filterHospital');
+
+        const userEditModal = document.getElementById('userEditModal');
+        const editUserId = document.getElementById('editUserId');
+        const editUserName = document.getElementById('editUserName');
+        const editUserEmail = document.getElementById('editUserEmail');
+        const editUserHospital = document.getElementById('editUserHospital');
+        const editUserRole = document.getElementById('editUserRole');
+        const editUserStatus = document.getElementById('editUserStatus');
+        const modalErrorMsg = document.getElementById('modalErrorMsg');
+
+
+        function showLoader(){loadingOverlay.style.display='flex';}
+        function hideLoader(){loadingOverlay.style.display='none';}
+
         function logout() {
             auth.signOut().then(() => {
                 localStorage.clear();
@@ -179,27 +443,30 @@
             if (!user) { // No user logged in
                 window.location.href = "login.html";
             } else {
+                // Fetch user role and status from local storage first (faster)
                 const userRole = localStorage.getItem("userRole");
                 const userStatus = localStorage.getItem("userStatus");
 
-                if (userRole !== "Admin" || userStatus !== "active") {
+                if (userRole === "Admin" && userStatus === "active") {
+                    loadAllUsers(); // Load users if admin
+                    // Note: The previous "Pending User Accounts" section is set to display: none in CSS
+                    // If you want to reactivate it, you'd need separate fetch/render logic for it.
+                } else {
                     alert("Access Denied: You are not authorized to view this page or your account is not active.");
                     logout();
-                    return;
-                } else {
-                    loadPendingUsers();
                 }
             }
         });
 
-        async function loadPendingUsers() {
-            const pendingUsersListDiv = document.getElementById('pendingUsersList');
-            pendingUsersListDiv.innerHTML = '<p class="no-pending-users">Loading pending users...</p>';
+        // --- User Management Functions ---
 
+        async function loadAllUsers() {
+            showLoader();
+            usersTableBody.innerHTML = '<tr><td colspan="6" class="no-users-message">Loading users...</td></tr>';
+            
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
-
-                const response = await fetch('https://back-end-wrxi.onrender.com/admin/pending-users', {
+                const response = await fetch('https://back-end-wrxi.onrender.com/admin/users', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -209,47 +476,110 @@
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.message || `Failed to fetch pending users. Status: ${response.status}`);
+                    throw new Error(errorData.message || `Failed to fetch users. Status: ${response.status}`);
                 }
 
-                const users = await response.json();
-
-                if (users.length === 0) {
-                    pendingUsersListDiv.innerHTML = '<p class="no-pending-users">No pending user accounts at this time.</p>';
-                } else {
-                    pendingUsersListDiv.innerHTML = '';
-                    users.forEach(user => {
-                        const userItem = document.createElement('div');
-                        userItem.className = 'user-item';
-                        userItem.innerHTML = `
-                            <div class="user-info">
-                                <strong>Name:</strong> ${user.name || 'N/A'}<br>
-                                <strong>Email:</strong> ${user.email || 'N/A'}<br>
-                                <strong>Hospital:</strong> ${user.hospital || 'N/A'}<br>
-                                <strong>Role:</strong> ${user.role || 'N/A'}
-                            </div>
-                            <div class="user-actions">
-                                <button class="approve-btn" onclick="updateUserStatus('${user.uid}', 'active')">Approve</button>
-                                <button class="reject-btn" onclick="updateUserStatus('${user.uid}', 'rejected')">Reject</button>
-                            </div>
-                        `;
-                        pendingUsersListDiv.appendChild(userItem);
-                    });
-                }
+                allUsersData = await response.json(); // Store all users
+                populateFilters(); // Populate hospital filter based on all users
+                renderUsers(allUsersData); // Render all users initially
+                
             } catch (error) {
-                console.error("Error loading pending users:", error);
-                pendingUsersListDiv.innerHTML = `<p class="no-pending-users" style="color: red;">Error: ${error.message || 'Could not load pending users.'}</p>`;
+                console.error("Error loading users:", error);
+                usersTableBody.innerHTML = `<tr><td colspan="6" class="no-users-message" style="color: red;">Error: ${error.message || 'Could not load users.'}</td></tr>`;
+            } finally {
+                hideLoader();
             }
         }
 
+        function populateFilters() {
+            const hospitals = new Set();
+            allUsersData.forEach(user => {
+                if (user.hospital) {
+                    hospitals.add(user.hospital);
+                }
+            });
+
+            filterHospital.innerHTML = '<option value="">All Hospitals</option>';
+            editUserHospital.innerHTML = ''; // Also populate the modal's hospital dropdown
+            hospitals.forEach(hospital => {
+                const option = document.createElement('option');
+                option.value = hospital;
+                option.textContent = hospital;
+                filterHospital.appendChild(option);
+
+                const modalOption = document.createElement('option');
+                modalOption.value = hospital;
+                modalOption.textContent = hospital;
+                editUserHospital.appendChild(modalOption);
+            });
+             // Add an "Other / New Hospital" option to the modal for new entries
+            const newHospitalOption = document.createElement('option');
+            newHospitalOption.value = "Other";
+            newHospitalOption.textContent = "Other / New Hospital";
+            editUserHospital.appendChild(newHospitalOption);
+        }
+
+        function renderUsers(usersToRender) {
+            usersTableBody.innerHTML = ''; // Clear existing rows
+            if (usersToRender.length === 0) {
+                usersTableBody.innerHTML = '<tr><td colspan="6" class="no-users-message">No users found matching current filters.</td></tr>';
+                return;
+            }
+
+            usersToRender.forEach(user => {
+                const row = usersTableBody.insertRow();
+                row.innerHTML = `
+                    <td>${user.name || 'N/A'}</td>
+                    <td>${user.email || 'N/A'}</td>
+                    <td>${user.hospital || 'N/A'}</td>
+                    <td>${user.role || 'N/A'}</td>
+                    <td><span style="color: ${user.status === 'active' ? 'green' : user.status === 'pending' ? 'orange' : 'red'}; font-weight: bold;">${(user.status || 'N/A').toUpperCase()}</span></td>
+                    <td>
+                        <button class="approve-btn" onclick="updateUserStatus('${user.uid}', 'active')">Approve</button>
+                        <button class="reject-btn" onclick="updateUserStatus('${user.uid}', 'rejected')">Reject</button>
+                        <button class="edit-btn" onclick="openEditModal('${user.uid}')">Edit</button>
+                    </td>
+                `;
+            });
+        }
+
+        function filterUsers() {
+            const searchTerm = searchUserInput.value.toLowerCase();
+            const selectedStatus = filterStatus.value;
+            const selectedRole = filterRole.value;
+            const selectedHospital = filterHospital.value;
+
+            const filtered = allUsersData.filter(user => {
+                const matchesSearch = (user.name && user.name.toLowerCase().includes(searchTerm)) ||
+                                      (user.email && user.email.toLowerCase().includes(searchTerm)) ||
+                                      (user.hospital && user.hospital.toLowerCase().includes(searchTerm)) ||
+                                      (user.role && user.role.toLowerCase().includes(searchTerm));
+                
+                const matchesStatus = selectedStatus === "" || user.status === selectedStatus;
+                const matchesRole = selectedRole === "" || user.role === selectedRole;
+                const matchesHospital = selectedHospital === "" || user.hospital === selectedHospital;
+
+                return matchesSearch && matchesStatus && matchesRole && matchesHospital;
+            });
+
+            renderUsers(filtered);
+        }
+
         async function updateUserStatus(uid, newStatus) {
-            const confirmed = confirm(`Are you sure you want to set status of user ${uid} to ${newStatus}?`);
+            const user = allUsersData.find(u => u.uid === uid);
+            if (!user) {
+                alert("User not found.");
+                return;
+            }
+
+            const confirmed = confirm(`Are you sure you want to set status of ${user.name} (${user.email}) to ${newStatus.toUpperCase()}?`);
             if (!confirmed) {
                 return;
             }
+            
+            showLoader();
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
-
                 const response = await fetch('https://back-end-wrxi.onrender.com/admin/update-user-status', {
                     method: 'POST',
                     headers: {
@@ -264,13 +594,137 @@
                     throw new Error(errorData.message || `Failed to update user status. Status: ${response.status}`);
                 }
 
-                alert(`User status updated to ${newStatus} successfully!`);
-                loadPendingUsers();
+                alert(`User status updated to ${newStatus.toUpperCase()} successfully!`);
+                loadAllUsers(); // Reload all users to reflect changes
             } catch (error) {
                 console.error("Error updating user status:", error);
                 alert(`Failed to update user status: ${error.message}`);
+            } finally {
+                hideLoader();
             }
         }
+
+        function openEditModal(uid) {
+            modalErrorMsg.textContent = ''; // Clear previous errors
+            const user = allUsersData.find(u => u.uid === uid);
+            if (!user) {
+                modalErrorMsg.textContent = "Error: User data not found for editing.";
+                userEditModal.style.display = 'flex'; // Still show modal with error
+                return;
+            }
+
+            editUserId.value = user.uid;
+            editUserName.value = user.name || '';
+            editUserEmail.value = user.email || '';
+            editUserHospital.value = user.hospital || '';
+            editUserRole.value = user.role || '';
+            editUserStatus.value = user.status || '';
+
+            // Ensure the 'Other' option is handled for hospital input
+            if (!user.hospital || !Array.from(editUserHospital.options).some(option => option.value === user.hospital)) {
+                editUserHospital.value = "Other"; // Select 'Other' if hospital is not in dropdown or empty
+                const newHospitalInput = document.createElement('input');
+                newHospitalInput.type = 'text';
+                newHospitalInput.id = 'newHospitalNameInput';
+                newHospitalInput.placeholder = 'Enter new hospital name';
+                newHospitalInput.value = user.hospital || ''; // Pre-fill if there was a value
+                editUserHospital.parentNode.insertBefore(newHospitalInput, editUserHospital.nextSibling);
+                newHospitalInput.focus();
+            } else {
+                 const existingNewHospitalInput = document.getElementById('newHospitalNameInput');
+                 if (existingNewHospitalInput) existingNewHospitalInput.remove();
+            }
+
+            // Listener for 'Other / New Hospital' option in modal
+            editUserHospital.onchange = function() {
+                const existingNewHospitalInput = document.getElementById('newHospitalNameInput');
+                if (this.value === "Other") {
+                    if (!existingNewHospitalInput) {
+                        const newHospitalInput = document.createElement('input');
+                        newHospitalInput.type = 'text';
+                        newHospitalInput.id = 'newHospitalNameInput';
+                        newHospitalInput.placeholder = 'Enter new hospital name';
+                        newHospitalInput.value = ''; // Start empty for new entry
+                        this.parentNode.insertBefore(newHospitalInput, this.nextSibling);
+                        newHospitalInput.focus();
+                    }
+                } else {
+                    if (existingNewHospitalInput) existingNewHospitalInput.remove();
+                }
+            };
+
+
+            userEditModal.style.display = 'flex'; // Show the modal
+        }
+
+        function closeEditModal() {
+            userEditModal.style.display = 'none'; // Hide the modal
+            const existingNewHospitalInput = document.getElementById('newHospitalNameInput');
+            if (existingNewHospitalInput) existingNewHospitalInput.remove(); // Clean up dynamic input
+        }
+
+        async function saveUserChanges() {
+            modalErrorMsg.textContent = ''; // Clear previous errors
+            const uid = editUserId.value;
+            let hospitalToSave = editUserHospital.value;
+            const roleToSave = editUserRole.value;
+            const statusToSave = editUserStatus.value;
+
+            // Handle 'Other' hospital input
+            if (hospitalToSave === "Other") {
+                const newHospitalInput = document.getElementById('newHospitalNameInput');
+                if (newHospitalInput && newHospitalInput.value.trim() !== "") {
+                    hospitalToSave = newHospitalInput.value.trim();
+                } else {
+                    modalErrorMsg.textContent = "Please enter a new hospital name or select an existing one.";
+                    return;
+                }
+            }
+
+            if (!uid || !hospitalToSave || !roleToSave || !statusToSave) {
+                modalErrorMsg.textContent = "All fields (except Name/Email) are required for update.";
+                return;
+            }
+
+            showLoader();
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const response = await fetch('https://back-end-wrxi.onrender.com/admin/update-user-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                    body: JSON.stringify({
+                        uid: uid,
+                        hospital: hospitalToSave,
+                        role: roleToSave,
+                        status: statusToSave
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `Failed to save changes. Status: ${response.status}`);
+                }
+
+                alert("User details updated successfully!");
+                closeEditModal();
+                loadAllUsers(); // Reload all users to reflect changes
+            } catch (error) {
+                console.error("Error saving user changes:", error);
+                modalErrorMsg.textContent = `Failed to save changes: ${error.message}`;
+            } finally {
+                hideLoader();
+            }
+        }
+
+        // Initial load on page ready
+        document.addEventListener('DOMContentLoaded', () => {
+            // No need to call loadAllUsers here, it's called by onAuthStateChanged
+            // Event listeners for filters are set directly in HTML (onchange, onkeyup)
+        });
+
     </script>
 </body>
 </html>
