@@ -775,7 +775,7 @@
     var showTrendBtn = document.getElementById('showTrendBtn');
 
     // NEW: Get references to Export buttons
-    var exportExcelBtn = document.getElementById('exportExcelBtn'); // Renamed from exportCsvBtn
+    var exportExcelBtn = document.getElementById('exportExcelBtn'); [cite_start]// Renamed from exportCsvBtn [cite: 2]
 
     // Get references for data containers to apply transitions
     var tableContainer = document.getElementById('table');
@@ -1269,63 +1269,122 @@
         addChatMessage(botResponse, 'bot');
     }
 
-    // Export function adapted for Excel (generates a CSV with .xlsx extension)
+    // Export function for Excel (generates a CSV with .xlsx extension)
     function exportToExcel() {
-        if (hot) {
-            hot.updateSettings({
-                exportFile: {
-                    columnHeaders: true, // Include column headers
-                    rowHeaders: false,   // Exclude row headers (unless you want them)
-                    fileExtension: 'xlsx', // Change to .xlsx
+        if (hot && hot.getPlugin) { // Check if hot exists and getPlugin method is available
+            const exportPlugin = hot.getPlugin('exportFile'); // Get the exportFile plugin instance
+            if (exportPlugin) {
+                exportPlugin.downloadFile('xlsx', { // Use the plugin's downloadFile method directly
+                    columnHeaders: true,
+                    rowHeaders: false,
                     filename: `LINAC_QA_Data_${currentDate.getFullYear()}_${String(currentDate.getMonth()+1).padStart(2,'0')}`,
-                    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // Changed MIME type for Excel
+                    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                     encoding: 'utf-8',
-                }
-            });
-            hot.exportFile.downloadFile();
+                    fileExtension: 'xlsx' // Ensure this is also passed to the method
+                });
+            } else {
+                alert("Handsontable ExportFile plugin not available.");
+            }
         } else {
             alert("No data table available to export.");
         }
     }
 
-    // Print Dashboard function remains the same
-    function printDashboard() {
-        // Temporarily hide elements not desired in print
-        const sidebar = document.querySelector('.sidebar');
-        const topbar = document.querySelector('.topbar');
-        const chatBubble = document.getElementById('chat-bubble');
-        const chatWindow = document.getElementById('chat-window');
-        const saveSection = document.getElementById('save-section');
-        const trendEnergySelect = document.getElementById('trendEnergySelect');
-        const showTrendBtn = document.getElementById('showTrendBtn');
-        const exportSection = document.getElementById('export-section');
+    // This function for PDF export is now removed from usage, but kept for reference if needed
+    // async function exportDashboardToPdf() {
+    //     showLoader();
+    //     try {
+    //         const { jsPDF } = window.jspdf;
+    //         const dashboardContent = document.querySelector('.main');
+
+    //         const chatBubble = document.getElementById('chat-bubble');
+    //         const exportSection = document.getElementById('export-section');
+    //         const topbar = document.querySelector('.topbar');
+    //         const sidebar = document.querySelector('.sidebar');
+    //         if (chatBubble) chatBubble.style.display = 'none';
+    //         if (exportSection) exportSection.style.display = 'none';
+    //         if (topbar) topbar.style.display = 'none';
+    //         if (sidebar) sidebar.style.display = 'none';
+
+    //         const canvas = await html2canvas(dashboardContent, {
+    //             scale: 2,
+    //             useCORS: true,
+    //             logging: false
+    //         });
+
+    //         const imgData = canvas.toDataURL('image/png');
+    //         const imgWidth = 210;
+    //         const pageHeight = 297;
+    //         const imgHeight = canvas.height * imgWidth / canvas.width;
+    //         let heightLeft = imgHeight;
+
+    //         const pdf = new jsPDF('p', 'mm', 'a4');
+    //         let position = 0;
+
+    //         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    //         heightLeft -= pageHeight;
+
+    //         while (heightLeft >= 0) {
+    //             position = heightLeft - imgHeight;
+    //             pdf.addPage();
+    //             pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    //             heightLeft -= pageHeight;
+    //         }
+
+    //         pdf.save(`LINAC_QA_Dashboard_${currentDate.getFullYear()}_${String(currentDate.getMonth()+1).padStart(2,'0')}.pdf`);
+    //         alert("PDF exported successfully!");
+
+    //     } catch (error) {
+    //         console.error("Error exporting PDF:", error);
+    //         alert("Failed to export PDF: " + error.message);
+    //     } finally {
+    //         const chatBubble = document.getElementById('chat-bubble');
+    //         const exportSection = document.getElementById('export-section');
+    //         const topbar = document.querySelector('.topbar');
+    //         const sidebar = document.querySelector('.sidebar');
+    //         if (chatBubble) chatBubble.style.display = '';
+    //         if (exportSection) exportSection.style.display = '';
+    //         if (topbar) topbar.style.display = '';
+    //         if (sidebar) sidebar.style.display = '';
+    //         hideLoader();
+    //     }
+    // }
+
+    // This function for printing is now removed from usage, but kept for reference if needed
+    // function printDashboard() {
+    //     const sidebar = document.querySelector('.sidebar');
+    //     const topbar = document.querySelector('.topbar');
+    //     const chatBubble = document.getElementById('chat-bubble');
+    //     const chatWindow = document.getElementById('chat-window');
+    //     const saveSection = document.getElementById('save-section');
+    //     const trendEnergySelect = document.getElementById('trendEnergySelect');
+    //     const showTrendBtn = document.getElementById('showTrendBtn');
+    //     const exportSection = document.getElementById('export-section');
 
 
-        if (sidebar) sidebar.style.display = 'none';
-        if (topbar) topbar.style.display = 'none';
-        if (chatBubble) chatBubble.style.display = 'none';
-        if (chatWindow) chatWindow.style.display = 'none'; // Hide if open
-        if (saveSection) saveSection.style.display = 'none';
-        if (trendEnergySelect) trendEnergySelect.style.display = 'none'; // Hide the select
-        if (showTrendBtn) showTrendBtn.style.display = 'none'; // Hide the button
-        if (exportSection) exportSection.style.display = 'none';
+    //     if (sidebar) sidebar.style.display = 'none';
+    //     if (topbar) topbar.style.display = 'none';
+    //     if (chatBubble) chatBubble.style.display = 'none';
+    //     if (chatWindow) chatWindow.style.display = 'none';
+    //     if (saveSection) saveSection.style.display = 'none';
+    //     if (trendEnergySelect) trendEnergySelect.style.display = 'none';
+    //     if (showTrendBtn) showTrendBtn.style.display = 'none';
+    //     if (exportSection) exportSection.style.display = 'none';
 
 
-        window.print(); // Trigger browser print dialog
+    //     window.print();
 
-        // Restore elements after print dialog is closed
-        // This is a common, though imperfect, workaround as window.print() is blocking.
-        setTimeout(() => {
-            if (sidebar) sidebar.style.display = '';
-            if (topbar) topbar.style.display = '';
-            if (chatBubble) chatBubble.style.display = '';
-            if (chatWindow) chatWindow.style.display = '';
-            if (saveSection) saveSection.style.display = '';
-            if (trendEnergySelect) trendEnergySelect.style.display = '';
-            if (showTrendBtn) showTrendBtn.style.display = '';
-            if (exportSection) exportSection.style.display = '';
-        }, 500); // Small delay to allow print dialog to appear/disappear
-    }
+    //     setTimeout(() => {
+    //         if (sidebar) sidebar.style.display = '';
+    //         if (topbar) topbar.style.display = '';
+    //         if (chatBubble) chatBubble.style.display = '';
+    //         if (chatWindow) chatWindow.style.display = '';
+    //         if (saveSection) saveSection.style.display = '';
+    //         if (trendEnergySelect) trendEnergySelect.style.display = '';
+    //         if (showTrendBtn) showTrendBtn.style.display = '';
+    //         if (exportSection) exportSection.style.display = '';
+    //     }, 500);
+    // }
 
 
     // Attach all event listeners after the DOM is fully loaded and all functions are defined.
@@ -1340,7 +1399,7 @@
         showTrendBtn.addEventListener('click', updateTrendChart);
 
         // NEW: Export Button Event Listeners
-        exportExcelBtn.addEventListener('click', exportToExcel); // Event listener for the new Excel button
+        [cite_start]exportExcelBtn.addEventListener('click', exportToExcel); // Event listener for the new Excel button [cite: 2]
 
         // Chatbot Event Listeners
         chatBubble.addEventListener('click', function() {
