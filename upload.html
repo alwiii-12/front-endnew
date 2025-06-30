@@ -698,9 +698,6 @@
       </div>
 
       <div id="export-section">
-          <button id="exportCsvBtn" style="background-color: #2196F3; color: white;">
-              <i class="fas fa-file-csv"></i> Export CSV
-          </button>
           <button id="exportPdfBtn" style="background-color: #f44336; color: white;">
               <i class="fas fa-file-pdf"></i> Export PDF
           </button>
@@ -781,7 +778,6 @@
     var showTrendBtn = document.getElementById('showTrendBtn');
 
     // NEW: Get references to Export buttons
-    var exportCsvBtn = document.getElementById('exportCsvBtn');
     var exportPdfBtn = document.getElementById('exportPdfBtn');
     var printDashboardBtn = document.getElementById('printDashboardBtn');
 
@@ -1411,7 +1407,6 @@
         showTrendBtn.addEventListener('click', updateTrendChart);
 
         // NEW: Export Button Event Listeners
-        exportCsvBtn.addEventListener('click', exportHandsontableToCsv);
         exportPdfBtn.addEventListener('click', exportDashboardToPdf);
         printDashboardBtn.addEventListener('click', printDashboard);
 
