@@ -775,7 +775,8 @@
     var showTrendBtn = document.getElementById('showTrendBtn');
 
     // NEW: Get references to Export buttons
-    var exportExcelBtn = document.getElementById('exportExcelBtn'); [cite_start]// Renamed from exportCsvBtn [cite: 2]
+    // This is the correct, single declaration for exportExcelBtn.
+    [cite_start]var exportExcelBtn = document.getElementById('exportExcelBtn'); [cite: 1]
 
     // Get references for data containers to apply transitions
     var tableContainer = document.getElementById('table');
@@ -1399,7 +1400,7 @@
         showTrendBtn.addEventListener('click', updateTrendChart);
 
         // NEW: Export Button Event Listeners
-        [cite_start]exportExcelBtn.addEventListener('click', exportToExcel); // Event listener for the new Excel button [cite: 2]
+        [cite_start]exportExcelBtn.addEventListener('click', exportToExcel); // [cite: 1]
 
         // Chatbot Event Listeners
         chatBubble.addEventListener('click', function() {
