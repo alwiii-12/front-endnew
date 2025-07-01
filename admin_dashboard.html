@@ -371,34 +371,42 @@
         }
 
         .hospital-qa-table th, .hospital-qa-table td {
-            padding: 8px 5px; /* Reduce padding for more space */
+            padding: 5px; /* Reduced padding for more space */
             text-align: center; /* Center align data for dates */
             border-bottom: 1px solid #eee;
             overflow: hidden; /* Hide overflowing content */
-            text-overflow: ellipsis; /* Add ellipsis to truncated text */
-            white-space: nowrap; /* Prevent text from wrapping */
+            white-space: normal; /* Allow text to wrap within cells by default */
+            word-break: break-all; /* Force breaking of long words/dates if they are really long */
         }
 
         .hospital-qa-table th:first-child,
         .hospital-qa-table td:first-child {
             width: 100px; /* Fixed width for the 'Energy' column */
             text-align: left; /* Keep energy name left-aligned */
-            white-space: normal; /* Allow energy name to wrap if needed */
+            white-space: nowrap; /* Keep energy names on one line, use ellipsis if too long */
+            text-overflow: ellipsis;
         }
 
-        /* Calculate width for date columns: (100% - width_of_energy_col) / num_date_cols */
-        /* This example uses a fixed '31' for max days for consistency, but can be dynamic */
+        /* Distribute remaining width equally among date columns */
+        /* IMPORTANT: For this to work perfectly without horizontal scroll with table-layout: fixed,
+                      the width needs to be calculated dynamically in JS based on numDaysInMonth.
+                      Otherwise, if you have 31 days and limited screen space,
+                      the min-width might force overflow.
+                      The 'auto' layout in fullscreen might be a better fallback if fixed causes issues. */
         .hospital-qa-table th:not(:first-child),
         .hospital-qa-table td:not(:first-child) {
-            width: calc((100% - 100px) / 31); /* Example for a 31-day month, will stretch or compress */
-            min-width: 35px; /* Minimum width for date cells */
+            width: calc((100% - 100px) / 31); /* This is a best-effort for CSS only fixed layout */
+                                             /* It aims to divide the remaining space by max days (31). */
+            min-width: 35px; /* Minimum width for readability, might force overflow */
         }
 
         /* Adjust padding and font size for fullscreen mode if columns are still too wide */
         .card-section.fullscreen .hospital-qa-table th,
         .card-section.fullscreen .hospital-qa-table td {
-            padding: 5px 3px; /* Even smaller padding in fullscreen */
-            font-size: 0.8em; /* Smaller font size in fullscreen */
+            padding: 3px 2px; /* Even smaller padding in fullscreen */
+            font-size: 0.75em; /* Smaller font size in fullscreen */
+            white-space: normal; /* Ensure text can wrap */
+            word-break: break-all; /* Break long words/dates */
         }
 
         /* Allow date headers to wrap in fullscreen if necessary */
@@ -964,7 +972,9 @@
             // Populate dynamic date headers
             for (let i = 1; i <= numDaysInMonth; i++) {
                 const th = document.createElement('th');
-                th.textContent = `${year}-${month}-${String(i).padStart(2, '0')}`; //YYYY-MM-DD
+                const formattedMonth = String(month).padStart(2, '0'); // Ensure month is 2 digits
+                const formattedDay = String(i).padStart(2, '0'); // Ensure day is 2 digits
+                th.textContent = `${year}-${formattedMonth}-${formattedDay}`; // Corrected date header format
                 hospitalQaTableHeader.appendChild(th);
             }
 
