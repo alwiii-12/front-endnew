@@ -388,16 +388,11 @@
         }
 
         /* Distribute remaining width equally among date columns */
-        /* IMPORTANT: For this to work perfectly without horizontal scroll with table-layout: fixed,
-                      the width needs to be calculated dynamically in JS based on numDaysInMonth.
-                      Otherwise, if you have 31 days and limited screen space,
-                      the min-width might force overflow.
-                      The 'auto' layout in fullscreen might be a better fallback if fixed causes issues. */
+        /* This uses a CSS variable set by JS for precise control */
         .hospital-qa-table th:not(:first-child),
         .hospital-qa-table td:not(:first-child) {
-            width: calc((100% - 100px) / 31); /* This is a best-effort for CSS only fixed layout */
-                                             /* It aims to divide the remaining space by max days (31). */
-            min-width: 35px; /* Minimum width for readability, might force overflow */
+            width: var(--date-col-width, auto); /* Default to auto, JS will set this */
+            min-width: 35px; /* A minimum width for readability */
         }
 
         /* Adjust padding and font size for fullscreen mode if columns are still too wide */
@@ -409,10 +404,18 @@
             word-break: break-all; /* Break long words/dates */
         }
 
-        /* Allow date headers to wrap in fullscreen if necessary */
-        .card-section.fullscreen .hospital-qa-table th:not(:first-child) {
-            white-space: normal; /* Allow date headers to wrap */
-            word-break: break-all; /* Break long words (dates) if needed */
+        /* Ensure the table container can scroll horizontally if needed */
+        .user-table-container { /* This class is used for both tables */
+            overflow-x: auto; /* Allow horizontal scrolling */
+            /* white-space: nowrap; Removing this here as it conflicts with child th/td white-space: normal */
+        }
+
+        /* When in fullscreen, ensure the container uses all width */
+        .card-section.fullscreen .user-table-container {
+            /* This container is now within the fullscreen .card-section */
+            /* It needs to grow and handle its own overflow-x */
+            flex-grow: 1;
+            overflow-x: auto;
         }
     </style>
 </head>
@@ -593,6 +596,7 @@
         const adminMonthSelect = document.getElementById('adminMonthSelect');
         const hospitalQaTableHeader = document.getElementById('hospitalQaTableHeader');
         const hospitalQaDataTableBody = document.getElementById('hospitalQaDataTableBody');
+        const hospitalQaDataTableContainer = document.getElementById('hospitalQaDataTableContainer'); // Added this reference
 
 
         // --- GLOBAL HELPER FUNCTIONS ---
@@ -1034,6 +1038,7 @@
             }
 
             // Re-render table if data was previously loaded, to ensure layout adjusts well
+            // This also re-calculates column widths based on the new container size.
             if (lastLoadedHospitalQaData.data && lastLoadedHospitalQaData.data.length > 0) {
                 renderHospitalQaDataTable(
                     lastLoadedHospitalQaData.data,
