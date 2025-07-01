@@ -368,13 +368,13 @@
             width: max-content; /* Table will be as wide as its content demands */
             min-width: 100%; /* But also ensure it's at least 100% of the container */
             border-collapse: collapse;
-            /* table-layout: fixed; Removed this, will let auto layout work with min-width on cells */
+            border: 1px solid #999; /* Outer border for the table */
         }
 
         .hospital-qa-table th, .hospital-qa-table td {
             padding: 5px; /* Reduced padding for more space */
             text-align: center; /* Center align data for dates */
-            border-bottom: 1px solid #eee;
+            border: 1px solid #999; /* Added: Darker border for separation */
             overflow: hidden; /* Hide overflowing content */
             white-space: nowrap; /* Keep content on one line by default */
             text-overflow: ellipsis; /* Show ellipsis for truncated text */
@@ -398,10 +398,10 @@
         /* Adjust padding and font size for fullscreen mode if columns are still too wide */
         .card-section.fullscreen .hospital-qa-table th,
         .card-section.fullscreen .hospital-qa-table td {
-            padding: 3px 2px; /* Even smaller padding in fullscreen */
+            padding: 3px 1px; /* Even smaller padding in fullscreen cells */
             font-size: 0.75em; /* Smaller font size in fullscreen */
-            white-space: nowrap; /* Ensure text fits on one line */
-            word-break: unset; /* Remove break-all, as nowrap is dominant */
+            white-space: normal; /* Ensure text can wrap in fullscreen */
+            word-break: break-all; /* Aggressively break words in fullscreen */
         }
 
         /* Ensure the table container can scroll horizontally if needed */
@@ -968,8 +968,7 @@
             hospitalQaTableHeader.innerHTML = '<th>Energy</th>'; // Reset header to just 'Energy'
 
             // Month in Date constructor is 0-indexed, so use parseInt(month) -1 for Date object, but just parseInt(month) for numDaysInMonth
-            // This is crucial for correctly getting the number of days in the selected month
-            const numDaysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate(); // Corrected Date constructor usage for month days calculation
+            const numDaysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate(); // Correct way to get days in month for a '1-12' month value
             
             // Populate dynamic date headers
             for (let i = 1; i <= numDaysInMonth; i++) {
