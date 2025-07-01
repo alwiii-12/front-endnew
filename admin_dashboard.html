@@ -365,9 +365,10 @@
 
         /* New/Modified CSS for Hospital QA Table (crucial for fitting) */
         .hospital-qa-table {
-            width: 100%; /* Ensure it takes full width of its container */
+            width: max-content; /* Table will be as wide as its content demands */
+            min-width: 100%; /* But also ensure it's at least 100% of the container */
             border-collapse: collapse;
-            table-layout: fixed; /* THIS IS KEY for fixed column widths */
+            /* table-layout: fixed; Removed this, will let auto layout work with min-width on cells */
         }
 
         .hospital-qa-table th, .hospital-qa-table td {
@@ -375,24 +376,23 @@
             text-align: center; /* Center align data for dates */
             border-bottom: 1px solid #eee;
             overflow: hidden; /* Hide overflowing content */
-            white-space: normal; /* Allow text to wrap within cells by default */
-            word-break: break-all; /* Force breaking of long words/dates if they are really long */
+            white-space: nowrap; /* Keep content on one line by default */
+            text-overflow: ellipsis; /* Show ellipsis for truncated text */
         }
 
         .hospital-qa-table th:first-child,
         .hospital-qa-table td:first-child {
             width: 100px; /* Fixed width for the 'Energy' column */
+            min-width: 100px; /* Ensure minimum */
             text-align: left; /* Keep energy name left-aligned */
-            white-space: nowrap; /* Keep energy names on one line, use ellipsis if too long */
-            text-overflow: ellipsis;
+            white-space: normal; /* Allow energy name to wrap if needed */
+            text-overflow: unset; /* Don't apply ellipsis to energy column if wrapping */
         }
 
-        /* Distribute remaining width equally among date columns */
-        /* This uses a CSS variable set by JS for precise control */
+        /* Date columns - give them a sufficient minimum width and let them auto-distribute */
         .hospital-qa-table th:not(:first-child),
         .hospital-qa-table td:not(:first-child) {
-            width: var(--date-col-width, auto); /* Default to auto, JS will set this */
-            min-width: 35px; /* A minimum width for readability */
+            min-width: 60px; /* Minimum width for full date to be visible, will force table wider if needed */
         }
 
         /* Adjust padding and font size for fullscreen mode if columns are still too wide */
@@ -400,22 +400,19 @@
         .card-section.fullscreen .hospital-qa-table td {
             padding: 3px 2px; /* Even smaller padding in fullscreen */
             font-size: 0.75em; /* Smaller font size in fullscreen */
-            white-space: normal; /* Ensure text can wrap */
-            word-break: break-all; /* Break long words/dates */
+            white-space: nowrap; /* Ensure text fits on one line */
+            word-break: unset; /* Remove break-all, as nowrap is dominant */
         }
 
         /* Ensure the table container can scroll horizontally if needed */
         .user-table-container { /* This class is used for both tables */
             overflow-x: auto; /* Allow horizontal scrolling */
-            /* white-space: nowrap; Removing this here as it conflicts with child th/td white-space: normal */
         }
 
         /* When in fullscreen, ensure the container uses all width */
         .card-section.fullscreen .user-table-container {
-            /* This container is now within the fullscreen .card-section */
-            /* It needs to grow and handle its own overflow-x */
             flex-grow: 1;
-            overflow-x: auto;
+            overflow-x: auto; /* Keep this to ensure scrolling in fullscreen if needed */
         }
     </style>
 </head>
@@ -971,7 +968,8 @@
             hospitalQaTableHeader.innerHTML = '<th>Energy</th>'; // Reset header to just 'Energy'
 
             // Month in Date constructor is 0-indexed, so use parseInt(month) -1 for Date object, but just parseInt(month) for numDaysInMonth
-            const numDaysInMonth = new Date(year, parseInt(month), 0).getDate();
+            // This is crucial for correctly getting the number of days in the selected month
+            const numDaysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate(); // Corrected Date constructor usage for month days calculation
             
             // Populate dynamic date headers
             for (let i = 1; i <= numDaysInMonth; i++) {
