@@ -294,6 +294,64 @@
         .user-table td.within, .hospital-qa-table td.within { background-color: #d4edda !important; color: #155724 !important; }
         .user-table td.warning, .hospital-qa-table td.warning { background-color: #fff3cd !important; color: #856404 !important; }
         .user-table td.out, .hospital-qa-table td.out { background-color: #f8d7da !important; color: #721c24 !important; }
+
+        /* New CSS for Fullscreen Button */
+        .fullscreen-btn {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #007bff;
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 5px;
+            transition: color 0.2s ease, transform 0.2s ease;
+        }
+        .fullscreen-btn:hover {
+            color: #0056b3;
+            transform: translateY(-50%) scale(1.1);
+        }
+        .fullscreen-btn i {
+            pointer-events: none; /* Prevents icon from blocking button click */
+        }
+
+        /* CSS for Fullscreen Mode */
+        body.fullscreen-active {
+            overflow: hidden; /* Hide body scrollbar when in fullscreen */
+        }
+
+        .card-section.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw; /* Full viewport width */
+            height: 100vh; /* Full viewport height */
+            margin: 0;
+            padding: 20px; /* Adjust padding as needed */
+            z-index: 10001; /* Ensure it's on top of everything */
+            background: white; /* Ensure consistent background */
+            border-radius: 0; /* No rounded corners in fullscreen */
+            overflow-y: auto; /* Allow scrolling within fullscreen content if it overflows */
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); /* Stronger shadow */
+            display: flex;
+            flex-direction: column; /* Organize content vertically */
+        }
+
+        .card-section.fullscreen .user-table-container {
+            flex-grow: 1; /* Allow the table container to expand */
+            max-height: unset; /* Remove max-height constraint */
+        }
+        .card-section.fullscreen .filter-search-container {
+             justify-content: flex-start; /* Align filters to left in fullscreen */
+        }
+        .card-section.fullscreen .fullscreen-btn {
+            color: #dc3545; /* Change color to indicate exit fullscreen */
+        }
+        .card-section.fullscreen .fullscreen-btn:hover {
+            color: #bb2d3b;
+        }
     </style>
 </head>
 <body>
@@ -344,7 +402,12 @@
         </div>
 
         <div class="card-section" id="hospital-data-access-section">
-            <h2>View Hospital LINAC QA Data</h2>
+            <h2 style="position: relative;">
+                View Hospital LINAC QA Data
+                <button id="fullscreenHospitalDataBtn" class="fullscreen-btn" onclick="toggleFullscreenHospitalData()">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </h2>
             <div class="filter-search-container" id="hospitalDataControls">
                 <select id="adminHospitalSelect">
                     <option value="">Select Hospital</option>
@@ -441,6 +504,7 @@
         const db = firebase.firestore();
 
         let allUsersData = []; // Store the full list of users fetched from backend
+        let lastLoadedHospitalQaData = { data: [], year: null, month: null }; // To store the last fetched data for re-rendering
 
         // DOM elements for loading, filters, and modal (existing)
         const loadingOverlay = document.getElementById('loading-overlay');
@@ -460,6 +524,8 @@
         const modalErrorMsg = document.getElementById('modalErrorMsg');
 
         // NEW: DOM elements for Hospital QA Data section
+        const hospitalDataAccessSection = document.getElementById('hospital-data-access-section');
+        const fullscreenHospitalDataBtn = document.getElementById('fullscreenHospitalDataBtn');
         const adminHospitalSelect = document.getElementById('adminHospitalSelect');
         const adminYearSelect = document.getElementById('adminYearSelect');
         const adminMonthSelect = document.getElementById('adminMonthSelect');
@@ -823,6 +889,7 @@
                 }
 
                 const result = await response.json();
+                lastLoadedHospitalQaData = { data: result.data, year: year, month: month }; // Store for re-rendering
                 renderHospitalQaDataTable(result.data, year, month); // Pass data and month/year for date headers
                 
             } catch (error) {
@@ -837,7 +904,8 @@
             hospitalQaDataTableBody.innerHTML = ''; // Clear existing rows
             hospitalQaTableHeader.innerHTML = '<th>Energy</th>'; // Reset header to just 'Energy'
 
-            const numDaysInMonth = new Date(year, parseInt(month) /* 0-indexed month for JS Date */, 0).getDate();
+            // Month in Date constructor is 0-indexed, so use parseInt(month) for numDaysInMonth, then use month for display
+            const numDaysInMonth = new Date(year, parseInt(month), 0).getDate();
             
             // Populate dynamic date headers
             for (let i = 1; i <= numDaysInMonth; i++) {
@@ -888,6 +956,27 @@
                 }
                 hospitalQaDataTableBody.appendChild(tr);
             });
+        }
+
+        // --- NEW: Fullscreen Toggle Function for Hospital Data ---
+        function toggleFullscreenHospitalData() {
+            hospitalDataAccessSection.classList.toggle('fullscreen');
+            document.body.classList.toggle('fullscreen-active'); // To hide body scrollbar
+
+            if (hospitalDataAccessSection.classList.contains('fullscreen')) {
+                fullscreenHospitalDataBtn.innerHTML = '<i class="fas fa-compress"></i>'; // Change icon to compress
+            } else {
+                fullscreenHospitalDataBtn.innerHTML = '<i class="fas fa-expand"></i>'; // Change icon to expand
+            }
+
+            // Re-render table if data was previously loaded, to ensure layout adjusts well
+            if (lastLoadedHospitalQaData.data && lastLoadedHospitalQaData.data.length > 0) {
+                renderHospitalQaDataTable(
+                    lastLoadedHospitalQaData.data,
+                    lastLoadedHospitalQaData.year,
+                    lastLoadedHospitalQaData.month
+                );
+            }
         }
 
 
