@@ -137,11 +137,15 @@
         .user-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed; /* Added for fixed column widths */
         }
         .user-table th, .user-table td {
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #eee;
+            overflow: hidden; /* Ensure content outside cell is hidden */
+            text-overflow: ellipsis; /* Add ellipsis for overflowing text */
+            white-space: nowrap; /* Prevent text from wrapping by default for initial view */
         }
         .user-table th {
             background-color: #e0f7fa;
@@ -151,9 +155,15 @@
             top: 0;
             z-index: 1;
         }
-        .user-table tr:hover {
-            background-color: #f0f8ff;
-        }
+        /* Adjust specific column widths for user table */
+        .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 15%; } /* Name */
+        .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 25%; } /* Email */
+        .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 20%; } /* Hospital */
+        .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 15%; } /* Role */
+        .user-table th:nth-child(5), .user-table td:nth-child(5) { width: 10%; } /* Status */
+        .user-table th:nth-child(6), .user-table td:nth-child(6) { width: 15%; } /* Actions */
+
+
         .user-table .user-actions button {
             padding: 6px 12px;
             border-radius: 4px;
@@ -351,6 +361,50 @@
         }
         .card-section.fullscreen .fullscreen-btn:hover {
             color: #bb2d3b;
+        }
+
+        /* New/Modified CSS for Hospital QA Table (crucial for fitting) */
+        .hospital-qa-table {
+            width: 100%; /* Ensure it takes full width of its container */
+            border-collapse: collapse;
+            table-layout: fixed; /* THIS IS KEY for fixed column widths */
+        }
+
+        .hospital-qa-table th, .hospital-qa-table td {
+            padding: 8px 5px; /* Reduce padding for more space */
+            text-align: center; /* Center align data for dates */
+            border-bottom: 1px solid #eee;
+            overflow: hidden; /* Hide overflowing content */
+            text-overflow: ellipsis; /* Add ellipsis to truncated text */
+            white-space: nowrap; /* Prevent text from wrapping */
+        }
+
+        .hospital-qa-table th:first-child,
+        .hospital-qa-table td:first-child {
+            width: 100px; /* Fixed width for the 'Energy' column */
+            text-align: left; /* Keep energy name left-aligned */
+            white-space: normal; /* Allow energy name to wrap if needed */
+        }
+
+        /* Calculate width for date columns: (100% - width_of_energy_col) / num_date_cols */
+        /* This example uses a fixed '31' for max days for consistency, but can be dynamic */
+        .hospital-qa-table th:not(:first-child),
+        .hospital-qa-table td:not(:first-child) {
+            width: calc((100% - 100px) / 31); /* Example for a 31-day month, will stretch or compress */
+            min-width: 35px; /* Minimum width for date cells */
+        }
+
+        /* Adjust padding and font size for fullscreen mode if columns are still too wide */
+        .card-section.fullscreen .hospital-qa-table th,
+        .card-section.fullscreen .hospital-qa-table td {
+            padding: 5px 3px; /* Even smaller padding in fullscreen */
+            font-size: 0.8em; /* Smaller font size in fullscreen */
+        }
+
+        /* Allow date headers to wrap in fullscreen if necessary */
+        .card-section.fullscreen .hospital-qa-table th:not(:first-child) {
+            white-space: normal; /* Allow date headers to wrap */
+            word-break: break-all; /* Break long words (dates) if needed */
         }
     </style>
 </head>
@@ -904,13 +958,13 @@
             hospitalQaDataTableBody.innerHTML = ''; // Clear existing rows
             hospitalQaTableHeader.innerHTML = '<th>Energy</th>'; // Reset header to just 'Energy'
 
-            // Month in Date constructor is 0-indexed, so use parseInt(month) for numDaysInMonth, then use month for display
+            // Month in Date constructor is 0-indexed, so use parseInt(month) -1 for Date object, but just parseInt(month) for numDaysInMonth
             const numDaysInMonth = new Date(year, parseInt(month), 0).getDate();
             
             // Populate dynamic date headers
             for (let i = 1; i <= numDaysInMonth; i++) {
                 const th = document.createElement('th');
-                th.textContent = `${year}-${month}-${String(i).padStart(2, '0')}`; // YYYY-MM-DD
+                th.textContent = `${year}-${month}-${String(i).padStart(2, '0')}`; //YYYY-MM-DD
                 hospitalQaTableHeader.appendChild(th);
             }
 
