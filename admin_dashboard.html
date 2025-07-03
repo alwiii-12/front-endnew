@@ -9,11 +9,11 @@
     <style>
         /* Base styles */
         html {
-            margin: 0; /* Changed from !important, relying on native fullscreen */
-            padding: 0; /* Changed from !important, relying on native fullscreen */
-            width: 100%; /* Changed from vw/vh, relying on native fullscreen */
-            height: 100%; /* Changed from vw/vh, relying on native fullscreen */
-            overflow: auto; /* Default overflow for html */
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -45,12 +45,12 @@
             text-align: center;
         }
         .logout-button {
-            padding: 10px 20px;
+            padding: 8px 15px; /* Reduced padding */
+            font-size: 0.9em; /* Reduced font size */
             background-color: #dc3545; /* Red for logout */
             color: white;
             border: none;
             border-radius: 6px;
-            font-size: 1em;
             cursor: pointer;
             transition: background-color 0.3s ease;
             white-space: nowrap; /* Prevent button text from wrapping */
@@ -62,15 +62,15 @@
         /* NEW: Main layout for sidebar */
         .main-admin-layout {
             display: flex;
-            flex-grow: 1; /* Allow this to take remaining vertical space */
-            width: 100%;
-            max-width: 1200px; /* Optional: Max width for the entire admin area */
-            margin: 0 auto; /* Center the layout */
+            flex-grow: 1; /* Allows this to take remaining vertical space */
+            width: 100%; /* Ensure this takes 100% of the body's available width */
+            max-width: unset; /* Remove max-width to allow it to span full width */
+            margin: 0; /* Remove auto margin to allow it to stick to left */
             box-sizing: border-box; /* Ensure padding/border don't cause overflow */
         }
 
         .sidebar-nav {
-            width: 250px; /* Fixed width for the sidebar */
+            width: 200px; /* Adjusted: Width for the sidebar */
             background-color: #ffffff;
             box-shadow: 2px 0 5px rgba(0,0,0,0.08);
             padding: 20px;
@@ -79,6 +79,7 @@
             gap: 10px;
             flex-shrink: 0; /* Prevent sidebar from shrinking */
             box-sizing: border-box;
+            /* It will naturally stick to the left because .main-admin-layout is display: flex and margin is 0 */
         }
 
         .sidebar-nav .nav-btn {
@@ -106,12 +107,12 @@
         }
 
         .content-display-area {
-            flex-grow: 1; /* Allow content area to take remaining space */
+            flex-grow: 1; /* Allows content area to take remaining space */
             padding: 20px;
             display: flex; /* Use flexbox to manage child card-sections */
             flex-direction: column;
             gap: 30px; /* Space between sections if multiple are visible */
-            overflow-y: auto; /* Allow content area to scroll vertically */
+            overflow-y: auto; /* Allows content area to scroll vertically */
             box-sizing: border-box;
         }
 
@@ -421,7 +422,7 @@
         #hospital-data-access-section:-moz-full-screen,
         #hospital-data-access-section:-ms-fullscreen,
         #hospital-data-access-section:fullscreen {
-            position: fixed; /* Native fullscreen sometimes keeps fixed positioning context */
+            position: fixed; /* Native fullscreen sometimes retains fixed positioning context */
             top: 0;
             bottom: 0;
             left: 0;
@@ -450,7 +451,6 @@
             padding: 20px;
             box-sizing: border-box;
             flex-shrink: 0;
-            /* Text alignment is usually centered from original rule */
         }
         #hospital-data-access-section:-webkit-full-screen .filter-search-container,
         #hospital-data-access-section:-moz-full-screen .filter-search-container,
@@ -761,7 +761,7 @@
         const adminMonthSelect = document.getElementById('adminMonthSelect');
         const hospitalQaTableHeader = document.getElementById('hospitalQaTableHeader');
         const hospitalQaDataTableBody = document.getElementById('hospitalQaDataTableBody');
-        const hospitalQaDataTableContainer = document.getElementById('hospitalQaDataTableContainer'); // Added this reference
+        const hospitalQaDataTableContainer = document.getElementById('hospitalQaDataTableContainer');
 
 
         // --- GLOBAL HELPER FUNCTIONS ---
