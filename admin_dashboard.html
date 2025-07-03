@@ -334,23 +334,24 @@
 
         .card-section.fullscreen {
             position: fixed;
-            top: 0;    /* Pin to top */
-            bottom: 0; /* Pin to bottom */
-            left: 0;   /* Pin to left */
-            right: 0;  /* Pin to right */
-            width: auto; /* Let top/bottom/left/right define width */
-            height: auto;/* Let top/bottom/left/right define height */
-            margin: auto; /* NEW: This is key to centering fixed elements defined by all four sides */
+            top: 0 !important;    /* Force pin to top */
+            bottom: 0 !important; /* Force pin to bottom */
+            left: 0 !important;   /* Force pin to left */
+            right: 0 !important;  /* Force pin to right */
+            width: 100% !important; /* NEW: Force 100% of parent (viewport) width */
+            height: 100% !important;/* NEW: Force 100% of parent (viewport) height */
+            margin: 0 !important; /* NEW: Absolutely no margins */
             padding: 0; /* NEW: Remove padding here, add to internal elements if needed */
-            z-index: 10001;
-            background: white;
-            border-radius: 0;
-            overflow: hidden; /* NEW: Keep main section hidden, table container handles its own scroll */
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
-            align-items: center; /* To center the H2 and filter-search-container if they don't take full width */
-            justify-content: flex-start; /* Aligns content to the start (top) of the flex container */
+            z-index: 10001 !important; /* Ensure it's on top */
+            background: white !important; /* Ensure solid background */
+            border-radius: 0 !important; /* No rounded corners in fullscreen */
+            box-shadow: none !important; /* Remove shadow for clean fullscreen */
+            overflow: auto !important; /* Allow internal scrolling if content overflows */
+
+            display: flex !important; /* Force flexbox */
+            flex-direction: column !important; /* Force column layout */
+            align-items: stretch !important; /* NEW: Make children stretch horizontally */
+            justify-content: flex-start !important; /* Align content to top */
         }
         
         /* Ensure the H2 inside fullscreen is also centered */
@@ -395,8 +396,9 @@
             text-align: center; /* Center align data for dates */
             border: 1px solid #999; /* Added: Darker border for separation */
             overflow: hidden; /* Hide overflowing content */
-            white-space: normal; /* Allow normal wrapping */
+            white-space: normal; /* Allow normal wrapping, fixed dates are short enough for nowrap usually */
             word-wrap: break-word; /* Use this for graceful word breaking for dates */
+            /* Removed word-break: break-all; as it can be too aggressive and cause misalignment */
         }
 
         .hospital-qa-table th:first-child,
@@ -424,7 +426,7 @@
         .card-section.fullscreen .hospital-qa-table td {
             padding: 3px 1px; /* Even smaller padding in fullscreen cells */
             font-size: 0.65em; /* Smaller font size in fullscreen */
-            white-space: normal; /* NEW: Allow text to wrap in fullscreen */
+            white-space: normal; /* NEW: Allow text to wrap in fullscreen for very narrow columns */
             word-wrap: break-word; /* NEW: Ensure graceful breaking in fullscreen */
             text-overflow: unset; /* Remove ellipsis in fullscreen as content wraps */
         }
