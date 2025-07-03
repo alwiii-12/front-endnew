@@ -8,16 +8,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         /* Base styles */
-        html, body {
-            margin: 0; /* Changed from !important, relying on native fullscreen */
-            padding: 0; /* Changed from !important, relying on native fullscreen */
-            width: 100%; /* Changed from vw/vh, relying on native fullscreen */
-            height: 100%; /* Changed from vw/vh, relying on native fullscreen */
-            overflow: auto; /* Default overflow for html/body */
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
         }
-
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -35,7 +36,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-shrink: 0; /* Prevent header from shrinking */
+            flex-shrink: 0;
         }
         .admin-header h1 {
             margin: 0;
@@ -84,7 +85,7 @@
             background-color: #f8f8f8;
             border-top: 1px solid #ccc;
             text-align: center;
-            flex-shrink: 0; /* Prevent footer from shrinking */
+            flex-shrink: 0;
         }
 
         /* Card/Section Styling */
@@ -168,16 +169,16 @@
         /* Adjust specific column widths for user table */
         .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 15%; } /* Name */
         .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 25%; } /* Email */
-        .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 20%; } /* Hospital */
-        .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 15%; } /* Role */
+        .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 18%; } /* Hospital - slightly smaller */
+        .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 12%; } /* Role - slightly smaller */
         .user-table th:nth-child(5), .user-table td:nth-child(5) { width: 10%; } /* Status */
-        .user-table th:nth-child(6), .user-table td:nth-child(6) { width: 15%; } /* Actions */
+        .user-table th:nth-child(6), .user-table td:nth-child(6) { width: 20%; } /* Actions - Increased width */
 
 
         .user-table .user-actions button {
-            padding: 6px 12px;
+            padding: 5px 8px; /* Slightly reduced padding for smaller buttons */
+            font-size: 0.8em; /* Made font slightly smaller */
             border-radius: 4px;
-            font-size: 0.85em;
             margin-left: 5px;
             cursor: pointer;
             transition: background-color 0.2s ease;
@@ -188,6 +189,21 @@
         .user-table .reject-btn:hover { background-color: #e0a800; }
         .user-table .edit-btn { background-color: #17a2b8; color: white; }
         .user-table .edit-btn:hover { background-color: #138496; }
+
+        /* NEW: Styles for actions column to allow buttons to display correctly */
+        .user-table td:nth-child(6) {
+            white-space: normal; /* Allow content to wrap */
+            overflow: visible; /* Ensure content is not hidden by overflow */
+            text-overflow: unset; /* Remove ellipsis */
+            display: flex; /* Use flexbox for button layout */
+            flex-wrap: wrap; /* Allow buttons to wrap to next line if needed */
+            gap: 5px; /* Space between buttons */
+            justify-content: center; /* Center buttons horizontally */
+            align-items: center; /* Center buttons vertically */
+        }
+        .user-table td:nth-child(6) button {
+            margin: 0 !important; /* Override individual button margins */
+        }
 
 
         .no-users-message {
@@ -337,16 +353,17 @@
             pointer-events: none; /* Prevents icon from blocking button click */
         }
 
-        /* CSS for Fullscreen Mode - Using Native Fullscreen API, so these are minimal */
-        /* These styles will only apply when the element is *not* in native fullscreen
-           but is preparing or just exiting, or if native API isn't used.
-           Native fullscreen will override most of this directly. */
+        /* CSS for Fullscreen Mode - Using Native Fullscreen API */
+        /* These styles apply when the element is *not* in native fullscreen
+           but are part of the overall strategy. */
         
         /* The body and html will still get a class from JS to prevent scroll */
         html.fullscreen-active-html {
             overflow: hidden !important;
             width: 100vw !important;
             height: 100vh !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
         body.fullscreen-active { /* This class is added to body but native API handles actual fullscreen */
             overflow: hidden !important; /* Hide body scrollbar */
@@ -357,20 +374,20 @@
         }
         
         /* Styles for the element that *goes* into native fullscreen */
-        /* These styles define how it looks when it's natively fullscreen. */
+        /* These selectors use browser prefixes for cross-browser compatibility */
         #hospital-data-access-section:-webkit-full-screen,
         #hospital-data-access-section:-moz-full-screen,
         #hospital-data-access-section:-ms-fullscreen,
         #hospital-data-access-section:fullscreen {
-            position: fixed; /* Native fullscreen sometimes keeps fixed positioning context */
+            position: fixed; /* Native fullscreen sometimes retains fixed positioning context */
             top: 0;
             bottom: 0;
             left: 0;
             right: 0;
-            width: 100vw;
-            height: 100vh;
+            width: 100vw; /* Force full viewport width */
+            height: 100vh; /* Force full viewport height */
             margin: 0;
-            padding: 0; /* Important: Native fullscreen provides its own padding, so reset ours */
+            padding: 0; /* Native fullscreen provides its own padding, so reset ours */
             z-index: 9999999; /* Extremely high z-index to ensure it's on top */
             background: white; /* Ensure it covers everything */
             border-radius: 0;
@@ -383,6 +400,7 @@
         }
 
         /* Adjust internal padding/layout for natively fullscreen content */
+        /* These rules apply when the section is in actual native fullscreen mode */
         #hospital-data-access-section:-webkit-full-screen h2,
         #hospital-data-access-section:-moz-full-screen h2,
         #hospital-data-access-section:-ms-fullscreen h2,
@@ -390,7 +408,6 @@
             padding: 20px;
             box-sizing: border-box;
             flex-shrink: 0;
-            /* Text alignment is usually centered from original rule */
         }
         #hospital-data-access-section:-webkit-full-screen .filter-search-container,
         #hospital-data-access-section:-moz-full-screen .filter-search-container,
@@ -399,7 +416,6 @@
             padding: 0 20px 20px;
             box-sizing: border-box;
             flex-shrink: 0;
-            /* Justify-content is usually centered from original rule */
         }
         #hospital-data-access-section:-webkit-full-screen .user-table-container,
         #hospital-data-access-section:-moz-full-screen .user-table-container,
@@ -416,7 +432,7 @@
         }
 
         /* Hide other sections when native fullscreen is active */
-        /* These rules apply when *any* element is fullscreen, ensuring no other content interferes */
+        /* These rules apply to other parts of the body when *any* element is fullscreen */
         body:-webkit-full-screen > .admin-content > .card-section:not(#hospital-data-access-section),
         body:-moz-full-screen > .admin-content > .card-section:not(#hospital-data-access-section),
         body:-ms-fullscreen > .admin-content > .card-section:not(#hospital-data-access-section),
@@ -462,7 +478,6 @@
             overflow: hidden; /* Hide overflowing content */
             white-space: normal; /* Allow normal wrapping, fixed dates are short enough for nowrap usually */
             word-wrap: break-word; /* Use this for graceful word breaking for dates */
-            /* Removed word-break: break-all; as it can be too aggressive and cause misalignment */
         }
 
         .hospital-qa-table th:first-child,
@@ -583,7 +598,7 @@
                     </select>
                 <button onclick="loadHospitalQaData()">Load Data</button>
             </div>
-            <div class="user-table-container" id="hospitalQaDataTableContainer">
+            <div class="user-table-container">
                 <table class="user-table hospital-qa-table">
                     <thead>
                         <tr id="hospitalQaTableHeader">
