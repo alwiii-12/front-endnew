@@ -45,8 +45,8 @@
             text-align: center;
         }
         .logout-button {
-            padding: 8px 15px; /* Reduced padding */
-            font-size: 0.9em; /* Reduced font size */
+            padding: 5px 10px; /* Even smaller padding */
+            font-size: 0.8em; /* Even smaller font size */
             background-color: #dc3545; /* Red for logout */
             color: white;
             border: none;
@@ -212,11 +212,11 @@
         }
         /* Define min-widths for user table columns (percentages removed, auto layout) */
         .user-table th:nth-child(1), .user-table td:nth-child(1) { min-width: 100px; } /* Name */
-        .user-table th:nth-child(2), .user-table td:nth-child(2) { min-width: 180px; } /* Email */
-        .user-table th:nth-child(3), .user-table td:nth-child(3) { min-width: 120px; } /* Hospital */
-        .user-table th:nth-child(4), .user-table td:nth-child(4) { min-width: 100px; } /* Role */
-        .user-table th:nth-child(5), .user-table td:nth-child(5) { min-width: 80px; } /* Status */
-        .user-table th:nth-child(6), .user-table td:nth-child(6) { min-width: 160px; } /* Actions - Sufficient width for 3 buttons */
+        .user-table th:nth-child(2), .user-table td:nth-child(2) { min-width: 150px; } /* Email */
+        .user-table th:nth-child(3), .user-table td:nth-child(3) { min-width: 110px; } /* Hospital */
+        .user-table th:nth-child(4), .user-table td:nth-child(4) { min-width: 90px; } /* Role */
+        .user-table th:nth-child(5), .user-table td:nth-child(5) { min-width: 70px; } /* Status */
+        .user-table th:nth-child(6), .user-table td:nth-child(6) { min-width: 190px; } /* Actions - SIGNIFICANTLY INCREASED to ensure all 3 buttons fit */
 
 
         .user-table .user-actions button {
@@ -456,7 +456,7 @@
         /* These rules apply when the section is in actual native fullscreen mode */
         #hospital-data-access-section:-webkit-full-screen h2,
         #hospital-data-access-section:-moz-full-screen h2,
-        #hospital-data-access-section:-ms-fullscreen h2,
+        #hospital-data-access-section:-ms-full-screen h2,
         #hospital-data-access-section:fullscreen h2 {
             padding: 20px;
             box-sizing: border-box;
@@ -464,7 +464,7 @@
         }
         #hospital-data-access-section:-webkit-full-screen .filter-search-container,
         #hospital-data-access-section:-moz-full-screen .filter-search-container,
-        #hospital-data-access-section:-ms-fullscreen .filter-search-container,
+        #hospital-data-access-section:-ms-full-screen .filter-search-container,
         #hospital-data-access-section:fullscreen .filter-search-container {
             padding: 0 20px 20px;
             box-sizing: border-box;
@@ -472,7 +472,7 @@
         }
         #hospital-data-access-section:-webkit-full-screen .user-table-container,
         #hospital-data-access-section:-moz-full-screen .user-table-container,
-        #hospital-data-access-section:-ms-fullscreen .user-table-container,
+        #hospital-data-access-section:-ms-full-screen .user-table-container,
         #hospital-data-access-section:fullscreen .user-table-container {
             flex-grow: 1;
             max-height: unset;
@@ -490,8 +490,8 @@
         body:-moz-full-screen > .admin-content > .card-section:not(#hospital-data-access-section),
         body:-ms-fullscreen > .admin-content > .card-section:not(#hospital-data-access-section),
         body:fullscreen > .admin-content > .card-section:not(#hospital-data-access-section),
-        body:-webkit-full-screen > .admin-header, body:-moz-full-screen > .admin-header, body:-ms-fullscreen > .admin-header, body:fullscreen > .admin-header,
-        body:-webkit-full-screen > .admin-footer, body:-moz-full-screen > .admin-footer, body:-ms-fullscreen > .admin-footer, body:fullscreen > .admin-footer,
+        body:-webkit-full-screen > .admin-header, body:-moz-full-screen > .admin-header, body:-ms-full-screen > .admin-header, body:fullscreen > .admin-header,
+        body:-webkit-full-screen > .admin-footer, body:-moz-full-screen > .admin-footer, body:-ms-full-screen > .admin-footer, body:fullscreen > .admin-footer,
         body:-webkit-full-screen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)), /* Hide admin-content if not the parent of fullscreen elem */
         body:-moz-full-screen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)),
         body:-ms-fullscreen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)),
@@ -1088,7 +1088,7 @@
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.message || `Failed to save changes. Status: ${response.status}`);
+                    throw new Error(errorData.message || `Failed to update user status. Status: ${response.status}`);
                 }
 
                 alert("User details updated successfully!");
@@ -1096,7 +1096,41 @@
                 loadAllUsers(); // Reload all users to reflect changes
             } catch (error) {
                 console.error("Error saving user changes:", error);
-                modalErrorMsg.textContent = `Failed to save changes: ${error.message}`;
+                alert(`Failed to save user changes: ${error.message}`);
+            } finally {
+                hideLoader();
+            }
+        }
+
+        // --- NEW: Delete User Function (MOVED TO GLOBAL SCOPE) ---
+        async function deleteUser(uid, userName, userEmail) { // This function needs to be globally accessible
+            const confirmed = confirm(`WARNING: Are you absolutely sure you want to permanently delete user:\n\nName: ${userName}\nEmail: ${userEmail}\n\nThis action cannot be undone.`);
+            if (!confirmed) {
+                return;
+            }
+
+            showLoader();
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const response = await fetch('https://back-end-wrxi.onrender.com/admin/delete-user', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                    body: JSON.stringify({ uid: uid })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `Failed to delete user. Status: ${response.status}`);
+                }
+
+                alert(`User ${userName} (${userEmail}) deleted successfully!`);
+                loadAllUsers(); // Reload the user list to reflect the deletion
+            } catch (error) {
+                console.error("Error deleting user:", error);
+                alert(`Failed to delete user: ${error.message}`);
             } finally {
                 hideLoader();
             }
