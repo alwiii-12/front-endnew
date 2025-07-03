@@ -9,11 +9,11 @@
     <style>
         /* Base styles */
         html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
+            margin: 0; /* Changed from !important, relying on native fullscreen */
+            padding: 0; /* Changed from !important, relying on native fullscreen */
+            width: 100%; /* Changed from vw/vh, relying on native fullscreen */
+            height: 100%; /* Changed from vw/vh, relying on native fullscreen */
+            overflow: auto; /* Default overflow for html */
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -215,7 +215,7 @@
         .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 18%; }
         .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 12%; }
         .user-table th:nth-child(5), .user-table td:nth-child(5) { width: 10%; }
-        .user-table th:nth-child(6), .user-table td:nth-child(6) { width: 20%; }
+        .user-table th:nth-child(6), .user-table td:nth-child(6) { width: 20%; } /* Increased width for Actions */
 
 
         .user-table .user-actions button {
@@ -233,19 +233,20 @@
         .user-table .edit-btn { background-color: #17a2b8; color: white; }
         .user-table .edit-btn:hover { background-color: #138496; }
 
-        /* NEW: Styles for actions column to allow buttons to display correctly */
+        /* NEW: Styles for actions column to allow buttons to display side-by-side */
         .user-table td:nth-child(6) {
-            white-space: normal;
-            overflow: visible;
-            text-overflow: unset;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            justify-content: center;
-            align-items: center;
+            white-space: nowrap; /* Force content onto a single line */
+            overflow: hidden; /* Hide overflow content */
+            text-overflow: ellipsis; /* Show ellipsis if content overflows */
+            display: flex; /* Use flexbox for button layout */
+            flex-wrap: nowrap; /* Ensure buttons stay on one line, prevent wrapping */
+            gap: 5px; /* Space between buttons */
+            justify-content: center; /* Center buttons horizontally */
+            align-items: center; /* Center buttons vertically */
         }
         .user-table td:nth-child(6) button {
-            margin: 0 !important;
+            margin: 0 !important; /* Override individual button margins */
+            flex-shrink: 0; /* Prevent buttons from shrinking if space is tight */
         }
 
 
