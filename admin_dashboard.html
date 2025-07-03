@@ -9,11 +9,11 @@
     <style>
         /* Base styles */
         html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
+            margin: 0; /* Changed from !important, relying on native fullscreen */
+            padding: 0; /* Changed from !important, relying on native fullscreen */
+            width: 100%; /* Changed from vw/vh, relying on native fullscreen */
+            height: 100%; /* Changed from vw/vh, relying on native fullscreen */
+            overflow: auto; /* Default overflow for html */
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -36,7 +36,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-shrink: 0;
+            flex-shrink: 0; /* Prevent header from shrinking */
         }
         .admin-header h1 {
             margin: 0;
@@ -58,25 +58,85 @@
         .logout-button:hover {
             background-color: #c82333;
         }
-        .admin-content {
-            flex-grow: 1;
+
+        /* NEW: Main layout for sidebar */
+        .main-admin-layout {
+            display: flex;
+            flex-grow: 1; /* Allow this to take remaining vertical space */
+            width: 100%;
+            max-width: 1200px; /* Optional: Max width for the entire admin area */
+            margin: 0 auto; /* Center the layout */
+            box-sizing: border-box; /* Ensure padding/border don't cause overflow */
+        }
+
+        .sidebar-nav {
+            width: 250px; /* Fixed width for the sidebar */
+            background-color: #ffffff;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.08);
             padding: 20px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 30px; /* Spacing between sections */
-            overflow-y: auto; /* Allow content to scroll if it exceeds vertical height */
+            gap: 10px;
+            flex-shrink: 0; /* Prevent sidebar from shrinking */
+            box-sizing: border-box;
         }
-        .admin-content h1 {
-            color: #1e3a8a;
-            margin-bottom: 20px;
-            font-size: 2em;
-        }
-        .admin-content p {
-            font-size: 1.1em;
+
+        .sidebar-nav .nav-btn {
+            width: 100%;
+            padding: 15px 10px;
+            border: none;
+            background-color: #eee;
             color: #333;
-            line-height: 1.6;
+            font-size: 1em;
+            font-weight: 600;
+            text-align: left;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
+
+        .sidebar-nav .nav-btn:hover:not(.active) {
+            background-color: #e0e0e0;
+        }
+
+        .sidebar-nav .nav-btn.active {
+            background-color: #007bff;
+            color: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .content-display-area {
+            flex-grow: 1; /* Allow content area to take remaining space */
+            padding: 20px;
+            display: flex; /* Use flexbox to manage child card-sections */
+            flex-direction: column;
+            gap: 30px; /* Space between sections if multiple are visible */
+            overflow-y: auto; /* Allow content area to scroll vertically */
+            box-sizing: border-box;
+        }
+
+        /* Adjust existing card-section to fit into content-display-area */
+        .card-section { /* Old selector, make sure it applies */
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 100%; /* Take full width of content-display-area */
+            max-width: unset; /* Remove max-width from here as content-display-area controls it */
+            margin: 0; /* Remove auto margins as flexbox manages */
+            box-sizing: border-box;
+            display: none; /* Hide all card sections by default in normal flow */
+        }
+        .card-section.active-section {
+            display: block; /* Show only the active one */
+        }
+        /* Override specific card-section h2 as it's now wrapped in a general h2 */
+        .card-section h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+
         .admin-footer {
             margin-top: auto;
             padding: 15px;
@@ -86,24 +146,6 @@
             border-top: 1px solid #ccc;
             text-align: center;
             flex-shrink: 0;
-        }
-
-        /* Card/Section Styling */
-        .card-section {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            width: 95%;
-            max-width: 1000px; /* Wider for user table */
-            box-sizing: border-box;
-            /* No fullscreen specific styles here, will be handled by native API */
-        }
-        .card-section h2 {
-            text-align: center;
-            color: #007bff;
-            margin-bottom: 20px;
-            font-size: 1.5em;
         }
 
         /* Filter and Search */
@@ -120,8 +162,8 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 0.95em;
-            flex: 1; /* Allow items to grow */
-            min-width: 150px; /* Minimum width for inputs */
+            flex: 1;
+            min-width: 150px;
         }
         .filter-search-container button {
             padding: 10px 20px;
@@ -139,7 +181,7 @@
 
         /* User List Table */
         .user-table-container {
-            max-height: 500px; /* Fixed height with scroll */
+            max-height: 500px;
             overflow-y: auto;
             border: 1px solid #eee;
             border-radius: 8px;
@@ -148,15 +190,15 @@
         .user-table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed; /* Added for fixed column widths */
+            table-layout: fixed;
         }
         .user-table th, .user-table td {
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #eee;
-            overflow: hidden; /* Ensure content outside cell is hidden */
-            text-overflow: ellipsis; /* Add ellipsis for overflowing text */
-            white-space: nowrap; /* Prevent text from wrapping by default for initial view */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .user-table th {
             background-color: #e0f7fa;
@@ -167,17 +209,17 @@
             z-index: 1;
         }
         /* Adjust specific column widths for user table */
-        .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 15%; } /* Name */
-        .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 25%; } /* Email */
-        .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 18%; } /* Hospital - slightly smaller */
-        .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 12%; } /* Role - slightly smaller */
-        .user-table th:nth-child(5), .user-table td:nth-child(5) { width: 10%; } /* Status */
-        .user-table th:nth-child(6), .user-table td:nth-child(6) { width: 20%; } /* Actions - Increased width */
+        .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 15%; }
+        .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 25%; }
+        .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 18%; }
+        .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 12%; }
+        .user-table th:nth-child(5), .user-table td:nth-child(5) { width: 10%; }
+        .user-table th:nth-child(6), .user-table td:nth-child(6) { width: 20%; }
 
 
         .user-table .user-actions button {
-            padding: 5px 8px; /* Slightly reduced padding for smaller buttons */
-            font-size: 0.8em; /* Made font slightly smaller */
+            padding: 5px 8px;
+            font-size: 0.8em;
             border-radius: 4px;
             margin-left: 5px;
             cursor: pointer;
@@ -192,17 +234,17 @@
 
         /* NEW: Styles for actions column to allow buttons to display correctly */
         .user-table td:nth-child(6) {
-            white-space: normal; /* Allow content to wrap */
-            overflow: visible; /* Ensure content is not hidden by overflow */
-            text-overflow: unset; /* Remove ellipsis */
-            display: flex; /* Use flexbox for button layout */
-            flex-wrap: wrap; /* Allow buttons to wrap to next line if needed */
-            gap: 5px; /* Space between buttons */
-            justify-content: center; /* Center buttons horizontally */
-            align-items: center; /* Center buttons vertically */
+            white-space: normal;
+            overflow: visible;
+            text-overflow: unset;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+            align-items: center;
         }
         .user-table td:nth-child(6) button {
-            margin: 0 !important; /* Override individual button margins */
+            margin: 0 !important;
         }
 
 
@@ -366,7 +408,7 @@
             padding: 0 !important;
         }
         body.fullscreen-active { /* This class is added to body but native API handles actual fullscreen */
-            overflow: hidden !important; /* Hide body scrollbar */
+            overflow: hidden !important;
             width: 100vw !important;
             height: 100vh !important;
             margin: 0 !important;
@@ -379,7 +421,7 @@
         #hospital-data-access-section:-moz-full-screen,
         #hospital-data-access-section:-ms-fullscreen,
         #hospital-data-access-section:fullscreen {
-            position: fixed; /* Native fullscreen sometimes retains fixed positioning context */
+            position: fixed; /* Native fullscreen sometimes keeps fixed positioning context */
             top: 0;
             bottom: 0;
             left: 0;
@@ -408,6 +450,7 @@
             padding: 20px;
             box-sizing: border-box;
             flex-shrink: 0;
+            /* Text alignment is usually centered from original rule */
         }
         #hospital-data-access-section:-webkit-full-screen .filter-search-container,
         #hospital-data-access-section:-moz-full-screen .filter-search-container,
@@ -540,82 +583,86 @@
         <button onclick="logout()" class="logout-button">Logout</button>
     </div>
 
-    <div class="admin-content">
-        <div class="card-section">
-            <h2>Manage User Accounts</h2>
-            <div class="filter-search-container">
-                <input type="text" id="searchUserInput" placeholder="Search by name, email, hospital..." onkeyup="filterUsers()">
-                <select id="filterStatus" onchange="filterUsers()">
-                    <option value="">All Statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="active">Active</option>
-                    <option value="rejected">Rejected</option>
-                </select>
-                <select id="filterRole" onchange="filterUsers()">
-                    <option value="">All Roles</option>
-                    <option value="Medical physicist">Medical physicist</option>
-                    <option value="RSO">RSO</option>
-                    <option value="Admin">Admin</option>
-                </select>
-                <select id="filterHospital" onchange="filterUsers()">
-                    <option value="">All Hospitals</option>
-                    </select>
-                <button onclick="loadAllUsers()">Refresh</button>
-            </div>
-            <div class="user-table-container">
-                <table class="user-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Hospital</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="usersTableBody">
-                        <tr><td colspan="6" class="no-users-message">Loading users...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+    <div class="main-admin-layout">
+        <div class="sidebar-nav">
+            <button id="manageUsersBtn" class="nav-btn active" onclick="showAdminSection('manage-users-section')">
+                MANAGE USER ACCOUNTS
+            </button>
+            <button id="viewHospitalDataBtn" class="nav-btn" onclick="showAdminSection('hospital-data-access-section')">
+                VIEW HOSPITAL DATA
+            </button>
         </div>
 
-        <div class="card-section" id="hospital-data-access-section">
-            <h2 style="position: relative;">
-                View Hospital LINAC QA Data
-                <button id="fullscreenHospitalDataBtn" class="fullscreen-btn" onclick="toggleFullscreenHospitalData()">
-                    <i class="fas fa-expand"></i>
-                </button>
-            </h2>
-            <div class="filter-search-container" id="hospitalDataControls">
-                <select id="adminHospitalSelect">
-                    <option value="">Select Hospital</option>
+        <div class="content-display-area">
+            <div class="card-section active-section" id="manage-users-section">
+                <h2>Manage User Accounts</h2>
+                <div class="filter-search-container">
+                    <input type="text" id="searchUserInput" placeholder="Search by name, email, hospital..." onkeyup="filterUsers()">
+                    <select id="filterStatus" onchange="filterUsers()">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="active">Active</option>
+                        <option value="rejected">Rejected</option>
                     </select>
-                <select id="adminYearSelect">
+                    <select id="filterRole" onchange="filterUsers()">
+                        <option value="">All Roles</option>
+                        <option value="Medical physicist">Medical physicist</option>
+                        <option value="RSO">RSO</option>
+                        <option value="Admin">Admin</option>
                     </select>
-                <select id="adminMonthSelect">
-                    </select>
-                <button onclick="loadHospitalQaData()">Load Data</button>
-            </div>
-            <div class="user-table-container">
-                <table class="user-table hospital-qa-table">
-                    <thead>
-                        <tr id="hospitalQaTableHeader">
-                            <th>Energy</th>
+                    <select id="filterHospital" onchange="filterUsers()">
+                        <option value="">All Hospitals</option>
+                        </select>
+                    <button onclick="loadAllUsers()">Refresh</button>
+                </div>
+                <div class="user-table-container">
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Hospital</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Actions</th>
                             </tr>
-                    </thead>
-                    <tbody id="hospitalQaDataTableBody">
-                        <tr><td colspan="32" class="no-users-message" style="text-align:center;">Select a hospital, year, and month, then click Load Data.</td></tr>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr><td colspan="6" class="no-users-message">Loading users...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
 
-        <div class="card-section" style="display: none;">
-            <h2>Pending User Accounts (Deprecated)</h2>
-            <div id="pendingUsersList">
-                <p class="no-users-message">Loading pending users...</p>
+            <div class="card-section" id="hospital-data-access-section">
+                <h2 style="position: relative;">
+                    View Hospital LINAC QA Data
+                    <button id="fullscreenHospitalDataBtn" class="fullscreen-btn" onclick="toggleFullscreenHospitalData()">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </h2>
+                <div class="filter-search-container" id="hospitalDataControls">
+                    <select id="adminHospitalSelect">
+                        <option value="">Select Hospital</option>
+                        </select>
+                    <select id="adminYearSelect">
+                        </select>
+                    <select id="adminMonthSelect">
+                        </select>
+                    <button onclick="loadHospitalQaData()">Load Data</button>
+                </div>
+                <div class="user-table-container">
+                    <table class="user-table hospital-qa-table">
+                        <thead>
+                            <tr id="hospitalQaTableHeader">
+                                <th>Energy</th>
+                                </tr>
+                        </thead>
+                        <tbody id="hospitalQaDataTableBody">
+                            <tr><td colspan="32" class="no-users-message" style="text-align:center;">Select a hospital, year, and month, then click Load Data.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -703,7 +750,10 @@
         const editUserStatus = document.getElementById('editUserStatus');
         const modalErrorMsg = document.getElementById('modalErrorMsg');
 
-        // NEW: DOM elements for Hospital QA Data section
+        // NEW: DOM elements for Sidebar and Hospital QA Data section
+        const manageUsersBtn = document.getElementById('manageUsersBtn');
+        const viewHospitalDataBtn = document.getElementById('viewHospitalDataBtn');
+        const manageUsersSection = document.getElementById('manage-users-section');
         const hospitalDataAccessSection = document.getElementById('hospital-data-access-section');
         const fullscreenHospitalDataBtn = document.getElementById('fullscreenHospitalDataBtn');
         const adminHospitalSelect = document.getElementById('adminHospitalSelect');
@@ -724,6 +774,55 @@
                 window.location.href = "login.html";
             });
         }
+
+        // --- NEW: Function to show/hide admin sections (Sidebar functionality) ---
+        async function showAdminSection(sectionId) {
+            // Remove active class from all nav buttons
+            document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Add active class to the clicked button
+            if (sectionId === 'manage-users-section') {
+                manageUsersBtn.classList.add('active');
+            } else if (sectionId === 'hospital-data-access-section') {
+                viewHospitalDataBtn.classList.add('active');
+            }
+
+            // Hide all content sections
+            document.querySelectorAll('.content-display-area .card-section').forEach(section => {
+                section.style.display = 'none';
+                section.classList.remove('active-section');
+            });
+
+            // Show the selected section
+            const selectedSection = document.getElementById(sectionId);
+            selectedSection.style.display = 'block'; // Ensure it's block for card-section layout
+            selectedSection.classList.add('active-section'); // Add active-section class
+
+            // Conditional loading based on section
+            if (sectionId === 'manage-users-section') {
+                // Only load if not already loaded, or force refresh if desired
+                if (allUsersData.length === 0) { // Or add a 'forceRefresh' param if needed
+                    await loadAllUsers();
+                } else {
+                    renderUsers(allUsersData); // Just re-render if data is already there
+                }
+            } else if (sectionId === 'hospital-data-access-section') {
+                // Ensure hospital data filters are populated
+                if (adminHospitalSelect.options.length <= 1) { // If only "Select Hospital" is present
+                    // Ensure allUsersData is loaded before populating hospital filters
+                    if (allUsersData.length > 0) {
+                        populateHospitalDataFilters();
+                    } else {
+                        // This might happen if user navigates here directly or allUsersData failed
+                        await loadAllUsers(); // Ensure users are loaded first
+                        populateHospitalDataFilters();
+                    }
+                }
+            }
+        }
+
 
         // --- USER MANAGEMENT FUNCTIONS ---
         async function loadAllUsers() {
@@ -1222,8 +1321,8 @@
                 const userStatus = localStorage.getItem("userStatus");
 
                 if (userRole === "Admin" && userStatus === "active") {
-                    await loadAllUsers(); // Load all users and populate main filters
-                    populateHospitalDataFilters(); // Populate new hospital data section filters
+                    // Initial load: show 'Manage User Accounts' by default
+                    await showAdminSection('manage-users-section');
                 } else {
                     alert("Access Denied: You are not authorized to view this page or your account is not active.");
                     logout();
