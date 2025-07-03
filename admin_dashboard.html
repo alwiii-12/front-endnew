@@ -8,10 +8,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         /* Base styles */
+        html, body {
+            margin: 0 !important; /* Force no margin on html/body */
+            padding: 0 !important; /* Force no padding on html/body */
+            width: 100% !important; /* Force html/body to take full viewport width */
+            height: 100% !important; /* Force html/body to take full viewport height */
+            overflow: auto; /* Default overflow for html/body */
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -29,6 +35,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0; /* Prevent header from shrinking */
         }
         .admin-header h1 {
             margin: 0;
@@ -57,6 +64,7 @@
             flex-direction: column;
             align-items: center;
             gap: 30px; /* Spacing between sections */
+            overflow-y: auto; /* Allow content to scroll if it exceeds vertical height */
         }
         .admin-content h1 {
             color: #1e3a8a;
@@ -76,6 +84,7 @@
             background-color: #f8f8f8;
             border-top: 1px solid #ccc;
             text-align: center;
+            flex-shrink: 0; /* Prevent footer from shrinking */
         }
 
         /* Card/Section Styling */
@@ -329,11 +338,15 @@
 
         /* CSS for Fullscreen Mode */
         body.fullscreen-active {
-            overflow: hidden; /* Hide body scrollbar when in fullscreen */
+            overflow: hidden !important; /* Hide body scrollbar when in fullscreen */
+            width: 100vw !important;     /* Force body to match viewport width */
+            height: 100vh !important;    /* Force body to match viewport height */
+            margin: 0 !important;        /* Ensure no margin on body */
+            padding: 0 !important;       /* Ensure no padding on body */
         }
 
         .card-section.fullscreen {
-            position: fixed;
+            position: fixed !important;
             top: 0 !important;    /* Force pin to top */
             bottom: 0 !important; /* Force pin to bottom */
             left: 0 !important;   /* Force pin to left */
@@ -341,17 +354,17 @@
             width: 100% !important; /* NEW: Force 100% of parent (viewport) width */
             height: 100% !important;/* NEW: Force 100% of parent (viewport) height */
             margin: 0 !important; /* NEW: Absolutely no margins */
-            padding: 0; /* NEW: Remove padding here, add to internal elements if needed */
+            padding: 20px !important; /* Keep desired internal padding */
             z-index: 10001 !important; /* Ensure it's on top */
-            background: white !important; /* Ensure solid background */
-            border-radius: 0 !important; /* No rounded corners in fullscreen */
+            background: white !important; /* Solid background */
+            border-radius: 0 !important; /* No rounded corners */
             box-shadow: none !important; /* Remove shadow for clean fullscreen */
-            overflow: auto !important; /* Allow internal scrolling if content overflows */
+            overflow: auto !important;   /* Allow internal scroll if content overflows */
 
-            display: flex !important; /* Force flexbox */
-            flex-direction: column !important; /* Force column layout */
-            align-items: stretch !important; /* NEW: Make children stretch horizontally */
-            justify-content: flex-start !important; /* Align content to top */
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: stretch !important; /* Make children stretch horizontally */
+            justify-content: flex-start !important;
         }
         
         /* Ensure the H2 inside fullscreen is also centered */
@@ -398,7 +411,6 @@
             overflow: hidden; /* Hide overflowing content */
             white-space: normal; /* Allow normal wrapping, fixed dates are short enough for nowrap usually */
             word-wrap: break-word; /* Use this for graceful word breaking for dates */
-            /* Removed word-break: break-all; as it can be too aggressive and cause misalignment */
         }
 
         .hospital-qa-table th:first-child,
