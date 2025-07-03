@@ -9,11 +9,11 @@
     <style>
         /* Base styles */
         html {
-            margin: 0; /* Changed from !important, relying on native fullscreen */
-            padding: 0; /* Changed from !important, relying on native fullscreen */
-            width: 100%; /* Changed from vw/vh, relying on native fullscreen */
-            height: 100%; /* Changed from vw/vh, relying on native fullscreen */
-            overflow: auto; /* Default overflow for html */
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -210,12 +210,12 @@
             z-index: 1;
         }
         /* Adjust specific column widths for user table */
-        .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 15%; }
-        .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 25%; }
-        .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 18%; }
-        .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 12%; }
-        .user-table th:nth-child(5), .user-table td:nth-child(5) { width: 10%; }
-        .user-table th:nth-child(6), .user-table td:nth-child(6) { width: 20%; } /* Increased width for Actions */
+        .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 14%; } /* Name - slightly reduced */
+        .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 24%; } /* Email - slightly reduced */
+        .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 18%; } /* Hospital */
+        .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 12%; } /* Role */
+        .user-table th:nth-child(5), .user-table td:nth-child(5) { width: 10%; } /* Status */
+        .user-table th:nth-child(6), .user-table td:nth-child(6) { width: 22%; } /* Actions - Increased to 22% */
 
 
         .user-table .user-actions button {
@@ -1076,7 +1076,7 @@
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.message || `Failed to save changes. Status: ${response.status}`);
+                    throw new Error(errorData.message || `Failed to update user status. Status: ${response.status}`);
                 }
 
                 alert("User details updated successfully!");
