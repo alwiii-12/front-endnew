@@ -184,22 +184,23 @@
         .user-table-container {
             max-height: 500px;
             overflow-y: auto;
+            overflow-x: auto; /* NEW: Allow horizontal scroll for user table */
             border: 1px solid #eee;
             border-radius: 8px;
             background-color: #f9f9f9;
         }
         .user-table {
-            width: 100%;
+            width: 100%; /* Will try to fit 100% of container */
             border-collapse: collapse;
-            table-layout: fixed;
+            table-layout: auto; /* CRITICAL CHANGE: Allow browser to auto-size columns based on content */
         }
         .user-table th, .user-table td {
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #eee;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            white-space: normal; /* Allow normal wrapping for data cells */
+            word-wrap: break-word; /* Ensure long words break */
+            overflow: visible; /* Ensure content is not hidden by default */
         }
         .user-table th {
             background-color: #e0f7fa;
@@ -209,13 +210,13 @@
             top: 0;
             z-index: 1;
         }
-        /* Adjust specific column widths for user table */
-        .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 14%; } /* Name - slightly reduced */
-        .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 24%; } /* Email - slightly reduced */
-        .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 18%; } /* Hospital */
-        .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 12%; } /* Role */
-        .user-table th:nth-child(5), .user-table td:nth-child(5) { width: 10%; } /* Status */
-        .user-table th:nth-child(6), .user-table td:nth-child(6) { width: 22%; } /* Actions - Increased to 22% */
+        /* Define min-widths for user table columns (percentages removed, auto layout) */
+        .user-table th:nth-child(1), .user-table td:nth-child(1) { min-width: 100px; } /* Name */
+        .user-table th:nth-child(2), .user-table td:nth-child(2) { min-width: 180px; } /* Email */
+        .user-table th:nth-child(3), .user-table td:nth-child(3) { min-width: 120px; } /* Hospital */
+        .user-table th:nth-child(4), .user-table td:nth-child(4) { min-width: 100px; } /* Role */
+        .user-table th:nth-child(5), .user-table td:nth-child(5) { min-width: 80px; } /* Status */
+        .user-table th:nth-child(6), .user-table td:nth-child(6) { min-width: 160px; } /* Actions - Sufficient width for 3 buttons */
 
 
         .user-table .user-actions button {
@@ -233,13 +234,13 @@
         .user-table .edit-btn { background-color: #17a2b8; color: white; }
         .user-table .edit-btn:hover { background-color: #138496; }
 
-        /* NEW: Styles for actions column to allow buttons to display side-by-side */
+        /* Styles for actions column to allow buttons to display side-by-side */
         .user-table td:nth-child(6) {
-            white-space: nowrap; /* Force content onto a single line */
-            overflow: hidden; /* Hide overflow content */
+            white-space: nowrap; /* Keep the buttons on one line */
+            overflow: hidden; /* Hide if buttons still overflow min-width */
             text-overflow: ellipsis; /* Show ellipsis if content overflows */
             display: flex; /* Use flexbox for button layout */
-            flex-wrap: nowrap; /* Ensure buttons stay on one line, prevent wrapping */
+            flex-wrap: nowrap; /* Ensure buttons stay on one line */
             gap: 5px; /* Space between buttons */
             justify-content: center; /* Center buttons horizontally */
             align-items: center; /* Center buttons vertically */
