@@ -334,21 +334,23 @@
 
         .card-section.fullscreen {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw; /* Full viewport width */
-            height: 100vh; /* Full viewport height */
-            margin: 0; /* Ensure no external margin pushes it */
-            padding: 20px; /* Adjust padding as needed */
-            z-index: 10001; /* Ensure it's on top of everything */
-            background: white; /* Ensure consistent background */
-            border-radius: 0; /* No rounded corners in fullscreen */
-            overflow: auto; /* Allow scrolling within fullscreen content if it overflows */
-            box-shadow: 0 0 20px rgba(0,0,0,0.5); /* Stronger shadow */
+            top: 0;    /* Pin to top */
+            bottom: 0; /* Pin to bottom */
+            left: 0;   /* Pin to left */
+            right: 0;  /* Pin to right */
+            width: auto; /* Let top/bottom/left/right define width */
+            height: auto;/* Let top/bottom/left/right define height */
+            margin: auto; /* NEW: This is key to centering fixed elements defined by all four sides */
+            padding: 20px;
+            z-index: 10001;
+            background: white;
+            border-radius: 0;
+            overflow: auto;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
             display: flex;
-            flex-direction: column; /* Organize content vertically */
-            align-items: center; /* Center horizontally within the flex container */
-            justify-content: flex-start; /* Align content to top */
+            flex-direction: column;
+            align-items: center; /* To center the H2 and filter-search-container if they don't take full width */
+            justify-content: flex-start; /* Aligns content to the start (top) of the flex container */
         }
         
         /* Ensure the H2 inside fullscreen is also centered */
@@ -403,16 +405,15 @@
 
         /* Date columns - give them a sufficient minimum width and let them auto-distribute */
         .hospital-qa-table th:not(:first-child),
-        .hospital-qa-table td:not(:first-child) {
-            min-width: 60px; /* Minimum width for full date to be visible, will force table wider if needed */
-            /* No fixed width or calc here, letting browser auto-distribute based on min-width and content */
+        .hospital-qa-table td:not(:not(:first-child)) { /* Corrected selector: target all but the first child */
+            min-width: 70px; /* Minimum width for full date to be visible, will force table wider if needed */
         }
 
         /* Adjust padding and font size for fullscreen mode if columns are still too wide */
         .card-section.fullscreen .hospital-qa-table th,
         .card-section.fullscreen .hospital-qa-table td {
-            padding: 3px 2px; /* Even smaller padding in fullscreen cells */
-            font-size: 0.75em; /* Smaller font size in fullscreen */
+            padding: 3px 1px; /* Even smaller padding in fullscreen cells */
+            font-size: 0.65em; /* Smaller font size in fullscreen */
             white-space: normal; /* Ensure text can wrap in fullscreen for very narrow columns */
             word-wrap: break-word; /* Ensure graceful breaking in fullscreen */
         }
@@ -786,12 +787,12 @@
                 editUserHospital.value = "Other";
                 // If 'Other' is selected, create a new input field
                 const newHospitalInput = document.createElement('input');
-                newHospitalInput.type = 'text';
-                newHospitalInput.id = 'newHospitalNameInput';
-                newHospitalInput.placeholder = 'Enter new hospital name';
-                newHospitalInput.value = user.hospital || ''; // Pre-fill if there was a value
-                editUserHospital.parentNode.insertBefore(newHospitalInput, editUserHospital.nextSibling);
-                newHospitalInput.focus();
+                        newHospitalInput.type = 'text';
+                        newHospitalInput.id = 'newHospitalNameInput';
+                        newHospitalInput.placeholder = 'Enter new hospital name';
+                        newHospitalInput.value = user.hospital || ''; // Pre-fill if there was a value
+                        editUserHospital.parentNode.insertBefore(newHospitalInput, editUserHospital.nextSibling);
+                        newHospitalInput.focus();
             }
 
 
