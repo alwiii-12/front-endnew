@@ -341,11 +341,11 @@
             width: auto; /* Let top/bottom/left/right define width */
             height: auto;/* Let top/bottom/left/right define height */
             margin: auto; /* NEW: This is key to centering fixed elements defined by all four sides */
-            padding: 20px;
+            padding: 0; /* NEW: Remove padding here, add to internal elements if needed */
             z-index: 10001;
             background: white;
             border-radius: 0;
-            overflow: auto;
+            overflow: hidden; /* NEW: Keep main section hidden, table container handles its own scroll */
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
             display: flex;
             flex-direction: column;
@@ -355,25 +355,31 @@
         
         /* Ensure the H2 inside fullscreen is also centered */
         .card-section.fullscreen h2 {
-            text-align: center; /* Maintain center alignment */
-            width: 100%; /* Ensure h2 takes full width for its relative button */
+            padding: 20px; /* Add back heading padding */
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box; /* Include padding in width */
         }
 
         /* Ensure the filter-search-container is centered/aligned in fullscreen */
         .card-section.fullscreen .filter-search-container {
-            justify-content: center; /* Center filters in fullscreen */
-            width: 100%; /* Ensure filter container takes full width */
-            max-width: unset; /* Remove any max-width that might restrict it */
-            margin-bottom: 20px; /* Maintain spacing */
+            padding: 0 20px 20px; /* Add horizontal padding, and bottom padding */
+            justify-content: center;
+            width: 100%;
+            max-width: unset;
+            box-sizing: border-box;
         }
 
         /* Ensure table container takes full width and height in fullscreen */
         .card-section.fullscreen .user-table-container {
-            flex-grow: 1; /* Allow the table container to expand vertically */
-            max-height: unset; /* Remove max-height constraint */
-            width: 100%; /* Ensure it takes full horizontal space */
-            overflow: auto; /* Allow both X and Y scrolling for the table container */
-            border: 1px solid #ccc; /* Add border to visualy check container boundaries */
+            flex-grow: 1;
+            max-height: unset;
+            width: 100%; /* Ensure it takes 100% of the horizontal space available from parent */
+            overflow: auto; /* Handles its own scrolling */
+            border: none; /* Remove border from here, table itself has borders */
+            background: transparent; /* Make background transparent if it clashes with table borders */
+            padding: 0 20px 20px; /* Add padding around the table itself */
+            box-sizing: border-box; /* Include padding in width */
         }
 
         /* New/Modified CSS for Hospital QA Table (crucial for fitting) */
@@ -389,9 +395,8 @@
             text-align: center; /* Center align data for dates */
             border: 1px solid #999; /* Added: Darker border for separation */
             overflow: hidden; /* Hide overflowing content */
-            white-space: normal; /* Allow normal wrapping, fixed dates are short enough for nowrap usually */
+            white-space: normal; /* Allow normal wrapping */
             word-wrap: break-word; /* Use this for graceful word breaking for dates */
-            /* Removed word-break: break-all; as it can be too aggressive and cause misalignment */
         }
 
         .hospital-qa-table th:first-child,
@@ -410,17 +415,25 @@
         }
 
         /* Adjust padding and font size for fullscreen mode if columns are still too wide */
+        .card-section.fullscreen .hospital-qa-table {
+            width: 100%; /* Force table to fill 100% of the fullscreen container */
+            table-layout: fixed; /* NEW: Crucial for even distribution in fullscreen */
+        }
+
         .card-section.fullscreen .hospital-qa-table th,
         .card-section.fullscreen .hospital-qa-table td {
             padding: 3px 1px; /* Even smaller padding in fullscreen cells */
             font-size: 0.65em; /* Smaller font size in fullscreen */
-            white-space: normal; /* Ensure text can wrap in fullscreen for very narrow columns */
-            word-wrap: break-word; /* Ensure graceful breaking in fullscreen */
+            white-space: normal; /* NEW: Allow text to wrap in fullscreen */
+            word-wrap: break-word; /* NEW: Ensure graceful breaking in fullscreen */
+            text-overflow: unset; /* Remove ellipsis in fullscreen as content wraps */
         }
-        /* Make sure date headers specifically wrap in fullscreen for optimal fitting */
-        .card-section.fullscreen .hospital-qa-table th:not(:first-child) {
-            white-space: normal; /* Allow date headers to wrap in fullscreen */
-            word-wrap: break-word; /* Ensure graceful breaking */
+
+        /* In fullscreen, date columns are dynamically sized by fixed layout */
+        .card-section.fullscreen .hospital-qa-table th:not(:first-child),
+        .card-section.fullscreen .hospital-qa-table td:not(:first-child) {
+            width: auto; /* Let fixed layout distribute space */
+            min-width: unset; /* NEW: Remove min-width to allow shrinking in fullscreen */
         }
     </style>
 </head>
@@ -742,7 +755,7 @@
                 alert(`User status updated to ${newStatus.toUpperCase()} successfully!`);
                 loadAllUsers(); // Reload all users to reflect changes
             } catch (error) {
-                    console.error("Error updating user status:", error);
+                console.error("Error updating user status:", error);
                 alert(`Failed to update user status: ${error.message}`);
             } finally {
                 hideLoader();
