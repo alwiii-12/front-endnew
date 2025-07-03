@@ -36,7 +36,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-shrink: 0; /* Prevent header from shrinking */
+            flex-shrink: 0;
         }
         .admin-header h1 {
             margin: 0;
@@ -233,6 +233,14 @@
         .user-table .reject-btn:hover { background-color: #e0a800; }
         .user-table .edit-btn { background-color: #17a2b8; color: white; }
         .user-table .edit-btn:hover { background-color: #138496; }
+        /* NEW: Delete button styles */
+        .user-table .delete-btn {
+            background-color: #6c757d; /* A neutral gray for delete */
+            color: white;
+        }
+        .user-table .delete-btn:hover {
+            background-color: #5a6268;
+        }
 
         /* Styles for actions column to allow buttons to display side-by-side */
         .user-table td:nth-child(6) {
@@ -894,6 +902,9 @@
                         <button class="approve-btn" onclick="updateUserStatus('${user.uid}', 'active')">Approve</button>
                         <button class="reject-btn" onclick="updateUserStatus('${user.uid}', 'rejected')">Reject</button>
                         <button class="edit-btn" onclick="openEditModal('${user.uid}')">Edit</button>
+                        <button class="delete-btn" onclick="deleteUser('${user.uid}', '${user.name || 'N/A'}', '${user.email || 'N/A'}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
                     </td>
                 `;
             });
@@ -1077,7 +1088,7 @@
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.message || `Failed to update user status. Status: ${response.status}`);
+                    throw new Error(errorData.message || `Failed to save changes. Status: ${response.status}`);
                 }
 
                 alert("User details updated successfully!");
@@ -1176,7 +1187,7 @@
                 
             } catch (error) {
                 console.error("Error loading hospital QA data:", error);
-                hospitalQaDataTableBody.innerHTML = `<tr><td colspan="32" class="no-users-message" style="color: red; text-align:center;">Error: ${error.message || 'Could not load hospital data.'}</td></tr>`;
+                hospitalQaDataTableBody.innerHTML = `<tr><td colspan="32" class="no-users-message" style="color: red; text-align:center;">Error: ${error.message || 'Could not load hospital data.'}</p></td></tr>`;
             } finally {
                 hideLoader();
             }
