@@ -405,7 +405,7 @@
 
         /* Date columns - give them a sufficient minimum width and let them auto-distribute */
         .hospital-qa-table th:not(:first-child),
-        .hospital-qa-table td:not(:not(:first-child)) { /* Corrected selector: target all but the first child */
+        .hospital-qa-table td:not(:first-child) { /* Corrected selector: target all but the first child */
             min-width: 70px; /* Minimum width for full date to be visible, will force table wider if needed */
         }
 
@@ -742,7 +742,7 @@
                 alert(`User status updated to ${newStatus.toUpperCase()} successfully!`);
                 loadAllUsers(); // Reload all users to reflect changes
             } catch (error) {
-                console.error("Error updating user status:", error);
+                    console.error("Error updating user status:", error);
                 alert(`Failed to update user status: ${error.message}`);
             } finally {
                 hideLoader();
