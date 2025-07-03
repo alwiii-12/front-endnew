@@ -9,10 +9,10 @@
     <style>
         /* Base styles */
         html, body {
-            margin: 0 !important; /* Force no margin on html/body */
-            padding: 0 !important; /* Force no padding on html/body */
-            width: 100% !important; /* Force html/body to take full viewport width */
-            height: 100% !important; /* Force html/body to take full viewport height */
+            margin: 0; /* Changed from !important, relying on native fullscreen */
+            padding: 0; /* Changed from !important, relying on native fullscreen */
+            width: 100%; /* Changed from vw/vh, relying on native fullscreen */
+            height: 100%; /* Changed from vw/vh, relying on native fullscreen */
             overflow: auto; /* Default overflow for html/body */
         }
 
@@ -96,6 +96,7 @@
             width: 95%;
             max-width: 1000px; /* Wider for user table */
             box-sizing: border-box;
+            /* No fullscreen specific styles here, will be handled by native API */
         }
         .card-section h2 {
             text-align: center;
@@ -336,65 +337,115 @@
             pointer-events: none; /* Prevents icon from blocking button click */
         }
 
-        /* CSS for Fullscreen Mode */
-        body.fullscreen-active {
-            overflow: hidden !important; /* Hide body scrollbar when in fullscreen */
-            width: 100vw !important;     /* Force body to match viewport width */
-            height: 100vh !important;    /* Force body to match viewport height */
-            margin: 0 !important;        /* Ensure no margin on body */
-            padding: 0 !important;       /* Ensure no padding on body */
+        /* CSS for Fullscreen Mode - Using Native Fullscreen API, so these are minimal */
+        /* These styles will only apply when the element is *not* in native fullscreen
+           but is preparing or just exiting, or if native API isn't used.
+           Native fullscreen will override most of this directly. */
+        
+        /* The body and html will still get a class from JS to prevent scroll */
+        html.fullscreen-active-html {
+            overflow: hidden !important;
+            width: 100vw !important;
+            height: 100vh !important;
         }
-
-        .card-section.fullscreen {
-            position: fixed !important;
-            top: 0 !important;    /* Force pin to top */
-            bottom: 0 !important; /* Force pin to bottom */
-            left: 0 !important;   /* Force pin to left */
-            right: 0 !important;  /* Force pin to right */
-            width: 100% !important; /* NEW: Force 100% of parent (viewport) width */
-            height: 100% !important;/* NEW: Force 100% of parent (viewport) height */
-            margin: 0 !important; /* NEW: Absolutely no margins */
-            padding: 20px !important; /* Keep desired internal padding */
-            z-index: 10001 !important; /* Ensure it's on top */
-            background: white !important; /* Solid background */
-            border-radius: 0 !important; /* No rounded corners */
-            box-shadow: none !important; /* Remove shadow for clean fullscreen */
-            overflow: auto !important;   /* Allow internal scroll if content overflows */
-
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: stretch !important; /* Make children stretch horizontally */
-            justify-content: flex-start !important;
+        body.fullscreen-active { /* This class is added to body but native API handles actual fullscreen */
+            overflow: hidden !important; /* Hide body scrollbar */
+            width: 100vw !important;
+            height: 100vh !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
         
-        /* Ensure the H2 inside fullscreen is also centered */
-        .card-section.fullscreen h2 {
-            padding: 20px; /* Add back heading padding */
-            text-align: center;
-            width: 100%;
-            box-sizing: border-box; /* Include padding in width */
+        /* Styles for the element that *goes* into native fullscreen */
+        /* These styles define how it looks when it's natively fullscreen. */
+        #hospital-data-access-section:-webkit-full-screen,
+        #hospital-data-access-section:-moz-full-screen,
+        #hospital-data-access-section:-ms-fullscreen,
+        #hospital-data-access-section:fullscreen {
+            position: fixed; /* Native fullscreen sometimes keeps fixed positioning context */
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0; /* Important: Native fullscreen provides its own padding, so reset ours */
+            z-index: 9999999; /* Extremely high z-index to ensure it's on top */
+            background: white; /* Ensure it covers everything */
+            border-radius: 0;
+            box-shadow: none;
+            overflow: auto; /* Allow internal scrolling if content exceeds screen */
+            display: flex;
+            flex-direction: column;
+            align-items: stretch; /* Stretch children to fill width */
+            justify-content: flex-start;
         }
 
-        /* Ensure the filter-search-container is centered/aligned in fullscreen */
-        .card-section.fullscreen .filter-search-container {
-            padding: 0 20px 20px; /* Add horizontal padding, and bottom padding */
-            justify-content: center;
-            width: 100%;
-            max-width: unset;
+        /* Adjust internal padding/layout for natively fullscreen content */
+        #hospital-data-access-section:-webkit-full-screen h2,
+        #hospital-data-access-section:-moz-full-screen h2,
+        #hospital-data-access-section:-ms-fullscreen h2,
+        #hospital-data-access-section:fullscreen h2 {
+            padding: 20px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            /* Text alignment is usually centered from original rule */
+        }
+        #hospital-data-access-section:-webkit-full-screen .filter-search-container,
+        #hospital-data-access-section:-moz-full-screen .filter-search-container,
+        #hospital-data-access-section:-ms-fullscreen .filter-search-container,
+        #hospital-data-access-section:fullscreen .filter-search-container {
+            padding: 0 20px 20px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            /* Justify-content is usually centered from original rule */
+        }
+        #hospital-data-access-section:-webkit-full-screen .user-table-container,
+        #hospital-data-access-section:-moz-full-screen .user-table-container,
+        #hospital-data-access-section:-ms-fullscreen .user-table-container,
+        #hospital-data-access-section:fullscreen .user-table-container {
+            flex-grow: 1;
+            max-height: unset;
+            width: 100%; /* This is key to make the table container fill the native fullscreen space */
+            overflow: auto; /* Ensure internal scrolling */
+            border: none;
+            background: transparent;
+            padding: 0 20px 20px; /* Internal padding for table container */
             box-sizing: border-box;
         }
 
-        /* Ensure table container takes full width and height in fullscreen */
-        .card-section.fullscreen .user-table-container {
-            flex-grow: 1;
-            max-height: unset;
-            width: 100%; /* Ensure it takes 100% of the horizontal space available from parent */
-            overflow: auto; /* Handles its own scrolling */
-            border: none; /* Remove border from here, table itself has borders */
-            background: transparent; /* Make background transparent if it clashes with table borders */
-            padding: 0 20px 20px; /* Add padding around the table itself */
-            box-sizing: border-box; /* Include padding in width */
+        /* Hide other sections when native fullscreen is active */
+        /* These rules apply when *any* element is fullscreen, ensuring no other content interferes */
+        body:-webkit-full-screen > .admin-content > .card-section:not(#hospital-data-access-section),
+        body:-moz-full-screen > .admin-content > .card-section:not(#hospital-data-access-section),
+        body:-ms-fullscreen > .admin-content > .card-section:not(#hospital-data-access-section),
+        body:fullscreen > .admin-content > .card-section:not(#hospital-data-access-section),
+        body:-webkit-full-screen > .admin-header, body:-moz-full-screen > .admin-header, body:-ms-fullscreen > .admin-header, body:fullscreen > .admin-header,
+        body:-webkit-full-screen > .admin-footer, body:-moz-full-screen > .admin-footer, body:-ms-fullscreen > .admin-footer, body:fullscreen > .admin-footer,
+        body:-webkit-full-screen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)), /* Hide admin-content if not the parent of fullscreen elem */
+        body:-moz-full-screen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)),
+        body:-ms-fullscreen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)),
+        body:fullscreen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)) {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
+        /* Specific rule for admin-content itself when native fullscreen is active */
+        body:-webkit-full-screen .admin-content,
+        body:-moz-full-screen .admin-content,
+        body:-ms-fullscreen .admin-content,
+        body:fullscreen .admin-content {
+            position: absolute !important; /* Take it out of flow */
+            top: 0 !important; left: 0 !important;
+            width: 100vw !important; height: 100vh !important;
+            overflow: hidden !important;
+            background: transparent !important;
+            padding: 0 !important;
+            z-index: auto !important; /* Let the fullscreen element be higher */
+        }
+
 
         /* New/Modified CSS for Hospital QA Table (crucial for fitting) */
         .hospital-qa-table {
@@ -411,6 +462,7 @@
             overflow: hidden; /* Hide overflowing content */
             white-space: normal; /* Allow normal wrapping, fixed dates are short enough for nowrap usually */
             word-wrap: break-word; /* Use this for graceful word breaking for dates */
+            /* Removed word-break: break-all; as it can be too aggressive and cause misalignment */
         }
 
         .hospital-qa-table th:first-child,
@@ -429,13 +481,23 @@
         }
 
         /* Adjust padding and font size for fullscreen mode if columns are still too wide */
-        .card-section.fullscreen .hospital-qa-table {
+        /* These styles will apply when the element is natively fullscreen */
+        #hospital-data-access-section:-webkit-full-screen .hospital-qa-table,
+        #hospital-data-access-section:-moz-full-screen .hospital-qa-table,
+        #hospital-data-access-section:-ms-fullscreen .hospital-qa-table,
+        #hospital-data-access-section:fullscreen .hospital-qa-table {
             width: 100%; /* Force table to fill 100% of the fullscreen container */
-            table-layout: fixed; /* NEW: Crucial for even distribution in fullscreen */
+            table-layout: fixed; /* Crucial for even distribution in fullscreen */
         }
 
-        .card-section.fullscreen .hospital-qa-table th,
-        .card-section.fullscreen .hospital-qa-table td {
+        #hospital-data-access-section:-webkit-full-screen .hospital-qa-table th,
+        #hospital-data-access-section:-moz-full-screen .hospital-qa-table th,
+        #hospital-data-access-section:-ms-fullscreen .hospital-qa-table th,
+        #hospital-data-access-section:fullscreen .hospital-qa-table th,
+        #hospital-data-access-section:-webkit-full-screen .hospital-qa-table td,
+        #hospital-data-access-section:-moz-full-screen .hospital-qa-table td,
+        #hospital-data-access-section:-ms-fullscreen .hospital-qa-table td,
+        #hospital-data-access-section:fullscreen .hospital-qa-table td {
             padding: 3px 1px; /* Even smaller padding in fullscreen cells */
             font-size: 0.65em; /* Smaller font size in fullscreen */
             white-space: normal; /* NEW: Allow text to wrap in fullscreen for very narrow columns */
@@ -444,8 +506,14 @@
         }
 
         /* In fullscreen, date columns are dynamically sized by fixed layout */
-        .card-section.fullscreen .hospital-qa-table th:not(:first-child),
-        .card-section.fullscreen .hospital-qa-table td:not(:first-child) {
+        #hospital-data-access-section:-webkit-full-screen .hospital-qa-table th:not(:first-child),
+        #hospital-data-access-section:-webkit-full-screen .hospital-qa-table td:not(:first-child),
+        #hospital-data-access-section:-moz-full-screen .hospital-qa-table th:not(:first-child),
+        #hospital-data-access-section:-moz-full-screen .hospital-qa-table td:not(:first-child),
+        #hospital-data-access-section:-ms-fullscreen .hospital-qa-table th:not(:first-child),
+        #hospital-data-access-section:-ms-fullscreen .hospital-qa-table td:not(:first-child),
+        #hospital-data-access-section:fullscreen .hospital-qa-table th:not(:first-child),
+        #hospital-data-access-section:fullscreen .hospital-qa-table td:not(:first-child) {
             width: auto; /* Let fixed layout distribute space */
             min-width: unset; /* NEW: Remove min-width to allow shrinking in fullscreen */
         }
@@ -1060,17 +1128,65 @@
 
         // --- NEW: Fullscreen Toggle Function for Hospital Data ---
         function toggleFullscreenHospitalData() {
-            hospitalDataAccessSection.classList.toggle('fullscreen');
-            document.body.classList.toggle('fullscreen-active'); // To hide body scrollbar
+            // Check if element is currently in fullscreen
+            const isFullscreen = document.fullscreenElement === hospitalDataAccessSection ||
+                                 document.mozFullScreenElement === hospitalDataAccessSection ||
+                                 document.webkitFullscreenElement === hospitalDataAccessSection ||
+                                 document.msFullscreenElement === hospitalDataAccessSection;
 
-            if (hospitalDataAccessSection.classList.contains('fullscreen')) {
-                fullscreenHospitalDataBtn.innerHTML = '<i class="fas fa-compress"></i>'; // Change icon to compress
+            if (!isFullscreen) {
+                // Request fullscreen for the hospitalDataAccessSection
+                if (hospitalDataAccessSection.requestFullscreen) {
+                    hospitalDataAccessSection.requestFullscreen();
+                } else if (hospitalDataAccessSection.mozRequestFullScreen) { /* Firefox */
+                    hospitalDataAccessSection.mozRequestFullScreen();
+                } else if (hospitalDataAccessSection.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+                    hospitalDataAccessSection.webkitRequestFullscreen();
+                } else if (hospitalDataAccessSection.msRequestFullscreen) { /* IE/Edge */
+                    hospitalDataAccessSection.msRequestFullscreen();
+                }
+                // Add class to html for aggressive overflow control
+                document.documentElement.classList.add('fullscreen-active-html');
+                document.body.classList.add('fullscreen-active');
+
             } else {
-                fullscreenHospitalDataBtn.innerHTML = '<i class="fas fa-expand"></i>'; // Change icon to expand
+                // Exit fullscreen if already in fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE/Edge */
+                    document.msExitFullscreen();
+                }
+                 // Remove class from html
+                document.documentElement.classList.remove('fullscreen-active-html');
+                document.body.classList.remove('fullscreen-active');
+            }
+            // Icon change and re-render will be handled by fullscreenchange event listener
+        }
+
+        // --- Event Listener for Fullscreen API Changes ---
+        // This will update the button icon and re-render the table dynamically
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange); // Firefox
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Chrome, Safari
+        document.addEventListener('msfullscreenchange', handleFullscreenChange); // IE/Edge
+
+        function handleFullscreenChange() {
+            const isCurrentlyFullscreen = document.fullscreenElement === hospitalDataAccessSection ||
+                                         document.mozFullScreenElement === hospitalDataAccessSection ||
+                                         document.webkitFullscreenElement === hospitalDataAccessSection ||
+                                         document.msFullscreenElement === hospitalDataAccessSection;
+
+            if (isCurrentlyFullscreen) {
+                fullscreenHospitalDataBtn.innerHTML = '<i class="fas fa-compress"></i>'; // In fullscreen
+            } else {
+                fullscreenHospitalDataBtn.innerHTML = '<i class="fas fa-expand"></i>'; // Not in fullscreen
             }
 
-            // Re-render table if data was previously loaded, to ensure layout adjusts well
-            // This also re-calculates column widths based on the new container size.
+            // Always re-render the table to adapt to new dimensions (whether entering or exiting fullscreen)
             if (lastLoadedHospitalQaData.data && lastLoadedHospitalQaData.data.length > 0) {
                 renderHospitalQaDataTable(
                     lastLoadedHospitalQaData.data,
