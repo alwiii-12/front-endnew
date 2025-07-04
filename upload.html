@@ -12,7 +12,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-  <script src="firebase-init.js"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="firebase-init.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 
@@ -655,6 +657,56 @@
             width: 100% !important;
         }
     }
+
+    /* NEW: Styles for Custom Notifications */
+    #notification-container {
+        position: fixed;
+        top: 20px; /* Adjust as needed */
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10000; /* Ensure it's on top of everything */
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none; /* Allows clicks to pass through when no messages are active */
+    }
+
+    .notification-message {
+        background-color: #333;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        transform: translateY(-20px);
+        min-width: 250px;
+        text-align: center;
+        pointer-events: auto; /* Re-enable pointer events for the message itself */
+    }
+
+    .notification-message.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .notification-message.success {
+        background-color: var(--success-green);
+    }
+
+    .notification-message.error {
+        background-color: var(--error-red);
+    }
+
+    .notification-message.warning {
+        background-color: var(--warning-orange);
+        color: var(--text-dark); /* warning text usually better dark */
+    }
+
+    .notification-message.info {
+        background-color: var(--primary-blue);
+    }
+
   </style>
 </head>
 <body>
@@ -746,6 +798,12 @@
       </div>
   </div>
 
+  <div id="notification-container"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  <script src="firebase-init.js"></script>
 
   <script>
     // These now reference the globally initialized Firebase objects from firebase-init.js
@@ -787,11 +845,35 @@
     var chatInput = document.getElementById('chat-input');
     var sendChatBtn = document.getElementById('send-chat-btn');
 
+    // NEW: Notification Container
+    var notificationContainer = document.getElementById('notification-container');
+
 
     var currentDate = new Date(); currentDate.setDate(1);
     var energyTypes = ["6X","10X","15X","6X FFF","10X FFF","6E","9E","12E","15E","18E"];
 
     var outOfToleranceValues = []; // This array holds the current out-of-tolerance values displayed in the table.
+
+    // --- NEW: Custom Notification Function ---
+    function showNotification(message, type = 'info', duration = 3000) {
+        const notification = document.createElement('div');
+        notification.classList.add('notification-message', type);
+        notification.textContent = message;
+
+        notificationContainer.appendChild(notification);
+
+        // Force reflow to ensure transition plays
+        void notification.offsetWidth; 
+        notification.classList.add('show');
+
+        setTimeout(() => {
+            notification.classList.remove('show');
+            notification.addEventListener('transitionend', () => {
+                notification.remove();
+            }, { once: true });
+        }, duration);
+    }
+
 
     // --- Core Functions ---
     window.logout = function() {
@@ -802,8 +884,8 @@
         window.location.href = "login.html";
       }).catch((error) => {
         console.error("Logout error:", error);
+        showNotification("Logout failed: " + error.message, 'error'); // Using new notification
         hideLoader();
-        alert("Logout failed: " + error.message);
       });
     }
 
@@ -865,7 +947,7 @@
         updateSummaryAndChart(data);
       } catch(e) {
         console.error("Error loading table data:", e);
-        alert("Could not load table data. Please try again.");
+        showNotification("Could not load table data. Please try again.", 'error'); // Using new notification
       } finally {
         hideLoader();
         if (tableContainer) tableContainer.classList.remove('loading-transition');
@@ -928,11 +1010,12 @@
         });
 
         if (!saveResponse.ok) {
-            throw new Error('Failed to save data: ' + saveResponse.statusText);
+            const errorText = await saveResponse.text(); // Get raw text for better debugging
+            throw new Error('Failed to save data: ' + saveResponse.statusText + ' - ' + errorText);
         }
 
         lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
-        alert("Data saved successfully!");
+        showNotification("Data saved successfully!", 'success'); // Using new notification
 
         if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') {
             var alertResponse = await fetch('https://back-end-wrxi.onrender.com/send-alert', {
@@ -951,11 +1034,13 @@
             var alertResult = await alertResponse.json();
             if (alertResult.status === 'alert sent') {
                 console.log("Email alert sent for current out of tolerance values.");
+                showNotification("Alert email sent to RSO(s).", 'info'); // Using new notification
             } else if (alertResult.status === 'no_change') {
                 console.log("No new out-of-tolerance values or changes. Email not sent.");
+                showNotification("No new critical alerts to send.", 'info'); // Using new notification
             } else {
                 console.warn("Could not send email alert:", alertResult.message || alertResult.status);
-                alert("Alert email could not be sent: " + (alertResult.message || "Unknown error."));
+                showNotification("Alert email could not be sent: " + (alertResult.message || "Unknown error."), 'warning'); // Using new notification
             }
         } else {
             console.log("No out-of-tolerance values to send for alert and no prior save to trigger a resolution check.");
@@ -963,7 +1048,7 @@
 
       } catch(err){
         console.error("Operation failed:", err);
-        alert("Operation failed: " + err.message);
+        showNotification("Operation failed: " + err.message, 'error'); // Using new notification
       } finally{
         hideLoader();
       }
@@ -1013,7 +1098,7 @@
         var selectedEnergy = document.getElementById('trendEnergySelect').value;
         if (!selectedEnergy) {
             hideLoader();
-            alert("Please select an energy type for trend analysis.");
+            showNotification("Please select an energy type for trend analysis.", 'info'); // Using new notification
             if (trendChartSection) trendChartSection.classList.remove('loading-transition');
             return;
         }
@@ -1103,7 +1188,7 @@
 
         } catch (error) {
             console.error("Error fetching trend data:", error);
-            alert("Could not load trend data. Please try again.");
+            showNotification("Could not load trend data. Please try again.", 'error'); // Using new notification
         } finally {
             hideLoader();
             if (trendChartSection) trendChartSection.classList.remove('loading-transition');
@@ -1294,14 +1379,14 @@
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url); // Clean up the URL object
-                alert("Excel file exported successfully!");
+                showNotification("Excel file exported successfully!", 'success'); // Using new notification
             } else {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Failed to export Excel file.');
             }
         } catch (error) {
             console.error("Error exporting Excel:", error);
-            alert("Failed to export Excel: " + error.message);
+            showNotification("Failed to export Excel: " + error.message, 'error'); // Using new notification
         } finally {
             hideLoader(); // Hide loading indicator
         }
@@ -1354,7 +1439,7 @@
                 var userStatus = localStorage.getItem("userStatus");
 
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
-                    alert("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.");
+                    showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000); // Using new notification
                     window.logout();
                     return;
                 }
