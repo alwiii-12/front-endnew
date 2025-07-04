@@ -108,6 +108,56 @@
     .forgot-password-link:hover {
         text-decoration: underline;
     }
+
+    /* NEW: Styles for Custom Notifications (copied from upload.html) */
+    #notification-container {
+        position: fixed;
+        top: 20px; /* Adjust as needed */
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10000; /* Ensure it's on top of everything */
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none; /* Allows clicks to pass through when no messages are active */
+    }
+
+    .notification-message {
+        background-color: #333;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        transform: translateY(-20px);
+        min-width: 250px;
+        text-align: center;
+        pointer-events: auto; /* Re-enable pointer events for the message itself */
+    }
+
+    .notification-message.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .notification-message.success {
+        background-color: #28a745; /* var(--success-green) */
+    }
+
+    .notification-message.error {
+        background-color: #dc3545; /* var(--error-red) */
+    }
+
+    .notification-message.warning {
+        background-color: #ffc107; /* var(--warning-orange) */
+        color: #333; /* var(--text-dark) */
+    }
+
+    .notification-message.info {
+        background-color: #007bff; /* var(--primary-blue) */
+    }
+
   </style>
 </head>
 <body>
@@ -132,10 +182,12 @@
 
   <a href="index.html" class="home-link" title="Go to Home Page">Home</a>
 
+  <div id="notification-container"></div>
+
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="firebase-init.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-  <script src="firebase-init.js"></script>
 
   <script>
     // These now reference the globally initialized Firebase objects from firebase-init.js
@@ -144,11 +196,32 @@
 
     const errorMsg = document.getElementById("errorMsg");
     const successMsg = document.getElementById("successMsg");
+    const notificationContainer = document.getElementById('notification-container'); // Get notification container
 
     function clearMessages() {
         errorMsg.textContent = "";
         successMsg.textContent = "";
     }
+
+    // NEW: Custom Notification Function (copied here for consistency)
+    function showNotification(message, type = 'info', duration = 3000) {
+        const notification = document.createElement('div');
+        notification.classList.add('notification-message', type);
+        notification.textContent = message;
+
+        notificationContainer.appendChild(notification);
+
+        void notification.offsetWidth; // Force reflow
+        notification.classList.add('show');
+
+        setTimeout(() => {
+            notification.classList.remove('show');
+            notification.addEventListener('transitionend', () => {
+                notification.remove();
+            }, { once: true });
+        }, duration);
+    }
+
 
     document.getElementById("loginForm").addEventListener("submit", function (e) {
       e.preventDefault();
@@ -181,11 +254,17 @@
               } else if (userStatus === "active") {
                 window.location.href = "upload.html";
               } else if (userStatus === "pending" || userStatus === "rejected") {
-                alert("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.");
-                window.location.href = "awaiting_approval.html";
+                showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000); // Using new notification
+                // No direct alert here, notification handles it.
+                // You might still want to immediately redirect if status prevents login.
+                setTimeout(() => { // Give time for notification to show
+                    window.location.href = "awaiting_approval.html";
+                }, 1000);
               } else {
-                alert("Your account status is unknown. Please contact support.");
-                window.location.href = "awaiting_approval.html";
+                showNotification("Your account status is unknown. Please contact support.", 'warning', 5000); // Using new notification
+                setTimeout(() => { // Give time for notification to show
+                    window.location.href = "awaiting_approval.html";
+                }, 1000);
               }
 
             } else {
@@ -193,20 +272,25 @@
               localStorage.setItem("hospitalName", "UNKNOWN HOSPITAL");
               localStorage.setItem("userRole", "unknown");
               localStorage.setItem("userStatus", "unknown");
-              alert("Your profile data is incomplete. Please contact support.");
-              window.location.href = "awaiting_approval.html";
+              showNotification("Your profile data is incomplete. Please contact support.", 'error', 5000); // Using new notification
+              setTimeout(() => { // Give time for notification to show
+                    window.location.href = "awaiting_approval.html";
+                }, 1000);
             }
           } catch (err) {
             console.error("Error fetching user data from Firestore:", err);
             localStorage.setItem("hospitalName", "UNKNOWN HOSPITAL");
             localStorage.setItem("userRole", "unknown");
             localStorage.setItem("userStatus", "unknown");
-            alert("An error occurred fetching your profile. Please contact support.");
-            window.location.href = "awaiting_approval.html";
+            showNotification("An error occurred fetching your profile. Please contact support.", 'error', 5000); // Using new notification
+            setTimeout(() => { // Give time for notification to show
+                    window.location.href = "awaiting_approval.html";
+                }, 1000);
           }
         })
         .catch((error) => {
-          errorMsg.textContent = "❌ Invalid email or password.";
+          // errorMsg.textContent = "❌ Invalid email or password."; // Replaced by notification
+          showNotification("Login failed: " + (error.message || "Invalid email or password."), 'error'); // Using new notification
         });
     });
 
@@ -215,21 +299,21 @@
         const email = document.getElementById("email").value;
 
         if (!email) {
-            errorMsg.textContent = "Please enter your email to reset password.";
+            showNotification("Please enter your email to reset password.", 'warning'); // Using new notification
             return;
         }
 
         try {
             await auth.sendPasswordResetEmail(email);
-            successMsg.textContent = "✅ Password reset email sent. Check your inbox!";
+            showNotification("Password reset email sent. Check your inbox!", 'success'); // Using new notification
         } catch (error) {
             console.error("Password reset error:", error);
             if (error.code === 'auth/user-not-found') {
-                errorMsg.textContent = "No user found with that email address.";
+                showNotification("No user found with that email address.", 'error'); // Using new notification
             } else if (error.code === 'auth/invalid-email') {
-                errorMsg.textContent = "Please enter a valid email address.";
+                showNotification("Please enter a valid email address.", 'error'); // Using new notification
             } else {
-                errorMsg.textContent = "Error sending password reset email: " + error.message;
+                showNotification("Error sending password reset email: " + error.message, 'error'); // Using new notification
             }
         }
     }
