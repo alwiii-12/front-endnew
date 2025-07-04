@@ -94,6 +94,55 @@
             text-align: center;
             margin-bottom: 10px;
         }
+
+        /* NEW: Styles for Custom Notifications (copied from upload.html) */
+        #notification-container {
+            position: fixed;
+            top: 20px; /* Adjust as needed */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000; /* Ensure it's on top of everything */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none; /* Allows clicks to pass through when no messages are active */
+        }
+
+        .notification-message {
+            background-color: #333;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            transform: translateY(-20px);
+            min-width: 250px;
+            text-align: center;
+            pointer-events: auto; /* Re-enable pointer events for the message itself */
+        }
+
+        .notification-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .notification-message.success {
+            background-color: #28a745; /* var(--success-green) */
+        }
+
+        .notification-message.error {
+            background-color: #dc3545; /* var(--error-red) */
+        }
+
+        .notification-message.warning {
+            background-color: #ffc107; /* var(--warning-orange) */
+            color: #333; /* var(--text-dark) */
+        }
+
+        .notification-message.info {
+            background-color: #007bff; /* var(--primary-blue) */
+        }
     </style>
 </head>
 <body>
@@ -130,13 +179,41 @@
     <p style="margin-top: 15px; text-align: center; font-size: 0.9em; color: var(--text-dark);">Already have an account? <a href="login.html" style="color: var(--primary-blue);">Log in</a></p>
   </div>
 
+  <div id="notification-container"></div>
+
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="firebase-init.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
     // These now reference the globally initialized Firebase auth object
     const auth = firebase.auth();
+    // Assuming db might be used indirectly via backend for signup. If direct Firestore access needed, uncomment:
+    const db = firebase.firestore(); 
+
+    const notificationContainer = document.getElementById('notification-container'); // Get notification container
+
+
+    // NEW: Custom Notification Function (copied here for consistency)
+    function showNotification(message, type = 'info', duration = 3000) {
+        const notification = document.createElement('div');
+        notification.classList.add('notification-message', type);
+        notification.textContent = message;
+
+        notificationContainer.appendChild(notification);
+
+        void notification.offsetWidth; // Force reflow
+        notification.classList.add('show');
+
+        setTimeout(() => {
+            notification.classList.remove('show');
+            notification.addEventListener('transitionend', () => {
+                notification.remove();
+            }, { once: true });
+        }, duration);
+    }
+
 
     async function signup() {
       const name = document.getElementById("name").value.trim();
@@ -146,10 +223,10 @@
       const role = document.getElementById("role").value.trim();
       const messageDiv = document.getElementById("message");
       messageDiv.textContent = "";
-      messageDiv.style.color = "red";
+      // messageDiv.style.color = "red"; // Replaced by notification system
 
       if (!name || !email || !password || !hospital || hospital === "" || !role || role === "") {
-        messageDiv.textContent = "Please fill in all fields.";
+        showNotification("Please fill in all fields.", 'warning'); // Using new notification
         return;
       }
 
@@ -177,19 +254,20 @@
             // but we use it as hospitalName in localStorage for display consistency in upload.html
             localStorage.setItem("hospitalName", hospital.toUpperCase());
 
-            messageDiv.textContent = "Signup successful! Your account is awaiting approval. You will receive an email once approved.";
-            messageDiv.style.color = "green";
+            showNotification("Signup successful! Your account is awaiting approval.", 'success', 5000); // Using new notification
+            // messageDiv.textContent = "Signup successful! Your account is awaiting approval. You will receive an email once approved.";
+            // messageDiv.style.color = "green";
             setTimeout(() => {
                 window.location.href = "awaiting_approval.html"; // Redirect to approval page
-            }, 3000);
+            }, 3000); // Give time for notification to show
 
         } else {
-            messageDiv.textContent = "Signup failed: " + data.message;
+            showNotification("Signup failed: " + data.message, 'error'); // Using new notification
+            // messageDiv.textContent = "Signup failed: " + data.message;
         }
 
       } catch (error) {
         console.error(error);
-        // Improved error handling messages based on Firebase Auth error codes
         let errorMessage = "An unknown error occurred.";
         switch (error.code) {
           case 'auth/email-already-in-use':
@@ -207,7 +285,8 @@
           default:
             errorMessage = "Firebase signup error: " + error.message;
         }
-        messageDiv.textContent = errorMessage;
+        showNotification(errorMessage, 'error'); // Using new notification
+        // messageDiv.textContent = errorMessage;
       }
     }
   </script>
