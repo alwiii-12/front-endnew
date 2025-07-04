@@ -44,16 +44,21 @@
             flex-grow: 1; /* Allows it to take available space */
             text-align: center;
         }
+        /* Updated logout button styles */
         .logout-button {
-            padding: 5px 10px; /* Even smaller padding */
-            font-size: 0.8em; /* Even smaller font size */
+            width: 38px; /* Fixed width for a square/circular button */
+            height: 38px; /* Fixed height for a square/circular button */
+            display: flex; /* Use flexbox to center the icon */
+            justify-content: center;
+            align-items: center;
+            padding: 0; /* Remove padding if using fixed width/height */
+            font-size: 1.2em; /* Size of the icon */
             background-color: #dc3545; /* Red for logout */
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 50%; /* Makes it circular */
             cursor: pointer;
             transition: background-color 0.3s ease;
-            white-space: nowrap; /* Prevent button text from wrapping */
         }
         .logout-button:hover {
             background-color: #c82333;
@@ -171,7 +176,7 @@
             background-color: #007bff;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px; /* Applied to refresh button */
             cursor: pointer;
             transition: background-color 0.3s ease;
             font-size: 0.95em;
@@ -222,7 +227,7 @@
         .user-table .user-actions button {
             padding: 5px 8px;
             font-size: 0.8em;
-            border-radius: 4px;
+            border-radius: 8px; /* Adjusted for more curve */
             margin-left: 5px;
             cursor: pointer;
             transition: background-color 0.2s ease;
@@ -494,7 +499,7 @@
         body:-webkit-full-screen > .admin-footer, body:-moz-full-screen > .admin-footer, body:-ms-full-screen > .admin-footer, body:fullscreen > .admin-footer,
         body:-webkit-full-screen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)), /* Hide admin-content if not the parent of fullscreen elem */
         body:-moz-full-screen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)),
-        body:-ms-fullscreen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)),
+        body:-ms-full-screen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)),
         body:fullscreen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)) {
             display: none !important;
             visibility: hidden !important;
@@ -504,7 +509,7 @@
         /* Specific rule for admin-content itself when native fullscreen is active */
         body:-webkit-full-screen .admin-content,
         body:-moz-full-screen .admin-content,
-        body:-ms-fullscreen .admin-content,
+        body:-ms-full-screen .admin-content,
         body:fullscreen .admin-content {
             position: absolute !important; /* Take it out of flow */
             top: 0 !important; left: 0 !important;
@@ -590,7 +595,7 @@
 <body>
     <div class="admin-header">
         <h1>LINAC QA Admin Portal</h1>
-        <button onclick="logout()" class="logout-button">Logout</button>
+        <button onclick="logout()" class="logout-button" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
     </div>
 
     <div class="main-admin-layout">
