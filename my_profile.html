@@ -114,8 +114,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
     <script src="firebase-init.js"></script>
-    <script type="module"> /* Still use type="module" for v9 import syntax */
-        // These now reference the globally initialized Firebase objects from firebase-init.js
+    <script type="module">
         // For modular SDK, you still import the functions directly, but the app is initialized globally.
         import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js';
         import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js';
@@ -126,19 +125,19 @@
         const auth = getAuth(firebase.app());
         const db = getFirestore(firebase.app());
 
-        window.logout = function() { // Expose logout globally for onclick
-            signOut(auth).then(() => { // Use v9 signOut
+        window.logout = function() {
+            signOut(auth).then(() => {
                 localStorage.clear();
                 window.location.href = "login.html";
             });
         }
 
-        onAuthStateChanged(auth, user => { // Use v9 onAuthStateChanged
+        onAuthStateChanged(auth, user => {
             if (user) {
                 const userStatus = localStorage.getItem("userStatus");
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
                     alert("Your account is not active. Please await admin approval.");
-                    window.logout(); // Use global logout
+                    window.logout();
                     return;
                 }
                 loadProfile(user.uid);
