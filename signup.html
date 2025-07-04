@@ -132,20 +132,12 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script>
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
-      authDomain: "linac-qa.firebaseapp.com",
-      projectId: "linac-qa",
-      storageBucket: "linac-qa.appspot.com",
-      messagingSenderId: "395443876940",
-      appId: "1:395443876940:web:8ed5b7b3d17693bd70b31c"
-    };
-    firebase.initializeApp(firebaseConfig);
-  </script>
+  <script src="firebase-init.js"></script>
 
   <script>
+    // These now reference the globally initialized Firebase auth object
+    const auth = firebase.auth();
+
     async function signup() {
       const name = document.getElementById("name").value.trim();
       const email = document.getElementById("email").value.trim();
@@ -162,7 +154,7 @@
       }
 
       try {
-        const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         const uid = userCredential.user.uid;
 
         // Send initial status as "pending" along with other user data to backend
