@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Profile | LINAC QA</title>
-    <link rel="icon" href="/favicon.png" type="image/png"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
+    <link rel="icon" href="/favicon.png" type="image/png">
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -90,6 +90,55 @@
             text-align: center;
             color: #666;
         }
+
+        /* NEW: Styles for Custom Notifications (copied from upload.html) */
+        #notification-container {
+            position: fixed;
+            top: 20px; /* Adjust as needed */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000; /* Ensure it's on top of everything */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none; /* Allows clicks to pass through when no messages are active */
+        }
+
+        .notification-message {
+            background-color: #333;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            transform: translateY(-20px);
+            min-width: 250px;
+            text-align: center;
+            pointer-events: auto; /* Re-enable pointer events for the message itself */
+        }
+
+        .notification-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .notification-message.success {
+            background-color: #28a745; /* var(--success-green) */
+        }
+
+        .notification-message.error {
+            background-color: #dc3545; /* var(--error-red) */
+        }
+
+        .notification-message.warning {
+            background-color: #ffc107; /* var(--warning-orange) */
+            color: #333; /* var(--text-dark) */
+        }
+
+        .notification-message.info {
+            background-color: #007bff; /* var(--primary-blue) */
+        }
     </style>
 </head>
 <body>
@@ -110,30 +159,55 @@
         </div>
     </div>
 
+    <div id="notification-container"></div>
+
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="firebase-init.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-    <script src="firebase-init.js"></script>
     
     <script>
         // These now directly reference the globally initialized Firebase objects from firebase-init.js
-        // No need for 'import' statements for getFirestore, doc, getDoc, getAuth, onAuthStateChanged, signOut
-        // as we are using the Compat SDK style for consistency with firebase-init.js
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const notificationContainer = document.getElementById('notification-container'); // Get notification container
+
+
+        // NEW: Custom Notification Function (copied here for consistency)
+        function showNotification(message, type = 'info', duration = 3000) {
+            const notification = document.createElement('div');
+            notification.classList.add('notification-message', type);
+            notification.textContent = message;
+
+            notificationContainer.appendChild(notification);
+
+            void notification.offsetWidth; // Force reflow
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+                notification.addEventListener('transitionend', () => {
+                    notification.remove();
+                }, { once: true });
+            }, duration);
+        }
+
 
         window.logout = function() {
-            auth.signOut().then(() => { // Use Compat signOut
+            auth.signOut().then(() => {
                 localStorage.clear();
                 window.location.href = "login.html";
+            }).catch((error) => {
+                console.error("Logout error:", error);
+                showNotification("Logout failed: " + error.message, 'error'); // Using new notification
             });
         }
 
-        firebase.auth().onAuthStateChanged(user => { // Use Compat onAuthStateChanged
+        auth.onAuthStateChanged(user => {
             if (user) {
                 const userStatus = localStorage.getItem("userStatus");
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
-                    alert("Your account is not active. Please await admin approval.");
+                    showNotification("Your account is not active. Please await admin approval.", 'warning', 5000); // Using new notification
                     window.logout();
                     return;
                 }
@@ -148,11 +222,10 @@
             profileDetailsDiv.innerHTML = '<p class="loading-message">Loading profile data...</p>';
 
             try {
-                // Correct Compat SDK way to get a document reference and fetch it
                 const userDocRef = db.collection("users").doc(uid);
                 const userDocSnap = await userDocRef.get();
 
-                if (userDocSnap.exists) {
+                if (userDocSnap.exists()) {
                     const userData = userDocSnap.data();
                     profileDetailsDiv.innerHTML = `
                         <div class="profile-item"><strong>Name:</strong> ${userData.name || 'N/A'}</div>
@@ -166,10 +239,12 @@
                 } else {
                     profileDetailsDiv.innerHTML = '<p class="loading-message" style="color: red;">Error: User profile not found in database.</p>';
                     console.error("Profile Error: User document not found for UID:", uid);
+                    showNotification("Error: User profile not found in database.", 'error'); // Using new notification
                 }
             } catch (error) {
                 console.error("Error loading profile:", error);
                 profileDetailsDiv.innerHTML = `<p class="loading-message" style="color: red;">Error: ${error.message || 'Could not load profile data.'}</p>`;
+                showNotification(`Error: ${error.message || 'Could not load profile data.'}`, 'error'); // Using new notification
             }
         }
     </script>
