@@ -113,26 +113,18 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-    <script type="module"> /* Use type="module" for v9 import syntax */
+    <script src="firebase-init.js"></script>
+    <script type="module"> /* Still use type="module" for v9 import syntax */
+        // These now reference the globally initialized Firebase objects from firebase-init.js
+        // For modular SDK, you still import the functions directly, but the app is initialized globally.
         import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js';
         import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js';
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js';
+        // No need to import initializeApp here as it's done in firebase-init.js
 
-        // Firebase config (Copy your actual config here from login.html/admin_dashboard.html)
-        const firebaseConfig = {
-          apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
-          authDomain: "linac-qa-project.firebaseapp.com",
-          projectId: "linac-qa-project",
-          storageBucket: "linac-qa-project.firebasestorage.app",
-          messagingSenderId: "850988733382",
-          appId: "1:850988733382:web:ef75d64e30deb7e37c18c7",
-          measurementId: "G-HFJ2CGS664"
-        };
-        
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app); // Get auth instance
-        const db = getFirestore(app); // Get firestore instance
+        // Get auth and firestore instances from the globally initialized app
+        // window.firebase.app() refers to the default app initialized in firebase-init.js
+        const auth = getAuth(firebase.app());
+        const db = getFirestore(firebase.app());
 
         window.logout = function() { // Expose logout globally for onclick
             signOut(auth).then(() => { // Use v9 signOut
@@ -160,11 +152,10 @@
             profileDetailsDiv.innerHTML = '<p class="loading-message">Loading profile data...</p>';
 
             try {
-                // Correct v9 way to get a document reference and fetch it
-                const userDocRef = doc(db, "users", uid); // Correct: doc(db, collectionName, docId)
-                const userDocSnap = await getDoc(userDocRef); // Correct: getDoc(docRef)
+                const userDocRef = doc(db, "users", uid);
+                const userDocSnap = await getDoc(userDocRef);
 
-                if (userDocSnap.exists()) { // Correct: userDocSnap.exists() is a method
+                if (userDocSnap.exists()) {
                     const userData = userDocSnap.data();
                     profileDetailsDiv.innerHTML = `
                         <div class="profile-item"><strong>Name:</strong> ${userData.name || 'N/A'}</div>
