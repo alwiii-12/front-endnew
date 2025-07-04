@@ -489,7 +489,7 @@
         body:-webkit-full-screen > .admin-footer, body:-moz-full-screen > .admin-footer, body:-ms-full-screen > .admin-footer, body:fullscreen > .admin-footer,
         body:-webkit-full-screen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)),
         body:-moz-full-screen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)),
-        body:-ms-fullscreen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)),
+        body:-ms-full-screen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)),
         body:fullscreen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)) {
             display: none !important;
             visibility: hidden !important;
@@ -965,7 +965,7 @@
             editUserStatus.value = user.status || '';
 
             const allHospitals = new Set(allUsersData.map(u => u.hospital).filter(Boolean));
-            editUserHospital.innerHTML = '';
+            editUserHospital.innerHTML = '<option value="">Select Hospital</option>'; // Always ensure a default option for consistency
             allHospitals.forEach(hospital => {
                 const option = document.createElement('option');
                 option.value = hospital;
