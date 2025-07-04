@@ -225,7 +225,7 @@
 
 
         /* More specific selector for action buttons to ensure styles apply */
-        .user-table tbody .user-actions button { /* Added tbody to make it more specific */
+        .user-table tbody .user-actions-cell button { /* Targeted by new class on TD */
             padding: 5px 8px;
             font-size: 0.8em;
             border-radius: 8px; /* Adjusted for more curve */
@@ -248,7 +248,7 @@
         }
 
         /* Styles for actions column to allow buttons to display side-by-side */
-        .user-table td:nth-child(6) {
+        .user-table td.user-actions-cell { /* Targeted by new class on TD */
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -258,7 +258,7 @@
             justify-content: center;
             align-items: center;
         }
-        .user-table td:nth-child(6) button {
+        .user-table td.user-actions-cell button { /* Targeted by new class on TD */
             margin: 0 !important;
             flex-shrink: 0;
         }
@@ -453,7 +453,7 @@
 
         #hospital-data-access-section:-webkit-full-screen h2,
         #hospital-data-access-section:-moz-full-screen h2,
-        #hospital-data-access-section:-ms-full-screen h2,
+        #hospital-data-access-section:-ms-fullscreen h2,
         #hospital-data-access-section:fullscreen h2 {
             padding: 20px;
             box-sizing: border-box;
@@ -461,7 +461,7 @@
         }
         #hospital-data-access-section:-webkit-full-screen .filter-search-container,
         #hospital-data-access-section:-moz-full-screen .filter-search-container,
-        #hospital-data-access-section:-ms-full-screen .filter-search-container,
+        #hospital-data-access-section:-ms-fullscreen .filter-search-container,
         #hospital-data-access-section:fullscreen .filter-search-container {
             padding: 0 20px 20px;
             box-sizing: border-box;
@@ -469,7 +469,7 @@
         }
         #hospital-data-access-section:-webkit-full-screen .user-table-container,
         #hospital-data-access-section:-moz-full-screen .user-table-container,
-        #hospital-data-access-section:-ms-full-screen .user-table-container,
+        #hospital-data-access-section:-ms-fullscreen .user-table-container,
         #hospital-data-access-section:fullscreen .user-table-container {
             flex-grow: 1;
             max-height: unset;
@@ -489,7 +489,7 @@
         body:-webkit-full-screen > .admin-footer, body:-moz-full-screen > .admin-footer, body:-ms-full-screen > .admin-footer, body:fullscreen > .admin-footer,
         body:-webkit-full-screen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)),
         body:-moz-full-screen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)),
-        body:-ms-full-screen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)),
+        body:-ms-fullscreen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)),
         body:fullscreen > .admin-content:not(:has(#hospital-data-access-section:fullscreen)) {
             display: none !important;
             visibility: hidden !important;
@@ -714,26 +714,17 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="firebase-init.js"></script>
 
     <script>
-        // --- Firebase Initialization (MOVED TO THE VERY TOP OF THE SCRIPT BLOCK) ---
-        const firebaseConfig = {
-          apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
-          authDomain: "linac-qa-project.firebaseapp.com",
-          projectId: "linac-qa-project",
-          storageBucket: "linac-qa-project.firebasestorage.app",
-          messagingSenderId: "850988733382",
-          appId: "1:850988733382:web:ef75d64e30deb7e37c18c7",
-          measurementId: "G-HFJ2CGS664"
-        };
-        firebase.initializeApp(firebaseConfig);
+        // These now reference the globally initialized Firebase objects from firebase-init.js
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        let allUsersData = []; // Store the full list of users fetched from backend
-        let lastLoadedHospitalQaData = { data: [], year: null, month: null }; // To store the last fetched data for re-rendering
+        let allUsersData = [];
+        let lastLoadedHospitalQaData = { data: [], year: null, month: null };
 
-        // DOM elements for loading, filters, and modal (existing)
+        // DOM elements for loading, filters, and modal
         const loadingOverlay = document.getElementById('loading-overlay');
         const usersTableBody = document.getElementById('usersTableBody');
         const searchUserInput = document.getElementById('searchUserInput');
@@ -750,7 +741,7 @@
         const editUserStatus = document.getElementById('editUserStatus');
         const modalErrorMsg = document.getElementById('modalErrorMsg');
 
-        // NEW: DOM elements for Sidebar and Hospital QA Data section
+        // DOM elements for Sidebar and Hospital QA Data section
         const manageUsersBtn = document.getElementById('manageUsersBtn');
         const viewHospitalDataBtn = document.getElementById('viewHospitalDataBtn');
         const manageUsersSection = document.getElementById('manage-users-section');
@@ -797,26 +788,22 @@
 
             // Show the selected section
             const selectedSection = document.getElementById(sectionId);
-            selectedSection.style.display = 'block'; // Ensure it's block for card-section layout
-            selectedSection.classList.add('active-section'); // Add active-section class
+            selectedSection.style.display = 'block';
+            selectedSection.classList.add('active-section');
 
             // Conditional loading based on section
             if (sectionId === 'manage-users-section') {
-                // Only load if not already loaded, or force refresh if desired
-                if (allUsersData.length === 0) { // Or add a 'forceRefresh' param if needed
+                if (allUsersData.length === 0) {
                     await loadAllUsers();
                 } else {
-                    renderUsers(allUsersData); // Just re-render if data is already there
+                    renderUsers(allUsersData);
                 }
             } else if (sectionId === 'hospital-data-access-section') {
-                // Ensure hospital data filters are populated
-                if (adminHospitalSelect.options.length <= 1) { // If only "Select Hospital" is present
-                    // Ensure allUsersData is loaded before populating hospital filters
+                if (adminHospitalSelect.options.length <= 1) {
                     if (allUsersData.length > 0) {
                         populateHospitalDataFilters();
                     } else {
-                        // This might happen if user navigates here directly or allUsersData failed
-                        await loadAllUsers(); // Ensure users are loaded first
+                        await loadAllUsers();
                         populateHospitalDataFilters();
                     }
                 }
@@ -844,9 +831,9 @@
                     throw new Error(errorData.message || `Failed to fetch users. Status: ${response.status}`);
                 }
 
-                allUsersData = await response.json(); // Store all users
-                populateMainUserFilters(); // Populate hospital filter in the 'Manage User Accounts' section
-                renderUsers(allUsersData); // Render all users initially
+                allUsersData = await response.json();
+                populateMainUserFilters();
+                renderUsers(allUsersData);
                 
             } catch (error) {
                 console.error("Error loading users:", error);
@@ -856,7 +843,7 @@
             }
         }
 
-        function populateMainUserFilters() { // Renamed from populateFilters to distinguish
+        function populateMainUserFilters() {
             const hospitals = new Set();
             allUsersData.forEach(user => {
                 if (user.hospital) {
@@ -874,7 +861,7 @@
         }
 
         function renderUsers(usersToRender) {
-            usersTableBody.innerHTML = ''; // Clear existing rows
+            usersTableBody.innerHTML = '';
             if (usersToRender.length === 0) {
                 usersTableBody.innerHTML = '<tr><td colspan="6" class="no-users-message">No users found matching current filters.</td></tr>';
                 return;
@@ -882,14 +869,14 @@
 
             usersToRender.forEach(user => {
                 const row = usersTableBody.insertRow();
-                // Adding a class to the td containing the buttons for more specific targeting
                 row.innerHTML = `
                     <td>${user.name || 'N/A'}</td>
                     <td>${user.email || 'N/A'}</td>
                     <td>${user.hospital || 'N/A'}</td>
                     <td>${user.role || 'N/A'}</td>
                     <td><span style="color: ${user.status === 'active' ? 'green' : user.status === 'pending' ? 'orange' : 'red'}; font-weight: bold;">${(user.status || 'N/A').toUpperCase()}</span></td>
-                    <td class="user-actions-cell"> <button class="approve-btn" onclick="updateUserStatus('${user.uid}', 'active')">Approve</button>
+                    <td class="user-actions-cell">
+                        <button class="approve-btn" onclick="updateUserStatus('${user.uid}', 'active')">Approve</button>
                         <button class="reject-btn" onclick="updateUserStatus('${user.uid}', 'rejected')">Reject</button>
                         <button class="edit-btn" onclick="openEditModal('${user.uid}')">Edit</button>
                         <button class="delete-btn" onclick="deleteUser('${user.uid}', '${user.name || 'N/A'}', '${user.email || 'N/A'}')">
@@ -952,7 +939,7 @@
                 }
 
                 alert(`User status updated to ${newStatus.toUpperCase()} successfully!`);
-                loadAllUsers(); // Reload all users to reflect changes
+                loadAllUsers();
             } catch (error) {
                 console.error("Error updating user status:", error);
                 alert(`Failed to update user status: ${error.message}`);
@@ -962,11 +949,11 @@
         }
 
         function openEditModal(uid) {
-            modalErrorMsg.textContent = ''; // Clear previous errors
+            modalErrorMsg.textContent = '';
             const user = allUsersData.find(u => u.uid === uid);
             if (!user) {
                 modalErrorMsg.textContent = "Error: User data not found for editing.";
-                userEditModal.style.display = 'flex'; // Still show modal with error
+                userEditModal.style.display = 'flex';
                 return;
             }
 
@@ -977,7 +964,6 @@
             editUserRole.value = user.role || '';
             editUserStatus.value = user.status || '';
 
-            // Populate the modal's hospital dropdown dynamically using all unique hospitals
             const allHospitals = new Set(allUsersData.map(u => u.hospital).filter(Boolean));
             editUserHospital.innerHTML = '';
             allHospitals.forEach(hospital => {
@@ -986,29 +972,25 @@
                 option.textContent = hospital;
                 editUserHospital.appendChild(option);
             });
-            // Add "Other / New Hospital" option to modal for flexible input
             const newHospitalOption = document.createElement('option');
             newHospitalOption.value = "Other";
             newHospitalOption.textContent = "Other / New Hospital";
             editUserHospital.appendChild(newHospitalOption);
 
-            // Set the selected value after options are populated
             if (user.hospital && allHospitals.has(user.hospital)) {
                 editUserHospital.value = user.hospital;
             } else {
                 editUserHospital.value = "Other";
-                // If 'Other' is selected, create a new input field
                 const newHospitalInput = document.createElement('input');
                         newHospitalInput.type = 'text';
                         newHospitalInput.id = 'newHospitalNameInput';
                         newHospitalInput.placeholder = 'Enter new hospital name';
-                        newHospitalInput.value = user.hospital || ''; // Pre-fill if there was a value
+                        newHospitalInput.value = user.hospital || '';
                         editUserHospital.parentNode.insertBefore(newHospitalInput, editUserHospital.nextSibling);
                         newHospitalInput.focus();
             }
 
 
-            // Listener for 'Other / New Hospital' option in modal
             editUserHospital.onchange = function() {
                 const existingNewHospitalInput = document.getElementById('newHospitalNameInput');
                 if (this.value === "Other") {
@@ -1017,7 +999,7 @@
                         newHospitalInput.type = 'text';
                         newHospitalInput.id = 'newHospitalNameInput';
                         newHospitalInput.placeholder = 'Enter new hospital name';
-                        newHospitalInput.value = ''; // Start empty for new entry
+                        newHospitalInput.value = '';
                         this.parentNode.insertBefore(newHospitalInput, this.nextSibling);
                         newHospitalInput.focus();
                     }
@@ -1027,23 +1009,22 @@
             };
 
 
-            userEditModal.style.display = 'flex'; // Show the modal
+            userEditModal.style.display = 'flex';
         }
 
         function closeEditModal() {
-            userEditModal.style.display = 'none'; // Hide the modal
+            userEditModal.style.display = 'none';
             const existingNewHospitalInput = document.getElementById('newHospitalNameInput');
-            if (existingNewHospitalInput) existingNewHospitalInput.remove(); // Clean up dynamic input
+            if (existingNewHospitalInput) existingNewHospitalInput.remove();
         }
 
         async function saveUserChanges() {
-            modalErrorMsg.textContent = ''; // Clear previous errors
+            modalErrorMsg.textContent = '';
             const uid = editUserId.value;
             let hospitalToSave = editUserHospital.value;
             const roleToSave = editUserRole.value;
             const statusToSave = editUserStatus.value;
 
-            // Handle 'Other' hospital input
             if (hospitalToSave === "Other") {
                 const newHospitalInput = document.getElementById('newHospitalNameInput');
                 if (newHospitalInput && newHospitalInput.value.trim() !== "") {
@@ -1083,7 +1064,7 @@
 
                 alert("User details updated successfully!");
                 closeEditModal();
-                loadAllUsers(); // Reload all users to reflect changes
+                loadAllUsers();
             } catch (error) {
                 console.error("Error saving user changes:", error);
                 alert(`Failed to save user changes: ${error.message}`);
@@ -1092,8 +1073,7 @@
             }
         }
 
-        // --- NEW: Delete User Function (MOVED TO GLOBAL SCOPE) ---
-        async function deleteUser(uid, userName, userEmail) { // This function needs to be globally accessible
+        async function deleteUser(uid, userName, userEmail) {
             const confirmed = confirm(`WARNING: Are you absolutely sure you want to permanently delete user:\n\nName: ${userName}\nEmail: ${userEmail}\n\nThis action cannot be undone.`);
             if (!confirmed) {
                 return;
@@ -1117,7 +1097,7 @@
                 }
 
                 alert(`User ${userName} (${userEmail}) deleted successfully!`);
-                loadAllUsers(); // Reload the user list to reflect the deletion
+                loadAllUsers();
             } catch (error) {
                 console.error("Error deleting user:", error);
                 alert(`Failed to delete user: ${error.message}`);
@@ -1126,11 +1106,8 @@
             }
         }
 
-        // --- NEW: Hospital QA Data Access Functions (moved to global scope) ---
-
         function populateHospitalDataFilters() {
-            // Populate Hospital Select using the already loaded allUsersData
-            const uniqueHospitals = new Set(allUsersData.map(user => user.hospital).filter(Boolean)); // Get unique, non-empty hospital names
+            const uniqueHospitals = new Set(allUsersData.map(user => user.hospital).filter(Boolean));
             adminHospitalSelect.innerHTML = '<option value="">Select Hospital</option>';
             uniqueHospitals.forEach(hospital => {
                 const option = document.createElement('option');
@@ -1139,18 +1116,16 @@
                 adminHospitalSelect.appendChild(option);
             });
 
-            // Populate Year Select
             const currentYear = new Date().getFullYear();
-            adminYearSelect.innerHTML = ''; // Clear previous options
-            for (let i = currentYear; i >= currentYear - 5; i--) { // Show current and 5 past years
+            adminYearSelect.innerHTML = '';
+            for (let i = currentYear; i >= currentYear - 5; i--) {
                 const option = document.createElement('option');
                 option.value = i;
                 option.textContent = i;
                 adminYearSelect.appendChild(option);
             }
-            adminYearSelect.value = currentYear; // Default to current year
+            adminYearSelect.value = currentYear;
 
-            // Populate Month Select
             const months = [
                 { value: '01', text: 'January' }, { value: '02', text: 'February' },
                 { value: '03', text: 'March' }, { value: '04', text: 'April' },
@@ -1159,7 +1134,7 @@
                 { value: '09', text: 'September' }, { value: '10', text: 'October' },
                 { value: '11', text: 'November' }, { value: '12', text: 'December' }
             ];
-            adminMonthSelect.innerHTML = ''; // Clear previous options
+            adminMonthSelect.innerHTML = '';
             const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
             months.forEach(month => {
                 const option = document.createElement('option');
@@ -1167,14 +1142,14 @@
                 option.textContent = month.text;
                 adminMonthSelect.appendChild(option);
             });
-            adminMonthSelect.value = currentMonth; // Default to current month (e.g., '07' for July)
+            adminMonthSelect.value = currentMonth;
         }
 
         async function loadHospitalQaData() {
             const hospitalId = adminHospitalSelect.value;
             const year = adminYearSelect.value;
             const month = adminMonthSelect.value;
-            const monthParam = `${year}-${month}`; // e.g., "2025-07"
+            const monthParam = `${year}-${month}`;
 
             if (!hospitalId) {
                 alert("Please select a hospital.");
@@ -1186,9 +1161,8 @@
             }
 
             showLoader();
-            // Using the new Date object for month name formatting correctly
             const monthName = new Date(year, parseInt(month) - 1, 1).toLocaleString('default', { month: 'long' });
-            hospitalQaDataTableBody.innerHTML = `<tr><td colspan="32" class="no-users-message" style="text-align:center;">Loading data for ${hospitalId} in ${monthName} ${year}...</td></tr>`; // Show loading in table
+            hospitalQaDataTableBody.innerHTML = `<tr><td colspan="32" class="no-users-message" style="text-align:center;">Loading data for ${hospitalId} in ${monthName} ${year}...</td></tr>`;
             
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
@@ -1206,8 +1180,8 @@
                 }
 
                 const result = await response.json();
-                lastLoadedHospitalQaData = { data: result.data, year: year, month: month }; // Store for re-rendering
-                renderHospitalQaDataTable(result.data, year, month); // Pass data and month/year for date headers
+                lastLoadedHospitalQaData = { data: result.data, year: year, month: month };
+                renderHospitalQaDataTable(result.data, year, month);
                 
             } catch (error) {
                 console.error("Error loading hospital QA data:", error);
@@ -1218,18 +1192,16 @@
         }
 
         function renderHospitalQaDataTable(data, year, month) {
-            hospitalQaDataTableBody.innerHTML = ''; // Clear existing rows
-            hospitalQaTableHeader.innerHTML = '<th>Energy</th>'; // Reset header to just 'Energy'
+            hospitalQaDataTableBody.innerHTML = '';
+            hospitalQaTableHeader.innerHTML = '<th>Energy</th>';
 
-            // Month in Date constructor is 0-indexed, so use parseInt(month) -1 for Date object, but just parseInt(month) for numDaysInMonth
-            const numDaysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate(); // Correct way to get days in month for a '1-12' month value
+            const numDaysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate();
             
-            // Populate dynamic date headers
             for (let i = 1; i <= numDaysInMonth; i++) {
                 const th = document.createElement('th');
-                const formattedMonth = String(month).padStart(2, '0'); // Ensure month is 2 digits
-                const formattedDay = String(i).padStart(2, '0'); // Ensure day is 2 digits
-                th.textContent = `${year}-${formattedMonth}-${formattedDay}`; // Corrected date header format
+                const formattedMonth = String(month).padStart(2, '0');
+                const formattedDay = String(i).padStart(2, '0');
+                th.textContent = `${year}-${formattedMonth}-${formattedDay}`;
                 hospitalQaTableHeader.appendChild(th);
             }
 
@@ -1238,10 +1210,8 @@
                 return;
             }
 
-            // Define energy types for consistent row order (should match backend)
             const ENERGY_TYPES_ORDER = ["6X","10X","15X","6X FFF","10X FFF","6E","9E","12E","15E","18E"];
             const dataMap = new Map();
-            // Populate dataMap from fetched data, assuming row[0] is energy and row.slice(1) are values
             data.forEach(row => {
                 if (row.length > 0) {
                     dataMap.set(row[0], row.slice(1));
@@ -1251,16 +1221,16 @@
             ENERGY_TYPES_ORDER.forEach(energyType => {
                 const tr = document.createElement('tr');
                 const energyTd = document.createElement('td');
-                energyTd.textContent = energyType; // Energy type
+                energyTd.textContent = energyType;
                 tr.appendChild(energyTd);
 
-                const values = dataMap.get(energyType) || []; // Get values, or empty array if not present
+                const values = dataMap.get(energyType) || [];
 
                 for (let i = 0; i < numDaysInMonth; i++) {
                     const td = document.createElement('td');
-                    const value = values[i] !== undefined && values[i] !== null ? values[i] : ''; // Handle null/undefined
+                    const value = values[i] !== undefined && values[i] !== null ? values[i] : '';
                     const n = parseFloat(value);
-                    td.textContent = value; // Display raw value
+                    td.textContent = value;
 
                     if (!isNaN(n)) {
                         if (Math.abs(n) <= 1.8) {
@@ -1277,53 +1247,44 @@
             });
         }
 
-        // --- NEW: Fullscreen Toggle Function for Hospital Data ---
         function toggleFullscreenHospitalData() {
-            // Check if element is currently in fullscreen
             const isFullscreen = document.fullscreenElement === hospitalDataAccessSection ||
                                  document.mozFullScreenElement === hospitalDataAccessSection ||
                                  document.webkitFullscreenElement === hospitalDataAccessSection ||
                                  document.msFullscreenElement === hospitalDataAccessSection;
 
             if (!isFullscreen) {
-                // Request fullscreen for the hospitalDataAccessSection
                 if (hospitalDataAccessSection.requestFullscreen) {
                     hospitalDataAccessSection.requestFullscreen();
-                } else if (hospitalDataAccessSection.mozRequestFullScreen) { /* Firefox */
+                } else if (hospitalDataAccessSection.mozRequestFullScreen) {
                     hospitalDataAccessSection.mozRequestFullScreen();
-                } else if (hospitalDataAccessSection.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+                } else if (hospitalDataAccessSection.webkitRequestFullscreen) {
                     hospitalDataAccessSection.webkitRequestFullscreen();
-                } else if (hospitalDataAccessSection.msRequestFullscreen) { /* IE/Edge */
+                } else if (hospitalDataAccessSection.msRequestFullscreen) {
                     hospitalDataAccessSection.msRequestFullscreen();
                 }
-                // Add class to html for aggressive overflow control
                 document.documentElement.classList.add('fullscreen-active-html');
                 document.body.classList.add('fullscreen-active');
 
             } else {
-                // Exit fullscreen if already in fullscreen
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
-                } else if (document.mozCancelFullScreen) { /* Firefox */
+                } else if (document.mozCancelFullScreen) {
                     document.mozCancelFullScreen();
-                } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                } else if (document.webkitExitFullscreen) {
                     document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) { /* IE/Edge */
+                } else if (document.msExitFullscreen) {
                     document.msExitFullscreen();
                 }
-                 // Remove class from html
                 document.documentElement.classList.remove('fullscreen-active-html');
                 document.body.classList.remove('fullscreen-active');
             }
-            // Icon change and re-render will be handled by fullscreenchange event listener
         }
 
-        // --- Event Listener for Fullscreen API Changes ---
-        // This will update the button icon and re-render the table dynamically
         document.addEventListener('fullscreenchange', handleFullscreenChange);
-        document.addEventListener('mozfullscreenchange', handleFullscreenChange); // Firefox
-        document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Chrome, Safari
-        document.addEventListener('msfullscreenchange', handleFullscreenChange); // IE/Edge
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('msfullscreenchange', handleFullscreenChange);
 
         function handleFullscreenChange() {
             const isCurrentlyFullscreen = document.fullscreenElement === hospitalDataAccessSection ||
@@ -1332,12 +1293,11 @@
                                          document.msFullscreenElement === hospitalDataAccessSection;
 
             if (isCurrentlyFullscreen) {
-                fullscreenHospitalDataBtn.innerHTML = '<i class="fas fa-compress"></i>'; // In fullscreen
+                fullscreenHospitalDataBtn.innerHTML = '<i class="fas fa-compress"></i>';
             } else {
-                fullscreenHospitalDataBtn.innerHTML = '<i class="fas fa-expand"></i>'; // Not in fullscreen
+                fullscreenHospitalDataBtn.innerHTML = '<i class="fas fa-expand"></i>';
             }
 
-            // Always re-render the table to adapt to new dimensions (whether entering or exiting fullscreen)
             if (lastLoadedHospitalQaData.data && lastLoadedHospitalQaData.data.length > 0) {
                 renderHospitalQaDataTable(
                     lastLoadedHospitalQaData.data,
@@ -1348,17 +1308,14 @@
         }
 
 
-        // --- Initial Auth State Check (This runs once Firebase is ready) ---
         auth.onAuthStateChanged(async user => {
-            if (!user) { // No user logged in
+            if (!user) {
                 window.location.href = "login.html";
             } else {
-                // Fetch user role and status from local storage first (faster)
                 const userRole = localStorage.getItem("userRole");
                 const userStatus = localStorage.getItem("userStatus");
 
                 if (userRole === "Admin" && userStatus === "active") {
-                    // Initial load: show 'Manage User Accounts' by default
                     await showAdminSection('manage-users-section');
                 } else {
                     alert("Access Denied: You are not authorized to view this page or your account is not active.");
