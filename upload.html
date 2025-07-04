@@ -272,6 +272,7 @@
         font-weight: 600;
         font-size: 1.4em;
         margin-bottom: 15px;
+        text-align: center;
     }
     .summary-box p {
         font-size: 1em;
@@ -885,7 +886,7 @@
         window.location.href = "login.html";
       }).catch((error) => {
         console.error("Logout error:", error);
-        showNotification("Logout failed: " + error.message, 'error'); // Using new notification
+        showNotification("Logout failed: " + error.message, 'error');
         hideLoader();
       });
     }
@@ -948,7 +949,7 @@
         updateSummaryAndChart(data);
       } catch(e) {
         console.error("Error loading table data:", e);
-        showNotification("Could not load table data. Please try again.", 'error'); // Using new notification
+        showNotification("Could not load table data. Please try again.", 'error');
       } finally {
         hideLoader();
         if (tableContainer) tableContainer.classList.remove('loading-transition');
@@ -1011,12 +1012,12 @@
         });
 
         if (!saveResponse.ok) {
-            const errorText = await saveResponse.text(); // Get raw text for better debugging
+            const errorText = await saveResponse.text();
             throw new Error('Failed to save data: ' + saveResponse.statusText + ' - ' + errorText);
         }
 
         lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
-        showNotification("Data saved successfully!", 'success'); // Using new notification
+        showNotification("Data saved successfully!", 'success');
 
         if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') {
             var alertResponse = await fetch('https://back-end-wrxi.onrender.com/send-alert', {
@@ -1024,7 +1025,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.2stringify({
+                body: JSON.stringify({
                     outValues: outOfToleranceValues,
                     hospitalName: currentHospital,
                     uid: currentUID,
@@ -1035,13 +1036,13 @@
             var alertResult = await alertResponse.json();
             if (alertResult.status === 'alert sent') {
                 console.log("Email alert sent for current out of tolerance values.");
-                showNotification("Alert email sent to RSO(s).", 'info'); // Using new notification
+                showNotification("Alert email sent to RSO(s).", 'info');
             } else if (alertResult.status === 'no_change') {
                 console.log("No new out-of-tolerance values or changes. Email not sent.");
-                showNotification("No new critical alerts to send.", 'info'); // Using new notification
+                showNotification("No new critical alerts to send.", 'info');
             } else {
                 console.warn("Could not send email alert:", alertResult.message || alertResult.status);
-                showNotification("Alert email could not be sent: " + (alertResult.message || "Unknown error."), 'warning'); // Using new notification
+                showNotification("Alert email could not be sent: " + (alertResult.message || "Unknown error."), 'warning');
             }
         } else {
             console.log("No out-of-tolerance values to send for alert and no prior save to trigger a resolution check.");
@@ -1049,7 +1050,7 @@
 
       } catch(err){
         console.error("Operation failed:", err);
-        showNotification("Operation failed: " + err.message, 'error'); // Using new notification
+        showNotification("Operation failed: " + err.message, 'error');
       } finally{
         hideLoader();
       }
@@ -1099,7 +1100,7 @@
         var selectedEnergy = document.getElementById('trendEnergySelect').value;
         if (!selectedEnergy) {
             hideLoader();
-            showNotification("Please select an energy type for trend analysis.", 'info'); // Using new notification
+            showNotification("Please select an energy type for trend analysis.", 'info');
             if (trendChartSection) trendChartSection.classList.remove('loading-transition');
             return;
         }
@@ -1189,7 +1190,7 @@
 
         } catch (error) {
             console.error("Error fetching trend data:", error);
-            showNotification("Could not load trend data. Please try again.", 'error'); // Using new notification
+            showNotification("Could not load trend data. Please try again.", 'error');
         } finally {
             hideLoader();
             if (trendChartSection) trendChartSection.classList.remove('loading-transition');
@@ -1202,7 +1203,7 @@
         messageElement.classList.add('chat-message', sender);
         messageElement.textContent = message;
         chatBody.appendChild(messageElement);
-        chatBody.scrollTop = chatBody.scrollHeight; // Scroll to bottom
+        chatBody.scrollTop = chatBody.scrollHeight;
     }
 
     // NEW: Function to handle sending chat messages
@@ -1211,23 +1212,20 @@
         if (message === "") return;
 
         addChatMessage(message, 'user');
-        chatInput.value = ''; // Clear input
+        chatInput.value = '';
 
-        // Convert message to lowercase for easier matching
         var lowerCaseMessage = message.toLowerCase();
-        var botResponse = ""; // Initialize botResponse here
+        var botResponse = "";
 
-        // --- Extract Energy Type and Date (for data queries) ---
         const energyTypesRegex = new RegExp(`(${energyTypes.join('|').replace(/ /g, '\\s*')})`, 'i');
         var energyMatch = lowerCaseMessage.match(energyTypesRegex);
-        var dateMatch = lowerCaseMessage.match(/(\d{4}-\d{2}-\d{2})/); //YYYY-MM-DD format
+        var dateMatch = lowerCaseMessage.match(/(\d{4}-\d{2}-\d{2})/);
 
-        var extractedEnergyType = energyMatch ? energyMatch[1].toUpperCase().replace(/\s/g, '') : null; // Clean up matched energy type
+        var extractedEnergyType = energyMatch ? energyMatch[1].toUpperCase().replace(/\s/g, '') : null;
         var extractedDate = dateMatch ? dateMatch[0] : null;
         
         var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
 
-        // --- Data Query Logic - Prioritize these checks ---
         if (lowerCaseMessage.includes('out of tolerance dates')) {
             addChatMessage("Finding out of tolerance dates for current month...", 'bot');
             try {
@@ -1255,7 +1253,6 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
-        // "What is the value/status for [Energy Type] on [Date]?"
         else if ((lowerCaseMessage.includes('value for') || lowerCaseMessage.includes('status for')) && extractedEnergyType && extractedDate) {
             addChatMessage(`Looking up data for ${extractedEnergyType} on ${extractedDate}...`, 'bot');
             try {
@@ -1285,7 +1282,6 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
-        // "Show me all [Energy Type] data for this month."
         else if ((lowerCaseMessage.includes('show all') || lowerCaseMessage.includes('all data')) && extractedEnergyType && lowerCaseMessage.includes('this month')) {
             addChatMessage(`Getting all data for ${extractedEnergyType} this month...`, 'bot');
             try {
@@ -1311,7 +1307,6 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
-        // "List all warning values for [specific month]."
         else if (lowerCaseMessage.includes('list all warning values') || lowerCaseMessage.includes('show warning values')) {
             addChatMessage(`Getting warning values for this month...`, 'bot');
             try {
@@ -1336,7 +1331,6 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
-        // --- Basic Greetings and Conversational Responses (as a fallback if no data query matches) ---
         else if (lowerCaseMessage.includes('hi') || lowerCaseMessage.includes('hello') || lowerCaseMessage.includes('hey')) {
             botResponse = "Hello there! How can I assist you with your QA data today?";
         } else if (lowerCaseMessage.includes('how are you')) {
@@ -1344,7 +1338,6 @@
         } else if (lowerCaseMessage.includes('thank you') || lowerCaseMessage.includes('thanks')) {
             botResponse = "You're welcome! Happy to help.";
         }
-        // --- Fallback for unrecognized commands ---
         else {
              botResponse = "I'm sorry, I don't understand that request. Please try rephrasing or ask about:\n\n- \"Out of tolerance dates\"\n- \"Value for 6X on 2025-06-10\" (useYYYY-MM-DD for dates).";
         }
@@ -1354,55 +1347,45 @@
 
     // Export function for Excel (requests XLSX from backend)
     async function exportToExcel() {
-        showLoader(); // Show loading indicator
+        showLoader();
 
         var month = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
         try {
-            const response = await fetch('https://back-end-wrxi.onrender.com/export-excel', { // <-- New backend endpoint
+            const response = await fetch('https://back-end-wrxi.onrender.com/export-excel', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     month: month,
-                    uid: currentUID // Send current user's UID
+                    uid: currentUID
                 })
             });
 
             if (response.ok) {
-                // If the response is successful, get the Blob and create a download link
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                a.download = `LINAC_QA_Data_${month}.xlsx`; // Set the desired filename
+                a.download = `LINAC_QA_Data_${month}.xlsx`;
                 document.body.appendChild(a);
                 a.click();
-                window.URL.revokeObjectURL(url); // Clean up the URL object
-                showNotification("Excel file exported successfully!", 'success'); // Using new notification
+                window.URL.revokeObjectURL(url);
+                showNotification("Excel file exported successfully!", 'success');
             } else {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Failed to export Excel file.');
             }
         } catch (error) {
             console.error("Error exporting Excel:", error);
-            showNotification("Failed to export Excel: " + error.message, 'error'); // Using new notification
+            showNotification("Failed to export Excel: " + error.message, 'error');
         } finally {
-            hideLoader(); // Hide loading indicator
+            hideLoader();
         }
     }
 
-    // This function for PDF export is now removed from usage, but kept for reference if needed
-    // async function exportDashboardToPdf() { /* ... */ }
-
-    // This function for printing is now removed from usage, but kept for reference if needed
-    // function printDashboard() { /* ... */ }
-
-
-    // Attach all event listeners after the DOM is fully loaded and all functions are defined.
     document.addEventListener('DOMContentLoaded', function() {
-        // Event listeners for static buttons
         saveBtn.addEventListener('click', manualSave);
         logoutBtn.addEventListener('click', window.logout);
         myProfileBtn.addEventListener('click', function() { window.location.href='my_profile.html'; });
@@ -1411,14 +1394,12 @@
         nextYearBtn.addEventListener('click', function() { changeYear(1); });
         showTrendBtn.addEventListener('click', updateTrendChart);
 
-        // NEW: Export Button Event Listeners
         exportExcelBtn.addEventListener('click', exportToExcel); 
 
-        // Chatbot Event Listeners
         chatBubble.addEventListener('click', function() {
             chatWindow.classList.toggle('open');
             if (chatWindow.classList.contains('open')) {
-                chatInput.focus(); // Focus input when opened
+                chatInput.focus();
             }
         });
         closeChatBtn.addEventListener('click', function() {
@@ -1432,7 +1413,6 @@
         });
 
 
-        // Firebase Auth State Listener - this should be the last logical step to kick off loading
         auth.onAuthStateChanged(function(user) {
             if (user) {
                 currentUID = user.uid;
@@ -1440,7 +1420,7 @@
                 var userStatus = localStorage.getItem("userStatus");
 
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
-                    showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000); // Using new notification
+                    showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000);
                     window.logout();
                     return;
                 }
