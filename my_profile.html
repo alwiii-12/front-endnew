@@ -168,6 +168,7 @@
     
     <script>
         // These now directly reference the globally initialized Firebase objects from firebase-init.js
+        // Make sure to use the 'compat' way for Firestore document access
         const auth = firebase.auth();
         const db = firebase.firestore();
         const notificationContainer = document.getElementById('notification-container'); // Get notification container
@@ -222,10 +223,12 @@
             profileDetailsDiv.innerHTML = '<p class="loading-message">Loading profile data...</p>';
 
             try {
+                // Correct Compat SDK way to get a document reference and fetch it
                 const userDocRef = db.collection("users").doc(uid);
                 const userDocSnap = await userDocRef.get();
 
-                if (userDocSnap.exists()) {
+                // CORRECTED LINE: userDocSnap.exists is a PROPERTY, not a METHOD in Compat SDK
+                if (userDocSnap.exists) { // This line was the source of the error
                     const userData = userDocSnap.data();
                     profileDetailsDiv.innerHTML = `
                         <div class="profile-item"><strong>Name:</strong> ${userData.name || 'N/A'}</div>
