@@ -12,6 +12,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  <script src="firebase-init.js"></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -116,10 +117,21 @@
     .topbar button:first-of-type:hover {
         background-color: #0056b3;
     }
-    .topbar button:last-of-type {
+    /* Adjusted logout button in upload.html */
+    #logoutBtn {
         background-color: #dc3545;
+        color: #fff;
+        width: 40px; /* Fixed width for a square/circular button */
+        height: 40px; /* Fixed height for a square/circular button */
+        padding: 0; /* Remove padding if using fixed width/height */
+        display: flex; /* Use flexbox to center the icon */
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%; /* Makes it circular */
+        font-size: 1.3em; /* Size of the icon */
+        margin-left: 10px; /* Keep spacing from My Profile button */
     }
-    .topbar button:last-of-type:hover {
+    #logoutBtn:hover {
         background-color: #bb2d3b;
     }
 
@@ -657,9 +669,8 @@
             style="background-color: var(--primary-blue); color: var(--text-light);">
       My Profile
     </button>
-    <button id="logoutBtn"
-            style="background-color: var(--error-red); color: var(--text-light);">
-      Logout
+    <button id="logoutBtn" title="Logout">
+      <i class="fas fa-sign-out-alt"></i>
     </button>
   </div>
 
@@ -738,20 +749,13 @@
   </div>
 
 
-  <script>
-    // Firebase config
-    var firebaseConfig = {
-      apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
-      authDomain: "linac-qa-project.firebaseapp.com",
-      projectId: "linac-qa-project",
-      storageBucket: "linac-qa-project.appspot.com",
-      messagingSenderId: "850988733382",
-      appId: "1:395443876940:web:8ed5b7b3d17693bd70b31c", // Ensure this appId is correct. Check Firebase console for your actual project.
-      measurementId: "G-HFJ2CGS664"
-    };
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  <script src="firebase-init.js"></script>
 
-    // Initialize Firebase (Using Compat SDK's global 'firebase' object)
-    firebase.initializeApp(firebaseConfig);
+  <script>
+    // These now reference the globally initialized Firebase objects from firebase-init.js
     var auth = firebase.auth();
     var db = firebase.firestore();
 
