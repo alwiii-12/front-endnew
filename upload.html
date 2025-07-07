@@ -746,6 +746,7 @@
 
   <script>
     // These now reference the globally initialized Firebase objects from firebase-init.js
+    // Removed duplicate Firebase config and initialization here
     var auth = firebase.auth();
     var db = firebase.firestore();
 
@@ -1302,7 +1303,6 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
-        // "Show me all [Energy Type] data for this month."
         else if ((lowerCaseMessage.includes('show all') || lowerCaseMessage.includes('all data')) && extractedEnergyType && lowerCaseMessage.includes('this month')) {
             addChatMessage(`Getting all data for ${extractedEnergyType} this month...`, 'bot');
             try {
@@ -1461,35 +1461,24 @@
         // Firebase Auth State Listener - this should be the last logical step to kick off loading
         auth.onAuthStateChanged(function(user) {
             if (user) {
-                // User is signed in. This is the legitimate authenticated state.
                 currentUID = user.uid;
                 currentHospital = localStorage.getItem("hospitalName") || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
                 var userStatus = localStorage.getItem("userStatus");
 
-                // Initialize currentDate to the actual current month/year on page load
-                // This ensures the table and navigation controls are correctly set for the current month.
-                // It's crucial this happens *before* loadTable and updateNavigationButtons
-                currentDate = new Date(); // Always initialize currentDate to actual current time
-                currentDate.setDate(1); // Set to 1st of the month to avoid issues with monthrange
-                
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
                     showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000);
                     window.logout(); // Force logout if status is not active
                     return;
                 }
 
-                // If user is active and legitimately logged in, proceed to load data
                 localStorage.setItem("uid", currentUID);
                 document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
                 buildMonthButtons();
-                // Call updateNavigationButtons here, after buildMonthButtons to set initial disabled states
                 updateNavigationButtons(); 
 
-                loadTable(); // Load table for the initialized currentDate
-                populateTrendEnergySelect(); // Call populate and implicitly update chart on initial load
+                loadTable();
+                populateTrendEnergySelect();
             } else {
-                // User is NOT signed in. Force them back to the login page.
-                // Use replace() to remove this page from history so back button can't return.
                 window.location.replace("login.html");
             }
         });
