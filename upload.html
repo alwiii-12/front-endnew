@@ -5,18 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LINAC Output Entry</title>
   <link rel="icon" href="/favicon.png" type="image/png">
-
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="firebase-init.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="firebase-init.js"></script> <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
 
@@ -123,20 +117,10 @@
     .topbar button:first-of-type:hover {
         background-color: #0056b3;
     }
-    #logoutBtn { /* Directly use ID for logout button */
-        background-color: var(--error-red);
-        color: var(--text-light);
-        width: 40px; /* Fixed width for a square/circular button */
-        height: 40px; /* Fixed height for a square/circular button */
-        padding: 0; /* Remove padding if using fixed width/height */
-        display: flex; /* Use flexbox to center the icon */
-        justify-content: center;
-        align-items: center;
-        border-radius: 50%; /* Makes it circular */
-        font-size: 1.3em; /* Size of the icon */
-        margin-left: 10px; /* Keep spacing from My Profile button */
+    .topbar button:last-of-type {
+        background-color: #dc3545;
     }
-    #logoutBtn:hover {
+    .topbar button:last-of-type:hover {
         background-color: #bb2d3b;
     }
 
@@ -746,13 +730,12 @@
   <div id="notification-container"></div>
 
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="firebase-init.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="firebase-init.js"></script> <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
     // These now reference the globally initialized Firebase objects from firebase-init.js
-    // IMPORTANT: Removed duplicate Firebase config and initialization here
+    // IMPORTANT: No local firebaseConfig or firebase.initializeApp() call here.
     var auth = firebase.auth();
     var db = firebase.firestore();
 
@@ -775,16 +758,12 @@
     var nextYearBtn = document.getElementById('nextYearBtn');
     var trendEnergySelect = document.getElementById('trendEnergySelect');
 
-
-    // Get references to Export buttons
     var exportExcelBtn = document.getElementById('exportExcelBtn'); 
 
-    // Get references for data containers to apply transitions
     var tableContainer = document.getElementById('table');
     var summaryBox = document.querySelector('.summary-box');
     var trendChartSection = document.querySelector('.trend-chart-section');
 
-    // Chatbot UI element references
     var chatBubble = document.getElementById('chat-bubble');
     var chatWindow = document.getElementById('chat-window');
     var closeChatBtn = document.getElementById('close-chat-btn');
@@ -792,7 +771,6 @@
     var chatInput = document.getElementById('chat-input');
     var sendChatBtn = document.getElementById('send-chat-btn');
 
-    // Notification Container
     var notificationContainer = document.getElementById('notification-container');
 
 
@@ -812,8 +790,10 @@
         notification.classList.add('notification-message', type);
         notification.textContent = message;
 
+        // Append to the notification container which should be at the top of the body
         notificationContainer.appendChild(notification);
 
+        // Force reflow to ensure transition plays
         void notification.offsetWidth; 
         notification.classList.add('show');
 
@@ -1439,6 +1419,7 @@
         nextYearBtn.addEventListener('click', function() { changeYear(1); });
         
         // NEW: Listen for 'change' event on the select element itself
+        // Removed the showTrendBtn listener as it's no longer needed
         trendEnergySelect.addEventListener('change', updateTrendChart); 
 
         // NEW: Export Button Event Listeners
