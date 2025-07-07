@@ -143,6 +143,31 @@
         .notification-message.info {
             background-color: #007bff; /* var(--primary-blue) */
         }
+
+        /* NEW: Styles for mandatory field asterisk */
+        .required {
+            color: var(--error-red);
+            margin-left: 4px;
+        }
+
+        /* NEW: Styles for password strength indicator */
+        .password-strength {
+            font-size: 0.85em;
+            margin-top: -5px; /* Adjust spacing from input */
+            margin-bottom: 10px; /* Adjust spacing to next element */
+            text-align: left;
+            font-weight: 500;
+            min-height: 1.2em; /* Reserve space to prevent layout shift */
+        }
+        .password-strength.weak {
+            color: var(--error-red);
+        }
+        .password-strength.intermediate {
+            color: var(--warning-orange);
+        }
+        .password-strength.strong {
+            color: var(--success-green);
+        }
     </style>
 </head>
 <body>
@@ -150,17 +175,18 @@
     <h2>LINAC QA Signup</h2>
     <div class="message" id="message"></div>
 
-    <label for="name">Full Name:</label>
-    <input type="text" id="name" placeholder="Enter your full name" />
+    <label for="name">Full Name:<span class="required">*</span></label>
+    <input type="text" id="name" placeholder="Enter your full name" required/>
 
-    <label for="email">Email:</label>
-    <input type="email" id="email" placeholder="Enter your email" />
+    <label for="email">Email:<span class="required">*</span></label>
+    <input type="email" id="email" placeholder="Enter your email" required/>
 
-    <label for="password">Password:</label>
-    <input type="password" id="password" placeholder="Choose a password" />
+    <label for="password">Password:<span class="required">*</span></label>
+    <input type="password" id="password" placeholder="Choose a password" required/>
+    <div id="passwordStrength" class="password-strength"></div> <!-- Password strength indicator -->
 
-    <label for="hospital">Select Hospital:</label>
-    <select id="hospital">
+    <label for="hospital">Select Hospital:<span class="required">*</span></label>
+    <select id="hospital" required>
       <option value="">-- Select Hospital --</option>
       <option value="aoi_gurugram">AOI GURUGRAM</option>
       <option value="medanta_gurugram">Medanta Gurugram</option>
@@ -169,8 +195,8 @@
       <option value="max_delhi">Max Healthcare Delhi</option>
     </select>
 
-    <label for="role">Select Role:</label>
-    <select id="role">
+    <label for="role">Select Role:<span class="required">*</span></label>
+    <select id="role" required>
       <option value="">Select Role</option>
       <option value="Medical physicist">Medical physicist</option>
       <option value="RSO">RSO</option>
@@ -179,20 +205,26 @@
     <p style="margin-top: 15px; text-align: center; font-size: 0.9em; color: var(--text-dark);">Already have an account? <a href="login.html" style="color: var(--primary-blue);">Log in</a></p>
   </div>
 
+  <!-- NEW: Container for custom notifications -->
   <div id="notification-container"></div>
 
+  <!-- Corrected Firebase script loading order -->
+  <!-- 1. Load the core Firebase App Compat SDK first -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <!-- 2. Then load your centralized Firebase initialization file -->
   <script src="firebase-init.js"></script>
+  <!-- 3. Finally, load other specific Firebase Compat SDKs (Auth, Firestore) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
     // These now reference the globally initialized Firebase auth object
     const auth = firebase.auth();
-    // Assuming db might be used indirectly via backend for signup. If direct Firestore access needed, uncomment:
-    const db = firebase.firestore(); 
+    const db = firebase.firestore(); // db might not be strictly needed here, but keeping for consistency
 
     const notificationContainer = document.getElementById('notification-container'); // Get notification container
+    const passwordInput = document.getElementById('password');
+    const passwordStrengthDiv = document.getElementById('passwordStrength');
 
 
     // NEW: Custom Notification Function (copied here for consistency)
@@ -214,6 +246,46 @@
         }, duration);
     }
 
+    // NEW: Password Strength Checker Function
+    function checkPasswordStrength() {
+        const password = passwordInput.value;
+        let strength = 0;
+        let message = '';
+        let type = '';
+
+        if (password.length > 0) {
+            if (password.length >= 8) {
+                strength += 1;
+            }
+            if (password.match(/[a-z]/) && password.match(/[A-Z]/)) {
+                strength += 1;
+            }
+            if (password.match(/\d/)) {
+                strength += 1;
+            }
+            if (password.match(/[^a-zA-Z0-9]/)) {
+                strength += 1;
+            }
+
+            if (strength < 2) {
+                message = 'Weak';
+                type = 'weak';
+            } else if (strength < 4) {
+                message = 'Intermediate';
+                type = 'intermediate';
+            } else {
+                message = 'Strong';
+                type = 'strong';
+            }
+        }
+
+        passwordStrengthDiv.textContent = message;
+        passwordStrengthDiv.className = 'password-strength ' + type; // Update class for styling
+    }
+
+    // Attach password strength checker to input event
+    passwordInput.addEventListener('input', checkPasswordStrength);
+
 
     async function signup() {
       const name = document.getElementById("name").value.trim();
@@ -221,14 +293,23 @@
       const password = document.getElementById("password").value.trim();
       const hospital = document.getElementById("hospital").value.trim(); // This is the centerId (value from dropdown)
       const role = document.getElementById("role").value.trim();
-      const messageDiv = document.getElementById("message");
-      messageDiv.textContent = "";
-      // messageDiv.style.color = "red"; // Replaced by notification system
+      const messageDiv = document.getElementById("message"); // This messageDiv is now mostly unused, notifications are preferred
+      // messageDiv.textContent = ""; // Not strictly needed if relying on notifications
+      // messageDiv.style.color = "red"; // Not strictly needed if relying on notifications
 
       if (!name || !email || !password || !hospital || hospital === "" || !role || role === "") {
         showNotification("Please fill in all fields.", 'warning'); // Using new notification
         return;
       }
+
+      // Optional: Add a check for minimum password strength before signup
+      // You might want to enforce "Intermediate" or "Strong" here
+      const currentPasswordStrengthClass = passwordStrengthDiv.className;
+      if (currentPasswordStrengthClass.includes('weak')) {
+          showNotification("Please choose a stronger password.", 'warning');
+          return;
+      }
+
 
       try {
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
@@ -255,15 +336,13 @@
             localStorage.setItem("hospitalName", hospital.toUpperCase());
 
             showNotification("Signup successful! Your account is awaiting approval.", 'success', 5000); // Using new notification
-            // messageDiv.textContent = "Signup successful! Your account is awaiting approval. You will receive an email once approved.";
-            // messageDiv.style.color = "green";
+            
             setTimeout(() => {
                 window.location.href = "awaiting_approval.html"; // Redirect to approval page
             }, 3000); // Give time for notification to show
 
         } else {
             showNotification("Signup failed: " + data.message, 'error'); // Using new notification
-            // messageDiv.textContent = "Signup failed: " + data.message;
         }
 
       } catch (error) {
@@ -286,7 +365,6 @@
             errorMessage = "Firebase signup error: " + error.message;
         }
         showNotification(errorMessage, 'error'); // Using new notification
-        // messageDiv.textContent = errorMessage;
       }
     }
   </script>
