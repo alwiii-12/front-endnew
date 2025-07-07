@@ -183,9 +183,7 @@
 
     <label for="password">Password:<span class="required">*</span></label>
     <input type="password" id="password" placeholder="Choose a password" required/>
-    <div id="passwordStrength" class="password-strength"></div> <!-- Password strength indicator -->
-
-    <label for="hospital">Select Hospital:<span class="required">*</span></label>
+    <div id="passwordStrength" class="password-strength"></div> <label for="hospital">Select Hospital:<span class="required">*</span></label>
     <select id="hospital" required>
       <option value="">-- Select Hospital --</option>
       <option value="aoi_gurugram">AOI GURUGRAM</option>
@@ -201,19 +199,13 @@
       <option value="Medical physicist">Medical physicist</option>
       <option value="RSO">RSO</option>
       </select>
-    <button onclick="signup()">Sign Up</button>
-    <p style="margin-top: 15px; text-align: center; font-size: 0.9em; color: var(--text-dark);">Already have an account? <a href="login.html" style="color: var(--primary-blue);">Log in</a></p>
+    <button onclick="signup()" id="signupButton">Sign Up</button> <p style="margin-top: 15px; text-align: center; font-size: 0.9em; color: var(--text-dark);">Already have an account? <a href="login.html" style="color: var(--primary-blue);">Log in</a></p>
   </div>
 
-  <!-- NEW: Container for custom notifications -->
   <div id="notification-container"></div>
 
-  <!-- Corrected Firebase script loading order -->
-  <!-- 1. Load the core Firebase App Compat SDK first -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <!-- 2. Then load your centralized Firebase initialization file -->
   <script src="firebase-init.js"></script>
-  <!-- 3. Finally, load other specific Firebase Compat SDKs (Auth, Firestore) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -225,6 +217,7 @@
     const notificationContainer = document.getElementById('notification-container'); // Get notification container
     const passwordInput = document.getElementById('password');
     const passwordStrengthDiv = document.getElementById('passwordStrength');
+    const signupButton = document.getElementById('signupButton'); // Get the signup button
 
 
     // NEW: Custom Notification Function (copied here for consistency)
@@ -286,27 +279,34 @@
     // Attach password strength checker to input event
     passwordInput.addEventListener('input', checkPasswordStrength);
 
-
+    // --- Signup Function ---
     async function signup() {
+      // Disable button and show loading state
+      signupButton.disabled = true;
+      signupButton.textContent = 'Signing Up...';
+
       const name = document.getElementById("name").value.trim();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
       const hospital = document.getElementById("hospital").value.trim(); // This is the centerId (value from dropdown)
       const role = document.getElementById("role").value.trim();
-      const messageDiv = document.getElementById("message"); // This messageDiv is now mostly unused, notifications are preferred
-      // messageDiv.textContent = ""; // Not strictly needed if relying on notifications
-      // messageDiv.style.color = "red"; // Not strictly needed if relying on notifications
+      // messageDiv is now mostly unused, notifications are preferred
+      // messageDiv.textContent = "";
+      // messageDiv.style.color = "red";
 
       if (!name || !email || !password || !hospital || hospital === "" || !role || role === "") {
-        showNotification("Please fill in all fields.", 'warning'); // Using new notification
+        showNotification("Please fill in all fields.", 'warning');
+        signupButton.disabled = false; // Re-enable button
+        signupButton.textContent = 'Sign Up';
         return;
       }
 
       // Optional: Add a check for minimum password strength before signup
-      // You might want to enforce "Intermediate" or "Strong" here
       const currentPasswordStrengthClass = passwordStrengthDiv.className;
       if (currentPasswordStrengthClass.includes('weak')) {
           showNotification("Please choose a stronger password.", 'warning');
+          signupButton.disabled = false; // Re-enable button
+          signupButton.textContent = 'Sign Up';
           return;
       }
 
@@ -335,14 +335,14 @@
             // but we use it as hospitalName in localStorage for display consistency in upload.html
             localStorage.setItem("hospitalName", hospital.toUpperCase());
 
-            showNotification("Signup successful! Your account is awaiting approval.", 'success', 5000); // Using new notification
+            showNotification("Signup successful! Your account is awaiting approval.", 'success', 5000);
             
             setTimeout(() => {
                 window.location.href = "awaiting_approval.html"; // Redirect to approval page
             }, 3000); // Give time for notification to show
 
         } else {
-            showNotification("Signup failed: " + data.message, 'error'); // Using new notification
+            showNotification("Signup failed: " + data.message, 'error');
         }
 
       } catch (error) {
@@ -364,7 +364,10 @@
           default:
             errorMessage = "Firebase signup error: " + error.message;
         }
-        showNotification(errorMessage, 'error'); // Using new notification
+        showNotification(errorMessage, 'error');
+      } finally {
+        signupButton.disabled = false; // Always re-enable button
+        signupButton.textContent = 'Sign Up';
       }
     }
   </script>
