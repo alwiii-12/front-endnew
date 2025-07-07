@@ -753,6 +753,7 @@
 
   <script>
     // These now reference the globally initialized Firebase objects from firebase-init.js
+    // Removed duplicate Firebase config and initialization here
     var auth = firebase.auth();
     var db = firebase.firestore();
 
@@ -773,6 +774,7 @@
     var myProfileBtn = document.getElementById('myProfileBtn');
     var prevYearBtn = document.getElementById('prevYearBtn');
     var nextYearBtn = document.getElementById('nextYearBtn');
+    var showTrendBtn = document.getElementById('showTrendBtn'); // Still needed for its listener
     var trendEnergySelect = document.getElementById('trendEnergySelect');
 
 
@@ -792,7 +794,7 @@
     var chatInput = document.getElementById('chat-input');
     var sendChatBtn = document.getElementById('send-chat-btn');
 
-    // NEW: Notification Container
+    // Notification Container
     var notificationContainer = document.getElementById('notification-container');
 
 
@@ -806,7 +808,7 @@
 
     var outOfToleranceValues = []; // This array holds the current out-of-tolerance values displayed in the table.
 
-    // --- NEW: Custom Notification Function ---
+    // Custom Notification Function
     function showNotification(message, type = 'info', duration = 3000) {
         const notification = document.createElement('div');
         notification.classList.add('notification-message', type);
@@ -832,7 +834,7 @@
       auth.signOut().then(() => {
         localStorage.clear();
         hideLoader();
-        window.location.replace("login.html");
+        window.location.replace("login.html"); // Use replace to clear history for this page
       }).catch((error) => {
         console.error("Logout error:", error);
         showNotification("Logout failed: " + error.message, 'error');
@@ -892,10 +894,9 @@
             } else {
                 // Determine if the cell's date is in the future
                 const cellDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), c);
-                cellDate.setHours(0,0,0,0); // Normalize to start of day
+                cellDate.setHours(0,0,0,0);
 
-                // Get current actual date, normalized to start of day for accurate comparison
-                const actualToday = new Date();
+                const actualToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
                 actualToday.setHours(0,0,0,0);
 
                 // Set readOnly to true if the cell's date is strictly in the future
@@ -1116,8 +1117,8 @@
             option.textContent = energy;
             select.appendChild(option);
         });
-        // Call updateTrendChart initially if an option is selected
-        if (energyTypes.length > 0 && select.value) {
+        if (energyTypes.length > 0) {
+            select.value = energyTypes[0];
             updateTrendChart();
         }
     }
@@ -1143,7 +1144,7 @@
 
         var monthKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
         try {
-            var res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`);
+            var res = await fetch('https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}');
             var result = await res.json();
             var monthData = result.data;
 
@@ -1320,7 +1321,8 @@
                     body: JSON.stringify({
                         query: 'energy_data_for_month',
                         month: monthKey,
-                        uid: currentUID
+                        uid: currentUID,
+                        energy_type: extractedEnergyType
                     })
                 });
                 var result = await response.json();
@@ -1452,7 +1454,7 @@
         chatBubble.addEventListener('click', function() {
             chatWindow.classList.toggle('open');
             if (chatWindow.classList.contains('open')) {
-                chatInput.focus();
+                chatInput.focus(); // Focus input when opened
             }
         });
         closeChatBtn.addEventListener('click', function() {
