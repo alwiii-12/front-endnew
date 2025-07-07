@@ -833,7 +833,7 @@
       auth.signOut().then(() => {
         localStorage.clear();
         hideLoader();
-        window.location.replace("login.html");
+        window.location.replace("login.html"); // Use replace to clear history for this page
       }).catch((error) => {
         console.error("Logout error:", error);
         showNotification("Logout failed: " + error.message, 'error');
@@ -989,7 +989,7 @@
       }
 
       try {
-        var saveResponse = await fetch('https://back-end-wrxi.onrender.com/save', { // <-- Corrected fetch URL
+        var saveResponse = await fetch('https://back-end-wrxi.onrender.com/save', {
           method:'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ data: changedData, month, uid: currentUID })
@@ -1001,10 +1001,10 @@
         }
 
         lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
-        showNotification("Data saved successfully!", 'success'); // Using new notification
+        showNotification("Data saved successfully!", 'success');
 
         if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') {
-            var alertResponse = await fetch('https://back-end-wrxi.onrender.com/send-alert', { // <-- Corrected fetch URL
+            var alertResponse = await fetch('https://back-end-wrxi.onrender.com/send-alert', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1139,7 +1139,7 @@
 
         var monthKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
         try {
-            var res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`); // <-- Corrected fetch URL
+            var res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`);
             var result = await res.json();
             var monthData = result.data;
 
