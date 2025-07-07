@@ -753,7 +753,7 @@
 
   <script>
     // These now reference the globally initialized Firebase objects from firebase-init.js
-    // Removed duplicate Firebase config and initialization here
+    // IMPORTANT: Removed duplicate Firebase config and initialization here
     var auth = firebase.auth();
     var db = firebase.firestore();
 
@@ -774,11 +774,10 @@
     var myProfileBtn = document.getElementById('myProfileBtn');
     var prevYearBtn = document.getElementById('prevYearBtn');
     var nextYearBtn = document.getElementById('nextYearBtn');
-    var showTrendBtn = document.getElementById('showTrendBtn'); // Still needed for its listener
     var trendEnergySelect = document.getElementById('trendEnergySelect');
 
 
-    // NEW: Get references to Export buttons
+    // Get references to Export buttons
     var exportExcelBtn = document.getElementById('exportExcelBtn'); 
 
     // Get references for data containers to apply transitions
@@ -834,7 +833,7 @@
       auth.signOut().then(() => {
         localStorage.clear();
         hideLoader();
-        window.location.replace("login.html"); // Use replace to clear history for this page
+        window.location.replace("login.html");
       }).catch((error) => {
         console.error("Logout error:", error);
         showNotification("Logout failed: " + error.message, 'error');
@@ -990,7 +989,7 @@
       }
 
       try {
-        var saveResponse = await fetch(`https://back-end-wrxi.onrender.com/save`,{
+        var saveResponse = await fetch('https://back-end-wrxi.onrender.com/save', { // <-- Corrected fetch URL
           method:'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ data: changedData, month, uid: currentUID })
@@ -1002,10 +1001,10 @@
         }
 
         lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
-        showNotification("Data saved successfully!", 'success');
+        showNotification("Data saved successfully!", 'success'); // Using new notification
 
         if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') {
-            var alertResponse = await fetch(`https://back-end-wrxi.onrender.com/send-alert`, {
+            var alertResponse = await fetch('https://back-end-wrxi.onrender.com/send-alert', { // <-- Corrected fetch URL
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1060,15 +1059,13 @@
         var btn = document.createElement('button');
         btn.textContent = m;
         btn.addEventListener('click', () => changeMonth(i));
-        // Add a class for month buttons to distinguish them if needed for updateNavigationButtons
-        btn.classList.add('month-button');
+        btn.classList.add('month-button'); // Add a class for month buttons
         monthsDiv.appendChild(btn);
       });
       highlightActiveMonth();
     }
 
     function highlightActiveMonth(){
-      // This part ensures the currently displayed month button is highlighted
       [...monthsDiv.querySelectorAll('.month-button')].forEach((btn,i)=>{ // Use .month-button class
         btn.classList.toggle('active', i === currentDate.getMonth());
       });
@@ -1083,10 +1080,11 @@
         const actualCurrentMonth = today.getMonth(); // 0-indexed
 
         // Disable 'Next Year' button
-        // Only disable if the displayed year is strictly in the future relative to the actual current year
-        // OR if it's the current year AND the month is already the current month (preventing year advance to next year too soon)
         nextYearBtn.disabled = (currentDisplayYear > actualCurrentYear) || 
                                (currentDisplayYear === actualCurrentYear && currentDisplayMonth >= actualCurrentMonth);
+
+        // Ensure 'Previous' year button is always enabled (unless a specific minimum historical year is defined)
+        prevYearBtn.disabled = false; 
 
         // Disable specific month buttons dynamically
         const monthButtons = monthsDiv.querySelectorAll('.month-button');
@@ -1102,9 +1100,6 @@
                 btn.disabled = false; // Past months/years, and current month/year are enabled
             }
         });
-
-        // Ensure 'Previous' year button is always enabled (unless a very old minimum year is defined)
-        prevYearBtn.disabled = false;
     }
 
 
@@ -1144,7 +1139,7 @@
 
         var monthKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
         try {
-            var res = await fetch('https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}');
+            var res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`); // <-- Corrected fetch URL
             var result = await res.json();
             var monthData = result.data;
 
@@ -1321,8 +1316,7 @@
                     body: JSON.stringify({
                         query: 'energy_data_for_month',
                         month: monthKey,
-                        uid: currentUID,
-                        energy_type: extractedEnergyType
+                        uid: currentUID
                     })
                 });
                 var result = await response.json();
