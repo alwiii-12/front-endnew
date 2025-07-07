@@ -1398,14 +1398,14 @@
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url); // Clean up the URL object
-                alert("Excel file exported successfully!", 'success');
+                showNotification("Excel file exported successfully!", 'success');
             } else {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Failed to export Excel file.');
             }
         } catch (error) {
             console.error("Error exporting Excel:", error);
-            alert("Failed to export Excel: " + error.message);
+            showNotification("Failed to export Excel: " + error.message, 'error');
         } finally {
             hideLoader(); // Hide loading indicator
         }
@@ -1420,14 +1420,26 @@
 
     // Attach all event listeners after the DOM is fully loaded and all functions are defined.
     document.addEventListener('DOMContentLoaded', function() {
+        // IMPORTANT: Prevent browser back button from showing cached authenticated content.
+        // This makes sure the browser's back navigation to this page performs a full reload.
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) { // If loaded from cache (bfcache)
+                window.location.reload(); // Force a full reload to re-run auth checks
+            }
+        });
+
         // Event listeners for static buttons
         saveBtn.addEventListener('click', manualSave);
         logoutBtn.addEventListener('click', window.logout);
         myProfileBtn.addEventListener('click', function() { window.location.href='my_profile.html'; });
         darkToggle.addEventListener('change', toggleDarkMode);
+        
+        // Event listeners for year navigation buttons
         prevYearBtn.addEventListener('click', function() { changeYear(-1); });
         nextYearBtn.addEventListener('click', function() { changeYear(1); });
-        showTrendBtn.addEventListener('click', updateTrendChart);
+        
+        // NEW: Listen for 'change' event on the select element itself
+        trendEnergySelect.addEventListener('change', updateTrendChart); 
 
         // NEW: Export Button Event Listeners
         exportExcelBtn.addEventListener('click', exportToExcel); 
@@ -1451,25 +1463,27 @@
 
 
         // Firebase Auth State Listener - this should be the last logical step to kick off loading
-        firebase.auth().onAuthStateChanged(function(user) {
+        auth.onAuthStateChanged(function(user) {
             if (user) {
                 currentUID = user.uid;
                 currentHospital = localStorage.getItem("hospitalName") || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
                 var userStatus = localStorage.getItem("userStatus");
 
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
-                    alert("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.");
-                    window.logout();
+                    showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000);
+                    window.logout(); // Force logout if status is not active
                     return;
                 }
 
                 localStorage.setItem("uid", currentUID);
                 document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
                 buildMonthButtons();
+                updateNavigationButtons(); 
+
                 loadTable();
                 populateTrendEnergySelect();
             } else {
-                window.location.href = "login.html";
+                window.location.replace("login.html");
             }
         });
     });
