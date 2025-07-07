@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - LINAC QA</title>
+  <link rel="icon" href="/favicon.png" type="image/png">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom right, #dbeafe, #f0f9ff);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-container {
+      background: #ffffffcc;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 24px;
+      color: #1e3a8a;
+    }
+    label {
+      display: block;
+      text-align: left;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .error {
+      color: red;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .success-message {
+        color: green;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+    .home-link {
+        display: block;
+        max-width: 120px;
+        margin: 20px auto 0 auto;
+        font-size: 16px;
+        font-weight: bold;
+        text-decoration: none;
+        color: #007bff;
+        background-color: #e6f2ff;
+        padding: 10px 20px;
+        border-radius: 6px;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        box-sizing: border-box;
+        text-align: center;
+    }
+    .home-link:hover {
+        background-color: #d0e7ff;
+        transform: translateY(-1px);
+    }
+    .home-link:active {
+        background-color: #b3d9ff;
+        transform: translateY(0);
+        box-shadow: 0 0px 2px rgba(0, 0, 0, 0.1);
+    }
+    .forgot-password-link {
+        display: block;
+        text-align: right;
+        font-size: 14px;
+        margin-top: -15px;
+        margin-bottom: 15px;
+        color: #007bff;
+        text-decoration: none;
+    }
+    .forgot-password-link:hover {
+        text-decoration: underline;
+    }
+
+    /* NEW: Styles for Custom Notifications (copied from upload.html) */
+    #notification-container {
+        position: fixed;
+        top: 20px; /* Adjust as needed */
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10000; /* Ensure it's on top of everything */
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none; /* Allows clicks to pass through when no messages are active */
+    }
+
+    .notification-message {
+        background-color: #333;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        transform: translateY(-20px);
+        min-width: 250px;
+        text-align: center;
+        pointer-events: auto; /* Re-enable pointer events for the message itself */
+    }
+
+    .notification-message.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .notification-message.success {
+        background-color: #28a745; /* var(--success-green) */
+    }
+
+    .notification-message.error {
+        background-color: #dc3545; /* var(--error-red) */
+    }
+
+    .notification-message.warning {
+        background-color: #ffc107; /* var(--warning-orange) */
+        color: #333; /* var(--text-dark) */
+    }
+
+    .notification-message.info {
+        background-color: #007bff; /* var(--primary-blue) */
+    }
+
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h2>Login - LINAC QA</h2>
+    <form id="loginForm">
+      <div class="error" id="errorMsg"></div>
+      <div class="success-message" id="successMsg"></div>
+
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required />
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required />
+
+      <a href="#" class="forgot-password-link" onclick="sendPasswordReset()">Forgot Password?</a>
+
+      <button type="submit">Login</button>
+    </form>
+    <div class="footer">© 2025 LINAC QA System</div>
+  </div>
+
+  <a href="index.html" class="home-link" title="Go to Home Page">Home</a>
+
+  <div id="notification-container"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="firebase-init.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+  <script src="config.js"></script>
+
+  <script>
+    // These now reference the globally initialized Firebase objects from firebase-init.js
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const errorMsg = document.getElementById("errorMsg");
+    const successMsg = document.getElementById("successMsg");
+    const notificationContainer = document.getElementById('notification-container');
+
+    function clearMessages() {
+        errorMsg.textContent = "";
+        successMsg.textContent = "";
+    }
+
+    // Custom Notification Function (copied here for consistency across pages)
+    function showNotification(message, type = 'info', duration = 3000) {
+        const notification = document.createElement('div');
+        notification.classList.add('notification-message', type);
+        notification.textContent = message;
+
+        notificationContainer.appendChild(notification);
+
+        void notification.offsetWidth;
+        notification.classList.add('show');
+
+        setTimeout(() => {
+            notification.classList.remove('show');
+            notification.addEventListener('transitionend', () => {
+                notification.remove();
+            }, { once: true });
+        }, duration);
+    }
+
+
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      clearMessages();
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then(async (userCredential) => {
+          const user = userCredential.user;
+          localStorage.setItem("userEmail", email);
+
+          try {
+            const userDocRef = db.collection("users").doc(user.uid);
+            const userDocSnap = await userDocRef.get();
+
+            if (userDocSnap.exists) {
+              const userData = userDocSnap.data();
+              const hospitalName = userData.hospital || "UNKNOWN HOSPITAL";
+              const userRole = userData.role;
+              const userStatus = userData.status;
+
+              localStorage.setItem("hospitalName", hospitalName.toUpperCase());
+              localStorage.setItem("userRole", userRole);
+              localStorage.setItem("userStatus", userStatus);
+
+              if (userRole === "Admin") {
+                showNotification("Logged in as Admin. Redirecting...", 'success');
+                setTimeout(() => { window.location.href = "admin_dashboard.html"; }, 1000);
+              } else if (userStatus === "active") {
+                showNotification("Login successful. Redirecting...", 'success');
+                setTimeout(() => { window.location.href = "upload.html"; }, 1000);
+              } else if (userStatus === "pending" || userStatus === "rejected") {
+                showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000);
+                setTimeout(() => { window.location.href = "awaiting_approval.html"; }, 1000);
+              } else {
+                showNotification("Your account status is unknown. Please contact support.", 'warning', 5000);
+                setTimeout(() => { window.location.href = "awaiting_approval.html"; }, 1000);
+              }
+
+            } else {
+              console.warn("User document NOT found in Firestore for UID:", user.uid);
+              localStorage.setItem("hospitalName", "UNKNOWN HOSPITAL");
+              localStorage.setItem("userRole", "unknown");
+              localStorage.setItem("userStatus", "unknown");
+              showNotification("Your profile data is incomplete. Please contact support.", 'error', 5000);
+              setTimeout(() => { window.location.href = "awaiting_approval.html"; }, 1000);
+            }
+          } catch (err) {
+            console.error("Error fetching user data from Firestore:", err);
+            localStorage.setItem("hospitalName", "UNKNOWN HOSPITAL");
+            localStorage.setItem("userRole", "unknown");
+            localStorage.setItem("userStatus", "unknown");
+            showNotification("An error occurred fetching your profile. Please contact support.", 'error', 5000);
+            setTimeout(() => { window.location.href = "awaiting_approval.html"; }, 1000);
+          }
+        })
+        .catch((error) => {
+          console.error("Firebase Auth login error:", error);
+
+          let displayMessage = "An unexpected login error occurred.";
+          switch (error.code) {
+            case 'auth/invalid-email':
+              displayMessage = "Please enter a valid email address.";
+              break;
+            case 'auth/user-disabled':
+              displayMessage = "Your account has been disabled. Please contact support.";
+              break;
+            case 'auth/user-not-found':
+            case 'auth/wrong-password':
+            case 'auth/invalid-login-credentials':
+              // Security best practice: Do NOT specify if it's the email or password for security reasons
+              displayMessage = "Invalid email or password."; // Generic message for wrong email/password
+              break;
+            case 'auth/network-request-failed':
+              displayMessage = "Network error. Please check your internet connection.";
+              break;
+            default:
+              displayMessage = "Login failed: " + error.message;
+          }
+          showNotification(displayMessage, 'error');
+        });
+    });
+
+    async function sendPasswordReset() {
+        clearMessages();
+        const email = document.getElementById("email").value;
+
+        if (!email) {
+            showNotification("Please enter your email to reset password.", 'warning');
+            return;
+        }
+
+        try {
+            await auth.sendPasswordResetEmail(email);
+            showNotification("Password reset email sent. Check your inbox!", 'success');
+        } catch (error) {
+            console.error("Password reset error:", error);
+            let displayMessage = "An unexpected error occurred sending reset email.";
+            switch (error.code) {
+                case 'auth/invalid-email':
+                    displayMessage = "Please enter a valid email address.";
+                    break;
+                case 'auth/user-not-found':
+                    // Security best practice: Do NOT confirm if email exists for password resets
+                    displayMessage = "If an account exists for that email, a password reset link has been sent.";
+                    break;
+                case 'auth/network-request-failed':
+                    displayMessage = "Network error. Please check your internet connection.";
+                    break;
+                default:
+                    displayMessage = "Error sending password reset email: " + error.message;
+            }
+            showNotification(displayMessage, 'error');
+        }
+    }
+  </script>
+</body>
+</html>
