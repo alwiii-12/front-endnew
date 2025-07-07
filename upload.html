@@ -343,6 +343,7 @@
         color: #007bff;
         font-weight: 600;
         font-size: 1.4em;
+        margin-bottom: 15px;
         text-align: center;
     }
     .trend-chart-section label {
@@ -666,8 +667,9 @@
             style="background-color: var(--primary-blue); color: var(--text-light);">
       My Profile
     </button>
-    <button id="logoutBtn" title="Logout">
-      <i class="fas fa-sign-out-alt"></i>
+    <button id="logoutBtn"
+            style="background-color: var(--error-red); color: var(--text-light);">
+      Logout
     </button>
   </div>
 
@@ -718,6 +720,9 @@
           <label for="trendEnergySelect" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
           <select id="trendEnergySelect" style="padding: 8px; border: 1px var(--border-light) solid;">
             </select>
+          <button id="showTrendBtn" style="background-color: var(--primary-blue); color: var(--text-light); margin-left: 10px;">
+              <i class="fas fa-chart-line"></i> Show Trend
+          </button>
         </div>
         <canvas id="trendChart" style="max-height: 350px; width: 100%;"></canvas>
       </div>
@@ -751,7 +756,7 @@
       projectId: "linac-qa-project",
       storageBucket: "linac-qa-project.appspot.com",
       messagingSenderId: "850988733382",
-      appId: "1:395443876940:web:8ed5b7b3d17693bd70b31c", // Ensure this appId is correct. Check Firebase console for your actual project.
+      appId: "1:850988733382:web:ef75d64e30deb7e37c18c7",
       measurementId: "G-HFJ2CGS664"
     };
 
@@ -777,8 +782,7 @@
     var myProfileBtn = document.getElementById('myProfileBtn');
     var prevYearBtn = document.getElementById('prevYearBtn');
     var nextYearBtn = document.getElementById('nextYearBtn');
-    var trendEnergySelect = document.getElementById('trendEnergySelect');
-
+    var showTrendBtn = document.getElementById('showTrendBtn');
 
     // NEW: Get references to Export buttons
     var exportExcelBtn = document.getElementById('exportExcelBtn'); 
@@ -796,39 +800,11 @@
     var chatInput = document.getElementById('chat-input');
     var sendChatBtn = document.getElementById('send-chat-btn');
 
-    // NEW: Notification Container
-    var notificationContainer = document.getElementById('notification-container');
 
-
-    var currentDate = new Date(); // This will track the month/year currently displayed in the table
-    currentDate.setDate(1); // Set to 1st of the month to avoid issues with monthrange
-    var today = new Date(); // This will remain fixed to the actual current date for comparison
-    today.setHours(0,0,0,0); // Normalize today to start of day for comparison
-
-
+    var currentDate = new Date(); currentDate.setDate(1);
     var energyTypes = ["6X","10X","15X","6X FFF","10X FFF","6E","9E","12E","15E","18E"];
 
     var outOfToleranceValues = []; // This array holds the current out-of-tolerance values displayed in the table.
-
-    // --- NEW: Custom Notification Function ---
-    function showNotification(message, type = 'info', duration = 3000) {
-        const notification = document.createElement('div');
-        notification.classList.add('notification-message', type);
-        notification.textContent = message;
-
-        notificationContainer.appendChild(notification);
-
-        void notification.offsetWidth; 
-        notification.classList.add('show');
-
-        setTimeout(() => {
-            notification.classList.remove('show');
-            notification.addEventListener('transitionend', () => {
-                notification.remove();
-            }, { once: true });
-        }, duration);
-    }
-
 
     // --- Core Functions ---
     window.logout = function() {
@@ -836,11 +812,11 @@
       auth.signOut().then(() => {
         localStorage.clear();
         hideLoader();
-        window.location.replace("login.html"); // Use replace to clear history for this page
+        window.location.href = "login.html";
       }).catch((error) => {
         console.error("Logout error:", error);
-        showNotification("Logout failed: " + error.message, 'error');
         hideLoader();
+        alert("Logout failed: " + error.message);
       });
     }
 
@@ -866,7 +842,6 @@
       document.getElementById('header').textContent = `${currentDate.toLocaleString('default',{month:'long'})} ${currentDate.getFullYear()}`;
       yearLabel.textContent = currentDate.getFullYear();
       highlightActiveMonth();
-      updateNavigationButtons(); // Update button states after month/year change
 
       var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
       try {
@@ -891,31 +866,10 @@
           },
           cells: function (r, c) {
             var props = {};
-            if (c === 0) { // Energy column should always be read-only
-                props.readOnly = true;
-            } else {
-                // Determine if the cell's date is in the future
-                // A Date object normalized to the start of the day for the cell's date
-                const cellDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), c);
-                cellDate.setHours(0,0,0,0); // Normalize to start of day
-
-                // Get current actual date, normalized to start of day for accurate comparison
-                const actualToday = new Date();
-                actualToday.setHours(0,0,0,0);
-
-                // Set readOnly to true if the cell's date is strictly in the future
-                props.readOnly = (cellDate.getTime() > actualToday.getTime());
-
-                // Special handling for future MONTHS/YEARS for all days within them
-                const currentDisplayedMonthYear = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-                currentDisplayedMonthYear.setHours(0,0,0,0); // Normalize to start of day
-
-                const actualCurrentMonthYear = new Date(today.getFullYear(), today.getMonth(), 1);
-                actualCurrentMonthYear.setHours(0,0,0,0);
-
-                if (currentDisplayedMonthYear.getTime() > actualCurrentMonthYear.getTime()) {
-                    props.readOnly = true; // Make entire future month/year read-only
-                }
+            if (c === 0) return props;
+            var v = parseFloat(this.instance.getDataAtCell(r, c));
+            if (!isNaN(v)) {
+              props.className = Math.abs(v) <= 1.8 ? 'within' : (Math.abs(v) <= 2 ? 'warning' : 'out');
             }
             return props;
           }
@@ -924,7 +878,7 @@
         updateSummaryAndChart(data);
       } catch(e) {
         console.error("Error loading table data:", e);
-        showNotification("Could not load table data. Please try again.", 'error');
+        alert("Could not load table data. Please try again.");
       } finally {
         hideLoader();
         if (tableContainer) tableContainer.classList.remove('loading-transition');
@@ -979,37 +933,22 @@
       showLoader();
       var changedData = hot.getData();
       var month = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
-      
-      // Prevent saving if the current displayed month is strictly in the future
-      const currentDisplayedMonthYear = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      currentDisplayedMonthYear.setHours(0,0,0,0);
-
-      const actualCurrentMonthYear = new Date(today.getFullYear(), today.getMonth(), 1);
-      actualCurrentMonthYear.setHours(0,0,0,0);
-
-      if (currentDisplayedMonthYear.getTime() > actualCurrentMonthYear.getTime()) {
-          showNotification("Cannot save data for future months. Please navigate to the current or a past month.", 'warning', 5000);
-          hideLoader();
-          return;
-      }
-
       try {
-        var saveResponse = await fetch(`https://back-end-wrxi.onrender.com/save`,{
+        var saveResponse = await fetch('https://back-end-wrxi.onrender.com/save',{
           method:'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ data: changedData, month, uid: currentUID })
         });
 
         if (!saveResponse.ok) {
-            const errorText = await saveResponse.text();
-            throw new Error('Failed to save data: ' + saveResponse.statusText + ' - ' + errorText);
+            throw new Error('Failed to save data: ' + saveResponse.statusText);
         }
 
         lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
-        showNotification("Data saved successfully!", 'success');
+        alert("Data saved successfully!");
 
         if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') {
-            var alertResponse = await fetch(`https://back-end-wrxi.onrender.com/send-alert`, {
+            var alertResponse = await fetch('https://back-end-wrxi.onrender.com/send-alert', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1025,13 +964,11 @@
             var alertResult = await alertResponse.json();
             if (alertResult.status === 'alert sent') {
                 console.log("Email alert sent for current out of tolerance values.");
-                showNotification("Alert email sent to RSO(s).", 'info');
             } else if (alertResult.status === 'no_change') {
                 console.log("No new out-of-tolerance values or changes. Email not sent.");
-                showNotification("No new critical alerts to send.", 'info');
             } else {
                 console.warn("Could not send email alert:", alertResult.message || alertResult.status);
-                showNotification("Alert email could not be sent: " + (alertResult.message || "Unknown error."), 'warning');
+                alert("Alert email could not be sent: " + (alertResult.message || "Unknown error."));
             }
         } else {
             console.log("No out-of-tolerance values to send for alert and no prior save to trigger a resolution check.");
@@ -1039,22 +976,14 @@
 
       } catch(err){
         console.error("Operation failed:", err);
-        showNotification("Operation failed: " + err.message, 'error');
+        alert("Operation failed: " + err.message);
       } finally{
         hideLoader();
       }
     }
 
-    function changeMonth(m){ 
-      currentDate = new Date(currentDate.getFullYear(), m, 1); 
-      loadTable(); 
-      updateTrendChart(); 
-    }
-    function changeYear(o){ 
-      currentDate = new Date(currentDate.getFullYear()+o, currentDate.getMonth(), 1); 
-      loadTable(); 
-      updateTrendChart(); 
-    }
+    function changeMonth(m){ currentDate = new Date(currentDate.getFullYear(), m, 1); loadTable(); updateTrendChart(); }
+    function changeYear(o){ currentDate = new Date(currentDate.getFullYear()+o, currentDate.getMonth(), 1); loadTable(); updateTrendChart(); }
     function toggleDarkMode(){ document.body.classList.toggle('dark'); }
 
     function buildMonthButtons(){
@@ -1064,53 +993,16 @@
         var btn = document.createElement('button');
         btn.textContent = m;
         btn.addEventListener('click', () => changeMonth(i));
-        // Add a class for month buttons to distinguish them if needed for updateNavigationButtons
-        btn.classList.add('month-button');
         monthsDiv.appendChild(btn);
       });
       highlightActiveMonth();
     }
 
     function highlightActiveMonth(){
-      // This part ensures the currently displayed month button is highlighted
-      [...monthsDiv.querySelectorAll('.month-button')].forEach((btn,i)=>{ // Use .month-button class
+      [...monthsDiv.querySelectorAll('button')].forEach((btn,i)=>{
         btn.classList.toggle('active', i === currentDate.getMonth());
       });
     }
-
-    // NEW: Function to update the disabled state of navigation buttons
-    function updateNavigationButtons() {
-        const currentDisplayYear = currentDate.getFullYear();
-        const currentDisplayMonth = currentDate.getMonth(); // 0-indexed
-
-        const actualCurrentYear = today.getFullYear();
-        const actualCurrentMonth = today.getMonth(); // 0-indexed
-
-        // Disable 'Next Year' button
-        nextYearBtn.disabled = (currentDisplayYear > actualCurrentYear) || 
-                               (currentDisplayYear === actualCurrentYear && currentDisplayMonth >= actualCurrentMonth);
-
-        // Disable 'Previous Year' button (example: if you want to limit how far back they can go)
-        // For now, always enabled unless a specific oldest year is set
-        prevYearBtn.disabled = false; 
-
-        // Disable specific month buttons
-        const monthButtons = monthsDiv.querySelectorAll('.month-button');
-        monthButtons.forEach((btn, i) => {
-            // 'i' here is the 0-indexed month (0=Jan, 11=Dec)
-            const btnMonth = i;
-            const btnYear = currentDisplayYear; // These buttons are for the current displayed year
-
-            if (btnYear > actualCurrentYear) {
-                btn.disabled = true; // Disable all months if in a future year
-            } else if (btnYear === actualCurrentYear && btnMonth > actualCurrentMonth) {
-                btn.disabled = true; // Disable future months in the current year
-            } else {
-                btn.disabled = false; // Enable if in past month/year or current month/year
-            }
-        });
-    }
-
 
     function populateTrendEnergySelect() {
         var select = document.getElementById('trendEnergySelect');
@@ -1121,8 +1013,8 @@
             option.textContent = energy;
             select.appendChild(option);
         });
-        // Call updateTrendChart initially if an option is selected
-        if (energyTypes.length > 0 && select.value) {
+        if (energyTypes.length > 0) {
+            select.value = energyTypes[0];
             updateTrendChart();
         }
     }
@@ -1131,10 +1023,10 @@
         showLoader();
         if (trendChartSection) trendChartSection.classList.add('loading-transition');
 
-        var selectedEnergy = trendEnergySelect.value;
+        var selectedEnergy = document.getElementById('trendEnergySelect').value;
         if (!selectedEnergy) {
             hideLoader();
-            showNotification("Please select an energy type for trend analysis.", 'info');
+            alert("Please select an energy type for trend analysis.");
             if (trendChartSection) trendChartSection.classList.remove('loading-transition');
             return;
         }
@@ -1224,7 +1116,7 @@
 
         } catch (error) {
             console.error("Error fetching trend data:", error);
-            showNotification("Could not load trend data. Please try again.", 'error');
+            alert("Could not load trend data. Please try again.");
         } finally {
             hideLoader();
             if (trendChartSection) trendChartSection.classList.remove('loading-transition');
@@ -1237,7 +1129,7 @@
         messageElement.classList.add('chat-message', sender);
         messageElement.textContent = message;
         chatBody.appendChild(messageElement);
-        chatBody.scrollTop = chatBody.scrollHeight;
+        chatBody.scrollTop = chatBody.scrollHeight; // Scroll to bottom
     }
 
     // NEW: Function to handle sending chat messages
@@ -1246,24 +1138,27 @@
         if (message === "") return;
 
         addChatMessage(message, 'user');
-        chatInput.value = '';
+        chatInput.value = ''; // Clear input
 
+        // Convert message to lowercase for easier matching
         var lowerCaseMessage = message.toLowerCase();
-        var botResponse = "";
+        var botResponse = ""; // Initialize botResponse here
 
+        // --- Extract Energy Type and Date (for data queries) ---
         const energyTypesRegex = new RegExp(`(${energyTypes.join('|').replace(/ /g, '\\s*')})`, 'i');
         var energyMatch = lowerCaseMessage.match(energyTypesRegex);
-        var dateMatch = lowerCaseMessage.match(/(\d{4}-\d{2}-\d{2})/);
+        var dateMatch = lowerCaseMessage.match(/(\d{4}-\d{2}-\d{2})/); //YYYY-MM-DD format
 
-        var extractedEnergyType = energyMatch ? energyMatch[1].toUpperCase().replace(/\s/g, '') : null;
+        var extractedEnergyType = energyMatch ? energyMatch[1].toUpperCase().replace(/\s/g, '') : null; // Clean up matched energy type
         var extractedDate = dateMatch ? dateMatch[0] : null;
         
         var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
 
+        // --- Data Query Logic - Prioritize these checks ---
         if (lowerCaseMessage.includes('out of tolerance dates')) {
             addChatMessage("Finding out of tolerance dates for current month...", 'bot');
             try {
-                var response = await fetch(`https://back-end-wrxi.onrender.com/query-qa-data`, {
+                var response = await fetch('https://back-end-wrxi.onrender.com/query-qa-data', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1287,10 +1182,11 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
+        // "What is the value/status for [Energy Type] on [Date]?"
         else if ((lowerCaseMessage.includes('value for') || lowerCaseMessage.includes('status for')) && extractedEnergyType && extractedDate) {
             addChatMessage(`Looking up data for ${extractedEnergyType} on ${extractedDate}...`, 'bot');
             try {
-                var response = await fetch(`https://back-end-wrxi.onrender.com/query-qa-data`, {
+                var response = await fetch('https://back-end-wrxi.onrender.com/query-qa-data', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1316,10 +1212,11 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
+        // "Show me all [Energy Type] data for this month."
         else if ((lowerCaseMessage.includes('show all') || lowerCaseMessage.includes('all data')) && extractedEnergyType && lowerCaseMessage.includes('this month')) {
             addChatMessage(`Getting all data for ${extractedEnergyType} this month...`, 'bot');
             try {
-                var response = await fetch(`https://back-end-wrxi.onrender.com/query-qa-data`, {
+                var response = await fetch('https://back-end-wrxi.onrender.com/query-qa-data', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1341,10 +1238,11 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
+        // "List all warning values for [specific month]."
         else if (lowerCaseMessage.includes('list all warning values') || lowerCaseMessage.includes('show warning values')) {
             addChatMessage(`Getting warning values for this month...`, 'bot');
             try {
-                var response = await fetch(`https://back-end-wrxi.onrender.com/query-qa-data`, {
+                var response = await fetch('https://back-end-wrxi.onrender.com/query-qa-data', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1365,6 +1263,7 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
+        // --- Basic Greetings and Conversational Responses (as a fallback if no data query matches) ---
         else if (lowerCaseMessage.includes('hi') || lowerCaseMessage.includes('hello') || lowerCaseMessage.includes('hey')) {
             botResponse = "Hello there! How can I assist you with your QA data today?";
         } else if (lowerCaseMessage.includes('how are you')) {
@@ -1372,6 +1271,7 @@
         } else if (lowerCaseMessage.includes('thank you') || lowerCaseMessage.includes('thanks')) {
             botResponse = "You're welcome! Happy to help.";
         }
+        // --- Fallback for unrecognized commands ---
         else {
              botResponse = "I'm sorry, I don't understand that request. Please try rephrasing or ask about:\n\n- \"Out of tolerance dates\"\n- \"Value for 6X on 2025-06-10\" (useYYYY-MM-DD for dates).";
         }
@@ -1385,7 +1285,7 @@
 
         var month = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
         try {
-            const response = await fetch('https://back-end-wrxi.onrender.com/export-excel', {
+            const response = await fetch('https://back-end-wrxi.onrender.com/export-excel', { // <-- New backend endpoint
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1407,14 +1307,14 @@
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url); // Clean up the URL object
-                showNotification("Excel file exported successfully!", 'success');
+                alert("Excel file exported successfully!");
             } else {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Failed to export Excel file.');
             }
         } catch (error) {
             console.error("Error exporting Excel:", error);
-            showNotification("Failed to export Excel: " + error.message, 'error');
+            alert("Failed to export Excel: " + error.message);
         } finally {
             hideLoader(); // Hide loading indicator
         }
@@ -1429,26 +1329,14 @@
 
     // Attach all event listeners after the DOM is fully loaded and all functions are defined.
     document.addEventListener('DOMContentLoaded', function() {
-        // IMPORTANT: Prevent browser back button from showing cached authenticated content.
-        // This makes sure the browser's back navigation to this page performs a full reload.
-        window.addEventListener('pageshow', function(event) {
-            if (event.persisted) { // If loaded from cache (bfcache)
-                window.location.reload(); // Force a full reload to re-run auth checks
-            }
-        });
-
         // Event listeners for static buttons
         saveBtn.addEventListener('click', manualSave);
         logoutBtn.addEventListener('click', window.logout);
         myProfileBtn.addEventListener('click', function() { window.location.href='my_profile.html'; });
         darkToggle.addEventListener('change', toggleDarkMode);
-        
-        // Event listeners for year navigation buttons
         prevYearBtn.addEventListener('click', function() { changeYear(-1); });
         nextYearBtn.addEventListener('click', function() { changeYear(1); });
-        
-        // NEW: Listen for 'change' event on the select element itself
-        trendEnergySelect.addEventListener('change', updateTrendChart);
+        showTrendBtn.addEventListener('click', updateTrendChart);
 
         // NEW: Export Button Event Listeners
         exportExcelBtn.addEventListener('click', exportToExcel); 
@@ -1457,7 +1345,7 @@
         chatBubble.addEventListener('click', function() {
             chatWindow.classList.toggle('open');
             if (chatWindow.classList.contains('open')) {
-                chatInput.focus();
+                chatInput.focus(); // Focus input when opened
             }
         });
         closeChatBtn.addEventListener('click', function() {
@@ -1474,35 +1362,23 @@
         // Firebase Auth State Listener - this should be the last logical step to kick off loading
         auth.onAuthStateChanged(function(user) {
             if (user) {
-                // User is signed in. This is the legitimate authenticated state.
                 currentUID = user.uid;
                 currentHospital = localStorage.getItem("hospitalName") || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
                 var userStatus = localStorage.getItem("userStatus");
 
-                // Initialize currentDate to the actual current month/year on page load
-                // This ensures the table and navigation controls are correctly set for the current month.
-                currentDate = new Date(); // Always initialize currentDate to actual current time
-                currentDate.setDate(1); // Set to 1st of the month to avoid issues with monthrange
-                
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
-                    showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000);
-                    window.logout(); // Force logout if status is not active
+                    alert("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.");
+                    window.logout();
                     return;
                 }
 
-                // If user is active and legitimately logged in, proceed to load data
                 localStorage.setItem("uid", currentUID);
                 document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
                 buildMonthButtons();
-                // Ensure updateNavigationButtons is called after buildMonthButtons to update prev/next states
-                updateNavigationButtons(); // Call this here to set initial disabled states
-
                 loadTable();
-                populateTrendEnergySelect(); // Call populate and implicitly update chart on initial load
+                populateTrendEnergySelect();
             } else {
-                // User is NOT signed in. Force them back to the login page.
-                // Use replace() to remove this page from history so back button can't return.
-                window.location.replace("login.html");
+                window.location.href = "login.html";
             }
         });
     });
