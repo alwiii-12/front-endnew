@@ -123,10 +123,9 @@
     .topbar button:first-of-type:hover {
         background-color: #0056b3;
     }
-    /* Adjusted logout button in upload.html */
-    #logoutBtn {
-        background-color: #dc3545;
-        color: #fff;
+    #logoutBtn { /* Directly use ID for logout button */
+        background-color: var(--error-red);
+        color: var(--text-light);
         width: 40px; /* Fixed width for a square/circular button */
         height: 40px; /* Fixed height for a square/circular button */
         padding: 0; /* Remove padding if using fixed width/height */
@@ -720,9 +719,6 @@
           <label for="trendEnergySelect" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
           <select id="trendEnergySelect" style="padding: 8px; border: 1px var(--border-light) solid;">
             </select>
-          <button id="showTrendBtn" style="background-color: var(--primary-blue); color: var(--text-light); margin-left: 10px;">
-              <i class="fas fa-chart-line"></i> Show Trend
-          </button>
         </div>
         <canvas id="trendChart" style="max-height: 350px; width: 100%;"></canvas>
       </div>
@@ -747,10 +743,16 @@
       </div>
   </div>
 
+  <div id="notification-container"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="firebase-init.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
     // These now reference the globally initialized Firebase objects from firebase-init.js
-    // Removed duplicate Firebase config and initialization here
+    // IMPORTANT: Removed duplicate Firebase config and initialization here
     var auth = firebase.auth();
     var db = firebase.firestore();
 
@@ -771,8 +773,6 @@
     var myProfileBtn = document.getElementById('myProfileBtn');
     var prevYearBtn = document.getElementById('prevYearBtn');
     var nextYearBtn = document.getElementById('nextYearBtn');
-    var showTrendBtn = document.getElementById('showTrendBtn');
-
     var trendEnergySelect = document.getElementById('trendEnergySelect');
 
 
@@ -866,7 +866,7 @@
 
       var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
       try {
-        var res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`);
+        var res = await fetch('https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}');
         var result = await res.json();
         var data = Array.isArray(result.data) && result.data.length === energyTypes.length
           ? result.data.map(r=>r.map(c=> c===null||c==="None"?"":c))
@@ -988,7 +988,7 @@
       }
 
       try {
-        var saveResponse = await fetch('https://back-end-wrxi.onrender.com/save', {
+        var saveResponse = await fetch('https://back-end-wrxi.onrender.com/save', { // <-- Corrected fetch URL
           method:'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ data: changedData, month, uid: currentUID })
@@ -1003,7 +1003,7 @@
         showNotification("Data saved successfully!", 'success'); // Using new notification
 
         if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') {
-            var alertResponse = await fetch('https://back-end-wrxi.onrender.com/send-alert', {
+            var alertResponse = await fetch('https://back-end-wrxi.onrender.com/send-alert', { // <-- Corrected fetch URL
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1138,7 +1138,7 @@
 
         var monthKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
         try {
-            var res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`);
+            var res = await fetch('https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}');
             var result = await res.json();
             var monthData = result.data;
 
