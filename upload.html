@@ -358,14 +358,15 @@
         font-size: 0.95em;
         border-radius: 6px;
     }
-    .trend-chart-section button {
+    /* Removed the 'Show Trend' button styles as the button is being removed */
+    /* .trend-chart-section button {
         padding: 10px 20px;
         font-size: 0.95em;
         background-color: var(--primary-blue);
         color: #fff;
         border-radius: 6px;
         box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
+    } */
 
 
     /* Dark Mode overrides */
@@ -777,10 +778,7 @@
           <label for="trendEnergySelect" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
           <select id="trendEnergySelect" style="padding: 8px; border: 1px var(--border-light) solid;">
             </select>
-          <button id="showTrendBtn" style="background-color: var(--primary-blue); color: var(--text-light); margin-left: 10px;">
-              <i class="fas fa-chart-line"></i> Show Trend
-          </button>
-        </div>
+          </div>
         <canvas id="trendChart" style="max-height: 350px; width: 100%;"></canvas>
       </div>
     </div>
@@ -833,7 +831,8 @@
     var myProfileBtn = document.getElementById('myProfileBtn');
     var prevYearBtn = document.getElementById('prevYearBtn');
     var nextYearBtn = document.getElementById('nextYearBtn');
-    var showTrendBtn = document.getElementById('showTrendBtn');
+    var trendEnergySelect = document.getElementById('trendEnergySelect'); // Get reference to the select element
+
 
     // NEW: Get references to Export buttons
     var exportExcelBtn = document.getElementById('exportExcelBtn'); 
@@ -1091,8 +1090,8 @@
             option.textContent = energy;
             select.appendChild(option);
         });
-        if (energyTypes.length > 0) {
-            select.value = energyTypes[0];
+        // Call updateTrendChart initially if an option is selected
+        if (energyTypes.length > 0 && select.value) { // Check if a value is selected (after options populated)
             updateTrendChart();
         }
     }
@@ -1101,7 +1100,7 @@
         showLoader();
         if (trendChartSection) trendChartSection.classList.add('loading-transition');
 
-        var selectedEnergy = document.getElementById('trendEnergySelect').value;
+        var selectedEnergy = trendEnergySelect.value; // Use the selected value directly from the select element
         if (!selectedEnergy) {
             hideLoader();
             showNotification("Please select an energy type for trend analysis.", 'info');
@@ -1414,7 +1413,9 @@
         darkToggle.addEventListener('change', toggleDarkMode);
         prevYearBtn.addEventListener('click', function() { changeYear(-1); });
         nextYearBtn.addEventListener('click', function() { changeYear(1); });
-        showTrendBtn.addEventListener('click', updateTrendChart);
+        
+        // NEW: Listen for 'change' event on the select element itself
+        trendEnergySelect.addEventListener('change', updateTrendChart); // Removed showTrendBtn, listening on select
 
         // NEW: Export Button Event Listeners
         exportExcelBtn.addEventListener('click', exportToExcel); 
@@ -1456,7 +1457,7 @@
                 document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
                 buildMonthButtons();
                 loadTable();
-                populateTrendEnergySelect();
+                populateTrendEnergySelect(); // Call populate and implicitly update chart on initial load
             } else {
                 // User is NOT signed in. Force them back to the login page.
                 // Use replace() to remove this page from history so back button can't return.
