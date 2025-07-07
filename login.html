@@ -189,6 +189,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
+  <script src="config.js"></script>
+
   <script>
     // These now reference the globally initialized Firebase objects from firebase-init.js
     const auth = firebase.auth();
@@ -196,14 +198,14 @@
 
     const errorMsg = document.getElementById("errorMsg");
     const successMsg = document.getElementById("successMsg");
-    const notificationContainer = document.getElementById('notification-container'); // Get notification container
+    const notificationContainer = document.getElementById('notification-container');
 
     function clearMessages() {
         errorMsg.textContent = "";
         successMsg.textContent = "";
     }
 
-    // NEW: Custom Notification Function (copied here for consistency)
+    // Custom Notification Function (copied here for consistency across pages)
     function showNotification(message, type = 'info', duration = 3000) {
         const notification = document.createElement('div');
         notification.classList.add('notification-message', type);
@@ -211,7 +213,7 @@
 
         notificationContainer.appendChild(notification);
 
-        void notification.offsetWidth; // Force reflow
+        void notification.offsetWidth;
         notification.classList.add('show');
 
         setTimeout(() => {
@@ -250,21 +252,17 @@
               localStorage.setItem("userStatus", userStatus);
 
               if (userRole === "Admin") {
-                window.location.href = "admin_dashboard.html";
+                showNotification("Logged in as Admin. Redirecting...", 'success');
+                setTimeout(() => { window.location.href = "admin_dashboard.html"; }, 1000);
               } else if (userStatus === "active") {
-                window.location.href = "upload.html";
+                showNotification("Login successful. Redirecting...", 'success');
+                setTimeout(() => { window.location.href = "upload.html"; }, 1000);
               } else if (userStatus === "pending" || userStatus === "rejected") {
-                showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000); // Using new notification
-                // No direct alert here, notification handles it.
-                // You might still want to immediately redirect if status prevents login.
-                setTimeout(() => { // Give time for notification to show
-                    window.location.href = "awaiting_approval.html";
-                }, 1000);
+                showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000);
+                setTimeout(() => { window.location.href = "awaiting_approval.html"; }, 1000);
               } else {
-                showNotification("Your account status is unknown. Please contact support.", 'warning', 5000); // Using new notification
-                setTimeout(() => { // Give time for notification to show
-                    window.location.href = "awaiting_approval.html";
-                }, 1000);
+                showNotification("Your account status is unknown. Please contact support.", 'warning', 5000);
+                setTimeout(() => { window.location.href = "awaiting_approval.html"; }, 1000);
               }
 
             } else {
@@ -272,25 +270,42 @@
               localStorage.setItem("hospitalName", "UNKNOWN HOSPITAL");
               localStorage.setItem("userRole", "unknown");
               localStorage.setItem("userStatus", "unknown");
-              showNotification("Your profile data is incomplete. Please contact support.", 'error', 5000); // Using new notification
-              setTimeout(() => { // Give time for notification to show
-                    window.location.href = "awaiting_approval.html";
-                }, 1000);
+              showNotification("Your profile data is incomplete. Please contact support.", 'error', 5000);
+              setTimeout(() => { window.location.href = "awaiting_approval.html"; }, 1000);
             }
           } catch (err) {
             console.error("Error fetching user data from Firestore:", err);
             localStorage.setItem("hospitalName", "UNKNOWN HOSPITAL");
             localStorage.setItem("userRole", "unknown");
             localStorage.setItem("userStatus", "unknown");
-            showNotification("An error occurred fetching your profile. Please contact support.", 'error', 5000); // Using new notification
-            setTimeout(() => { // Give time for notification to show
-                    window.location.href = "awaiting_approval.html";
-                }, 1000);
+            showNotification("An error occurred fetching your profile. Please contact support.", 'error', 5000);
+            setTimeout(() => { window.location.href = "awaiting_approval.html"; }, 1000);
           }
         })
         .catch((error) => {
-          // errorMsg.textContent = "❌ Invalid email or password."; // Replaced by notification
-          showNotification("Login failed: " + (error.message || "Invalid email or password."), 'error'); // Using new notification
+          console.error("Firebase Auth login error:", error);
+
+          let displayMessage = "An unexpected login error occurred.";
+          switch (error.code) {
+            case 'auth/invalid-email':
+              displayMessage = "Please enter a valid email address.";
+              break;
+            case 'auth/user-disabled':
+              displayMessage = "Your account has been disabled. Please contact support.";
+              break;
+            case 'auth/user-not-found':
+            case 'auth/wrong-password':
+            case 'auth/invalid-login-credentials':
+              // Security best practice: Do NOT specify if it's the email or password for security reasons
+              displayMessage = "Invalid email or password."; // Generic message for wrong email/password
+              break;
+            case 'auth/network-request-failed':
+              displayMessage = "Network error. Please check your internet connection.";
+              break;
+            default:
+              displayMessage = "Login failed: " + error.message;
+          }
+          showNotification(displayMessage, 'error');
         });
     });
 
@@ -299,22 +314,31 @@
         const email = document.getElementById("email").value;
 
         if (!email) {
-            showNotification("Please enter your email to reset password.", 'warning'); // Using new notification
+            showNotification("Please enter your email to reset password.", 'warning');
             return;
         }
 
         try {
             await auth.sendPasswordResetEmail(email);
-            showNotification("Password reset email sent. Check your inbox!", 'success'); // Using new notification
+            showNotification("Password reset email sent. Check your inbox!", 'success');
         } catch (error) {
             console.error("Password reset error:", error);
-            if (error.code === 'auth/user-not-found') {
-                showNotification("No user found with that email address.", 'error'); // Using new notification
-            } else if (error.code === 'auth/invalid-email') {
-                showNotification("Please enter a valid email address.", 'error'); // Using new notification
-            } else {
-                showNotification("Error sending password reset email: " + error.message, 'error'); // Using new notification
+            let displayMessage = "An unexpected error occurred sending reset email.";
+            switch (error.code) {
+                case 'auth/invalid-email':
+                    displayMessage = "Please enter a valid email address.";
+                    break;
+                case 'auth/user-not-found':
+                    // Security best practice: Do NOT confirm if email exists for password resets
+                    displayMessage = "If an account exists for that email, a password reset link has been sent.";
+                    break;
+                case 'auth/network-request-failed':
+                    displayMessage = "Network error. Please check your internet connection.";
+                    break;
+                default:
+                    displayMessage = "Error sending password reset email: " + error.message;
             }
+            showNotification(displayMessage, 'error');
         }
     }
   </script>
