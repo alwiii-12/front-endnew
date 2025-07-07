@@ -752,7 +752,7 @@
 
   <script>
     // These now reference the globally initialized Firebase objects from firebase-init.js
-    // IMPORTANT: Removed duplicate Firebase config and initialization here
+    // Removed duplicate Firebase config and initialization here
     var auth = firebase.auth();
     var db = firebase.firestore();
 
@@ -861,12 +861,13 @@
       var dateCols = getMonthDates(currentDate);
       document.getElementById('header').textContent = `${currentDate.toLocaleString('default',{month:'long'})} ${currentDate.getFullYear()}`;
       yearLabel.textContent = currentDate.getFullYear();
+      buildMonthButtons(); // Rebuild month buttons so updateNavigationButtons can disable them
       highlightActiveMonth();
       updateNavigationButtons(); // Update button states after month/year change
 
       var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
       try {
-        var res = await fetch('https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}');
+        var res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`);
         var result = await res.json();
         var data = Array.isArray(result.data) && result.data.length === energyTypes.length
           ? result.data.map(r=>r.map(c=> c===null||c==="None"?"":c))
@@ -1138,7 +1139,7 @@
 
         var monthKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
         try {
-            var res = await fetch('https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}');
+            var res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`);
             var result = await res.json();
             var monthData = result.data;
 
@@ -1306,6 +1307,7 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
+        // "Show me all [Energy Type] data for this month."
         else if ((lowerCaseMessage.includes('show all') || lowerCaseMessage.includes('all data')) && extractedEnergyType && lowerCaseMessage.includes('this month')) {
             addChatMessage(`Getting all data for ${extractedEnergyType} this month...`, 'bot');
             try {
@@ -1437,7 +1439,6 @@
         nextYearBtn.addEventListener('click', function() { changeYear(1); });
         
         // NEW: Listen for 'change' event on the select element itself
-        // Removed the showTrendBtn listener as it's no longer needed
         trendEnergySelect.addEventListener('change', updateTrendChart); 
 
         // NEW: Export Button Event Listeners
