@@ -19,6 +19,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -375,7 +376,7 @@
         color: #e0f7fa;
         box-shadow: 0 1px 3px rgba(0,0,0,0.5);
     }
-    body.dark .topbar #hospitalName, body.dark h1, body.dark h2, body.dark .user-info strong {
+    body.dark .topbar #hospitalName, body.dark h1, body.dark h2, body.dark h3, body.dark .user-info strong {
         color: #e0f7fa;
     }
     body.dark .sidebar button {
@@ -719,9 +720,6 @@
           <label for="trendEnergySelect" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
           <select id="trendEnergySelect" style="padding: 8px; border: 1px var(--border-light) solid;">
             </select>
-          <button id="showTrendBtn" style="background-color: var(--primary-blue); color: var(--text-light); margin-left: 10px;">
-              <i class="fas fa-chart-line"></i> Show Trend
-          </button>
         </div>
         <canvas id="trendChart" style="max-height: 350px; width: 100%;"></canvas>
       </div>
@@ -746,10 +744,15 @@
       </div>
   </div>
 
+  <div id="notification-container"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="firebase-init.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
     // These now reference the globally initialized Firebase objects from firebase-init.js
-    // Removed duplicate Firebase config and initialization here
     var auth = firebase.auth();
     var db = firebase.firestore();
 
@@ -770,11 +773,10 @@
     var myProfileBtn = document.getElementById('myProfileBtn');
     var prevYearBtn = document.getElementById('prevYearBtn');
     var nextYearBtn = document.getElementById('nextYearBtn');
-    var showTrendBtn = document.getElementById('showTrendBtn'); // Still needed for its listener
     var trendEnergySelect = document.getElementById('trendEnergySelect');
 
 
-    // Get references to Export buttons
+    // NEW: Get references to Export buttons
     var exportExcelBtn = document.getElementById('exportExcelBtn'); 
 
     // Get references for data containers to apply transitions
@@ -790,7 +792,7 @@
     var chatInput = document.getElementById('chat-input');
     var sendChatBtn = document.getElementById('send-chat-btn');
 
-    // Notification Container
+    // NEW: Notification Container
     var notificationContainer = document.getElementById('notification-container');
 
 
@@ -804,7 +806,7 @@
 
     var outOfToleranceValues = []; // This array holds the current out-of-tolerance values displayed in the table.
 
-    // Custom Notification Function
+    // --- NEW: Custom Notification Function ---
     function showNotification(message, type = 'info', duration = 3000) {
         const notification = document.createElement('div');
         notification.classList.add('notification-message', type);
@@ -890,9 +892,10 @@
             } else {
                 // Determine if the cell's date is in the future
                 const cellDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), c);
-                cellDate.setHours(0,0,0,0);
+                cellDate.setHours(0,0,0,0); // Normalize to start of day
 
-                const actualToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                // Get current actual date, normalized to start of day for accurate comparison
+                const actualToday = new Date();
                 actualToday.setHours(0,0,0,0);
 
                 // Set readOnly to true if the cell's date is strictly in the future
@@ -1080,8 +1083,7 @@
 
         // Disable 'Next Year' button
         // Only disable if the displayed year is strictly in the future relative to the actual current year
-        // OR if it's the current actual year and the displayed month is already the current actual month.
-        // This prevents navigating to 2026 or to August 2025 (if current month is July 2025).
+        // OR if it's the current year AND the month is already the current month (preventing year advance to next year too soon)
         nextYearBtn.disabled = (currentDisplayYear > actualCurrentYear) || 
                                (currentDisplayYear === actualCurrentYear && currentDisplayMonth >= actualCurrentMonth);
 
@@ -1114,8 +1116,8 @@
             option.textContent = energy;
             select.appendChild(option);
         });
-        if (energyTypes.length > 0) {
-            select.value = energyTypes[0];
+        // Call updateTrendChart initially if an option is selected
+        if (energyTypes.length > 0 && select.value) {
             updateTrendChart();
         }
     }
@@ -1124,7 +1126,7 @@
         showLoader();
         if (trendChartSection) trendChartSection.classList.add('loading-transition');
 
-        var selectedEnergy = document.getElementById('trendEnergySelect').value;
+        var selectedEnergy = trendEnergySelect.value;
         if (!selectedEnergy) {
             hideLoader();
             showNotification("Please select an energy type for trend analysis.", 'info');
@@ -1309,7 +1311,6 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
-        // "Show me all [Energy Type] data for this month."
         else if ((lowerCaseMessage.includes('show all') || lowerCaseMessage.includes('all data')) && extractedEnergyType && lowerCaseMessage.includes('this month')) {
             addChatMessage(`Getting all data for ${extractedEnergyType} this month...`, 'bot');
             try {
@@ -1319,8 +1320,7 @@
                     body: JSON.stringify({
                         query: 'energy_data_for_month',
                         month: monthKey,
-                        uid: currentUID,
-                        energy_type: extractedEnergyType
+                        uid: currentUID
                     })
                 });
                 var result = await response.json();
@@ -1335,7 +1335,6 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
-        // "List all warning values for [specific month]."
         else if (lowerCaseMessage.includes('list all warning values') || lowerCaseMessage.includes('show warning values')) {
             addChatMessage(`Getting warning values for this month...`, 'bot');
             try {
@@ -1360,7 +1359,6 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
-        // --- Basic Greetings and Conversational Responses (as a fallback if no data query matches) ---
         else if (lowerCaseMessage.includes('hi') || lowerCaseMessage.includes('hello') || lowerCaseMessage.includes('hey')) {
             botResponse = "Hello there! How can I assist you with your QA data today?";
         } else if (lowerCaseMessage.includes('how are you')) {
@@ -1368,7 +1366,6 @@
         } else if (lowerCaseMessage.includes('thank you') || lowerCaseMessage.includes('thanks')) {
             botResponse = "You're welcome! Happy to help.";
         }
-        // --- Fallback for unrecognized commands ---
         else {
              botResponse = "I'm sorry, I don't understand that request. Please try rephrasing or ask about:\n\n- \"Out of tolerance dates\"\n- \"Value for 6X on 2025-06-10\" (useYYYY-MM-DD for dates).";
         }
@@ -1455,7 +1452,7 @@
         chatBubble.addEventListener('click', function() {
             chatWindow.classList.toggle('open');
             if (chatWindow.classList.contains('open')) {
-                chatInput.focus(); // Focus input when opened
+                chatInput.focus();
             }
         });
         closeChatBtn.addEventListener('click', function() {
@@ -1492,8 +1489,9 @@
                 // If user is active and legitimately logged in, proceed to load data
                 localStorage.setItem("uid", currentUID);
                 document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
-                buildMonthButtons(); // This creates the month buttons
-                updateNavigationButtons(); // Call this here to set initial disabled states *after* buttons are built
+                buildMonthButtons();
+                // Call updateNavigationButtons here, after buildMonthButtons to set initial disabled states
+                updateNavigationButtons(); 
 
                 loadTable(); // Load table for the initialized currentDate
                 populateTrendEnergySelect(); // Call populate and implicitly update chart on initial load
