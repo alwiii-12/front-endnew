@@ -775,12 +775,9 @@
         <h3>Energy Trend Analysis (Current Month)</h3>
         <div style="margin-bottom: 15px;">
           <label for="trendEnergySelect" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
-          <select id="trendEnergySelect" style="padding: 8px; border: 1px var(--border-light) solid;">
+          <select id="trendEnergySelect" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart()">
             </select>
-          <button id="showTrendBtn" style="background-color: var(--primary-blue); color: var(--text-light); margin-left: 10px;">
-              <i class="fas fa-chart-line"></i> Show Trend
-          </button>
-        </div>
+          </div>
         <canvas id="trendChart" style="max-height: 350px; width: 100%;"></canvas>
       </div>
     </div>
@@ -833,7 +830,7 @@
     var myProfileBtn = document.getElementById('myProfileBtn');
     var prevYearBtn = document.getElementById('prevYearBtn');
     var nextYearBtn = document.getElementById('nextYearBtn');
-    var showTrendBtn = document.getElementById('showTrendBtn');
+    // var showTrendBtn = document.getElementById('showTrendBtn'); // REMOVED
 
     // NEW: Get references to Export buttons
     var exportExcelBtn = document.getElementById('exportExcelBtn'); 
@@ -1414,7 +1411,7 @@
         darkToggle.addEventListener('change', toggleDarkMode);
         prevYearBtn.addEventListener('click', function() { changeYear(-1); });
         nextYearBtn.addEventListener('click', function() { changeYear(1); });
-        showTrendBtn.addEventListener('click', updateTrendChart);
+        // showTrendBtn.addEventListener('click', updateTrendChart); // REMOVED: This line is removed.
 
         // NEW: Export Button Event Listeners
         exportExcelBtn.addEventListener('click', exportToExcel); 
