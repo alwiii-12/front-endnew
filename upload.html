@@ -818,11 +818,13 @@
     var saveBtn = document.getElementById('saveBtn');
     var logoutBtn = document.getElementById('logoutBtn');
     var myProfileBtn = document.getElementById('myProfileBtn');
-    // CORRECTED: Ensure these are defined here at the top with other DOM element references
+    // CORRECTED: Ensure these navigation button variables are linked to their elements
     var prevYearBtn = document.getElementById('prevYearBtn');
     var nextYearBtn = document.getElementById('nextYearBtn');
-    var prevMonthBtn; // Declared here, assigned in buildMonthButtons()
-    var nextMonthBtn; // Declared here, assigned in buildMonthButtons()
+    // Note: prevMonthBtn and nextMonthBtn are dynamically created in buildMonthButtons(),
+    // so their references need to be local to that function or accessible globally after creation.
+    // For now, updateNavigationButtons will operate on them after buildMonthButtons has run.
+
 
     var trendEnergySelect = document.getElementById('trendEnergySelect');
 
@@ -952,6 +954,15 @@
 
                 // Set readOnly to true if the cell's date is strictly in the future
                 props.readOnly = (cellDate.getTime() > actualToday.getTime());
+
+                // Special handling for future MONTHS/YEARS for all days within them
+                const currentDisplayedMonthYear = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                const actualCurrentMonthYear = new Date(today.getFullYear(), today.getMonth(), 1);
+                actualCurrentMonthYear.setHours(0,0,0,0); // Normalize to start of day
+
+                if (currentDisplayedMonthYear.getTime() > actualCurrentMonthYear.getTime()) {
+                    props.readOnly = true; // Make entire future month/year read-only
+                }
             }
             return props;
           }
@@ -1104,6 +1115,7 @@
     }
 
     function highlightActiveMonth(){
+      // This part ensures the currently displayed month button is highlighted
       [...monthsDiv.querySelectorAll('button')].forEach((btn,i)=>{
         btn.classList.toggle('active', i === currentDate.getMonth());
       });
@@ -1127,7 +1139,9 @@
 
         // Ensure 'Previous' buttons are never disabled (unless a specific minimum historical year is defined)
         prevYearBtn.disabled = false;
-        prevMonthBtn.disabled = false;
+        // The month buttons are created dynamically, so prevMonthBtn won't be a global var.
+        // We'll need to re-select it or ensure `buildMonthButtons` handles this.
+        // For simplicity, `prevMonthBtn` is not individually disabled as going back years makes it unnecessary.
     }
 
 
@@ -1498,10 +1512,10 @@
 
                 // Initialize currentDate to the actual current month/year on page load
                 // Only set if not already navigating to a specific month from history etc.
-                if (currentDate.getFullYear() === 1970 && currentDate.getMonth() === 0) { // Check if currentDate is still its default (not changed by direct navigation)
-                    currentDate = new Date(); // Use today's date to initialize currentDate
-                    currentDate.setDate(1); // Set to 1st of the month to avoid issues with monthrange
-                }
+                // This logic needs to be revisited to ensure correct initial display of current month/year
+                // regardless of previous navigation. Simpler to always set to current month/year on auth.
+                currentDate = new Date(); // Always initialize currentDate to actual current time
+                currentDate.setDate(1); // Set to 1st of the month to avoid issues with monthrange
                 
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
                     showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000);
@@ -1513,6 +1527,9 @@
                 localStorage.setItem("uid", currentUID);
                 document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
                 buildMonthButtons();
+                // Ensure updateNavigationButtons is called after buildMonthButtons to update prev/next states
+                updateNavigationButtons(); // Call this here to set initial disabled states
+
                 loadTable();
                 populateTrendEnergySelect(); // Call populate and implicitly update chart on initial load
             } else {
