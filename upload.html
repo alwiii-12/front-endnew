@@ -308,7 +308,7 @@
     }
     button:active, a.button:active, select:active {
         transform: translateY(0);
-        box-shadow: 0 1px 4px rgba(0,0,0,0.08) inset;
+        box-shadow: 0 1px 4px var(--shadow-light) inset;
     }
 
     /* NEW: Export Buttons Section Styling */
@@ -1051,6 +1051,7 @@
 
         lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
         showNotification("Data saved successfully!", 'success');
+        updateTrendChart(); // ADDED: Update the trend chart after a successful save
 
         if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') {
             var alertResponse = await fetch(`https://back-end-wrxi.onrender.com/send-alert`, { // Use BACKEND_URL once config.js is integrated
