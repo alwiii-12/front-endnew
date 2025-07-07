@@ -69,12 +69,16 @@
         }
         .profile-item strong {
             display: inline-block;
-            width: 150px; /* Increased width to align colons consistently */
+            width: 150px; /* Fixed width for the label */
             min-width: 120px; /* Ensure minimum width */
             flex-shrink: 0; /* Prevent shrinking */
             color: #333;
-            text-align: left; /* Ensure text aligns left within its fixed width */
-            padding-right: 5px; /* Small space between label and colon */
+            text-align: right; /* Align label text to the right */
+            padding-right: 10px; /* Space between label and colon */
+        }
+        .profile-item .colon { /* NEW: Style for the colon */
+            flex-shrink: 0; /* Prevent shrinking */
+            margin-right: 10px; /* Space after the colon */
         }
         .profile-item span:last-child { /* Target the actual value */
             flex-grow: 1; /* Allow value to take remaining space */
@@ -180,10 +184,10 @@
         // These now directly reference the globally initialized Firebase objects from firebase-init.js
         const auth = firebase.auth();
         const db = firebase.firestore();
-        const notificationContainer = document.getElementById('notification-container'); // Get notification container
+        const notificationContainer = document.getElementById('notification-container');
 
 
-        // NEW: Custom Notification Function (copied here for consistency)
+        // Custom Notification Function (copied here for consistency)
         function showNotification(message, type = 'info', duration = 3000) {
             const notification = document.createElement('div');
             notification.classList.add('notification-message', type);
@@ -209,7 +213,7 @@
                 window.location.href = "login.html";
             }).catch((error) => {
                 console.error("Logout error:", error);
-                showNotification("Logout failed: " + error.message, 'error'); // Using new notification
+                showNotification("Logout failed: " + error.message, 'error');
             });
         }
 
@@ -217,7 +221,7 @@
             if (user) {
                 const userStatus = localStorage.getItem("userStatus");
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
-                    showNotification("Your account is not active. Please await admin approval.", 'warning', 5000); // Using new notification
+                    showNotification("Your account is not active. Please await admin approval.", 'warning', 5000);
                     window.logout();
                     return;
                 }
@@ -238,23 +242,23 @@
                 if (userDocSnap.exists) {
                     const userData = userDocSnap.data();
                     profileDetailsDiv.innerHTML = `
-                        <div class="profile-item"><strong>Name:</strong><span>${userData.name || 'N/A'}</span></div>
-                        <div class="profile-item"><strong>Email:</strong><span>${userData.email || 'N/A'}</span></div>
-                        <div class="profile-item"><strong>Hospital:</strong><span>${userData.hospital || 'N/A'}</span></div>
-                        <div class="profile-item"><strong>Role:</strong><span>${userData.role || 'N/A'}</span></div>
-                        <div class="profile-item"><strong>Account Status:</strong><span style="color: ${userData.status === 'active' ? 'green' : 'orange'}; font-weight: bold;">${(userData.status || 'N/A').toUpperCase()}</span></div>
+                        <div class="profile-item"><strong>Name</strong><span class="colon">:</span><span>${userData.name || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Email</strong><span class="colon">:</span><span>${userData.email || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Hospital</strong><span class="colon">:</span><span>${userData.hospital || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Role</strong><span class="colon">:</span><span>${userData.role || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Account Status</strong><span class="colon">:</span><span style="color: ${userData.status === 'active' ? 'green' : 'orange'}; font-weight: bold;">${(userData.status || 'N/A').toUpperCase()}</span></div>
                     `;
                     localStorage.setItem("userStatus", userData.status);
 
                 } else {
                     profileDetailsDiv.innerHTML = '<p class="loading-message" style="color: red;">Error: User profile not found in database.</p>';
                     console.error("Profile Error: User document not found for UID:", uid);
-                    showNotification("Error: User profile not found in database.", 'error'); // Using new notification
+                    showNotification("Error: User profile not found in database.", 'error');
                 }
             } catch (error) {
                 console.error("Error loading profile:", error);
                 profileDetailsDiv.innerHTML = `<p class="loading-message" style="color: red;">Error: ${error.message || 'Could not load profile data.'}</p>`;
-                showNotification(`Error: ${error.message || 'Could not load profile data.'}`, 'error'); // Using new notification
+                showNotification(`Error: ${error.message || 'Could not load profile data.'}`, 'error');
             }
         }
     </script>
