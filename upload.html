@@ -19,6 +19,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -375,7 +376,7 @@
         color: #e0f7fa;
         box-shadow: 0 1px 3px rgba(0,0,0,0.5);
     }
-    body.dark .topbar #hospitalName, body.dark h1, body.dark h2, body.dark .user-info strong {
+    body.dark .topbar #hospitalName, body.dark h1, body.dark h2, body.dark h3, body.dark .user-info strong {
         color: #e0f7fa;
     }
     body.dark .sidebar button {
@@ -770,7 +771,8 @@
     var myProfileBtn = document.getElementById('myProfileBtn');
     var prevYearBtn = document.getElementById('prevYearBtn');
     var nextYearBtn = document.getElementById('nextYearBtn');
-    var showTrendBtn = document.getElementById('showTrendBtn'); // Still needed for its listener
+    var showTrendBtn = document.getElementById('showTrendBtn');
+
     var trendEnergySelect = document.getElementById('trendEnergySelect');
 
 
@@ -830,7 +832,7 @@
       auth.signOut().then(() => {
         localStorage.clear();
         hideLoader();
-        window.location.replace("login.html");
+        window.location.replace("login.html"); // Use replace to clear history for this page
       }).catch((error) => {
         console.error("Logout error:", error);
         showNotification("Logout failed: " + error.message, 'error');
@@ -892,7 +894,7 @@
                 const cellDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), c);
                 cellDate.setHours(0,0,0,0);
 
-                const actualToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const actualToday = new Date();
                 actualToday.setHours(0,0,0,0);
 
                 // Set readOnly to true if the cell's date is strictly in the future
@@ -986,7 +988,7 @@
       }
 
       try {
-        var saveResponse = await fetch(`https://back-end-wrxi.onrender.com/save`,{
+        var saveResponse = await fetch('https://back-end-wrxi.onrender.com/save', {
           method:'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ data: changedData, month, uid: currentUID })
@@ -998,10 +1000,10 @@
         }
 
         lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
-        showNotification("Data saved successfully!", 'success');
+        showNotification("Data saved successfully!", 'success'); // Using new notification
 
         if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') {
-            var alertResponse = await fetch(`https://back-end-wrxi.onrender.com/send-alert`, {
+            var alertResponse = await fetch('https://back-end-wrxi.onrender.com/send-alert', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1056,15 +1058,13 @@
         var btn = document.createElement('button');
         btn.textContent = m;
         btn.addEventListener('click', () => changeMonth(i));
-        // Add a class for month buttons to distinguish them if needed for updateNavigationButtons
-        btn.classList.add('month-button');
+        btn.classList.add('month-button'); // Add a class for month buttons
         monthsDiv.appendChild(btn);
       });
       highlightActiveMonth();
     }
 
     function highlightActiveMonth(){
-      // This part ensures the currently displayed month button is highlighted
       [...monthsDiv.querySelectorAll('.month-button')].forEach((btn,i)=>{ // Use .month-button class
         btn.classList.toggle('active', i === currentDate.getMonth());
       });
@@ -1079,11 +1079,11 @@
         const actualCurrentMonth = today.getMonth(); // 0-indexed
 
         // Disable 'Next Year' button
-        // Only disable if the displayed year is strictly in the future relative to the actual current year
-        // OR if it's the current actual year and the displayed month is already the current actual month.
-        // This prevents navigating to 2026 or to August 2025 (if current month is July 2025).
         nextYearBtn.disabled = (currentDisplayYear > actualCurrentYear) || 
                                (currentDisplayYear === actualCurrentYear && currentDisplayMonth >= actualCurrentMonth);
+
+        // Ensure 'Previous' year button is always enabled (unless a specific minimum historical year is defined)
+        prevYearBtn.disabled = false; 
 
         // Disable specific month buttons dynamically
         const monthButtons = monthsDiv.querySelectorAll('.month-button');
@@ -1099,9 +1099,6 @@
                 btn.disabled = false; // Past months/years, and current month/year are enabled
             }
         });
-
-        // Ensure 'Previous' year button is always enabled (unless a very old minimum year is defined)
-        prevYearBtn.disabled = false;
     }
 
 
@@ -1124,7 +1121,7 @@
         showLoader();
         if (trendChartSection) trendChartSection.classList.add('loading-transition');
 
-        var selectedEnergy = document.getElementById('trendEnergySelect').value;
+        var selectedEnergy = trendEnergySelect.value;
         if (!selectedEnergy) {
             hideLoader();
             showNotification("Please select an energy type for trend analysis.", 'info');
@@ -1309,7 +1306,6 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
-        // "Show me all [Energy Type] data for this month."
         else if ((lowerCaseMessage.includes('show all') || lowerCaseMessage.includes('all data')) && extractedEnergyType && lowerCaseMessage.includes('this month')) {
             addChatMessage(`Getting all data for ${extractedEnergyType} this month...`, 'bot');
             try {
@@ -1319,8 +1315,7 @@
                     body: JSON.stringify({
                         query: 'energy_data_for_month',
                         month: monthKey,
-                        uid: currentUID,
-                        energy_type: extractedEnergyType
+                        uid: currentUID
                     })
                 });
                 var result = await response.json();
@@ -1335,7 +1330,6 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
-        // "List all warning values for [specific month]."
         else if (lowerCaseMessage.includes('list all warning values') || lowerCaseMessage.includes('show warning values')) {
             addChatMessage(`Getting warning values for this month...`, 'bot');
             try {
@@ -1360,7 +1354,6 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
-        // --- Basic Greetings and Conversational Responses (as a fallback if no data query matches) ---
         else if (lowerCaseMessage.includes('hi') || lowerCaseMessage.includes('hello') || lowerCaseMessage.includes('hey')) {
             botResponse = "Hello there! How can I assist you with your QA data today?";
         } else if (lowerCaseMessage.includes('how are you')) {
@@ -1368,7 +1361,6 @@
         } else if (lowerCaseMessage.includes('thank you') || lowerCaseMessage.includes('thanks')) {
             botResponse = "You're welcome! Happy to help.";
         }
-        // --- Fallback for unrecognized commands ---
         else {
              botResponse = "I'm sorry, I don't understand that request. Please try rephrasing or ask about:\n\n- \"Out of tolerance dates\"\n- \"Value for 6X on 2025-06-10\" (useYYYY-MM-DD for dates).";
         }
@@ -1492,8 +1484,9 @@
                 // If user is active and legitimately logged in, proceed to load data
                 localStorage.setItem("uid", currentUID);
                 document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
-                buildMonthButtons(); // This creates the month buttons
-                updateNavigationButtons(); // Call this here to set initial disabled states *after* buttons are built
+                buildMonthButtons();
+                // Call updateNavigationButtons here, after buildMonthButtons to set initial disabled states
+                updateNavigationButtons(); 
 
                 loadTable(); // Load table for the initialized currentDate
                 populateTrendEnergySelect(); // Call populate and implicitly update chart on initial load
