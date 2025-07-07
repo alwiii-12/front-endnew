@@ -64,11 +64,21 @@
             margin-bottom: 15px;
             font-size: 1.1em;
             line-height: 1.6;
+            display: flex; /* Use flexbox for alignment */
+            align-items: baseline; /* Align text on baseline */
         }
         .profile-item strong {
             display: inline-block;
-            width: 120px; /* Aligns labels */
+            width: 150px; /* Increased width to align colons consistently */
+            min-width: 120px; /* Ensure minimum width */
+            flex-shrink: 0; /* Prevent shrinking */
             color: #333;
+            text-align: left; /* Ensure text aligns left within its fixed width */
+            padding-right: 5px; /* Small space between label and colon */
+        }
+        .profile-item span:last-child { /* Target the actual value */
+            flex-grow: 1; /* Allow value to take remaining space */
+            word-break: break-word; /* Ensure long values wrap */
         }
         .profile-actions {
             text-align: center;
@@ -168,7 +178,6 @@
     
     <script>
         // These now directly reference the globally initialized Firebase objects from firebase-init.js
-        // Make sure to use the 'compat' way for Firestore document access
         const auth = firebase.auth();
         const db = firebase.firestore();
         const notificationContainer = document.getElementById('notification-container'); // Get notification container
@@ -223,19 +232,17 @@
             profileDetailsDiv.innerHTML = '<p class="loading-message">Loading profile data...</p>';
 
             try {
-                // Correct Compat SDK way to get a document reference and fetch it
                 const userDocRef = db.collection("users").doc(uid);
                 const userDocSnap = await userDocRef.get();
 
-                // CORRECTED LINE: userDocSnap.exists is a PROPERTY, not a METHOD in Compat SDK
-                if (userDocSnap.exists) { // This line was the source of the error
+                if (userDocSnap.exists) {
                     const userData = userDocSnap.data();
                     profileDetailsDiv.innerHTML = `
-                        <div class="profile-item"><strong>Name:</strong> ${userData.name || 'N/A'}</div>
-                        <div class="profile-item"><strong>Email:</strong> ${userData.email || 'N/A'}</div>
-                        <div class="profile-item"><strong>Hospital:</strong> ${userData.hospital || 'N/A'}</div>
-                        <div class="profile-item"><strong>Role:</strong> ${userData.role || 'N/A'}</div>
-                        <div class="profile-item"><strong>Account Status:</strong> <span style="color: ${userData.status === 'active' ? 'green' : 'orange'}; font-weight: bold;">${(userData.status || 'N/A').toUpperCase()}</span></div>
+                        <div class="profile-item"><strong>Name:</strong><span>${userData.name || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Email:</strong><span>${userData.email || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Hospital:</strong><span>${userData.hospital || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Role:</strong><span>${userData.role || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Account Status:</strong><span style="color: ${userData.status === 'active' ? 'green' : 'orange'}; font-weight: bold;">${(userData.status || 'N/A').toUpperCase()}</span></div>
                     `;
                     localStorage.setItem("userStatus", userData.status);
 
