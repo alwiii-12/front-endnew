@@ -743,10 +743,16 @@
       </div>
   </div>
 
+  <div id="notification-container"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="firebase-init.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
     // These now reference the globally initialized Firebase objects from firebase-init.js
-    // Removed duplicate Firebase config and initialization here
+    // IMPORTANT: Removed duplicate Firebase config and initialization here
     var auth = firebase.auth();
     var db = firebase.firestore();
 
@@ -767,8 +773,6 @@
     var myProfileBtn = document.getElementById('myProfileBtn');
     var prevYearBtn = document.getElementById('prevYearBtn');
     var nextYearBtn = document.getElementById('nextYearBtn');
-    var showTrendBtn = document.getElementById('showTrendBtn');
-
     var trendEnergySelect = document.getElementById('trendEnergySelect');
 
 
@@ -1303,6 +1307,7 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
+        // "Show me all [Energy Type] data for this month."
         else if ((lowerCaseMessage.includes('show all') || lowerCaseMessage.includes('all data')) && extractedEnergyType && lowerCaseMessage.includes('this month')) {
             addChatMessage(`Getting all data for ${extractedEnergyType} this month...`, 'bot');
             try {
@@ -1393,14 +1398,14 @@
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url); // Clean up the URL object
-                showNotification("Excel file exported successfully!", 'success');
+                alert("Excel file exported successfully!", 'success');
             } else {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Failed to export Excel file.');
             }
         } catch (error) {
             console.error("Error exporting Excel:", error);
-            showNotification("Failed to export Excel: " + error.message, 'error');
+            alert("Failed to export Excel: " + error.message);
         } finally {
             hideLoader(); // Hide loading indicator
         }
@@ -1415,27 +1420,14 @@
 
     // Attach all event listeners after the DOM is fully loaded and all functions are defined.
     document.addEventListener('DOMContentLoaded', function() {
-        // IMPORTANT: Prevent browser back button from showing cached authenticated content.
-        // This makes sure the browser's back navigation to this page performs a full reload.
-        window.addEventListener('pageshow', function(event) {
-            if (event.persisted) { // If loaded from cache (bfcache)
-                window.location.reload(); // Force a full reload to re-run auth checks
-            }
-        });
-
         // Event listeners for static buttons
         saveBtn.addEventListener('click', manualSave);
         logoutBtn.addEventListener('click', window.logout);
         myProfileBtn.addEventListener('click', function() { window.location.href='my_profile.html'; });
         darkToggle.addEventListener('change', toggleDarkMode);
-        
-        // Event listeners for year navigation buttons
         prevYearBtn.addEventListener('click', function() { changeYear(-1); });
         nextYearBtn.addEventListener('click', function() { changeYear(1); });
-        
-        // NEW: Listen for 'change' event on the select element itself
-        // Removed the showTrendBtn listener as it's no longer needed
-        trendEnergySelect.addEventListener('change', updateTrendChart); 
+        showTrendBtn.addEventListener('click', updateTrendChart);
 
         // NEW: Export Button Event Listeners
         exportExcelBtn.addEventListener('click', exportToExcel); 
@@ -1459,27 +1451,25 @@
 
 
         // Firebase Auth State Listener - this should be the last logical step to kick off loading
-        auth.onAuthStateChanged(function(user) {
+        firebase.auth().onAuthStateChanged(function(user) {
             if (user) {
                 currentUID = user.uid;
                 currentHospital = localStorage.getItem("hospitalName") || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
                 var userStatus = localStorage.getItem("userStatus");
 
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
-                    showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000);
-                    window.logout(); // Force logout if status is not active
+                    alert("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.");
+                    window.logout();
                     return;
                 }
 
                 localStorage.setItem("uid", currentUID);
                 document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
                 buildMonthButtons();
-                updateNavigationButtons(); 
-
                 loadTable();
                 populateTrendEnergySelect();
             } else {
-                window.location.replace("login.html");
+                window.location.href = "login.html";
             }
         });
     });
