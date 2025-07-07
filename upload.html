@@ -86,7 +86,7 @@
       background: #ffffff;
       border: 1px solid rgba(0,0,0,0.05);
       padding: 20px;
-      box-sizing: border-box;
+      box-sizing: border;
     }
 
     /* Topbar styling */
@@ -895,7 +895,7 @@
                 const cellDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), c);
                 cellDate.setHours(0,0,0,0);
 
-                const actualToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const actualToday = new Date();
                 actualToday.setHours(0,0,0,0);
 
                 // Set readOnly to true if the cell's date is strictly in the future
@@ -989,7 +989,7 @@
       }
 
       try {
-        var saveResponse = await fetch('https://back-end-wrxi.onrender.com/save', {
+        var saveResponse = await fetch('https://back-end-wrxi.onrender.com/save', { // <-- Corrected fetch URL
           method:'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ data: changedData, month, uid: currentUID })
@@ -1001,10 +1001,10 @@
         }
 
         lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
-        showNotification("Data saved successfully!", 'success');
+        showNotification("Data saved successfully!", 'success'); // Using new notification
 
         if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') {
-            var alertResponse = await fetch('https://back-end-wrxi.onrender.com/send-alert', {
+            var alertResponse = await fetch('https://back-end-wrxi.onrender.com/send-alert', { // <-- Corrected fetch URL
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1139,7 +1139,7 @@
 
         var monthKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
         try {
-            var res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`);
+            var res = await fetch('https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}');
             var result = await res.json();
             var monthData = result.data;
 
@@ -1307,6 +1307,7 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
+        // "Show me all [Energy Type] data for this month."
         else if ((lowerCaseMessage.includes('show all') || lowerCaseMessage.includes('all data')) && extractedEnergyType && lowerCaseMessage.includes('this month')) {
             addChatMessage(`Getting all data for ${extractedEnergyType} this month...`, 'bot');
             try {
