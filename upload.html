@@ -358,14 +358,7 @@
         font-size: 0.95em;
         border-radius: 6px;
     }
-    .trend-chart-section button {
-        padding: 10px 20px;
-        font-size: 0.95em;
-        background-color: var(--primary-blue);
-        color: #fff;
-        border-radius: 6px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
+    /* Removed .trend-chart-section button rule as button is removed */
 
 
     /* Dark Mode overrides */
@@ -441,6 +434,22 @@
     .within { background-color: #d4edda !important; color: #155724 !important; }
     .warning { background-color: #fff3cd !important; color: #856404 !important; }
     .out { background-color: #f8d7da !important; color: #721c24 !important; }
+
+    /* New CSS for future cells to appear read-only */
+    .future-cell-readonly {
+        background-color: #f0f0f0 !important; /* Light grey for disabled look */
+        color: #999 !important; /* Muted text color */
+        cursor: not-allowed !important; /* Indicate it's not editable */
+    }
+    body.dark .future-cell-readonly {
+        background-color: #3a3a3a !important;
+        color: #777 !important;
+    }
+    /* Also ensure the Handsontable "placeholder" style is consistent in dark mode */
+    body.dark #table .handsontable .htPlaceholder {
+        background-color: #2a2a2a !important; /* Keep consistent with dark mode table bg */
+    }
+
 
     /* NEW CSS for Smooth Transitions */
     .data-container {
@@ -830,7 +839,7 @@
     var myProfileBtn = document.getElementById('myProfileBtn');
     var prevYearBtn = document.getElementById('prevYearBtn');
     var nextYearBtn = document.getElementById('nextYearBtn');
-    // var showTrendBtn = document.getElementById('showTrendBtn'); // REMOVED
+    // var showTrendBtn = document.getElementById('showTrendBtn'); // REMOVED: This line is removed as the button is gone
 
     // NEW: Get references to Export buttons
     var exportExcelBtn = document.getElementById('exportExcelBtn'); 
@@ -923,6 +932,14 @@
           ? result.data.map(r=>r.map(c=> c===null||c==="None"?"":c))
           : generateEmptyData(dateCols);
 
+        // Get today's date for comparison
+        const today = new Date();
+        const currentMonthYear = new Date(today.getFullYear(), today.getMonth(), 1); // Normalize to first day of current month
+
+        // Determine if the currently loaded month is in the future
+        const isFutureMonth = currentDate.getFullYear() > today.getFullYear() ||
+                              (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() > today.getMonth());
+
         if (hot) hot.destroy();
         hot = new Handsontable(container, {
           data,
@@ -938,10 +955,25 @@
           },
           cells: function (r, c) {
             var props = {};
-            if (c === 0) return props;
+            if (c === 0) { // Energy column (first column) is always read-only
+                props.readOnly = true;
+                return props;
+            }
+
+            // Calculate the actual date for the current cell (c is 1-based day index)
+            // No need for cellDate object; direct comparison is simpler
+            
+            // Check if the current month being displayed is a future month
+            // OR if it's the current month, but the day is in the future
+            if (isFutureMonth || (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() === today.getMonth() && c > today.getDate())) {
+                props.readOnly = true;
+                // Optional: add a class to visually indicate read-only
+                props.className = (props.className || '') + ' future-cell-readonly'; 
+            }
+
             var v = parseFloat(this.instance.getDataAtCell(r, c));
             if (!isNaN(v)) {
-              props.className = Math.abs(v) <= 1.8 ? 'within' : (Math.abs(v) <= 2 ? 'warning' : 'out');
+              props.className = (props.className || '') + ' ' + (Math.abs(v) <= 1.8 ? 'within' : (Math.abs(v) <= 2 ? 'warning' : 'out'));
             }
             return props;
           }
