@@ -718,7 +718,7 @@
     }
 
     .notification-message.info {
-        background-color: var(--primary-blue);
+        background-color: #007bff;
     }
 
   </style>
@@ -838,7 +838,6 @@
     var myProfileBtn = document.getElementById('myProfileBtn');
     var prevYearBtn = document.getElementById('prevYearBtn');
     var nextYearBtn = document.getElementById('nextYearBtn');
-    // var showTrendBtn = document.getElementById('showTrendBtn'); // REMOVED: This line is removed as the button is gone
 
     // NEW: Get references to Export buttons
     var exportExcelBtn = document.getElementById('exportExcelBtn'); 
@@ -863,7 +862,7 @@
     var currentDate = new Date(); currentDate.setDate(1);
     var energyTypes = ["6X","10X","15X","6X FFF","10X FFF","6E","9E","12E","15E","18E"];
 
-    var outOfToleranceValues = []; // This array holds the current out-of-tolerance values displayed in the table.
+    var outOfToleranceValues = [];
 
     // --- NEW: Custom Notification Function ---
     function showNotification(message, type = 'info', duration = 3000) {
@@ -891,8 +890,7 @@
       auth.signOut().then(() => {
         localStorage.clear();
         hideLoader();
-        // Redirect to login.html to prevent back button access to cached content
-        window.location.replace("login.html"); // Use replace to clear history for this page
+        window.location.replace("login.html");
       }).catch((error) => {
         console.error("Logout error:", error);
         showNotification("Logout failed: " + error.message, 'error');
@@ -1034,7 +1032,7 @@
       var changedData = hot.getData();
       var month = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
       try {
-        var saveResponse = await fetch(`https://back-end-wrxi.onrender.com/save`,{ // Use BACKEND_URL once config.js is integrated
+        var saveResponse = await fetch(`https://back-end-wrxi.onrender.com/save`,{
           method:'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ data: changedData, month, uid: currentUID })
@@ -1050,7 +1048,7 @@
         updateTrendChart();
 
         if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') {
-            var alertResponse = await fetch(`https://back-end-wrxi.onrender.com/send-alert`, { // Use BACKEND_URL once config.js is integrated
+            var alertResponse = await fetch(`https://back-end-wrxi.onrender.com/send-alert`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
