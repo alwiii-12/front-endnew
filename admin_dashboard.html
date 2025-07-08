@@ -544,7 +544,7 @@
         #hospital-data-access-section:fullscreen .hospital-qa-table th,
         #hospital-data-access-section:-webkit-full-screen .hospital-qa-table td,
         #hospital-data-access-section:-moz-full-screen .hospital-qa-table td,
-        #hospital-data-access-section:-ms-fullscreen .hospital-qa-table td,
+        #hospital-data-access-section:-ms-full-screen .hospital-qa-table td,
         #hospital-data-access-section:fullscreen .hospital-qa-table td {
             padding: 3px 1px;
             font-size: 0.65em;
@@ -748,7 +748,7 @@
         const db = firebase.firestore();
 
         // Define the backend URL
-        const BACKEND_URL = "https://back-end-wrxi.onrender.com"; // Ensure this matches your backend URL
+        const BACKEND_URL = "https://back-end-wrxi.onrender.com";
 
 
         let allUsersData = [];
@@ -1250,7 +1250,7 @@
             
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
-                const response = await fetch(`${BACKEND_URL}/admin/hospital-data?hospitalId=${hospitalId}&month=${monthParam}`, {
+                const response = await fetch(`${BACKEND_URL}/admin/hospital-data?hospitalId=${encodeURIComponent(hospitalId)}&month=${encodeURIComponent(monthParam)}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
