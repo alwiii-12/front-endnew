@@ -358,7 +358,6 @@
         font-size: 0.95em;
         border-radius: 6px;
     }
-    /* Removed .trend-chart-section button rule as button is removed */
 
 
     /* Dark Mode overrides */
@@ -447,7 +446,7 @@
     }
     /* Also ensure the Handsontable "placeholder" style is consistent in dark mode */
     body.dark #table .handsontable .htPlaceholder {
-        background-color: #2a2a2a !important; /* Keep consistent with dark mode table bg */
+        background-color: #2a2a2a !important;
     }
 
 
@@ -562,7 +561,7 @@
     .chat-message.bot {
         align-self: flex-start;
         background-color: var(--primary-blue-light);
-        color: var(--primary-blue-dark);
+        color: #0036B3; /* UPDATED: Bot message text color */
         border-bottom-left-radius: 2px;
     }
     body.dark #chat-window {
@@ -578,7 +577,7 @@
     }
     body.dark .chat-message.bot {
         background-color: var(--primary-blue-dark);
-        color: var(--primary-blue-light);
+        color: var(--primary-blue-light); /* Assuming this is okay or will be #0036B3 equivalent */
     }
 
 
@@ -627,15 +626,15 @@
 
         /* Ensure main content takes full width and flows properly */
         body {
-            display: block; /* Override flex for body */
+            display: block;
         }
         .content {
             flex-direction: column !important;
             width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
-            overflow: visible !important; /* Allow content to flow across pages */
-            height: auto !important; /* Don't restrict height */
+            overflow: visible !important;
+            height: auto !important;
         }
         .main {
             width: 100% !important;
@@ -646,29 +645,29 @@
         }
         .container {
             flex-direction: column !important;
-            align-items: center !important; /* Center items for print */
-            gap: 20px; /* Maintain gap if desired */
+            align-items: center !important;
+            gap: 20px;
         }
         #table, .summary-box, .trend-chart-section {
-            box-shadow: none !important; /* Remove shadows for cleaner print */
-            border: 1px solid #eee !important; /* Add light border if desired */
+            box-shadow: none !important;
+            border: 1px solid #eee !important;
             background: white !important;
-            width: 95% !important; /* Adjust width for print layout */
-            margin: 0 auto 20px auto !important; /* Center and add bottom margin */
-            page-break-inside: avoid; /* Prevent breaking these boxes across pages */
+            width: 95% !important;
+            margin: 0 auto 20px auto !important;
+            page-break-inside: avoid;
         }
         #table {
-            overflow: visible !important; /* Allow Handsontable to spill if wide */
-            height: auto !important; /* Don't restrict Handsontable height */
+            overflow: visible !important;
+            height: auto !important;
         }
         /* Make Handsontable cells print cleanly */
         #table .handsontable td, #table .handsontable th {
-            white-space: normal !important; /* Allow text to wrap if needed */
+            white-space: normal !important;
         }
 
         /* Adjust chart canvas for printing if necessary */
         canvas {
-            max-height: none !important; /* Allow chart to take full height */
+            max-height: none !important;
             width: 100% !important;
         }
     }
@@ -706,16 +705,16 @@
     }
 
     .notification-message.success {
-        background-color: #28a745; /* var(--success-green) */
+        background-color: #28a745;
     }
 
     .notification-message.error {
-        background-color: #dc3545; /* var(--error-red) */
+        background-color: #dc3545;
     }
 
     .notification-message.warning {
-        background-color: #ffc107; /* var(--warning-orange) */
-        color: #333; /* var(--text-dark) */
+        background-color: #ffc107;
+        color: #333;
     }
 
     .notification-message.info {
@@ -802,7 +801,7 @@
       </div>
       <div id="chat-body">
           <div class="chat-message bot">Hello! How can I help you with your QA data today?</div>
-          <div class="chat-message bot">You can ask: "Out of tolerance dates", "Value for 6X on 2025-06-10", "All 6X data this month", or "List all warning values". (Please useYYYY-MM-DD for dates).</div>
+          <div class="chat-message bot">You can ask: "Out of tolerance dates", "Value for 2025-06-10", "All 6X data this month", or "List all warning values". (Please useYYYY-MM-DD for dates).</div>
       </div>
       <div id="chat-input-area">
           <input type="text" id="chat-input" placeholder="Type your question...">
@@ -934,7 +933,7 @@
 
         // Get today's date for comparison
         const today = new Date();
-        const currentMonthYear = new Date(today.getFullYear(), today.getMonth(), 1); // Normalize to first day of current month
+        const currentMonthYear = new Date(today.getFullYear(), today.getMonth(), 1);
 
         // Determine if the currently loaded month is in the future
         const isFutureMonth = currentDate.getFullYear() > today.getFullYear() ||
@@ -959,9 +958,6 @@
                 props.readOnly = true;
                 return props;
             }
-
-            // Calculate the actual date for the current cell (c is 1-based day index)
-            // No need for cellDate object; direct comparison is simpler
             
             // Check if the current month being displayed is a future month
             // OR if it's the current month, but the day is in the future
@@ -1051,7 +1047,7 @@
 
         lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
         showNotification("Data saved successfully!", 'success');
-        updateTrendChart(); // ADDED: Update the trend chart after a successful save
+        updateTrendChart();
 
         if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') {
             var alertResponse = await fetch(`https://back-end-wrxi.onrender.com/send-alert`, { // Use BACKEND_URL once config.js is integrated
@@ -1148,7 +1144,7 @@
 
         var monthKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
         try {
-            var res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`); // Use BACKEND_URL once config.js is integrated
+            var res = await fetch(`https://back-end-wrxi.onrender.com/data?month=${monthKey}&uid=${currentUID}`);
             var result = await res.json();
             var monthData = result.data;
 
@@ -1263,7 +1259,7 @@
         if (lowerCaseMessage.includes('out of tolerance dates')) {
             addChatMessage("Finding out of tolerance dates for current month...", 'bot');
             try {
-                var response = await fetch(`https://back-end-wrxi.onrender.com/query-qa-data`, { // Use BACKEND_URL once config.js is integrated
+                var response = await fetch(`https://back-end-wrxi.onrender.com/query-qa-data`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1290,7 +1286,7 @@
         else if ((lowerCaseMessage.includes('value for') || lowerCaseMessage.includes('status for')) && extractedEnergyType && extractedDate) {
             addChatMessage(`Looking up data for ${extractedEnergyType} on ${extractedDate}...`, 'bot');
             try {
-                var response = await fetch(`https://back-end-wrxi.onrender.com/query-qa-data`, { // Use BACKEND_URL once config.js is integrated
+                var response = await fetch(`https://back-end-wrxi.onrender.com/query-qa-data`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1319,7 +1315,7 @@
         else if ((lowerCaseMessage.includes('show all') || lowerCaseMessage.includes('all data')) && extractedEnergyType && lowerCaseMessage.includes('this month')) {
             addChatMessage(`Getting all data for ${extractedEnergyType} this month...`, 'bot');
             try {
-                var response = await fetch(`https://back-end-wrxi.onrender.com/query-qa-data`, { // Use BACKEND_URL once config.js is integrated
+                var response = await fetch(`https://back-end-wrxi.onrender.com/query-qa-data`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1344,7 +1340,7 @@
         else if (lowerCaseMessage.includes('list all warning values') || lowerCaseMessage.includes('show warning values')) {
             addChatMessage(`Getting warning values for this month...`, 'bot');
             try {
-                var response = await fetch(`https://back-end-wrxi.onrender.com/query-qa-data`, { // Use BACKEND_URL once config.js is integrated
+                var response = await fetch(`https://back-end-wrxi.onrender.com/query-qa-data`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1381,32 +1377,31 @@
 
     // Export function for Excel (requests XLSX from backend)
     async function exportToExcel() {
-        showLoader(); // Show loading indicator
+        showLoader();
 
         var month = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
         try {
-            const response = await fetch(`https://back-end-wrxi.onrender.com/export-excel`, { // Use BACKEND_URL once config.js is integrated
+            const response = await fetch(`https://back-end-wrxi.onrender.com/export-excel`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     month: month,
-                    uid: currentUID // Send current user's UID
+                    uid: currentUID
                 })
             });
 
             if (response.ok) {
-                // If the response is successful, get the Blob and create a download link
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                a.download = `LINAC_QA_Data_${month}.xlsx`; // Set the desired filename
+                a.download = `LINAC_QA_Data_${month}.xlsx`;
                 document.body.appendChild(a);
                 a.click();
-                window.URL.revokeObjectURL(url); // Clean up the URL object
+                window.URL.revokeObjectURL(url);
                 showNotification("Excel file exported successfully!", 'success');
             } else {
                 const errorData = await response.json();
@@ -1416,40 +1411,26 @@
             console.error("Error exporting Excel:", error);
             showNotification("Failed to export Excel: " + error.message, 'error');
         } finally {
-            hideLoader(); // Hide loading indicator
+            hideLoader();
         }
     }
 
-    // This function for PDF export is now removed from usage, but kept for reference if needed
-    // async function exportDashboardToPdf() { /* ... */ }
-
-    // This function for printing is now removed from usage, but kept for reference if needed
-    // function printDashboard() { /* ... */ }
-
-
-    // Attach all event listeners after the DOM is fully loaded and all functions are defined.
     document.addEventListener('DOMContentLoaded', function() {
-        // IMPORTANT: Prevent browser back button from showing cached authenticated content.
-        // This makes sure the browser's back navigation to this page performs a full reload.
         window.addEventListener('pageshow', function(event) {
-            if (event.persisted) { // If loaded from cache (bfcache)
-                window.location.reload(); // Force a full reload to re-run auth checks
+            if (event.persisted) {
+                window.location.reload();
             }
         });
 
-        // Event listeners for static buttons
         saveBtn.addEventListener('click', manualSave);
         logoutBtn.addEventListener('click', window.logout);
         myProfileBtn.addEventListener('click', function() { window.location.href='my_profile.html'; });
         darkToggle.addEventListener('change', toggleDarkMode);
         prevYearBtn.addEventListener('click', function() { changeYear(-1); });
         nextYearBtn.addEventListener('click', function() { changeYear(1); });
-        // showTrendBtn.addEventListener('click', updateTrendChart); // REMOVED: This line is removed.
 
-        // NEW: Export Button Event Listeners
         exportExcelBtn.addEventListener('click', exportToExcel); 
 
-        // Chatbot Event Listeners
         chatBubble.addEventListener('click', function() {
             chatWindow.classList.toggle('open');
             if (chatWindow.classList.contains('open')) {
@@ -1467,29 +1448,24 @@
         });
 
 
-        // Firebase Auth State Listener - this should be the last logical step to kick off loading
         auth.onAuthStateChanged(function(user) {
             if (user) {
-                // User is signed in. This is the legitimate authenticated state.
                 currentUID = user.uid;
                 currentHospital = localStorage.getItem("hospitalName") || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
                 var userStatus = localStorage.getItem("userStatus");
 
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
                     showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000);
-                    window.logout(); // Force logout if status is not active
+                    window.logout();
                     return;
                 }
 
-                // If user is active and legitimately logged in, proceed to load data
                 localStorage.setItem("uid", currentUID);
                 document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
                 buildMonthButtons();
                 loadTable();
                 populateTrendEnergySelect();
             } else {
-                // User is NOT signed in. Force them back to the login page.
-                // Use replace() to remove this page from history so back button can't return.
                 window.location.replace("login.html");
             }
         });
