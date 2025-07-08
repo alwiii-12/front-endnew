@@ -544,7 +544,7 @@
         #hospital-data-access-section:fullscreen .hospital-qa-table th,
         #hospital-data-access-section:-webkit-full-screen .hospital-qa-table td,
         #hospital-data-access-section:-moz-full-screen .hospital-qa-table td,
-        #hospital-data-access-section:-ms-full-screen .hospital-qa-table td,
+        #hospital-data-access-section:-ms-fullscreen .hospital-qa-table td,
         #hospital-data-access-section:fullscreen .hospital-qa-table td {
             padding: 3px 1px;
             font-size: 0.65em;
@@ -670,9 +670,7 @@
                         <option value="user_update">User Update</option>
                         <option value="user_deletion">User Deletion</option>
                     </select>
-                    <input type="date" id="auditLogStartDate" onchange="loadAuditLogs()">
-                    <input type="date" id="auditLogEndDate" onchange="loadAuditLogs()">
-                    <button onclick="loadAuditLogs()">Refresh Logs</button>
+                    <input type="date" id="auditLogDateFilter" onchange="loadAuditLogs()"> <button onclick="loadAuditLogs()">Refresh Logs</button>
                 </div>
                 <div class="user-table-container">
                     <table class="user-table">
@@ -777,10 +775,10 @@
         // DOM elements for Sidebar and Hospital QA Data section
         const manageUsersBtn = document.getElementById('manageUsersBtn');
         const viewHospitalDataBtn = document.getElementById('viewHospitalDataBtn');
-        const viewAuditLogsBtn = document.getElementById('viewAuditLogsBtn'); // NEW
+        const viewAuditLogsBtn = document.getElementById('viewAuditLogsBtn');
         const manageUsersSection = document.getElementById('manage-users-section');
         const hospitalDataAccessSection = document.getElementById('hospital-data-access-section');
-        const auditLogsSection = document.getElementById('audit-logs-section'); // NEW
+        const auditLogsSection = document.getElementById('audit-logs-section');
         const fullscreenHospitalDataBtn = document.getElementById('fullscreenHospitalDataBtn');
         const adminHospitalSelect = document.getElementById('adminHospitalSelect');
         const adminYearSelect = document.getElementById('adminYearSelect');
@@ -793,8 +791,7 @@
         const auditLogsTableBody = document.getElementById('auditLogsTableBody');
         const auditLogHospitalFilter = document.getElementById('auditLogHospitalFilter');
         const auditLogActionFilter = document.getElementById('auditLogActionFilter');
-        const auditLogStartDate = document.getElementById('auditLogStartDate');
-        const auditLogEndDate = document.getElementById('auditLogEndDate');
+        const auditLogDateFilter = document.getElementById('auditLogDateFilter'); // Renamed to single date filter
 
 
         // --- GLOBAL HELPER FUNCTIONS ---
@@ -823,7 +820,7 @@
                 manageUsersBtn.classList.add('active');
             } else if (sectionId === 'hospital-data-access-section') {
                 viewHospitalDataBtn.classList.add('active');
-            } else if (sectionId === 'audit-logs-section') { // NEW
+            } else if (sectionId === 'audit-logs-section') {
                 viewAuditLogsBtn.classList.add('active');
             }
 
@@ -850,14 +847,14 @@
                     if (allUsersData.length === 0) { // If users not loaded yet, load them first
                         await loadAllUsers();
                     }
-                    populateHospitalDataFilters();
+                    populateHospitalDataFilters(); // This now calls populateHospitalFiltersCommon
                 }
-            } else if (sectionId === 'audit-logs-section') { // NEW
+            } else if (sectionId === 'audit-logs-section') {
                 if (auditLogHospitalFilter.options.length <= 1) { // Populate only if not already populated
                     if (allUsersData.length === 0) { // If users not loaded yet, load them first
                         await loadAllUsers();
                     }
-                    populateAuditLogFilters();
+                    populateAuditLogFilters(); // This now calls populateHospitalFiltersCommon
                 }
                 await loadAuditLogs(); // Load logs when the section is shown
             }
@@ -888,7 +885,7 @@
                 populateMainUserFilters();
                 
                 // Also populate hospital filters for other sections if needed
-                populateHospitalFiltersCommon();
+                populateHospitalFiltersCommon(); // Call this here after allUsersData is loaded
 
                 renderUsers(allUsersData);
                 
@@ -909,7 +906,7 @@
                 }
             });
 
-            // For Manage User Accounts
+            // Clear and populate for Manage User Accounts filterHospital
             filterHospital.innerHTML = '<option value="">All Hospitals</option>';
             hospitals.forEach(hospital => {
                 const option = document.createElement('option');
@@ -918,7 +915,7 @@
                 filterHospital.appendChild(option);
             });
 
-            // For Hospital Data Access
+            // Clear and populate for Hospital Data Access adminHospitalSelect
             adminHospitalSelect.innerHTML = '<option value="">Select Hospital</option>';
             hospitals.forEach(hospital => {
                 const option = document.createElement('option');
@@ -927,7 +924,7 @@
                 adminHospitalSelect.appendChild(option);
             });
 
-            // For Audit Logs
+            // Clear and populate for Audit Logs auditLogHospitalFilter
             auditLogHospitalFilter.innerHTML = '<option value="">All Hospitals</option>';
             hospitals.forEach(hospital => {
                 const option = document.createElement('option');
@@ -941,6 +938,7 @@
         function populateMainUserFilters() {
             // This function is now mainly a wrapper if specific filters need to be set or reset
             // The actual population of hospital options is now in populateHospitalFiltersCommon()
+            // No direct code needed here if populateHospitalFiltersCommon() is called appropriately.
         }
 
 
@@ -1397,13 +1395,9 @@
         function populateAuditLogFilters() {
             // Hospitals are already populated by populateHospitalFiltersCommon()
             
-            // Set default date range to last 30 days
+            // Set default date range to today's date
             const today = new Date();
-            const thirtyDaysAgo = new Date(today);
-            thirtyDaysAgo.setDate(today.getDate() - 30);
-
-            auditLogEndDate.value = today.toISOString().split('T')[0];
-            auditLogStartDate.value = thirtyDaysAgo.toISOString().split('T')[0];
+            auditLogDateFilter.value = today.toISOString().split('T')[0];
         }
 
         async function loadAuditLogs() {
@@ -1412,14 +1406,12 @@
 
             const hospitalId = auditLogHospitalFilter.value;
             const actionType = auditLogActionFilter.value;
-            const startDate = auditLogStartDate.value;
-            const endDate = auditLogEndDate.value;
+            const dateFilter = auditLogDateFilter.value; // Single date filter
 
             let url = `${BACKEND_URL}/admin/audit-logs?`;
-            if (hospitalId) url += `hospitalId=${hospitalId}&`;
-            if (actionType) url += `action=${actionType}&`;
-            if (startDate) url += `startDate=${startDate}&`;
-            if (endDate) url += `endDate=${endDate}&`;
+            if (hospitalId) url += `hospitalId=${encodeURIComponent(hospitalId)}&`; // Use encodeURIComponent for query params
+            if (actionType) url += `action=${encodeURIComponent(actionType)}&`;
+            if (dateFilter) url += `date=${encodeURIComponent(dateFilter)}&`; // Use 'date' for single date filter
             url = url.slice(0, -1); // Remove trailing '&' or '?'
 
             try {
@@ -1456,14 +1448,15 @@
 
             logsToRender.forEach(log => {
                 const row = auditLogsTableBody.insertRow();
+                // Format timestamp for display
+                const formattedTimestamp = new Date(log.timestamp).toLocaleString(); 
                 row.innerHTML = `
-                    <td>${log.timestamp || 'N/A'}</td>
+                    <td>${formattedTimestamp || 'N/A'}</td>
                     <td>${log.action || 'N/A'}</td>
                     <td>${log.targetUserEmail || log.userEmail || 'N/A'}</td>
                     <td>${log.hospital || 'N/A'}</td>
-                    <td>${JSON.stringify(log.changes || log.deletedUserData || 'N/A', null, 2)}</td>
+                    <td>${JSON.stringify(log.changes || log.deletedUserData || {}, null, 2)}</td>
                 `;
-                // You might want to format 'Details' more nicely for the UI, e.g., using a modal or tooltip
             });
         }
 
