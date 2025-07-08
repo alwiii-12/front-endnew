@@ -6,6 +6,7 @@
     <title>My Profile | LINAC QA</title>
     <link rel="icon" href="/favicon.png" type="image/png">
     <style>
+        /* ... (your existing CSS remains unchanged) ... */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -28,7 +29,7 @@
         }
         .topbar button {
             padding: 8px 15px;
-            background-color: #dc3545; /* Red for logout */
+            background-color: #dc3545;
             color: white;
             border: none;
             border-radius: 5px;
@@ -64,25 +65,25 @@
             margin-bottom: 15px;
             font-size: 1.1em;
             line-height: 1.6;
-            display: flex; /* Use flexbox for alignment */
-            align-items: baseline; /* Align text on baseline */
+            display: flex;
+            align-items: baseline;
         }
         .profile-item strong {
             display: inline-block;
-            width: 150px; /* Fixed width for the label */
-            min-width: 120px; /* Ensure minimum width */
-            flex-shrink: 0; /* Prevent shrinking */
+            width: 150px;
+            min-width: 120px;
+            flex-shrink: 0;
             color: #333;
-            text-align: right; /* Align label text to the right */
-            padding-right: 10px; /* Space between label and colon */
+            text-align: right;
+            padding-right: 10px;
         }
-        .profile-item .colon { /* NEW: Style for the colon */
-            flex-shrink: 0; /* Prevent shrinking */
-            margin-right: 10px; /* Space after the colon */
+        .profile-item .colon {
+            flex-shrink: 0;
+            margin-right: 10px;
         }
-        .profile-item span:last-child { /* Target the actual value */
-            flex-grow: 1; /* Allow value to take remaining space */
-            word-break: break-word; /* Ensure long values wrap */
+        .profile-item span:last-child {
+            flex-grow: 1;
+            word-break: break-word;
         }
         .profile-actions {
             text-align: center;
@@ -138,20 +139,20 @@
         }
 
         .notification-message.success {
-            background-color: #28a745; /* var(--success-green) */
+            background-color: #28a745;
         }
 
         .notification-message.error {
-            background-color: #dc3545; /* var(--error-red) */
+            background-color: #dc3545;
         }
 
         .notification-message.warning {
-            background-color: #ffc107; /* var(--warning-orange) */
-            color: #333; /* var(--text-dark) */
+            background-color: #ffc107;
+            color: #333;
         }
 
         .notification-message.info {
-            background-color: #007bff; /* var(--primary-blue) */
+            background-color: #007bff;
         }
     </style>
 </head>
@@ -176,8 +177,7 @@
     <div id="notification-container"></div>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="firebase-init.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="/firebase-init.js"></script> <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
     
     <script>
@@ -185,6 +185,9 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         const notificationContainer = document.getElementById('notification-container');
+
+        // Define the backend URL
+        const BACKEND_URL = "https://back-end-wrxi.onrender.com"; // Ensure this matches your backend URL
 
 
         // Custom Notification Function (copied here for consistency)
@@ -207,7 +210,31 @@
         }
 
 
-        window.logout = function() {
+        window.logout = async function() { // Made async to await the log event
+            const user = auth.currentUser;
+            const userUid = user ? user.uid : "unknown_uid";
+            const userEmail = localStorage.getItem("userEmail") || "unknown_email";
+            const hospitalName = localStorage.getItem("hospitalName") || "unknown_hospital";
+            const userRole = localStorage.getItem("userRole") || "unknown_role";
+
+            // --- NEW: Send Logout Log Event ---
+            try {
+                await fetch(`${BACKEND_URL}/log_event`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "user_logout",
+                        userUid: userUid,
+                        userEmail: userEmail,
+                        hospital: hospitalName,
+                        role: userRole
+                    })
+                });
+            } catch (logError) {
+                console.error("Error sending logout log event:", logError);
+            }
+            // --- End Logout Log Event ---
+
             auth.signOut().then(() => {
                 localStorage.clear();
                 window.location.href = "login.html";
