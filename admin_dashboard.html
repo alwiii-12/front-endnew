@@ -544,7 +544,7 @@
         #hospital-data-access-section:fullscreen .hospital-qa-table th,
         #hospital-data-access-section:-webkit-full-screen .hospital-qa-table td,
         #hospital-data-access-section:-moz-full-screen .hospital-qa-table td,
-        #hospital-data-access-section:-ms-full-screen .hospital-qa-table td,
+        #hospital-data-access-section:-ms-fullscreen .hospital-qa-table td,
         #hospital-data-access-section:fullscreen .hospital-qa-table td {
             padding: 3px 1px;
             font-size: 0.65em;
@@ -634,12 +634,12 @@
                     </button>
                 </h2>
                 <div class="filter-search-container" id="hospitalDataControls">
-                    <select id="adminHospitalSelect">
+                    <select id="adminHospitalSelect" onchange="loadHospitalQaData()">
                         <option value="">Select Hospital</option>
                         </select>
-                    <select id="adminYearSelect">
+                    <select id="adminYearSelect" onchange="loadHospitalQaData()">
                         </select>
-                    <select id="adminMonthSelect">
+                    <select id="adminMonthSelect" onchange="loadHospitalQaData()">
                         </select>
                     <button onclick="loadHospitalQaData()">Load Data</button>
                 </div>
@@ -791,7 +791,7 @@
         const auditLogsTableBody = document.getElementById('auditLogsTableBody');
         const auditLogHospitalFilter = document.getElementById('auditLogHospitalFilter');
         const auditLogActionFilter = document.getElementById('auditLogActionFilter');
-        const auditLogDateFilter = document.getElementById('auditLogDateFilter'); // Renamed to single date filter
+        const auditLogDateFilter = document.getElementById('auditLogDateFilter'); // Single date filter
 
 
         // --- GLOBAL HELPER FUNCTIONS ---
@@ -906,9 +906,12 @@
                 }
             });
 
+            // Convert set to sorted array
+            const sortedHospitals = Array.from(hospitals).sort();
+
             // Clear and populate for Manage User Accounts filterHospital
             filterHospital.innerHTML = '<option value="">All Hospitals</option>';
-            hospitals.forEach(hospital => {
+            sortedHospitals.forEach(hospital => {
                 const option = document.createElement('option');
                 option.value = hospital;
                 option.textContent = hospital;
@@ -917,7 +920,7 @@
 
             // Clear and populate for Hospital Data Access adminHospitalSelect
             adminHospitalSelect.innerHTML = '<option value="">Select Hospital</option>';
-            hospitals.forEach(hospital => {
+            sortedHospitals.forEach(hospital => {
                 const option = document.createElement('option');
                 option.value = hospital;
                 option.textContent = hospital;
@@ -926,7 +929,7 @@
 
             // Clear and populate for Audit Logs auditLogHospitalFilter
             auditLogHospitalFilter.innerHTML = '<option value="">All Hospitals</option>';
-            hospitals.forEach(hospital => {
+            sortedHospitals.forEach(hospital => {
                 const option = document.createElement('option');
                 option.value = hospital;
                 option.textContent = hospital;
@@ -1409,7 +1412,7 @@
             const dateFilter = auditLogDateFilter.value; // Single date filter
 
             let url = `${BACKEND_URL}/admin/audit-logs?`;
-            if (hospitalId) url += `hospitalId=${encodeURIComponent(hospitalId)}&`; // Use encodeURIComponent for query params
+            if (hospitalId) url += `hospitalId=${encodeURIComponent(hospitalId)}&`;
             if (actionType) url += `action=${encodeURIComponent(actionType)}&`;
             if (dateFilter) url += `date=${encodeURIComponent(dateFilter)}&`; // Use 'date' for single date filter
             url = url.slice(0, -1); // Remove trailing '&' or '?'
