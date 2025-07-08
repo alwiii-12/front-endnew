@@ -544,7 +544,7 @@
         #hospital-data-access-section:fullscreen .hospital-qa-table th,
         #hospital-data-access-section:-webkit-full-screen .hospital-qa-table td,
         #hospital-data-access-section:-moz-full-screen .hospital-qa-table td,
-        #hospital-data-access-section:-ms-fullscreen .hospital-qa-table td,
+        #hospital-data-access-section:-ms-full-screen .hospital-qa-table td,
         #hospital-data-access-section:fullscreen .hospital-qa-table td {
             padding: 3px 1px;
             font-size: 0.65em;
@@ -843,18 +843,18 @@
                     renderUsers(allUsersData);
                 }
             } else if (sectionId === 'hospital-data-access-section') {
-                if (adminHospitalSelect.options.length <= 1) { // Populate only if not already populated
-                    if (allUsersData.length === 0) { // If users not loaded yet, load them first
-                        await loadAllUsers();
-                    }
-                    populateHospitalDataFilters(); // This now calls populateHospitalFiltersCommon
+                // Always ensure hospital, year, month filters are populated for this section
+                if (allUsersData.length === 0) { // If users not loaded yet, load them first
+                    await loadAllUsers();
                 }
+                populateHospitalDataFilters(); // Call this to populate all three dropdowns
+                
             } else if (sectionId === 'audit-logs-section') {
                 if (auditLogHospitalFilter.options.length <= 1) { // Populate only if not already populated
                     if (allUsersData.length === 0) { // If users not loaded yet, load them first
                         await loadAllUsers();
                     }
-                    populateAuditLogFilters(); // This now calls populateHospitalFiltersCommon
+                    populateAuditLogFilters(); 
                 }
                 await loadAuditLogs(); // Load logs when the section is shown
             }
@@ -884,8 +884,8 @@
                 allUsersData = await response.json();
                 populateMainUserFilters();
                 
-                // Also populate hospital filters for other sections if needed
-                populateHospitalFiltersCommon(); // Call this here after allUsersData is loaded
+                // Also populate hospital filters for other sections after allUsersData is loaded
+                populateHospitalFiltersCommon(); 
 
                 renderUsers(allUsersData);
                 
@@ -1200,19 +1200,30 @@
             }
         }
 
+        // Corrected populateHospitalDataFilters to always populate year/month
         function populateHospitalDataFilters() {
-            // Hospital dropdown already populated by populateHospitalFiltersCommon()
-            // Set default year/month
+            // Hospitals already populated by populateHospitalFiltersCommon()
+            
+            // Populate Year dropdown
             const currentYear = new Date().getFullYear();
             adminYearSelect.innerHTML = '';
+            // Add a default "Select Year" option
+            let defaultYearOption = document.createElement('option');
+            defaultYearOption.value = "";
+            defaultYearOption.textContent = "-- Select Year --";
+            adminYearSelect.appendChild(defaultYearOption);
+
             for (let i = currentYear; i >= currentYear - 5; i--) {
                 const option = document.createElement('option');
                 option.value = i;
                 option.textContent = i;
                 adminYearSelect.appendChild(option);
             }
-            adminYearSelect.value = currentYear;
+            // Set current year as default selected, or empty if no users yet
+            adminYearSelect.value = allUsersData.length > 0 ? currentYear : "";
 
+
+            // Populate Month dropdown
             const months = [
                 { value: '01', text: 'January' }, { value: '02', text: 'February' },
                 { value: '03', text: 'March' }, { value: '04', text: 'April' },
@@ -1222,6 +1233,12 @@
                 { value: '11', text: 'November' }, { value: '12', text: 'December' }
             ];
             adminMonthSelect.innerHTML = '';
+            // Add a default "Select Month" option
+            let defaultMonthOption = document.createElement('option');
+            defaultMonthOption.value = "";
+            defaultMonthOption.textContent = "-- Select Month --";
+            adminMonthSelect.appendChild(defaultMonthOption);
+
             const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
             months.forEach(month => {
                 const option = document.createElement('option');
@@ -1229,8 +1246,10 @@
                 option.textContent = month.text;
                 adminMonthSelect.appendChild(option);
             });
-            adminMonthSelect.value = currentMonth;
+            // Set current month as default selected, or empty if no users yet
+            adminMonthSelect.value = allUsersData.length > 0 ? currentMonth : "";
         }
+
 
         async function loadHospitalQaData() {
             const hospitalId = adminHospitalSelect.value;
@@ -1238,14 +1257,19 @@
             const month = adminMonthSelect.value;
             const monthParam = `${year}-${month}`;
 
-            if (!hospitalId) {
+            if (!hospitalId || hospitalId === "") { // Check for empty string
                 alert("Please select a hospital.");
                 return;
             }
-            if (!year || !month) {
-                alert("Please select a year and month.");
+            if (!year || year === "") { // Check for empty string
+                alert("Please select a year.");
                 return;
             }
+            if (!month || month === "") { // Check for empty string
+                alert("Please select a month.");
+                return;
+            }
+
 
             showLoader();
             const monthName = new Date(year, parseInt(month) - 1, 1).toLocaleString('default', { month: 'long' });
