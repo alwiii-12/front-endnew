@@ -748,13 +748,47 @@
         function showLoader(){loadingOverlay.style.display='flex';}
         function hideLoader(){loadingOverlay.style.display='none';}
 
+        // NEW: Function to send audit event to backend
+        async function sendAuditEvent(action, userUid, email, details = {}) {
+            try {
+                const auditData = {
+                    action: action,
+                    userUid: userUid,
+                    email: email,
+                    ...details
+                };
+                const response = await fetch('https://back-end-wrxi.onrender.com/log_event', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(auditData)
+                });
+                if (!response.ok) {
+                    console.warn(`Failed to audit ${action}:`, await response.text());
+                } else {
+                    console.log(`Audit: ${action} logged successfully.`);
+                }
+            } catch (error) {
+                console.error(`Error sending audit for ${action}:`, error);
+            }
+        }
+
+
         function logout() {
-            auth.signOut().then(() => {
+            showLoader();
+            auth.signOut().then(async () => { // Make the .then() callback async
+                if (currentAdminUid) { // Only send logout audit if admin UID is known
+                    const email = localStorage.getItem("userEmail") || ""; // Get email from local storage
+                    sendAuditEvent("logout", currentAdminUid, email, {
+                        details: "Admin logged out."
+                    });
+                }
                 localStorage.clear();
+                hideLoader();
                 window.location.href = "login.html";
             }).catch((error) => {
                 console.error("Logout error:", error);
                 alert("Logout failed: " + error.message);
+                hideLoader();
             });
         }
 
@@ -1308,6 +1342,7 @@
                 const userRole = localStorage.getItem("userRole");
                 const userStatus = localStorage.getItem("userStatus");
                 currentAdminUid = user.uid; // Store the admin's UID
+                localStorage.setItem("userEmail", user.email); // Ensure admin's email is stored for audit logging
 
                 if (userRole === "Admin" && userStatus === "active") {
                     await showAdminSection('manage-users-section');
