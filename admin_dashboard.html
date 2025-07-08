@@ -143,18 +143,6 @@
         }
 
 
-        .admin-footer {
-            margin-top: auto;
-            padding: 15px;
-            font-size: 12px;
-            color: #6b7280;
-            background-color: #f8f8f8;
-            border-top: 1px solid #ccc;
-            text-align: center;
-            flex-shrink: 0;
-        }
-
-        /* Filter and Search */
         .filter-search-container {
             display: flex;
             flex-wrap: wrap;
@@ -483,7 +471,7 @@
 
         body:-webkit-full-screen > .admin-content > .card-section:not(#hospital-data-access-section),
         body:-moz-full-screen > .admin-content > .card-section:not(#hospital-data-access-section),
-        body:-ms-fullscreen > .admin-content > .card-section:not(#hospital-data-access-section),
+        body:-ms-full-screen > .admin-content > .card-section:not(#hospital-data-access-section),
         body:fullscreen > .admin-content > .card-section:not(#hospital-data-access-section),
         body:-webkit-full-screen > .admin-header, body:-moz-full-screen > .admin-header, body:-ms-full-screen > .admin-header, body:fullscreen > .admin-header,
         body:-webkit-full-screen > .admin-footer, body:-moz-full-screen > .admin-footer, body:-ms-full-screen > .admin-footer, body:fullscreen > .admin-footer,
@@ -723,6 +711,7 @@
 
         let allUsersData = [];
         let lastLoadedHospitalQaData = { data: [], year: null, month: null };
+        let currentAdminUid = null; // Store the admin's UID
 
         // DOM elements for loading, filters, and modal
         const loadingOverlay = document.getElementById('loading-overlay');
@@ -763,6 +752,9 @@
             auth.signOut().then(() => {
                 localStorage.clear();
                 window.location.href = "login.html";
+            }).catch((error) => {
+                console.error("Logout error:", error);
+                alert("Logout failed: " + error.message);
             });
         }
 
@@ -930,7 +922,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${idToken}`
                     },
-                    body: JSON.stringify({ uid, status: newStatus })
+                    body: JSON.stringify({ uid, status: newStatus, admin_uid: currentAdminUid }) // Pass currentAdminUid
                 });
 
                 if (!response.ok) {
@@ -1053,7 +1045,8 @@
                         uid: uid,
                         hospital: hospitalToSave,
                         role: roleToSave,
-                        status: statusToSave
+                        status: statusToSave,
+                        admin_uid: currentAdminUid // Pass currentAdminUid
                     })
                 });
 
@@ -1088,7 +1081,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${idToken}`
                     },
-                    body: JSON.stringify({ uid: uid })
+                    body: JSON.stringify({ uid: uid, admin_uid: currentAdminUid }) // Pass currentAdminUid
                 });
 
                 if (!response.ok) {
@@ -1314,6 +1307,7 @@
             } else {
                 const userRole = localStorage.getItem("userRole");
                 const userStatus = localStorage.getItem("userStatus");
+                currentAdminUid = user.uid; // Store the admin's UID
 
                 if (userRole === "Admin" && userStatus === "active") {
                     await showAdminSection('manage-users-section');
