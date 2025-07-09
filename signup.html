@@ -39,7 +39,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 20px; /* Ensure spacing on small screens */
             box-sizing: border-box;
         }
 
@@ -48,45 +48,58 @@
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
+            width: 100%; /* Take full available width */
+            max-width: 400px; /* Limit the maximum width of the form box */
             box-sizing: border-box;
-            margin: auto;
+            display: flex; /* Use flexbox for internal alignment */
+            flex-direction: column; /* Stack items vertically */
+            gap: 15px; /* Consistent spacing between form groups */
         }
 
         .signup-container h2 {
             margin-top: 0;
+            margin-bottom: 5px; /* Adjust as needed */
             text-align: center;
             color: var(--primary-blue);
         }
 
+        /* Form Group Styling - for labels and inputs/selects */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px; /* Spacing between label and input */
+        }
+
+        .form-group label {
+            text-align: left;
+            font-weight: bold;
+            color: var(--text-dark);
+        }
+
         /* General input and select styling */
-        .signup-container input[type="text"],
-        .signup-container input[type="email"],
-        .signup-container select {
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="password"], /* Include password input here */
+        .form-group select {
             width: 100%;
             padding: 10px;
-            margin: 10px 0;
             border-radius: 5px;
             border: 1px solid var(--border-light);
             box-sizing: border-box;
         }
 
-        /* Revised: Password input container style */
+        /* Password input container */
         .password-input-container {
             position: relative;
-            margin: 10px 0; /* Apply the same vertical margin as other inputs/selects */
-            /* Ensure it has a defined height or minimum height if internal elements are collapsing */
-            min-height: 40px; /* Example: based on 10px padding + font-size */
+            width: 100%; /* Ensure it takes full width of its parent */
         }
         .password-input-container input {
-            padding-right: 40px;
-            margin: 0; /* Remove specific margin from this input as container has it */
-            height: 40px; /* Explicitly set height to ensure consistency when type changes */
-            line-height: 20px; /* Adjust line-height if text seems off-center vertically */
+            padding-right: 40px; /* Space for the icon */
+            /* Remove margins from input itself here, let form-group handle general spacing */
+            margin: 0; 
         }
         
-        /* Revised: Eye icon style */
+        /* Eye icon style */
         .toggle-password {
             position: absolute;
             right: 10px;
@@ -96,20 +109,31 @@
             color: #6c757d;
             z-index: 2;
             font-size: 1.1em;
-            line-height: 1; /* Ensure icon itself doesn't have extra line height causing shift */
+            line-height: 1; 
         }
         .toggle-password:hover {
             color: #333;
         }
 
-        .signup-container label {
-            display: block;
+        /* Password strength indicator */
+        .password-strength {
+            font-size: 0.85em;
             text-align: left;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: var(--text-dark);
+            font-weight: 500;
+            min-height: 1.2em; /* Keep consistent height to prevent layout shift */
+            margin-top: 5px; /* Small margin to separate from input, if needed */
+        }
+        .password-strength.weak {
+            color: var(--error-red);
+        }
+        .password-strength.intermediate {
+            color: var(--warning-orange);
+        }
+        .password-strength.strong {
+            color: var(--success-green);
         }
 
+        /* Signup Button and "Already have account" link */
         .signup-container button {
             width: 100%;
             padding: 10px;
@@ -119,7 +143,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 10px; /* Adjust margin to fit with gap above */
             transition: background-color 0.3s ease;
         }
 
@@ -127,13 +151,32 @@
             background-color: var(--primary-blue-dark);
         }
 
+        .signup-container p {
+            margin-top: 10px; /* Adjust as needed */
+            text-align: center;
+            font-size: 0.9em;
+            color: var(--text-dark);
+        }
+        .signup-container p a {
+            color: var(--primary-blue);
+            text-decoration: none;
+        }
+        .signup-container p a:hover {
+            text-decoration: underline;
+        }
+
+        /* Misc. styles */
         .message {
             color: var(--error-red);
             text-align: center;
             margin-bottom: 10px;
         }
+        .required {
+            color: var(--error-red);
+            margin-left: 4px;
+        }
 
-        /* Styles for Custom Notifications */
+        /* Styles for Custom Notifications (remains same) */
         #notification-container {
             position: fixed;
             top: 20px;
@@ -181,31 +224,6 @@
         .notification-message.info {
             background-color: #007bff;
         }
-
-        /* Styles for mandatory field asterisk */
-        .required {
-            color: var(--error-red);
-            margin-left: 4px;
-        }
-
-        /* Styles for password strength indicator */
-        .password-strength {
-            font-size: 0.85em;
-            margin-top: -5px; /* Keep this negative margin to pull it up closer to input */
-            margin-bottom: 10px; /* Ensures proper spacing after strength message */
-            text-align: left;
-            font-weight: 500;
-            min-height: 1.2em; /* Keep consistent height */
-        }
-        .password-strength.weak {
-            color: var(--error-red);
-        }
-        .password-strength.intermediate {
-            color: var(--warning-orange);
-        }
-        .password-strength.strong {
-            color: var(--success-green);
-        }
     </style>
 </head>
 <body>
@@ -213,37 +231,48 @@
     <h2>LINAC QA Signup</h2>
     <div class="message" id="message"></div>
 
-    <label for="name">Full Name:<span class="required">*</span></label>
-    <input type="text" id="name" placeholder="Enter your full name" required/>
-
-    <label for="email">Email:<span class="required">*</span></label>
-    <input type="email" id="email" placeholder="Enter your email" required/>
-
-    <label for="password">Password:<span class="required">*</span></label>
-    <div class="password-input-container">
-      <input type="password" id="password" placeholder="Choose a password" required autocomplete="new-password" spellcheck="false"/>
-      <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span>
+    <div class="form-group">
+      <label for="name">Full Name:<span class="required">*</span></label>
+      <input type="text" id="name" placeholder="Enter your full name" required/>
     </div>
-    <div id="passwordStrength" class="password-strength"></div>
 
-    <label for="hospital">Select Hospital:<span class="required">*</span></label>
-    <select id="hospital" required>
-      <option value="">-- Select Hospital --</option>
-      <option value="aoi_gurugram">AOI GURUGRAM</option>
-      <option value="medanta_gurugram">Medanta Gurugram</option>
-      <option value="fortis_delhi">Fortis Hospital Delhi</option>
-      <option value="apollo_chennai">Apollo Hospitals Chennai</option>
-      <option value="max_delhi">Max Healthcare Delhi</option>
-    </select>
+    <div class="form-group">
+      <label for="email">Email:<span class="required">*</span></label>
+      <input type="email" id="email" placeholder="Enter your email" required/>
+    </div>
 
-    <label for="role">Select Role:<span class="required">*</span></label>
-    <select id="role" required>
-      <option value="">Select Role</option>
-      <option value="Medical physicist">Medical physicist</option>
-      <option value="RSO">RSO</option>
+    <div class="form-group">
+      <label for="password">Password:<span class="required">*</span></label>
+      <div class="password-input-container">
+        <input type="password" id="password" placeholder="Choose a password" required autocomplete="new-password" spellcheck="false"/>
+        <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span>
+      </div>
+      <div id="passwordStrength" class="password-strength"></div>
+    </div>
+
+    <div class="form-group">
+      <label for="hospital">Select Hospital:<span class="required">*</span></label>
+      <select id="hospital" required>
+        <option value="">-- Select Hospital --</option>
+        <option value="aoi_gurugram">AOI GURUGRAM</option>
+        <option value="medanta_gurugram">Medanta Gurugram</option>
+        <option value="fortis_delhi">Fortis Hospital Delhi</option>
+        <option value="apollo_chennai">Apollo Hospitals Chennai</option>
+        <option value="max_delhi">Max Healthcare Delhi</option>
       </select>
+    </div>
+
+    <div class="form-group">
+      <label for="role">Select Role:<span class="required">*</span></label>
+      <select id="role" required>
+        <option value="">Select Role</option>
+        <option value="Medical physicist">Medical physicist</option>
+        <option value="RSO">RSO</option>
+      </select>
+    </div>
+    
     <button onclick="signup()" id="signupButton">Sign Up</button>
-    <p style="margin-top: 15px; text-align: center; font-size: 0.9em; color: var(--text-dark);">Already have an account? <a href="login.html" style="color: var(--primary-blue);">Log in</a></p>
+    <p>Already have an account? <a href="login.html">Log in</a></p>
   </div>
 
   <div id="notification-container"></div>
