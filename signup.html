@@ -69,8 +69,8 @@
         /* NEW: Password input container style */
         .password-input-container {
             position: relative;
-            /* Adjust margin-bottom on this container to match overall form spacing */
-            margin-bottom: 10px; /* Aligns with original input margin-bottom, before password strength div */
+            /* Adjusted margin-bottom to align with other input spacing */
+            margin-bottom: 10px;
         }
         .password-input-container input { /* Specific password input override */
             padding-right: 40px; /* Make space for the icon */
@@ -208,8 +208,9 @@
     <input type="email" id="email" placeholder="Enter your email" required/>
 
     <label for="password">Password:<span class="required">*</span></label>
-    <div class="password-input-container"> <input type="password" id="password" placeholder="Choose a password" required/>
-      <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span> </div>
+    <div class="password-input-container">
+      <input type="password" id="password" placeholder="Choose a password" required autocomplete="new-password" spellcheck="false"/> <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span>
+    </div>
     <div id="passwordStrength" class="password-strength"></div>
 
     <label for="hospital">Select Hospital:<span class="required">*</span></label>
@@ -351,7 +352,7 @@
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         const uid = userCredential.user.uid;
 
-        const BACKEND_URL = "https://back-end-wrxi.onrender.com"; // Define backend URL for signup
+        const BACKEND_URL = "https://back-end-wrxi.onrender.com";
 
         const response = await fetch(`${BACKEND_URL}/signup`, {
             method: "POST",
