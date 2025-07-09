@@ -216,7 +216,7 @@
       display: flex;
       flex-direction: column;
       gap: 20px;
-      min-height: 0; /* NEW: Crucial for flex item to shrink below its content size */
+      min-height: 0; /* Crucial for flex item to shrink below its content size */
       overflow-y: auto; /* Adds scrollbar to main if content overflows */
     }
 
@@ -236,27 +236,23 @@
     .container {
       display: flex;
       gap: 20px;
-      align-items: flex-start;
+      /* align-items: flex-start; REMOVED this, it might cause issues with height distribution */
       flex-wrap: wrap; /* Allows summary box to wrap below table on smaller screens */
       flex: 1; /* Allows container to grow and shrink in the main column */
-      min-height: 0; /* NEW: Needed for flex children to shrink */
-      /* NEW: added overflow-y auto to this container */
-      overflow-y: auto; /* If content within this container overflows, it will scroll */
+      min-height: 0; /* Needed for flex children to shrink */
+      /* overflow-y: auto; REMOVED: This can cause double scrollbars, let main handle it */
     }
 
     /* NEW: Wrapper for Handsontable to control its height strictly */
     #table-wrapper {
-        flex-grow: 1;
+        flex-grow: 1; /* Allow table wrapper to take available space */
         min-width: 400px;
         display: flex; /* Make it a flex container for Handsontable */
         flex-direction: column;
-        /* Calculate height dynamically: available space minus other elements, padding, etc. */
-        /* This is tricky. Let's try height 100% and hope parent constraints work */
-        height: 100%; /* Make wrapper take full height of its flex parent */
-        max-height: 500px; /* Optional: if you want a max height for the table overall */
+        height: 500px; /* Explicit fixed height for the table wrapper */
         overflow: hidden; /* To ensure Handsontable doesn't break out */
 
-        /* Apply card-panel base styles directly here to wrap Handsontable */
+        /* Apply card-panel base styles here to wrap Handsontable */
         border-radius: 16px;
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
         background: #ffffff;
@@ -299,6 +295,12 @@
       background: #ffffff;
       border: 1px solid rgba(0,0,0,0.05);
       flex-shrink: 0; /* Prevent summary box from shrinking */
+      /* NEW: Fixed height to match table for side-by-side alignment */
+      height: 500px; /* Match the height of #table-wrapper for alignment */
+      display: flex; /* Make it flex to align content within */
+      flex-direction: column;
+      justify-content: space-between; /* Distribute content */
+      align-items: center; /* Center content horizontally */
     }
     .summary-box h3 {
         margin-top: 0;
@@ -317,6 +319,8 @@
     }
     canvas {
         margin-bottom: 15px;
+        max-width: 100%; /* Ensure canvas is responsive */
+        height: auto; /* Maintain aspect ratio */
     }
 
     #save-section {
@@ -1377,8 +1381,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        query_text: lowerCaseMessage,
-                        query: 'out_of_tolerance_dates',
+                        query_text: lowerCaseMessage, // Pass original query text for NLP on backend
+                        query: 'out_of_tolerance_dates', // Keep legacy query type for now
                         month: monthKey,
                         uid: currentUID
                     })
@@ -1405,8 +1409,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        query_text: lowerCaseMessage,
-                        query: 'value_on_date',
+                        query_text: lowerCaseMessage, // Pass original query text for NLP on backend
+                        query: 'value_on_date', // Keep legacy query type for now
                         month: monthKey,
                         uid: currentUID,
                         energy_type: extractedEnergyType,
@@ -1435,8 +1439,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        query_text: lowerCaseMessage,
-                        query: 'energy_data_for_month',
+                        query_text: lowerCaseMessage, // Pass original query text for NLP on backend
+                        query: 'energy_data_for_month', // Keep legacy query type for now
                         month: monthKey,
                         uid: currentUID,
                         energy_type: extractedEnergyType
@@ -1461,8 +1465,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        query_text: lowerCaseMessage,
-                        query: 'warning_values_for_month',
+                        query_text: lowerCaseMessage, // Pass original query text for NLP on backend
+                        query: 'warning_values_for_month', // Keep legacy query type for now
                         month: monthKey,
                         uid: currentUID
                     })
