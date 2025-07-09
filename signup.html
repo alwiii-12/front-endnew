@@ -39,7 +39,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px; /* Ensure spacing on small screens */
+            padding: 20px;
             box-sizing: border-box;
         }
 
@@ -48,26 +48,26 @@
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            width: 100%; /* Take full available width */
-            max-width: 400px; /* Limit the maximum width of the form box */
+            width: 100%;
+            max-width: 400px;
             box-sizing: border-box;
-            display: flex; /* Use flexbox for internal alignment */
-            flex-direction: column; /* Stack items vertically */
-            gap: 15px; /* Consistent spacing between form groups */
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
         .signup-container h2 {
             margin-top: 0;
-            margin-bottom: 5px; /* Adjust as needed */
+            margin-bottom: 5px;
             text-align: center;
             color: var(--primary-blue);
         }
 
-        /* Form Group Styling - for labels and inputs/selects */
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 5px; /* Spacing between label and input */
+            gap: 5px;
         }
 
         .form-group label {
@@ -76,10 +76,9 @@
             color: var(--text-dark);
         }
 
-        /* General input and select styling */
         .form-group input[type="text"],
         .form-group input[type="email"],
-        .form-group input[type="password"], /* Include password input here */
+        .form-group input[type="password"],
         .form-group select {
             width: 100%;
             padding: 10px;
@@ -88,18 +87,17 @@
             box-sizing: border-box;
         }
 
-        /* Password input container */
         .password-input-container {
             position: relative;
-            width: 100%; /* Ensure it takes full width of its parent */
+            margin: 0; /* Remove margin from container itself */
         }
         .password-input-container input {
-            padding-right: 40px; /* Space for the icon */
-            /* Remove margins from input itself here, let form-group handle general spacing */
+            padding-right: 40px;
             margin: 0; 
+            height: 40px;
+            line-height: 20px;
         }
         
-        /* Eye icon style */
         .toggle-password {
             position: absolute;
             right: 10px;
@@ -109,31 +107,12 @@
             color: #6c757d;
             z-index: 2;
             font-size: 1.1em;
-            line-height: 1; 
+            line-height: 1;
         }
         .toggle-password:hover {
             color: #333;
         }
 
-        /* Password strength indicator */
-        .password-strength {
-            font-size: 0.85em;
-            text-align: left;
-            font-weight: 500;
-            min-height: 1.2em; /* Keep consistent height to prevent layout shift */
-            margin-top: 5px; /* Small margin to separate from input, if needed */
-        }
-        .password-strength.weak {
-            color: var(--error-red);
-        }
-        .password-strength.intermediate {
-            color: var(--warning-orange);
-        }
-        .password-strength.strong {
-            color: var(--success-green);
-        }
-
-        /* Signup Button and "Already have account" link */
         .signup-container button {
             width: 100%;
             padding: 10px;
@@ -143,7 +122,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 10px; /* Adjust margin to fit with gap above */
+            margin-top: 10px;
             transition: background-color 0.3s ease;
         }
 
@@ -152,7 +131,7 @@
         }
 
         .signup-container p {
-            margin-top: 10px; /* Adjust as needed */
+            margin-top: 10px;
             text-align: center;
             font-size: 0.9em;
             color: var(--text-dark);
@@ -165,7 +144,6 @@
             text-decoration: underline;
         }
 
-        /* Misc. styles */
         .message {
             color: var(--error-red);
             text-align: center;
@@ -176,7 +154,24 @@
             margin-left: 4px;
         }
 
-        /* Styles for Custom Notifications (remains same) */
+        .password-strength {
+            font-size: 0.85em;
+            margin-top: 5px; /* Ensure positive margin below input */
+            margin-bottom: 0; /* Let form-group handle spacing */
+            text-align: left;
+            font-weight: 500;
+            min-height: 1.2em;
+        }
+        .password-strength.weak {
+            color: var(--error-red);
+        }
+        .password-strength.intermediate {
+            color: var(--warning-orange);
+        }
+        .password-strength.strong {
+            color: var(--success-green);
+        }
+
         #notification-container {
             position: fixed;
             top: 20px;
@@ -368,11 +363,26 @@
       signupButton.disabled = true;
       signupButton.textContent = 'Signing Up...';
 
-      const name = document.getElementById("name").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const hospital = document.getElementById("hospital").value.trim();
-      const role = document.getElementById("role").trim();
+      // Use a more robust way to get values, ensuring elements exist
+      const getName = document.getElementById("name");
+      const getEmail = document.getElementById("email");
+      const getPassword = document.getElementById("password");
+      const getHospital = document.getElementById("hospital");
+      const getRole = document.getElementById("role");
+
+      if (!getName || !getEmail || !getPassword || !getHospital || !getRole) {
+          showNotification("Error: Form elements not found. Please refresh the page.", 'error');
+          signupButton.disabled = false;
+          signupButton.textContent = 'Sign Up';
+          return;
+      }
+
+      const name = getName.value.trim();
+      const email = getEmail.value.trim();
+      const password = getPassword.value.trim();
+      const hospital = getHospital.value.trim();
+      const role = getRole.value.trim();
+
 
       if (!name || !email || !password || !hospital || hospital === "" || !role || role === "") {
         showNotification("Please fill in all fields.", 'warning');
