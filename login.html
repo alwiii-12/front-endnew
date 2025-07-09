@@ -37,13 +37,14 @@
       margin-bottom: 24px;
       color: #1e3a8a;
     }
-    label {
+    /* REMOVED: Label styling as labels are being removed from HTML */
+    /* label {
       display: block;
       text-align: left;
       margin-bottom: 5px;
       font-weight: 500;
-      color: #333; /* Ensure label color is clear */
-    }
+      color: #333;
+    } */
     
     input {
       width: 100%;
@@ -54,6 +55,7 @@
       box-sizing: border-box;
       background-color: rgba(255, 255, 255, 0.7); /* Slightly opaque input background */
       color: #333; /* Ensure input text is dark for contrast */
+      margin-bottom: 20px; /* Added margin-bottom to inputs for consistent spacing */
     }
     /* NEW: Placeholder text styling */
     input::placeholder {
@@ -79,11 +81,11 @@
 
     .password-input-container {
       position: relative;
-      margin-bottom: 20px;
+      margin-bottom: 20px; /* Kept for consistent spacing */
     }
     .password-input-container input {
       padding-right: 40px;
-      margin-bottom: 0;
+      margin-bottom: 0; /* Override the new general input margin-bottom */
     }
     .toggle-password {
       position: absolute;
@@ -93,31 +95,31 @@
       cursor: pointer;
       color: #6c757d;
       z-index: 2;
-      font-size: 1.1em; /* Adjusted for better visibility */
+      font-size: 1.1em;
     }
     .toggle-password:hover {
       color: #333;
     }
 
-    /* NEW: Remember Me checkbox container */
     .remember-me-container {
         display: flex;
         align-items: center;
-        margin-top: -10px; /* Adjust as needed */
-        margin-bottom: 15px; /* Spacing below it */
-        justify-content: flex-start; /* Align checkbox to left */
+        margin-top: -10px;
+        margin-bottom: 15px;
+        justify-content: flex-start;
     }
     .remember-me-container input[type="checkbox"] {
-        width: auto; /* Allow checkbox to take its natural width */
-        margin-right: 8px; /* Space between checkbox and label */
-        height: 16px; /* Size the checkbox */
+        width: auto;
+        margin-right: 8px;
+        height: 16px;
         width: 16px;
-        flex-shrink: 0; /* Prevent it from shrinking */
+        flex-shrink: 0;
         cursor: pointer;
+        margin-bottom: 0; /* Ensure checkbox doesn't get large margin-bottom */
     }
     .remember-me-container label {
-        margin-bottom: 0; /* Remove default label margin */
-        font-weight: normal; /* Less bold than form labels */
+        margin-bottom: 0;
+        font-weight: normal;
         color: #333;
         cursor: pointer;
     }
@@ -132,12 +134,12 @@
       border-radius: 6px;
       font-size: 16px;
       cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease; /* Add transitions */
+      transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
     }
     button:hover {
       background-color: #003FCC;
-      transform: translateY(-1px); /* Slight lift on hover */
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* Enhanced shadow on hover */
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
     button:active {
         transform: translateY(0);
@@ -255,12 +257,10 @@
       <div class="error" id="errorMsg"></div>
       <div class="success-message" id="successMsg"></div>
 
-      <label for="email">Email:</label>
-      <input type="email" id="email" name="email" placeholder="Enter your email" required autocomplete="username" />
+      <input type="email" id="email" name="email" placeholder="Email" required autocomplete="username" />
 
-      <label for="password">Password:</label>
       <div class="password-input-container">
-        <input type="password" id="password" name="password" placeholder="Enter your password" required 
+        <input type="password" id="password" name="password" placeholder="Password" required 
                autocomplete="current-password"
                spellcheck="false" 
                autocapitalize="off" 
@@ -296,9 +296,9 @@
     const errorMsg = document.getElementById("errorMsg");
     const successMsg = document.getElementById("successMsg");
     const notificationContainer = document.getElementById('notification-container');
-    const emailInput = document.getElementById('email'); // Get reference to email input
-    const passwordInput = document.getElementById('password'); // Get reference to password input
-    const rememberMeCheckbox = document.getElementById('rememberMe'); // Get reference to remember me checkbox
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const rememberMeCheckbox = document.getElementById('rememberMe');
 
 
     const BACKEND_URL = "https://back-end-wrxi.onrender.com";
@@ -342,34 +342,29 @@
         });
     });
 
-    // --- IMPORTANT FIX: Clear form fields on page load or when navigated back to ---
     window.addEventListener('pageshow', function(event) {
         if (event.persisted) {
-            emailInput.value = ''; // Clear email on back navigation
-            passwordInput.value = ''; // Clear password on back navigation
-            
-            // Reset rememberMe checkbox state on back navigation
+            emailInput.value = '';
+            passwordInput.value = '';
             rememberMeCheckbox.checked = false; 
 
-            // Reset the password toggle icon to 'eye' for security
             const toggleIcon = document.querySelector('.toggle-password');
-            if (passwordInput.type === 'text') { // If it was left as text, change back to password
+            if (passwordInput.type === 'text') {
                 passwordInput.type = 'password';
                 if (toggleIcon) {
                     toggleIcon.classList.remove('fa-eye-slash');
                     toggleIcon.classList.add('fa-eye');
                 }
             }
-            clearMessages(); // Clear any old error/success messages
+            clearMessages();
         }
     });
 
-    // --- NEW: Load saved email from localStorage on page load ---
     document.addEventListener('DOMContentLoaded', function() {
         const savedEmail = localStorage.getItem('rememberedEmail');
         if (savedEmail) {
             emailInput.value = savedEmail;
-            rememberMeCheckbox.checked = true; // Check the box if email was remembered
+            rememberMeCheckbox.checked = true;
         }
     });
 
@@ -381,7 +376,6 @@
       const email = emailInput.value;
       const password = passwordInput.value;
 
-      // --- NEW: Handle Remember Me logic on submission ---
       if (rememberMeCheckbox.checked) {
           localStorage.setItem('rememberedEmail', email);
       } else {
@@ -407,7 +401,6 @@
               localStorage.setItem("userRole", userRole);
               localStorage.setItem("userStatus", userStatus);
 
-              // Send Login Log Event
               try {
                   await fetch(`${BACKEND_URL}/log_event`, {
                       method: "POST",
@@ -483,7 +476,7 @@
 
     async function sendPasswordReset() {
         clearMessages();
-        const email = emailInput.value; // Use the direct reference
+        const email = emailInput.value;
 
         if (!email) {
             showNotification("Please enter your email to reset password.", 'warning');
