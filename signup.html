@@ -39,8 +39,8 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px; /* Add some padding to body to ensure container doesn't touch edges on small screens */
-            box-sizing: border-box; /* Include padding in body's width/height */
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         .signup-container {
@@ -66,7 +66,7 @@
         .signup-container select {
             width: 100%;
             padding: 10px;
-            margin: 10px 0; /* Apply consistent vertical margin */
+            margin: 10px 0;
             border-radius: 5px;
             border: 1px solid var(--border-light);
             box-sizing: border-box;
@@ -76,15 +76,17 @@
         .password-input-container {
             position: relative;
             margin: 10px 0; /* Apply the same vertical margin as other inputs/selects */
+            /* Ensure it has a defined height or minimum height if internal elements are collapsing */
+            min-height: 40px; /* Example: based on 10px padding + font-size */
         }
         .password-input-container input {
-            /* Set a fixed padding-right to avoid shifts, and ensure width calculation is consistent */
-            padding-right: 40px; 
+            padding-right: 40px;
             margin: 0; /* Remove specific margin from this input as container has it */
-            /* Add min-width or fixed width if still unstable, but 100% with box-sizing should be stable */
+            height: 40px; /* Explicitly set height to ensure consistency when type changes */
+            line-height: 20px; /* Adjust line-height if text seems off-center vertically */
         }
         
-        /* Eye icon style */
+        /* Revised: Eye icon style */
         .toggle-password {
             position: absolute;
             right: 10px;
@@ -94,6 +96,7 @@
             color: #6c757d;
             z-index: 2;
             font-size: 1.1em;
+            line-height: 1; /* Ensure icon itself doesn't have extra line height causing shift */
         }
         .toggle-password:hover {
             color: #333;
@@ -188,11 +191,11 @@
         /* Styles for password strength indicator */
         .password-strength {
             font-size: 0.85em;
-            margin-top: -5px; /* Adjust this relative to the input container */
+            margin-top: -5px; /* Keep this negative margin to pull it up closer to input */
             margin-bottom: 10px; /* Ensures proper spacing after strength message */
             text-align: left;
             font-weight: 500;
-            min-height: 1.2em; /* Keep a consistent height to avoid layout shift */
+            min-height: 1.2em; /* Keep consistent height */
         }
         .password-strength.weak {
             color: var(--error-red);
