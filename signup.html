@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Signup | LINAC QA</title>
-    <link rel="icon" href="/favicon.png" type="image/png"> <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         /* Re-using color variables from upload.html for consistency */
         :root {
@@ -54,14 +56,34 @@
             color: var(--primary-blue);
         }
 
-        .signup-container input,
-        .signup-container select {
+        /* NEW: Password input container style */
+        .password-input-container {
+            position: relative;
+            margin-bottom: 0; /* Adjusted from input default */
+        }
+        .signup-container input { /* General input style */
             width: 100%;
             padding: 10px;
-            margin: 10px 0;
+            margin: 10px 0; /* Existing margin */
             border-radius: 5px;
             border: 1px solid var(--border-light);
             box-sizing: border-box;
+        }
+        .password-input-container input { /* Specific password input override */
+            padding-right: 40px; /* Make space for the icon */
+            margin-bottom: 10px; /* Adjust as needed, matching next element */
+        }
+        /* NEW: Eye icon style */
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: calc(50% + 5px); /* Adjusted top to account for input's margin-top:10px and center vertically*/
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+        }
+        .toggle-password:hover {
+            color: #333;
         }
 
         .signup-container label {
@@ -95,17 +117,17 @@
             margin-bottom: 10px;
         }
 
-        /* NEW: Styles for Custom Notifications (copied from upload.html) */
+        /* Styles for Custom Notifications */
         #notification-container {
             position: fixed;
-            top: 20px; /* Adjust as needed */
+            top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 10000; /* Ensure it's on top of everything */
+            z-index: 10000;
             display: flex;
             flex-direction: column;
             gap: 10px;
-            pointer-events: none; /* Allows clicks to pass through when no messages are active */
+            pointer-events: none;
         }
 
         .notification-message {
@@ -119,7 +141,7 @@
             transform: translateY(-20px);
             min-width: 250px;
             text-align: center;
-            pointer-events: auto; /* Re-enable pointer events for the message itself */
+            pointer-events: auto;
         }
 
         .notification-message.show {
@@ -128,36 +150,36 @@
         }
 
         .notification-message.success {
-            background-color: #28a745; /* var(--success-green) */
+            background-color: #28a745;
         }
 
         .notification-message.error {
-            background-color: #dc3545; /* var(--error-red) */
+            background-color: #dc3545;
         }
 
         .notification-message.warning {
-            background-color: #ffc107; /* var(--warning-orange) */
-            color: #333; /* var(--text-dark) */
+            background-color: #ffc107;
+            color: #333;
         }
 
         .notification-message.info {
-            background-color: #007bff; /* var(--primary-blue) */
+            background-color: #007bff;
         }
 
-        /* NEW: Styles for mandatory field asterisk */
+        /* Styles for mandatory field asterisk */
         .required {
             color: var(--error-red);
             margin-left: 4px;
         }
 
-        /* NEW: Styles for password strength indicator */
+        /* Styles for password strength indicator */
         .password-strength {
             font-size: 0.85em;
-            margin-top: -5px; /* Adjust spacing from input */
-            margin-bottom: 10px; /* Adjust spacing to next element */
+            margin-top: -5px;
+            margin-bottom: 10px;
             text-align: left;
             font-weight: 500;
-            min-height: 1.2em; /* Reserve space to prevent layout shift */
+            min-height: 1.2em;
         }
         .password-strength.weak {
             color: var(--error-red);
@@ -182,8 +204,11 @@
     <input type="email" id="email" placeholder="Enter your email" required/>
 
     <label for="password">Password:<span class="required">*</span></label>
-    <input type="password" id="password" placeholder="Choose a password" required/>
-    <div id="passwordStrength" class="password-strength"></div> <label for="hospital">Select Hospital:<span class="required">*</span></label>
+    <div class="password-input-container"> <input type="password" id="password" placeholder="Choose a password" required/>
+      <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span> </div>
+    <div id="passwordStrength" class="password-strength"></div>
+
+    <label for="hospital">Select Hospital:<span class="required">*</span></label>
     <select id="hospital" required>
       <option value="">-- Select Hospital --</option>
       <option value="aoi_gurugram">AOI GURUGRAM</option>
@@ -199,28 +224,43 @@
       <option value="Medical physicist">Medical physicist</option>
       <option value="RSO">RSO</option>
       </select>
-    <button onclick="signup()" id="signupButton">Sign Up</button> <p style="margin-top: 15px; text-align: center; font-size: 0.9em; color: var(--text-dark);">Already have an account? <a href="login.html" style="color: var(--primary-blue);">Log in</a></p>
+    <button onclick="signup()" id="signupButton">Sign Up</button>
+    <p style="margin-top: 15px; text-align: center; font-size: 0.9em; color: var(--text-dark);">Already have an account? <a href="login.html" style="color: var(--primary-blue);">Log in</a></p>
   </div>
 
   <div id="notification-container"></div>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="firebase-init.js"></script>
+  <script src="/firebase-init.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // These now reference the globally initialized Firebase auth object
     const auth = firebase.auth();
-    const db = firebase.firestore(); // db might not be strictly needed here, but keeping for consistency
+    const db = firebase.firestore();
 
-    const notificationContainer = document.getElementById('notification-container'); // Get notification container
+    const notificationContainer = document.getElementById('notification-container');
     const passwordInput = document.getElementById('password');
     const passwordStrengthDiv = document.getElementById('passwordStrength');
-    const signupButton = document.getElementById('signupButton'); // Get the signup button
+    const signupButton = document.getElementById('signupButton');
+
+    // NEW: Toggle Password Visibility Functionality
+    document.querySelectorAll('.toggle-password').forEach(function(toggle) {
+        toggle.addEventListener('click', function() {
+            const passwordInput = document.querySelector(this.getAttribute('toggle'));
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                this.classList.remove('fa-eye');
+                this.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                this.classList.remove('fa-eye-slash');
+                this.classList.add('fa-eye');
+            }
+        });
+    });
 
 
-    // NEW: Custom Notification Function (copied here for consistency)
     function showNotification(message, type = 'info', duration = 3000) {
         const notification = document.createElement('div');
         notification.classList.add('notification-message', type);
@@ -228,7 +268,7 @@
 
         notificationContainer.appendChild(notification);
 
-        void notification.offsetWidth; // Force reflow
+        void notification.offsetWidth;
         notification.classList.add('show');
 
         setTimeout(() => {
@@ -239,7 +279,6 @@
         }, duration);
     }
 
-    // NEW: Password Strength Checker Function
     function checkPasswordStrength() {
         const password = passwordInput.value;
         let strength = 0;
@@ -273,39 +312,32 @@
         }
 
         passwordStrengthDiv.textContent = message;
-        passwordStrengthDiv.className = 'password-strength ' + type; // Update class for styling
+        passwordStrengthDiv.className = 'password-strength ' + type;
     }
 
-    // Attach password strength checker to input event
     passwordInput.addEventListener('input', checkPasswordStrength);
 
-    // --- Signup Function ---
     async function signup() {
-      // Disable button and show loading state
       signupButton.disabled = true;
       signupButton.textContent = 'Signing Up...';
 
       const name = document.getElementById("name").value.trim();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
-      const hospital = document.getElementById("hospital").value.trim(); // This is the centerId (value from dropdown)
+      const hospital = document.getElementById("hospital").value.trim();
       const role = document.getElementById("role").value.trim();
-      // messageDiv is now mostly unused, notifications are preferred
-      // messageDiv.textContent = "";
-      // messageDiv.style.color = "red";
 
       if (!name || !email || !password || !hospital || hospital === "" || !role || role === "") {
         showNotification("Please fill in all fields.", 'warning');
-        signupButton.disabled = false; // Re-enable button
+        signupButton.disabled = false;
         signupButton.textContent = 'Sign Up';
         return;
       }
 
-      // Optional: Add a check for minimum password strength before signup
       const currentPasswordStrengthClass = passwordStrengthDiv.className;
       if (currentPasswordStrengthClass.includes('weak')) {
           showNotification("Please choose a stronger password.", 'warning');
-          signupButton.disabled = false; // Re-enable button
+          signupButton.disabled = false;
           signupButton.textContent = 'Sign Up';
           return;
       }
@@ -315,31 +347,30 @@
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         const uid = userCredential.user.uid;
 
-        // Send initial status as "pending" along with other user data to backend
-        const response = await fetch("https://back-end-wrxi.onrender.com/signup", {
+        const BACKEND_URL = "https://back-end-wrxi.onrender.com"; // Define backend URL for signup
+
+        const response = await fetch(`${BACKEND_URL}/signup`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 uid,
                 name,
                 email,
-                hospital, // This is the centerId (value from dropdown)
+                hospital,
                 role,
-                status: "pending" // Set initial status to pending
+                status: "pending"
             })
         });
 
         const data = await response.json();
         if (data.status === "success") {
-            // Note: hospitalName is now the center ID from the dropdown,
-            // but we use it as hospitalName in localStorage for display consistency in upload.html
             localStorage.setItem("hospitalName", hospital.toUpperCase());
 
             showNotification("Signup successful! Your account is awaiting approval.", 'success', 5000);
             
             setTimeout(() => {
-                window.location.href = "awaiting_approval.html"; // Redirect to approval page
-            }, 3000); // Give time for notification to show
+                window.location.href = "awaiting_approval.html";
+            }, 3000);
 
         } else {
             showNotification("Signup failed: " + data.message, 'error');
@@ -366,7 +397,7 @@
         }
         showNotification(errorMessage, 'error');
       } finally {
-        signupButton.disabled = false; // Always re-enable button
+        signupButton.disabled = false;
         signupButton.textContent = 'Sign Up';
       }
     }
