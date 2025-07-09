@@ -15,7 +15,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      min-height: 100vh; /* Changed from height to min-height for better responsiveness */
+      min-height: 100vh;
     }
     .login-container {
       background: #ffffffcc;
@@ -198,8 +198,9 @@
       <input type="email" id="email" name="email" required />
 
       <label for="password">Password:</label>
-      <div class="password-input-container"> <input type="password" id="password" name="password" required />
-        <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span> </div>
+      <div class="password-input-container">
+        <input type="password" id="password" name="password" required autocomplete="new-password" spellcheck="false"/> <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span>
+      </div>
 
       <a href="#" class="forgot-password-link" onclick="sendPasswordReset()">Forgot Password?</a>
 
@@ -250,7 +251,7 @@
         }, duration);
     }
 
-    // NEW: Toggle Password Visibility Functionality
+    // Toggle Password Visibility Functionality
     document.querySelectorAll('.toggle-password').forEach(function(toggle) {
         toggle.addEventListener('click', function() {
             const passwordInput = document.querySelector(this.getAttribute('toggle'));
