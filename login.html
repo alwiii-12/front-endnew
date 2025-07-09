@@ -276,6 +276,26 @@
         });
     });
 
+    // --- IMPORTANT FIX: Clear form fields on page load or when navigated back to ---
+    window.addEventListener('pageshow', function(event) {
+        // Check if the page is being shown from the bfcache (back/forward cache)
+        if (event.persisted) {
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            // Reset the password toggle icon to 'eye' for security
+            const toggleIcon = document.querySelector('.toggle-password');
+            const passwordInput = document.getElementById('password');
+            if (passwordInput.type === 'text') { // If it was left as text, change back to password
+                passwordInput.type = 'password';
+                if (toggleIcon) {
+                    toggleIcon.classList.remove('fa-eye-slash');
+                    toggleIcon.classList.add('fa-eye');
+                }
+            }
+            clearMessages(); // Clear any old error/success messages
+        }
+    });
+
 
     document.getElementById("loginForm").addEventListener("submit", function (e) {
       e.preventDefault();
