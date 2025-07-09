@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Signup | LINAC QA</title>
     <link rel="icon" href="/favicon.png" type="image/png">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -363,7 +366,7 @@
       signupButton.disabled = true;
       signupButton.textContent = 'Signing Up...';
 
-      // --- NEW: More robust element retrieval ---
+      // Use a more robust way to get values, ensuring elements exist
       const getName = document.getElementById("name");
       const getEmail = document.getElementById("email");
       const getPassword = document.getElementById("password");
@@ -372,7 +375,7 @@
 
       // Check if elements are found before trying to access their values
       if (!getName || !getEmail || !getPassword || !getHospital || !getRole) {
-          showNotification("Error: Required form elements not found. Please refresh the page or contact support.", 'error', 5000);
+          showNotification("Error: Required form elements not found. Please refresh the page.", 'error', 5000);
           signupButton.disabled = false;
           signupButton.textContent = 'Sign Up';
           console.error("Missing form elements:", {
@@ -387,7 +390,7 @@
       const password = getPassword.value.trim();
       const hospital = getHospital.value.trim();
       const role = getRole.value.trim();
-      // --- END NEW ---
+
 
       if (!name || !email || !password || !hospital || hospital === "" || !role || role === "") {
         showNotification("Please fill in all fields.", 'warning');
