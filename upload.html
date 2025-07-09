@@ -1629,3 +1629,60 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+
+        saveBtn.addEventListener('click', manualSave);
+        logoutBtn.addEventListener('click', window.logout);
+        myProfileBtn.addEventListener('click', function() { window.location.href='my_profile.html'; });
+        darkToggle.addEventListener('change', toggleDarkMode);
+        prevYearBtn.addEventListener('click', function() { changeYear(-1); });
+        nextYearBtn.addEventListener('click', function() { changeYear(1); });
+
+        exportExcelBtn.addEventListener('click', exportToExcel); 
+
+        chatBubble.addEventListener('click', function() {
+            chatWindow.classList.toggle('open');
+            if (chatWindow.classList.contains('open')) {
+                chatInput.focus();
+            }
+        });
+        closeChatBtn.addEventListener('click', function() {
+            chatWindow.classList.remove('open');
+        });
+        sendChatBtn.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
+
+
+        auth.onAuthStateChanged(function(user) {
+            if (user) {
+                currentUID = user.uid;
+                currentHospital = localStorage.getItem("hospitalName") || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
+                var userStatus = localStorage.getItem("userStatus");
+
+                if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
+                    showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000);
+                    window.logout();
+                    return;
+                }
+
+                localStorage.setItem("uid", currentUID);
+                document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
+                buildMonthButtons();
+                loadTable();
+            } else {
+                window.location.replace("login.html");
+            }
+        });
+    });
+
+  </script>
+</body>
+</html>
