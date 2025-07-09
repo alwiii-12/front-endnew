@@ -58,7 +58,7 @@
       color: var(--text-dark);
       display: flex;
       height: 100vh;
-      overflow: hidden;
+      overflow: hidden; /* Ensure body itself doesn't scroll excessively */
       flex-direction: column;
     }
 
@@ -153,8 +153,8 @@
 
     .content {
       display: flex;
-      flex: 1;
-      overflow: hidden;
+      flex: 1; /* Allows content to take remaining height */
+      overflow: hidden; /* Crucial to contain scrolling within main/table */
     }
     .sidebar {
       width: 200px;
@@ -209,9 +209,9 @@
 
 
     .main {
-      flex-grow: 1;
+      flex-grow: 1; /* Allows main content to take available width */
       padding: 20px;
-      overflow: auto;
+      overflow-y: auto; /* Allow scrolling for main content if it exceeds height */
       display: flex;
       flex-direction: column;
       gap: 20px;
@@ -233,19 +233,20 @@
       display: flex;
       gap: 20px;
       align-items: flex-start;
-      flex-wrap: wrap;
-      flex: 1;
+      flex-wrap: wrap; /* Allows summary box to wrap below table on smaller screens */
+      flex: 1; /* Allows container to grow and shrink in the main column */
+      min-height: 0; /* NEW: Needed for flex children with defined heights to shrink */
     }
     #table {
-        flex-grow: 1;
-        height: 500px;
+        flex-grow: 1; /* Allows table to take available space in its row */
+        height: 500px; /* Maintain fixed height for Handsontable */
         min-width: 400px;
         /* Apply card-panel base styles */
         border-radius: 16px;
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
         background: #ffffff;
         border: 1px solid rgba(0,0,0,0.05);
-        overflow: hidden;
+        overflow: hidden; /* Ensure Handsontable's own scrollbars appear correctly */
     }
     /* Handsontable specific overrides for cell background and text */
     #table .ht_master, #table .handsontable {
@@ -696,7 +697,7 @@
         transform: translateY(-20px);
         min-width: 250px;
         text-align: center;
-        pointer-events: auto; /* Re-enable pointer events for the message itself */
+        pointer-events: auto;
     }
 
     .notification-message.show {
@@ -1061,7 +1062,6 @@
       let labels = [];
       let chartData = [];
 
-      // Logic to handle fully green pie chart when no warnings/out of tolerance
       if (total === 0) { // If no data at all, show empty chart or a single neutral slice
           backgroundColors = ['#cccccc']; // Neutral grey
           labels = ['No Data'];
@@ -1135,7 +1135,11 @@
         showNotification("Data saved successfully!", 'success');
         updateTrendChart();
 
-        if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') { // This line refers to lastSaved, though it's removed. Revisit this logic.
+        // This check needs modification since `lastSaved.textContent` is removed.
+        // It should now only rely on `outOfToleranceValues.length`.
+        // The original `|| lastSaved.textContent !== ''` part was likely checking if there was a previous state to clear alerts.
+        // For simplicity and to match the prompt, we'll keep the email sending logic to only trigger when outOfToleranceValues exist.
+        if (outOfToleranceValues.length > 0) { 
             var alertResponse = await fetch(`${BACKEND_URL}/send-alert`, {
                 method: 'POST',
                 headers: {
@@ -1161,7 +1165,33 @@
                 showNotification("Alert email could not be sent: " + (alertResult.message || "Unknown error."), 'warning');
             }
         } else {
-            console.log("No out-of-tolerance values to send for alert and no prior save to trigger a resolution check.");
+            // New logic: if outOfToleranceValues is empty (all resolved), still send an alert if previous alerts existed
+            // This requires backend to check previous alert state and send "all resolved" message.
+            // As per backend `send-alert` logic, it sends "All previously detected... resolved" if current_out_values is empty but previously_alerted exists.
+            // So, simply call the send-alert even if `outOfToleranceValues` is empty.
+             var alertResponse = await fetch(`${BACKEND_URL}/send-alert`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    outValues: outOfToleranceValues, // This will be empty
+                    hospitalName: currentHospital,
+                    uid: currentUID,
+                    month: month
+                })
+            });
+            var alertResult = await alertResponse.json();
+            if (alertResult.status === 'alert sent') {
+                console.log("Email alert sent (issues resolved).");
+                 showNotification("Alert email sent (issues resolved).", 'info');
+            } else if (alertResult.status === 'no_change') {
+                 console.log("No new alerts or changes to existing issues. Email not sent.");
+                 showNotification("No new critical alerts to send.", 'info');
+            } else {
+                 console.warn("Could not send email alert for resolution:", alertResult.message || alertResult.status);
+                 showNotification("Alert email for resolution could not be sent: " + (alertResult.message || "Unknown error."), 'warning');
+            }
         }
 
       } catch(err){
@@ -1352,7 +1382,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        query: 'out_of_tolerance_dates',
+                        query_text: lowerCaseMessage, // Pass original query text for NLP on backend
+                        query: 'out_of_tolerance_dates', // Keep legacy query type for now
                         month: monthKey,
                         uid: currentUID
                     })
@@ -1379,7 +1410,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        query: 'value_on_date',
+                        query_text: lowerCaseMessage, // Pass original query text for NLP on backend
+                        query: 'value_on_date', // Keep legacy query type for now
                         month: monthKey,
                         uid: currentUID,
                         energy_type: extractedEnergyType,
@@ -1408,7 +1440,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        query: 'energy_data_for_month',
+                        query_text: lowerCaseMessage, // Pass original query text for NLP on backend
+                        query: 'energy_data_for_month', // Keep legacy query type for now
                         month: monthKey,
                         uid: currentUID,
                         energy_type: extractedEnergyType
@@ -1433,7 +1466,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        query: 'warning_values_for_month',
+                        query_text: lowerCaseMessage, // Pass original query text for NLP on backend
+                        query: 'warning_values_for_month', // Keep legacy query type for now
                         month: monthKey,
                         uid: currentUID
                     })
@@ -1450,6 +1484,91 @@
                 botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
             }
         }
+        // NEW ANALYTICAL QUERIES from backend
+        else if (lowerCaseMessage.includes("average deviation") && extractedEnergyType) {
+            addChatMessage(`Calculating average deviation for ${extractedEnergyType} this month...`, 'bot');
+            try {
+                var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query_text: lowerCaseMessage,
+                        query: 'average_deviation', // New query type for backend
+                        month: monthKey,
+                        uid: currentUID,
+                        energy_type: extractedEnergyType
+                    })
+                });
+                var result = await response.json();
+                botResponse = result.message || "Could not get average deviation.";
+            } catch (error) {
+                console.error("Chatbot query error:", error);
+                botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+            }
+        }
+        else if (lowerCaseMessage.includes("max value") && extractedEnergyType) {
+             addChatMessage(`Finding max value for ${extractedEnergyType} this month...`, 'bot');
+            try {
+                var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query_text: lowerCaseMessage,
+                        query: 'max_value', // New query type for backend
+                        month: monthKey,
+                        uid: currentUID,
+                        energy_type: extractedEnergyType
+                    })
+                });
+                var result = await response.json();
+                botResponse = result.message || "Could not get max value.";
+            } catch (error) {
+                console.error("Chatbot query error:", error);
+                botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+            }
+        }
+        else if (lowerCaseMessage.includes("min value") && extractedEnergyType) {
+            addChatMessage(`Finding min value for ${extractedEnergyType} this month...`, 'bot');
+            try {
+                var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query_text: lowerCaseMessage,
+                        query: 'min_value', // New query type for backend
+                        month: monthKey,
+                        uid: currentUID,
+                        energy_type: extractedEnergyType
+                    })
+                });
+                var result = await response.json();
+                botResponse = result.message || "Could not get min value.";
+            } catch (error) {
+                console.error("Chatbot query error:", error);
+                botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+            }
+        }
+        else if ((lowerCaseMessage.includes("all values for") || lowerCaseMessage.includes("all energies on")) && extractedDate) {
+            addChatMessage(`Getting all values for ${extractedDate}...`, 'bot');
+            try {
+                var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query_text: lowerCaseMessage,
+                        query: 'all_values_on_date', // New query type for backend
+                        month: monthKey,
+                        uid: currentUID,
+                        date: extractedDate
+                    })
+                });
+                var result = await response.json();
+                botResponse = result.message || "Could not get daily values.";
+            } catch (error) {
+                console.error("Chatbot query error:", error);
+                botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+            }
+        }
         else if (lowerCaseMessage.includes('hi') || lowerCaseMessage.includes('hello') || lowerCaseMessage.includes('hey')) {
             botResponse = "Hello there! How can I assist you with your QA data today?";
         } else if (lowerCaseMessage.includes('how are you')) {
@@ -1458,7 +1577,7 @@
             botResponse = "You're welcome! Happy to help.";
         }
         else {
-             botResponse = "I'm sorry, I don't understand that request. Please try rephrasing or ask about:\n\n- \"Out of tolerance dates\"\n- \"Value for 6X on 2025-06-10\" (useYYYY-MM-DD for dates).";
+             botResponse = "I'm sorry, I don't understand that request. Please try rephrasing or ask about:\n\n- \"Out of tolerance dates\"\n- \"Value for 6X on 2025-06-10\" (useYYYY-MM-DD for dates).\n- \"Average deviation for 6X this month\"\n- \"Max/Min value for 10X FFF this month\"\n- \"All values for 2025-07-05\".";
         }
         
         addChatMessage(botResponse, 'bot');
