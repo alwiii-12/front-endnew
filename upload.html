@@ -769,8 +769,7 @@
         <button id="saveBtn" style="font-weight:bold; background-color: var(--primary-blue); color: var(--text-light);">
             <i class="fas fa-save"></i> Save
         </button>
-        <span id="lastSaved" style="margin-left:15px;font-size:14px;color:gray;"></span>
-      </div>
+        </div>
 
       <div id="export-section">
           <button id="exportExcelBtn" style="background-color: #28a745; color: white;">
@@ -780,8 +779,7 @@
 
 
       <div class="trend-chart-section data-container" style="margin-top: 30px;">
-        <h3>Energy Trend Analysis (Current Month)</h3>
-        <div style="margin-bottom: 15px;">
+        <h3 id="trendChartHeader"></h3> <div style="margin-bottom: 15px;">
           <label for="trendEnergySelect" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
           <select id="trendEnergySelect" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart()">
             </select>
@@ -796,7 +794,8 @@
   <div id="chat-bubble"><i class="fas fa-comment-dots"></i></div>
   <div id="chat-window">
       <div id="chat-header">
-          <span>QA Copilot</span> <button id="close-chat-btn"><i class="fas fa-times"></i></button>
+          <span>QA Copilot</span>
+          <button id="close-chat-btn"><i class="fas fa-times"></i></button>
       </div>
       <div id="chat-body">
           <div class="chat-message bot">Hello! How can I help you with your QA data today?</div>
@@ -829,7 +828,8 @@
     var monthsDiv = document.getElementById('months');
     var header = document.getElementById('header');
     var yearLabel = document.getElementById('year');
-    var lastSaved = document.getElementById('lastSaved');
+    // Removed reference to lastSaved as the element is removed from HTML
+    // var lastSaved = document.getElementById('lastSaved');
     var darkToggle = document.getElementById('darkToggle');
     var saveBtn = document.getElementById('saveBtn');
     var logoutBtn = document.getElementById('logoutBtn');
@@ -844,6 +844,7 @@
     var tableContainer = document.getElementById('table');
     var summaryBox = document.querySelector('.summary-box');
     var trendChartSection = document.querySelector('.trend-chart-section');
+    var trendChartHeader = document.getElementById('trendChartHeader'); // NEW reference for the trend chart header
 
     // Chatbot UI element references
     var chatBubble = document.getElementById('chat-bubble');
@@ -1054,11 +1055,61 @@
 
       var ctx = document.getElementById('summaryChart').getContext('2d');
       if (summaryChart) summaryChart.destroy();
+
+      // Determine colors for the pie chart
+      let backgroundColors = [];
+      let labels = [];
+      let chartData = [];
+
+      // Logic to handle fully green pie chart when no warnings/out of tolerance
+      if (total === 0) { // If no data at all, show empty chart or a single neutral slice
+          backgroundColors = ['#cccccc']; // Neutral grey
+          labels = ['No Data'];
+          chartData = [1]; // A single slice to represent "no data"
+      } else if (warning === 0 && out === 0) { // All within tolerance
+          backgroundColors = ['#66cc66']; // Full green
+          labels = ['Within Tolerance'];
+          chartData = [within];
+      } else { // Mix of within, warning, out
+          labels = ['Within Tolerance','Warning','Out of Tolerance'];
+          backgroundColors = ['#66cc66','#ffcc00','#ff6666'];
+          chartData = [within,warning,out];
+      }
+
+
       summaryChart = new Chart(ctx, {
         type: 'pie',
         data: {
-          labels: ['Within Tolerance','Warning','Out of Tolerance'],
-          datasets: [{ data: [within,warning,out], backgroundColor: ['#66cc66','#ffcc00','#ff6666'] }]
+          labels: labels, // Use dynamic labels
+          datasets: [{ data: chartData, backgroundColor: backgroundColors }] // Use dynamic data and colors
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false // Hide default legend if you are displaying counts manually
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed !== null) {
+                                label += context.parsed;
+                            }
+                            // Add percentage to tooltip
+                            if (context.dataset.data[context.dataIndex] > 0 && total > 0) {
+                                let percentage = (context.parsed / total * 100).toFixed(1) + '%';
+                                label += ' (' + percentage + ')';
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
         }
       });
     }
@@ -1079,11 +1130,12 @@
             throw new Error('Failed to save data: ' + saveResponse.statusText + ' - ' + errorText);
         }
 
-        lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
+        // Removed lastSaved.textContent line as the element is removed from HTML
+        // lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
         showNotification("Data saved successfully!", 'success');
         updateTrendChart();
 
-        if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') {
+        if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') { // This line refers to lastSaved, though it's removed. Revisit this logic.
             var alertResponse = await fetch(`${BACKEND_URL}/send-alert`, {
                 method: 'POST',
                 headers: {
@@ -1200,6 +1252,9 @@
 
             var ctx = document.getElementById('trendChart').getContext('2d');
             if (trendChart) trendChart.destroy();
+
+            // Set the trend chart header to only show the month name
+            trendChartHeader.textContent = `${currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })} Trend`;
 
             trendChart = new Chart(ctx, {
                 type: 'line',
