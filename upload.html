@@ -976,9 +976,14 @@
           afterChange: (changes, source) => {
             if (!changes || source === 'loadData') return;
             updateSummaryAndChart(hot.getData());
+            // Trigger a re-render of cell styles after changes
+            hot.render(); // This will re-evaluate the 'cells' function for affected cells
           },
           cells: function (r, c) {
             var props = {};
+            // Start with an empty className to clear previous ones for this specific cell logic
+            props.className = ''; 
+
             if (c === 0) { // Energy column (first column) is always read-only
                 props.readOnly = true;
                 return props;
@@ -988,14 +993,19 @@
             // OR if it's the current month, but the day is in the future
             if (isFutureMonth || (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() === today.getMonth() && c > today.getDate())) {
                 props.readOnly = true;
-                // Optional: add a class to visually indicate read-only
+                // Add the future-cell-readonly class
                 props.className = (props.className || '') + ' future-cell-readonly'; 
+            } else {
+                // Ensure it's editable if not a future cell
+                props.readOnly = false;
             }
 
             var v = parseFloat(this.instance.getDataAtCell(r, c));
             if (!isNaN(v)) {
               props.className = (props.className || '') + ' ' + (Math.abs(v) <= 1.8 ? 'within' : (Math.abs(v) <= 2 ? 'warning' : 'out'));
             }
+            // If it IS NaN (empty), the coloring classes won't be added,
+            // and because we started with `props.className = '';` they will be effectively removed.
             return props;
           }
         });
