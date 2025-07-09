@@ -56,31 +56,35 @@
             color: var(--primary-blue);
         }
 
-        /* NEW: Password input container style */
-        .password-input-container {
-            position: relative;
-            margin-bottom: 0; /* Adjusted from input default */
-        }
-        .signup-container input { /* General input style */
+        /* General input style - ensures consistency */
+        .signup-container input {
             width: 100%;
             padding: 10px;
             margin: 10px 0; /* Existing margin */
             border-radius: 5px;
             border: 1px solid var(--border-light);
-            box-sizing: border-box;
+            box-sizing: border-box; /* Crucial for consistent width calculation */
+        }
+
+        /* NEW: Password input container style */
+        .password-input-container {
+            position: relative;
+            /* Adjust margin-bottom on this container to match overall form spacing */
+            margin-bottom: 10px; /* Aligns with original input margin-bottom, before password strength div */
         }
         .password-input-container input { /* Specific password input override */
             padding-right: 40px; /* Make space for the icon */
-            margin-bottom: 10px; /* Adjust as needed, matching next element */
+            margin-bottom: 0; /* Remove default margin-bottom from input itself */
         }
         /* NEW: Eye icon style */
         .toggle-password {
             position: absolute;
             right: 10px;
-            top: calc(50% + 5px); /* Adjusted top to account for input's margin-top:10px and center vertically*/
-            transform: translateY(-50%);
+            top: 50%; /* Position relative to its container's vertical center */
+            transform: translateY(-50%); /* Adjust to true center */
             cursor: pointer;
             color: #6c757d;
+            z-index: 2; /* Ensure icon is above input in case of overlap */
         }
         .toggle-password:hover {
             color: #333;
@@ -175,7 +179,7 @@
         /* Styles for password strength indicator */
         .password-strength {
             font-size: 0.85em;
-            margin-top: -5px;
+            margin-top: 0; /* Adjusted from -5px to accommodate new input container */
             margin-bottom: 10px;
             text-align: left;
             font-weight: 500;
@@ -325,7 +329,7 @@
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
       const hospital = document.getElementById("hospital").value.trim();
-      const role = document.getElementById("role").value.trim();
+      const role = document.getElementById("role").trim();
 
       if (!name || !email || !password || !hospital || hospital === "" || !role || role === "") {
         showNotification("Please fill in all fields.", 'warning');
