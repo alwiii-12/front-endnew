@@ -89,11 +89,11 @@
 
         .password-input-container {
             position: relative;
-            margin: 0; /* Remove margin from container itself */
+            margin: 0;
         }
         .password-input-container input {
             padding-right: 40px;
-            margin: 0; 
+            margin: 0;
             height: 40px;
             line-height: 20px;
         }
@@ -156,8 +156,8 @@
 
         .password-strength {
             font-size: 0.85em;
-            margin-top: 5px; /* Ensure positive margin below input */
-            margin-bottom: 0; /* Let form-group handle spacing */
+            margin-top: 5px;
+            margin-bottom: 0;
             text-align: left;
             font-weight: 500;
             min-height: 1.2em;
@@ -363,18 +363,23 @@
       signupButton.disabled = true;
       signupButton.textContent = 'Signing Up...';
 
-      // Use a more robust way to get values, ensuring elements exist
+      // --- NEW: More robust element retrieval ---
       const getName = document.getElementById("name");
       const getEmail = document.getElementById("email");
       const getPassword = document.getElementById("password");
       const getHospital = document.getElementById("hospital");
       const getRole = document.getElementById("role");
 
+      // Check if elements are found before trying to access their values
       if (!getName || !getEmail || !getPassword || !getHospital || !getRole) {
-          showNotification("Error: Form elements not found. Please refresh the page.", 'error');
+          showNotification("Error: Required form elements not found. Please refresh the page or contact support.", 'error', 5000);
           signupButton.disabled = false;
           signupButton.textContent = 'Sign Up';
-          return;
+          console.error("Missing form elements:", {
+              name: getName, email: getEmail, password: getPassword,
+              hospital: getHospital, role: getRole
+          });
+          return; // Stop execution if elements are missing
       }
 
       const name = getName.value.trim();
@@ -382,7 +387,7 @@
       const password = getPassword.value.trim();
       const hospital = getHospital.value.trim();
       const role = getRole.value.trim();
-
+      // --- END NEW ---
 
       if (!name || !email || !password || !hospital || hospital === "" || !role || role === "") {
         showNotification("Please fill in all fields.", 'warning');
