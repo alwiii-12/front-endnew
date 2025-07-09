@@ -8,8 +8,9 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     body {
-      margin: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
       background: linear-gradient(to bottom right, #dbeafe, #f0f9ff);
       display: flex;
       flex-direction: column;
@@ -37,34 +38,36 @@
       font-weight: 500;
     }
     
-    /* Original input style - ensures consistency */
+    /* General input styling - ensure consistency */
     input {
       width: 100%;
       padding: 10px;
       border: 1px solid #cbd5e1;
       border-radius: 6px;
       font-size: 16px;
-      box-sizing: border-box; /* Crucial for consistent width calculation */
+      box-sizing: border-box; /* Crucial for consistent width */
     }
 
-    /* NEW: Password input container style for positioning eye icon */
+    /* Revised: Password input container style */
     .password-input-container {
       position: relative;
-      margin-bottom: 20px; /* This margin should match your original input margin-bottom */
+      /* Adjust this margin to provide spacing after the input, matching other form elements */
+      margin-bottom: 20px; 
     }
     .password-input-container input {
-      padding-right: 40px; /* Make space for the icon */
-      margin-bottom: 0; /* Remove default margin-bottom as container handles it */
+      padding-right: 40px; /* Space for the icon */
+      margin-bottom: 0; /* Remove default margin from input itself, let container handle it */
     }
-    /* NEW: Eye icon style */
+    /* Revised: Eye icon style */
     .toggle-password {
       position: absolute;
       right: 10px;
+      /* Vertically center the icon regardless of input height */
       top: 50%;
-      transform: translateY(-50%);
+      transform: translateY(-50%); 
       cursor: pointer;
       color: #6c757d;
-      z-index: 2; /* Ensure icon is above input in case of overlap */
+      z-index: 2;
     }
     .toggle-password:hover {
       color: #333;
@@ -127,8 +130,8 @@
         display: block;
         text-align: right;
         font-size: 14px;
-        margin-top: -15px; /* Adjust as needed */
-        margin-bottom: 15px; /* Adjust as needed */
+        margin-top: -15px; /* Ensure this margin is adjusted based on surrounding elements */
+        margin-bottom: 15px; /* Ensure this margin is adjusted based on surrounding elements */
         color: #0600FF;
         text-decoration: none;
     }
@@ -195,11 +198,13 @@
       <div class="success-message" id="successMsg"></div>
 
       <label for="email">Email:</label>
-      <input type="email" id="email" name="email" required />
-
-      <label for="password">Password:</label>
+      <input type="email" id="email" name="email" required autocomplete="username" /> <label for="password">Password:</label>
       <div class="password-input-container">
-        <input type="password" id="password" name="password" required autocomplete="new-password" spellcheck="false"/> <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span>
+        <input type="password" id="password" name="password" required 
+               autocomplete="new-password" 
+               spellcheck="false" 
+               autocapitalize="off" 
+               data-lpignore="true" /> <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span>
       </div>
 
       <a href="#" class="forgot-password-link" onclick="sendPasswordReset()">Forgot Password?</a>
