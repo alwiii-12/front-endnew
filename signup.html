@@ -66,17 +66,17 @@
             box-sizing: border-box; /* Crucial for consistent width calculation */
         }
 
-        /* NEW: Password input container style */
+        /* Revised: Password input container style */
         .password-input-container {
             position: relative;
             /* Adjusted margin-bottom to align with other input spacing */
-            margin-bottom: 10px;
+            margin-bottom: 10px; 
         }
         .password-input-container input { /* Specific password input override */
             padding-right: 40px; /* Make space for the icon */
             margin-bottom: 0; /* Remove default margin-bottom from input itself */
         }
-        /* NEW: Eye icon style */
+        /* Revised: Eye icon style */
         .toggle-password {
             position: absolute;
             right: 10px;
@@ -249,7 +249,7 @@
     const passwordStrengthDiv = document.getElementById('passwordStrength');
     const signupButton = document.getElementById('signupButton');
 
-    // NEW: Toggle Password Visibility Functionality
+    // Toggle Password Visibility Functionality
     document.querySelectorAll('.toggle-password').forEach(function(toggle) {
         toggle.addEventListener('click', function() {
             const passwordInput = document.querySelector(this.getAttribute('toggle'));
