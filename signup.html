@@ -48,10 +48,10 @@
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            width: 100%; /* Make it take full width of its flex item */
-            max-width: 400px; /* Limit maximum width as before */
-            box-sizing: border-box; /* Ensure padding is included in width */
-            margin: auto; /* Center the box in the remaining space if flexbox doesn't fill it */
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+            margin: auto;
         }
 
         .signup-container h2 {
@@ -60,36 +60,39 @@
             color: var(--primary-blue);
         }
 
-        /* General input style - ensures consistency */
-        .signup-container input,
-        .signup-container select { /* Apply to select also */
+        /* General input and select styling */
+        .signup-container input[type="text"],
+        .signup-container input[type="email"],
+        .signup-container select {
             width: 100%;
             padding: 10px;
-            margin: 10px 0; /* Existing margin */
+            margin: 10px 0; /* Apply consistent vertical margin */
             border-radius: 5px;
             border: 1px solid var(--border-light);
-            box-sizing: border-box; /* Crucial for consistent width calculation */
+            box-sizing: border-box;
         }
 
-        /* Revised: Password input container style */
+        /* Password input container */
         .password-input-container {
             position: relative;
-            /* Adjusted margin-bottom to align with other input spacing */
-            margin-bottom: 10px;
+            margin: 10px 0; /* Apply the same vertical margin as other inputs/selects */
         }
-        .password-input-container input { /* Specific password input override */
-            padding-right: 40px; /* Make space for the icon */
-            margin-bottom: 0; /* Remove default margin-bottom from input itself */
+        .password-input-container input[type="password"],
+        .password-input-container input[type="text"] { /* Target both password types */
+            padding-right: 40px; /* Space for the icon */
+            margin: 0; /* Remove specific margin from this input as container has it */
         }
-        /* Revised: Eye icon style */
+        
+        /* Eye icon style */
         .toggle-password {
             position: absolute;
             right: 10px;
-            top: 50%; /* Position relative to its container's vertical center */
-            transform: translateY(-50%); /* Adjust to true center */
+            top: 50%;
+            transform: translateY(-50%);
             cursor: pointer;
             color: #6c757d;
-            z-index: 2; /* Ensure icon is above input in case of overlap */
+            z-index: 2;
+            font-size: 1.1em; /* Make it slightly larger for better visibility */
         }
         .toggle-password:hover {
             color: #333;
@@ -184,8 +187,8 @@
         /* Styles for password strength indicator */
         .password-strength {
             font-size: 0.85em;
-            margin-top: 0; /* Adjusted from -5px to accommodate new input container */
-            margin-bottom: 10px;
+            margin-top: -5px; /* Adjust this relative to the input container */
+            margin-bottom: 10px; /* Ensures proper spacing after strength message */
             text-align: left;
             font-weight: 500;
             min-height: 1.2em;
