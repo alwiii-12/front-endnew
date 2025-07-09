@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login - LINAC QA</title>
   <link rel="icon" href="/favicon.png" type="image/png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* ... (your existing CSS remains unchanged) ... */
     body {
       margin: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -36,14 +36,34 @@
       margin-bottom: 5px;
       font-weight: 500;
     }
-    input {
+    /* NEW: Password input container style */
+    .password-input-container {
+      position: relative;
+      margin-bottom: 20px; /* Adjust margin as needed */
+    }
+    .password-input-container input {
       width: 100%;
       padding: 10px;
-      margin-bottom: 20px;
+      padding-right: 40px; /* Make space for the icon */
       border: 1px solid #cbd5e1;
       border-radius: 6px;
       font-size: 16px;
+      box-sizing: border-box; /* Include padding in width */
+      margin-bottom: 0; /* Remove default margin-bottom from input */
     }
+    /* NEW: Eye icon style */
+    .toggle-password {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #6c757d;
+    }
+    .toggle-password:hover {
+      color: #333;
+    }
+
     button {
       width: 100%;
       padding: 10px;
@@ -110,17 +130,17 @@
         text-decoration: underline;
     }
 
-    /* NEW: Styles for Custom Notifications (copied from upload.html) */
+    /* Styles for Custom Notifications */
     #notification-container {
         position: fixed;
-        top: 20px; /* Adjust as needed */
+        top: 20px;
         left: 50%;
         transform: translateX(-50%);
-        z-index: 10000; /* Ensure it's on top of everything */
+        z-index: 10000;
         display: flex;
         flex-direction: column;
         gap: 10px;
-        pointer-events: none; /* Allows clicks to pass through when no messages are active */
+        pointer-events: none;
     }
 
     .notification-message {
@@ -134,7 +154,7 @@
         transform: translateY(-20px);
         min-width: 250px;
         text-align: center;
-        pointer-events: auto; /* Re-enable pointer events for the message itself */
+        pointer-events: auto;
     }
 
     .notification-message.show {
@@ -172,7 +192,8 @@
       <input type="email" id="email" name="email" required />
 
       <label for="password">Password:</label>
-      <input type="password" id="password" name="password" required />
+      <div class="password-input-container"> <input type="password" id="password" name="password" required />
+        <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span> </div>
 
       <a href="#" class="forgot-password-link" onclick="sendPasswordReset()">Forgot Password?</a>
 
@@ -186,11 +207,11 @@
   <div id="notification-container"></div>
 
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="/firebase-init.js"></script> <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="/firebase-init.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
-    // These now reference the globally initialized Firebase objects from firebase-init.js
     const auth = firebase.auth();
     const db = firebase.firestore();
 
@@ -198,16 +219,13 @@
     const successMsg = document.getElementById("successMsg");
     const notificationContainer = document.getElementById('notification-container');
 
-    // Define the backend URL
-    const BACKEND_URL = "https://back-end-wrxi.onrender.com"; // Ensure this matches your backend URL
-
+    const BACKEND_URL = "https://back-end-wrxi.onrender.com";
 
     function clearMessages() {
         errorMsg.textContent = "";
         successMsg.textContent = "";
     }
 
-    // Custom Notification Function (copied here for consistency across pages)
     function showNotification(message, type = 'info', duration = 3000) {
         const notification = document.createElement('div');
         notification.classList.add('notification-message', type);
@@ -225,6 +243,22 @@
             }, { once: true });
         }, duration);
     }
+
+    // NEW: Toggle Password Visibility Functionality
+    document.querySelectorAll('.toggle-password').forEach(function(toggle) {
+        toggle.addEventListener('click', function() {
+            const passwordInput = document.querySelector(this.getAttribute('toggle'));
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                this.classList.remove('fa-eye');
+                this.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                this.classList.remove('fa-eye-slash');
+                this.classList.add('fa-eye');
+            }
+        });
+    });
 
 
     document.getElementById("loginForm").addEventListener("submit", function (e) {
@@ -253,7 +287,7 @@
               localStorage.setItem("userRole", userRole);
               localStorage.setItem("userStatus", userStatus);
 
-              // --- NEW: Send Login Log Event ---
+              // Send Login Log Event
               try {
                   await fetch(`${BACKEND_URL}/log_event`, {
                       method: "POST",
@@ -269,7 +303,6 @@
               } catch (logError) {
                   console.error("Error sending login log event:", logError);
               }
-              // --- End Login Log Event ---
 
               if (userRole === "Admin") {
                 showNotification("Logged in as Admin. Redirecting...", 'success');
