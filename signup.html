@@ -39,6 +39,8 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            padding: 20px; /* Add some padding to body to ensure container doesn't touch edges on small screens */
+            box-sizing: border-box; /* Include padding in body's width/height */
         }
 
         .signup-container {
@@ -46,8 +48,10 @@
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            width: 400px;
-            max-width: 90%;
+            width: 100%; /* Make it take full width of its flex item */
+            max-width: 400px; /* Limit maximum width as before */
+            box-sizing: border-box; /* Ensure padding is included in width */
+            margin: auto; /* Center the box in the remaining space if flexbox doesn't fill it */
         }
 
         .signup-container h2 {
@@ -57,7 +61,8 @@
         }
 
         /* General input style - ensures consistency */
-        .signup-container input {
+        .signup-container input,
+        .signup-container select { /* Apply to select also */
             width: 100%;
             padding: 10px;
             margin: 10px 0; /* Existing margin */
@@ -70,7 +75,7 @@
         .password-input-container {
             position: relative;
             /* Adjusted margin-bottom to align with other input spacing */
-            margin-bottom: 10px; 
+            margin-bottom: 10px;
         }
         .password-input-container input { /* Specific password input override */
             padding-right: 40px; /* Make space for the icon */
@@ -209,7 +214,8 @@
 
     <label for="password">Password:<span class="required">*</span></label>
     <div class="password-input-container">
-      <input type="password" id="password" placeholder="Choose a password" required autocomplete="new-password" spellcheck="false"/> <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span>
+      <input type="password" id="password" placeholder="Choose a password" required autocomplete="new-password" spellcheck="false"/>
+      <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span>
     </div>
     <div id="passwordStrength" class="password-strength"></div>
 
