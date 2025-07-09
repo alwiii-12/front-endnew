@@ -15,7 +15,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh; /* Changed from height to min-height for better responsiveness */
     }
     .login-container {
       background: #ffffffcc;
@@ -36,20 +36,25 @@
       margin-bottom: 5px;
       font-weight: 500;
     }
-    /* NEW: Password input container style */
-    .password-input-container {
-      position: relative;
-      margin-bottom: 20px; /* Adjust margin as needed */
-    }
-    .password-input-container input {
+    
+    /* Original input style - ensures consistency */
+    input {
       width: 100%;
       padding: 10px;
-      padding-right: 40px; /* Make space for the icon */
       border: 1px solid #cbd5e1;
       border-radius: 6px;
       font-size: 16px;
-      box-sizing: border-box; /* Include padding in width */
-      margin-bottom: 0; /* Remove default margin-bottom from input */
+      box-sizing: border-box; /* Crucial for consistent width calculation */
+    }
+
+    /* NEW: Password input container style for positioning eye icon */
+    .password-input-container {
+      position: relative;
+      margin-bottom: 20px; /* This margin should match your original input margin-bottom */
+    }
+    .password-input-container input {
+      padding-right: 40px; /* Make space for the icon */
+      margin-bottom: 0; /* Remove default margin-bottom as container handles it */
     }
     /* NEW: Eye icon style */
     .toggle-password {
@@ -59,6 +64,7 @@
       transform: translateY(-50%);
       cursor: pointer;
       color: #6c757d;
+      z-index: 2; /* Ensure icon is above input in case of overlap */
     }
     .toggle-password:hover {
       color: #333;
@@ -121,8 +127,8 @@
         display: block;
         text-align: right;
         font-size: 14px;
-        margin-top: -15px;
-        margin-bottom: 15px;
+        margin-top: -15px; /* Adjust as needed */
+        margin-bottom: 15px; /* Adjust as needed */
         color: #0600FF;
         text-decoration: none;
     }
