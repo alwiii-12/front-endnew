@@ -72,15 +72,16 @@
             box-sizing: border-box;
         }
 
-        /* Password input container */
+        /* Revised: Password input container style */
         .password-input-container {
             position: relative;
             margin: 10px 0; /* Apply the same vertical margin as other inputs/selects */
         }
-        .password-input-container input[type="password"],
-        .password-input-container input[type="text"] { /* Target both password types */
-            padding-right: 40px; /* Space for the icon */
+        .password-input-container input {
+            /* Set a fixed padding-right to avoid shifts, and ensure width calculation is consistent */
+            padding-right: 40px; 
             margin: 0; /* Remove specific margin from this input as container has it */
+            /* Add min-width or fixed width if still unstable, but 100% with box-sizing should be stable */
         }
         
         /* Eye icon style */
@@ -92,7 +93,7 @@
             cursor: pointer;
             color: #6c757d;
             z-index: 2;
-            font-size: 1.1em; /* Make it slightly larger for better visibility */
+            font-size: 1.1em;
         }
         .toggle-password:hover {
             color: #333;
@@ -191,7 +192,7 @@
             margin-bottom: 10px; /* Ensures proper spacing after strength message */
             text-align: left;
             font-weight: 500;
-            min-height: 1.2em;
+            min-height: 1.2em; /* Keep a consistent height to avoid layout shift */
         }
         .password-strength.weak {
             color: var(--error-red);
