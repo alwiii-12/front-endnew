@@ -221,6 +221,8 @@
       gap: 20px;
       min-height: 0; /* Crucial for flex item to shrink below its content size */
       overflow-y: auto; /* Adds scrollbar to main if content overflows vertically */
+      /* NEW: Allow horizontal scrolling *within* main, not the whole body, if container overflows */
+      overflow-x: auto; 
     }
 
     /* Month Header Box */
@@ -244,8 +246,10 @@
       flex: 1; /* Allows container to grow and shrink in the main column */
       min-height: 0; /* Needed for flex children to shrink */
       flex-direction: row; /* Ensure they stay in a row */
-      /* overflow-x: hidden; REMOVED: This might hide Handsontable's own scrollbar */
-      align-self: stretch; /* Ensure container stretches to fill available height */
+      
+      /* REMOVED: overflow-x: auto from here, moving it to .main for better single scrollbar behavior */
+      /* NEW: Add min-width to container to ensure it pushes .main horizontal scrollbar */
+      min-width: fit-content; /* Allows container to be at least as wide as its content */
     }
 
     /* Wrapper for Handsontable to control its height strictly */
@@ -274,7 +278,6 @@
     #table {
         flex-grow: 1; /* Allow Handsontable to take all available height inside wrapper */
         height: 100%; /* Force Handsontable to take full height of its wrapper */
-        /* Removed overflow: hidden from #table, as #table-wrapper handles it */
         background: none; /* Clear background inherited from parent if any */
         border: none; /* Clear border inherited from parent if any */
         padding: 0; /* Clear padding inherited from parent if any */
@@ -310,8 +313,7 @@
       justify-content: space-between; /* Distribute content vertically */
       align-items: center; /* Center content horizontally within the box */
       
-      /* NEW: Added flex-grow 0 and flex-basis to ensure it keeps its size and doesn't get squashed */
-      flex-grow: 0;
+      flex-grow: 0; /* Ensure it doesn't try to grow */
       flex-basis: 300px; /* Set a preferred basis to ensure it gets enough space */
     }
     .summary-box h3 {
@@ -992,7 +994,7 @@
 
     async function loadTable() {
       showLoader();
-      if (hot) hot.destroy();
+      if (hot) hot.destroy(); // Destroy existing Handsontable instance
       
       var dateCols = getMonthDates(currentDate);
       document.getElementById('header').textContent = `${currentDate.toLocaleString('default',{month:'long'})} ${currentDate.getFullYear()}`;
@@ -1020,7 +1022,7 @@
           data,
           rowHeaders: false,
           stretchH: 'all',
-          height: 'auto',
+          height: 'auto', /* Handsontable's height should adapt to its wrapper */
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
