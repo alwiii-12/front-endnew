@@ -220,7 +220,7 @@
       flex-direction: column;
       gap: 20px;
       min-height: 0; /* Crucial for flex item to shrink below its content size */
-      overflow-y: auto; /* Adds scrollbar to main if content overflows */
+      overflow-y: auto; /* Adds scrollbar to main if content overflows vertically */
     }
 
     /* Month Header Box */
@@ -239,24 +239,31 @@
     .container {
       display: flex;
       gap: 20px;
-      align-items: flex-start; /* Ensure items start at the top */
-      flex-wrap: nowrap; /* NEW: Prevent wrapping so table and summary stay side-by-side */
+      align-items: flex-start; /* Align items to the top */
+      flex-wrap: nowrap; /* Prevent wrapping initially */
       flex: 1; /* Allows container to grow and shrink in the main column */
       min-height: 0; /* Needed for flex children to shrink */
       flex-direction: row; /* Ensure they stay in a row */
-      /* NEW: Allow horizontal scroll for the container if content overflows */
-      overflow-x: auto;
+      
+      /* NEW: Prevent horizontal overflow in this container from causing main scroll */
+      overflow-x: hidden; /* Hide if content overflows horizontal */
+      /* NEW: Set up a flex-basis for table wrapper to play nicely */
+      align-self: stretch; /* Ensure container stretches to fill available height */
     }
 
     /* Wrapper for Handsontable to control its height strictly */
     #table-wrapper {
         flex-grow: 1; /* Allow table wrapper to take available horizontal space */
+        flex-basis: 0; /* NEW: Allow table to shrink more flexibly */
         min-width: 400px; /* Minimum width for table to be readable */
-        max-width: calc(100% - 300px - 20px); /* NEW: Calc max-width to leave space for summary-box + gap */
+        /* max-width: calc(100% - 300px - 20px);  Removing this to let flex-grow manage */
         display: flex; /* Make it a flex container for Handsontable */
         flex-direction: column;
         height: 500px; /* Explicit fixed height for the table wrapper */
-        overflow: hidden; /* To ensure Handsontable doesn't break out */
+        /* NEW: Add horizontal overflow for table if its content needs to scroll */
+        overflow-x: auto; /* Allow horizontal scroll within table wrapper */
+        overflow-y: hidden; /* Handsontable manages its own vertical scroll */
+
 
         /* Apply card-panel base styles here to wrap Handsontable */
         border-radius: 16px;
@@ -984,7 +991,7 @@
 
     async function loadTable() {
       showLoader();
-      if (hot) hot.destroy();
+      if (hot) hot.destroy(); // Destroy existing Handsontable instance
       
       var dateCols = getMonthDates(currentDate);
       document.getElementById('header').textContent = `${currentDate.toLocaleString('default',{month:'long'})} ${currentDate.getFullYear()}`;
@@ -993,6 +1000,7 @@
 
       var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
       try {
+        // Apply loading transitions before fetch
         if (tableContainer) tableContainer.classList.add('loading-transition');
         if (summaryBox) summaryBox.classList.add('loading-transition');
         if (trendChartSection) trendChartSection.classList.add('loading-transition');
@@ -1019,7 +1027,7 @@
           afterChange: (changes, source) => {
             if (!changes || source === 'loadData') return;
             updateSummaryAndChart(hot.getData());
-            hot.render();
+            hot.render(); // Re-evaluate cell styling
           },
           cells: function (r, c) {
             var props = {};
