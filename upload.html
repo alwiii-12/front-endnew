@@ -242,21 +242,23 @@
       gap: 20px;
       align-items: flex-start; /* Align items to the top */
       flex-wrap: nowrap; /* Prevent wrapping initially */
-      flex: 1; /* Allows container to grow and shrink in the main column */
-      min-height: 0; /* Needed for flex children to shrink */
+      /* NEW: Set a min-width for the container to ensure it can hold its children */
+      min-width: calc(400px + 300px + 20px); /* min-table-width + summary-width + gap */
       flex-direction: row; /* Ensure they stay in a row */
       
       /* NEW: Allow horizontal scroll for this container only */
       overflow-x: auto; 
-      /* NEW: Important for allowing flex items to shrink when space is constrained */
-      min-width: 0; 
-      box-sizing: border-box; /* Include padding in width calculations */
+      /* flex properties for container in its parent (main) */
+      flex-grow: 1; /* Allow container to grow if space is available */
+      flex-shrink: 1; /* Allow container to shrink */
+      flex-basis: auto; /* Default basis */
     }
 
     /* Wrapper for Handsontable to control its height strictly */
     #table-wrapper {
         flex-grow: 1; /* Allow table wrapper to take available horizontal space */
-        flex-basis: 0; /* Allow table to shrink more flexibly */
+        flex-shrink: 1; /* Allow table to shrink when space is constrained */
+        flex-basis: 0; /* NEW: Allow table to shrink *below* its content size if needed */
         min-width: 400px; /* Minimum width for table to be readable */
         
         display: flex; /* Make it a flex container for Handsontable */
