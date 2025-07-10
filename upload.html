@@ -240,36 +240,23 @@
       display: flex;
       gap: 20px;
       align-items: flex-start; /* Ensure items start at the top */
-      flex-wrap: wrap; /* Allows summary box to wrap below table on smaller screens */
+      flex-wrap: nowrap; /* NEW: Prevent wrapping so table and summary stay side-by-side */
       flex: 1; /* Allows container to grow and shrink in the main column */
       min-height: 0; /* Needed for flex children to shrink */
-      /* No overflow-y here, let the main handle it */
-      /* NEW: Added flex-direction row on larger screens, column on smaller */
-      flex-direction: row; /* Default for larger screens */
+      flex-direction: row; /* Ensure they stay in a row */
+      /* NEW: Allow horizontal scroll for the container if content overflows */
+      overflow-x: auto;
     }
-
-    /* Adjust for smaller screens where wrap is needed */
-    @media (max-width: 900px) { /* Adjust breakpoint as needed */
-        .container {
-            flex-direction: column; /* Stack elements vertically */
-            align-items: stretch; /* Stretch items to fill width */
-        }
-        #table-wrapper, .summary-box {
-            width: 100% !important; /* Take full width when stacked */
-        }
-    }
-
 
     /* Wrapper for Handsontable to control its height strictly */
     #table-wrapper {
         flex-grow: 1; /* Allow table wrapper to take available horizontal space */
-        min-width: 400px;
+        min-width: 400px; /* Minimum width for table to be readable */
+        max-width: calc(100% - 300px - 20px); /* NEW: Calc max-width to leave space for summary-box + gap */
         display: flex; /* Make it a flex container for Handsontable */
         flex-direction: column;
         height: 500px; /* Explicit fixed height for the table wrapper */
         overflow: hidden; /* To ensure Handsontable doesn't break out */
-        /* NEW: Added min-width here to prevent it from shrinking too much on narrow screens */
-        /* min-width: 400px;  Already present, just ensuring it's seen */
 
         /* Apply card-panel base styles here to wrap Handsontable */
         border-radius: 16px;
@@ -313,7 +300,6 @@
       background: #ffffff;
       border: 1px solid rgba(0,0,0,0.05);
       flex-shrink: 0; /* Prevent summary box from shrinking below its content */
-      /* NEW: Fixed height to match table for side-by-side alignment */
       height: 500px; /* Match the height of #table-wrapper for alignment */
       display: flex; /* Make it flex to align content within */
       flex-direction: column;
@@ -1026,7 +1012,7 @@
           data,
           rowHeaders: false,
           stretchH: 'all',
-          height: 'auto',
+          height: 'auto', /* Handsontable's height should adapt to its wrapper */
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
