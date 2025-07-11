@@ -18,6 +18,7 @@
   <script src="/firebase-init.js"></script> <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -241,29 +242,31 @@
       display: flex;
       gap: 20px;
       align-items: flex-start; /* Align items to the top */
-      flex-wrap: nowrap; /* Prevent wrapping initially */
-      flex: 1; /* Allows container to grow and shrink in the main column */
-      min-height: 0; /* Needed for flex children to shrink */
+      flex-wrap: nowrap; /* Prevent wrapping initially to keep side-by-side layout */
+      flex: 1; /* Allows container to grow and shrink horizontally within main */
+      min-height: 0; /* Important for flex children to shrink */
       flex-direction: row; /* Ensure they stay in a row */
       
-      overflow-x: auto; /* Allow horizontal scroll for this container if its children overflow */
-      min-width: 0; /* Important for allowing flex items to shrink when space is constrained */
+      /* NEW: Allow horizontal scroll for this container if its children overflow */
+      overflow-x: auto; 
+      /* NEW: Essential for allowing flex items to properly shrink when content is wider than container */
+      min-width: 0; 
       box-sizing: border-box; /* Include padding in width calculations */
     }
 
     /* NEW: Wrapper for Handsontable to control its height strictly */
-    /* This element is now #table-wrapper in HTML. The Handsontable instance will be attached to the inner #table */
-    #table-wrapper { 
-        flex-grow: 1; /* Allow table wrapper to take available horizontal space */
-        flex-shrink: 0; /* Prevents it from shrinking too much if content doesn't fit */
+    /* This element is now #handsontable-container in HTML */
+    #handsontable-container { 
+        flex-grow: 1; /* Allows it to take available horizontal space */
+        flex-shrink: 0; /* NEW: Prevent this container from shrinking smaller than its content's intrinsic size */
         flex-basis: auto; /* Let content dictate initial size, then grow/shrink as per flex-grow/shrink */
         min-width: 400px; /* Minimum width for table to be readable */
         
-        display: flex; /* Make it a flex container for Handsontable */
+        display: flex; /* Make it a flex container for the actual Handsontable target */
         flex-direction: column;
-        height: 500px; /* Explicit fixed height for the table wrapper */
-        overflow: hidden; /* To ensure Handsontable doesn't break out */
-        overflow-x: auto; /* Allow horizontal scroll within table wrapper for table content */
+        height: 500px; /* Fixed height for the table area */
+        overflow: hidden; /* Ensure Handsontable doesn't break out */
+        overflow-x: auto; /* Allow horizontal scroll within THIS container for table content */
         overflow-y: hidden; /* Handsontable manages its own vertical scroll */
 
 
@@ -277,17 +280,16 @@
     }
 
     /* Handsontable itself should take full height of its wrapper */
-    #table { /* This is the element where Handsontable will be initialized */
+    #table { /* This is the specific DIV where Handsontable is initialized by JS */
         flex-grow: 1; 
         height: 100%; 
-        background: none;
-        border: none;
-        padding: 0;
+        background: none; /* Clear background inherited from parent if any */
+        border: none; /* Clear border inherited from parent if any */
+        padding: 0; /* Clear padding inherited from parent if any */
     }
 
 
     /* Handsontable specific overrides for cell background and text */
-    /* Updated selector for the new #table structure */
     #handsontable-container .ht_master, #handsontable-container .handsontable {
         background-color: #ffffff;
         color: #333;
@@ -309,7 +311,7 @@
       box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
       background: #ffffff;
       border: 1px solid rgba(0,0,0,0.05);
-      flex-shrink: 0; /* Prevent summary box from shrinking below its content */
+      flex-shrink: 0; /* Prevents summary box from shrinking below its content */
       height: 500px; /* Match the height of table for alignment */
       display: flex; /* Make it flex to align content within */
       flex-direction: column;
@@ -798,9 +800,7 @@
       <div class="month-header-box" id="header">
         </div>
       <div class="container">
-        <div id="handsontable-container" class="data-container">
-            <div id="table"></div>
-        </div>
+        <div id="table" class="data-container"></div>
         <div class="summary-box data-container">
           <canvas id="summaryChart" width="280" height="280"></canvas>
           <h3>Summary</h3>
@@ -814,7 +814,8 @@
         <button id="saveBtn" style="font-weight:bold; background-color: var(--primary-blue); color: var(--text-light);">
             <i class="fas fa-save"></i> Save
         </button>
-        </div>
+        <span id="lastSaved" style="margin-left:15px;font-size:14px;color:gray;"></span>
+      </div>
 
       <div id="export-section">
           <button id="exportExcelBtn" style="background-color: #28a745; color: white;">
@@ -824,7 +825,8 @@
 
 
       <div class="trend-chart-section data-container" style="margin-top: 30px;">
-        <h3 id="trendChartHeader"></h3> <div style="margin-bottom: 15px;">
+        <h3>Energy Trend Analysis (Current Month)</h3>
+        <div style="margin-bottom: 15px;">
           <label for="trendEnergySelect" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
           <select id="trendEnergySelect" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart()">
             </select>
@@ -839,7 +841,8 @@
   <div id="chat-bubble"><i class="fas fa-comment-dots"></i></div>
   <div id="chat-window">
       <div id="chat-header">
-          <span>QA Copilot</span> <button id="close-chat-btn"><i class="fas fa-times"></i></button>
+          <span>QA Bot</span>
+          <button id="close-chat-btn"><i class="fas fa-times"></i></button>
       </div>
       <div id="chat-body">
           <div class="chat-message bot">Hello! How can I help you with your QA data today?</div>
@@ -858,25 +861,18 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
-    // These now reference the globally initialized Firebase objects from firebase-init.js
-    var auth = firebase.auth();
-    var db = firebase.firestore();
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
     var currentUID, currentHospital;
 
-    // Declare global variables that will hold Handsontable and Chart.js instances
     var hot, summaryChart, trendChart;
 
-    // Get references to DOM elements using their IDs - ALL DECLARED ONLY ONCE HERE
-    // UPDATED: Handsontable container now targets #table within #handsontable-container in HTML
-    var container = document.getElementById('table'); 
-    var handsontableContainer = document.getElementById('handsontable-container'); // Reference the new wrapper
-
+    var container = document.getElementById('table');
     var monthsDiv = document.getElementById('months');
     var header = document.getElementById('header');
     var yearLabel = document.getElementById('year');
-    // Removed reference to lastSaved as the element is removed from HTML
-    // var lastSaved = document.getElementById('lastSaved');
+    var lastSaved = document.getElementById('lastSaved');
     var darkToggle = document.getElementById('darkToggle');
     var saveBtn = document.getElementById('saveBtn');
     var logoutBtn = document.getElementById('logoutBtn');
@@ -884,17 +880,12 @@
     var prevYearBtn = document.getElementById('prevYearBtn');
     var nextYearBtn = document.getElementById('nextYearBtn');
 
-    // NEW: Get references to Export buttons
     var exportExcelBtn = document.getElementById('exportExcelBtn'); 
 
-    // Get references for data containers to apply transitions
-    // tableContainer now references the new #handsontable-container
-    var tableContainer = document.getElementById('handsontable-container'); 
+    var tableContainer = document.getElementById('table');
     var summaryBox = document.querySelector('.summary-box');
     var trendChartSection = document.querySelector('.trend-chart-section');
-    var trendChartHeader = document.getElementById('trendChartHeader');
 
-    // Chatbot UI element references
     var chatBubble = document.getElementById('chat-bubble');
     var chatWindow = document.getElementById('chat-window');
     var closeChatBtn = document.getElementById('close-chat-btn');
@@ -902,10 +893,8 @@
     var chatInput = document.getElementById('chat-input');
     var sendChatBtn = document.getElementById('send-chat-btn');
 
-    // NEW: Notification Container
     var notificationContainer = document.getElementById('notification-container');
 
-    // Define the backend URL
     const BACKEND_URL = "https://back-end-wrxi.onrender.com";
 
 
@@ -914,7 +903,6 @@
 
     var outOfToleranceValues = [];
 
-    // --- NEW: Custom Notification Function ---
     function showNotification(message, type = 'info', duration = 3000) {
         const notification = document.createElement('div');
         notification.classList.add('notification-message', type);
@@ -934,8 +922,7 @@
     }
 
 
-    // --- Core Functions ---
-    window.logout = async function() { // Make it async to await log event
+    window.logout = async function() {
       showLoader();
       const user = auth.currentUser;
       const userUid = user ? user.uid : "unknown_uid";
@@ -944,7 +931,6 @@
       const userRole = localStorage.getItem("userRole") || "unknown_role";
 
 
-      // --- NEW: Send Logout Log Event ---
       try {
           await fetch(`${BACKEND_URL}/log_event`, {
               method: "POST",
@@ -960,7 +946,6 @@
       } catch (logError) {
           console.error("Error sending logout log event:", logError);
       }
-      // --- End Logout Log Event ---
 
       auth.signOut().then(() => {
         localStorage.clear();
@@ -988,9 +973,9 @@
 
     async function loadTable() {
       showLoader();
-      // Ensure hot.destroy() is called before new Handsontable instance is created
-      if (hot) hot.destroy();
-      
+      if (tableContainer) tableContainer.classList.add('loading-transition');
+      if (summaryBox) summaryBox.classList.add('loading-transition');
+
       var dateCols = getMonthDates(currentDate);
       document.getElementById('header').textContent = `${currentDate.toLocaleString('default',{month:'long'})} ${currentDate.getFullYear()}`;
       yearLabel.textContent = currentDate.getFullYear();
@@ -998,27 +983,20 @@
 
       var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
       try {
-        // Apply loading transitions before fetch
-        if (tableContainer) tableContainer.classList.add('loading-transition');
-        if (summaryBox) summaryBox.classList.add('loading-transition');
-        if (trendChartSection) trendChartSection.classList.add('loading-transition');
-
         var res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&uid=${currentUID}`);
         var result = await res.json();
         var data = Array.isArray(result.data) && result.data.length === energyTypes.length
           ? result.data.map(r=>r.map(c=> c===null||c==="None"?"":c))
           : generateEmptyData(dateCols);
 
-        // Get today's date for comparison
         const today = new Date();
         const currentMonthYear = new Date(today.getFullYear(), today.getMonth(), 1);
 
-        // Determine if the currently loaded month is in the future
         const isFutureMonth = currentDate.getFullYear() > today.getFullYear() ||
                               (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() > today.getMonth());
 
-        // Initialize Handsontable in the inner div #table
-        hot = new Handsontable(document.getElementById('table'), {
+        if (hot) hot.destroy();
+        hot = new Handsontable(container, {
           data,
           rowHeaders: false,
           stretchH: 'all',
@@ -1029,26 +1007,18 @@
           afterChange: (changes, source) => {
             if (!changes || source === 'loadData') return;
             updateSummaryAndChart(hot.getData());
-            hot.render(); // Re-evaluate cell styling
           },
           cells: function (r, c) {
             var props = {};
-            // Start with an empty className to clear previous ones for this specific cell logic
-            props.className = ''; 
-
             if (c === 0) { // Energy column (first column) is always read-only
                 props.readOnly = true;
                 return props;
             }
             
-            // Check if the current month being displayed is a future month
-            // OR if it's the current month, but the day is in the future
             if (isFutureMonth || (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() === today.getMonth() && c > today.getDate())) {
                 props.readOnly = true;
-                // Add the future-cell-readonly class
                 props.className = (props.className || '') + ' future-cell-readonly'; 
             } else {
-                // Ensure it's editable if not a future cell
                 props.readOnly = false;
             }
 
@@ -1056,23 +1026,18 @@
             if (!isNaN(v)) {
               props.className = (props.className || '') + ' ' + (Math.abs(v) <= 1.8 ? 'within' : (Math.abs(v) <= 2 ? 'warning' : 'out'));
             }
-            // If it IS NaN (empty), the coloring classes won't be added,
-            // and because we started with `props.className = '';` they will be effectively removed.
             return props;
           }
         });
 
         updateSummaryAndChart(data);
-        populateTrendEnergySelect(); // Ensure this runs after table data is loaded and hot is created
       } catch(e) {
         console.error("Error loading table data:", e);
         showNotification("Could not load table data. Please try again.", 'error');
       } finally {
         hideLoader();
-        // Remove loading transitions after fetch and render
         if (tableContainer) tableContainer.classList.remove('loading-transition');
         if (summaryBox) summaryBox.classList.remove('loading-transition');
-        if (trendChartSection) trendChartSection.classList.remove('loading-transition');
       }
     }
 
@@ -1110,60 +1075,11 @@
 
       var ctx = document.getElementById('summaryChart').getContext('2d');
       if (summaryChart) summaryChart.destroy();
-
-      // Determine colors for the pie chart
-      let backgroundColors = [];
-      let labels = [];
-      let chartData = [];
-
-      if (total === 0) { // If no data at all, show empty chart or a single neutral slice
-          backgroundColors = ['#cccccc']; // Neutral grey
-          labels = ['No Data'];
-          chartData = [1]; // A single slice to represent "no data"
-      } else if (warning === 0 && out === 0) { // All within tolerance
-          backgroundColors = ['#66cc66']; // Full green
-          labels = ['Within Tolerance'];
-          chartData = [within];
-      } else { // Mix of within, warning, out
-          labels = ['Within Tolerance','Warning','Out of Tolerance'];
-          backgroundColors = ['#66cc66','#ffcc00','#ff6666'];
-          chartData = [within,warning,out];
-      }
-
-
       summaryChart = new Chart(ctx, {
         type: 'pie',
         data: {
-          labels: labels, // Use dynamic labels
-          datasets: [{ data: chartData, backgroundColor: backgroundColors }] // Use dynamic data and colors
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false // Hide default legend if you are displaying counts manually
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
-                            if (context.parsed !== null) {
-                                label += context.parsed;
-                            }
-                            // Add percentage to tooltip
-                            if (context.dataset.data[context.dataIndex] > 0 && total > 0) {
-                                let percentage = (context.parsed / total * 100).toFixed(1) + '%';
-                                label += ' (' + percentage + ')';
-                            }
-                            return label;
-                        }
-                    }
-                }
-            }
+          labels: ['Within Tolerance','Warning','Out of Tolerance'],
+          datasets: [{ data: [within,warning,out], backgroundColor: ['#66cc66','#ffcc00','#ff6666'] }]
         }
       });
     }
@@ -1184,35 +1100,38 @@
             throw new Error('Failed to save data: ' + saveResponse.statusText + ' - ' + errorText);
         }
 
-        // Removed lastSaved.textContent line as the element is removed from HTML
-        // lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
+        lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
         showNotification("Data saved successfully!", 'success');
         updateTrendChart();
 
-        var alertResponse = await fetch(`${BACKEND_URL}/send-alert`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                outValues: outOfToleranceValues, // This will be empty if all resolved
-                hospitalName: currentHospital,
-                uid: currentUID,
-                month: month
-            })
-        });
-        var alertResult = await alertResponse.json();
-        if (alertResult.status === 'alert sent') {
-            console.log("Email alert sent (issues updated).");
-            showNotification("Alert email sent to RSO(s).", 'info');
-        } else if (alertResult.status === 'no_change') {
-            console.log("No new alerts or changes to existing issues. Email not sent.");
-            showNotification("No new critical alerts to send.", 'info');
-        } else {
-            console.warn("Could not send email alert:", alertResult.message || alertResult.status);
-            showNotification("Alert email could not be sent: " + (alertResult.message || "Unknown error."), 'warning');
-        }
+        if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') {
+            var alertResponse = await fetch(`${BACKEND_URL}/send-alert`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    outValues: outOfToleranceValues,
+                    hospitalName: currentHospital,
+                    uid: currentUID,
+                    month: month
+                })
+            });
 
+            var alertResult = await alertResponse.json();
+            if (alertResult.status === 'alert sent') {
+                console.log("Email alert sent for current out of tolerance values.");
+                showNotification("Alert email sent to RSO(s).", 'info');
+            } else if (alertResult.status === 'no_change') {
+                console.log("No new out-of-tolerance values or changes. Email not sent.");
+                showNotification("No new critical alerts to send.", 'info');
+            } else {
+                console.warn("Could not send email alert:", alertResult.message || alertResult.status);
+                showNotification("Alert email could not be sent: " + (alertResult.message || "Unknown error."), 'warning');
+            }
+        } else {
+            console.log("No out-of-tolerance values to send for alert and no prior save to trigger a resolution check.");
+        }
 
       } catch(err){
         console.error("Operation failed:", err);
@@ -1303,13 +1222,6 @@
             var ctx = document.getElementById('trendChart').getContext('2d');
             if (trendChart) trendChart.destroy();
 
-            // Corrected: Set the trend chart header to only show the month name
-            var trendChartHeaderElement = document.getElementById('trendChartHeader');
-            if (trendChartHeaderElement) {
-                 trendChartHeaderElement.textContent = `${currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })} Trend`;
-            }
-
-
             trendChart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -1387,23 +1299,132 @@
         addChatMessage(message, 'user');
         chatInput.value = '';
 
-        // Send the complete user query text to the backend for NLP processing
-        var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                query_text: message, // Send the full query text
-                month: `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`,
-                uid: currentUID
-            })
-        });
+        var lowerCaseMessage = message.toLowerCase();
+        var botResponse = "";
 
-        var result = await response.json();
-        if (result.status === 'success') {
-            botResponse = result.message;
-        } else {
-            // Updated error message to be more user-friendly based on backend's error messages
-            botResponse = "Sorry, I couldn't process that request. " + (result.message || "Please try rephrasing or ask about:\n- Out of tolerance dates\n- Value for 6X on 2025-07-10\n- All 6X data this month\n- List all warning values\n- Average deviation for 6X this month\n- Max/Min value for 10X FFF this month\n- All values for 2025-07-05.");
+        const energyTypesRegex = new RegExp(`(${energyTypes.join('|').replace(/ /g, '\\s*')})`, 'i');
+        var energyMatch = lowerCaseMessage.match(energyTypesRegex);
+        var dateMatch = lowerCaseMessage.match(/(\d{4}-\d{2}-\d{2})/);
+
+        var extractedEnergyType = energyMatch ? energyMatch[1].toUpperCase().replace(/\s/g, '') : null;
+        var extractedDate = dateMatch ? dateMatch[0] : null;
+        
+        var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
+
+        if (lowerCaseMessage.includes('out of tolerance dates')) {
+            addChatMessage("Finding out of tolerance dates for current month...", 'bot');
+            try {
+                var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: 'out_of_tolerance_dates',
+                        month: monthKey,
+                        uid: currentUID
+                    })
+                });
+                var result = await response.json();
+                if (result.status === 'success') {
+                    if (result.dates && result.dates.length > 0) {
+                        botResponse = "The following dates had data beyond tolerance levels: " + result.dates.join(', ');
+                    } else {
+                        botResponse = "Great news! No data went beyond tolerance levels this month.";
+                    }
+                } else {
+                    botResponse = "Sorry, I couldn't retrieve that information: " + (result.message || "Unknown error.");
+                }
+            } catch (error) {
+                console.error("Chatbot query error:", error);
+                botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+            }
+        }
+        else if ((lowerCaseMessage.includes('value for') || lowerCaseMessage.includes('status for')) && extractedEnergyType && extractedDate) {
+            addChatMessage(`Looking up data for ${extractedEnergyType} on ${extractedDate}...`, 'bot');
+            try {
+                var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: 'value_on_date',
+                        month: monthKey,
+                        uid: currentUID,
+                        energy_type: extractedEnergyType,
+                        date: extractedDate
+                    })
+                });
+                var result = await response.json();
+                if (result.status === 'success') {
+                    if (result.value !== undefined && result.value !== null) {
+                        botResponse = `For ${result.energy_type} on ${result.date}: Value is ${result.value}% (Status: ${result.data_status}).`;
+                    } else {
+                        botResponse = `No data found for ${extractedEnergyType} on ${extractedDate}.`;
+                    }
+                } else {
+                    botResponse = `Sorry, I couldn't retrieve that information: ${result.message || "Unknown error."}`;
+                }
+            } catch (error) {
+                console.error("Chatbot query error:", error);
+                botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+            }
+        }
+        else if ((lowerCaseMessage.includes('show all') || lowerCaseMessage.includes('all data')) && extractedEnergyType && lowerCaseMessage.includes('this month')) {
+            addChatMessage(`Getting all data for ${extractedEnergyType} this month...`, 'bot');
+            try {
+                var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: 'energy_data_for_month',
+                        month: monthKey,
+                        uid: currentUID,
+                        energy_type: extractedEnergyType
+                    })
+                });
+                var result = await response.json();
+                if (result.status === 'success' && result.data && result.data.length > 0) {
+                    let formattedData = result.data.map(item => `${item.date}: ${item.value}%`).join('; ');
+                    botResponse = `Here is the data for ${extractedEnergyType} this month: ${formattedData}.`;
+                } else {
+                    botResponse = result.message || `No data found for ${extractedEnergyType} this month.`;
+                }
+            } catch (error) {
+                console.error("Chatbot query error:", error);
+                botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+            }
+        }
+        else if (lowerCaseMessage.includes('list all warning values') || lowerCaseMessage.includes('show warning values')) {
+            addChatMessage(`Getting warning values for this month...`, 'bot');
+            try {
+                var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: 'warning_values_for_month',
+                        month: monthKey,
+                        uid: currentUID
+                    })
+                });
+                var result = await response.json();
+                if (result.status === 'success' && result.warning_entries && result.warning_entries.length > 0) {
+                    let formattedWarnings = result.warning_entries.map(item => `${item.energy} on ${item.date}: ${item.value}%`).join('; ');
+                    botResponse = `Warning values this month: ${formattedWarnings}.`;
+                } else {
+                    botResponse = "No warning values found this month. Great job!";
+                }
+            } catch (error) {
+                console.error("Chatbot query error:", error);
+                botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+            }
+        }
+        else if (lowerCaseMessage.includes('hi') || lowerCaseMessage.includes('hello') || lowerCaseMessage.includes('hey')) {
+            botResponse = "Hello there! How can I assist you with your QA data today?";
+        } else if (lowerCaseMessage.includes('how are you')) {
+            botResponse = "I'm just a bot, but I'm doing great! How can I help you manage your LINAC QA?";
+        } else if (lowerCaseMessage.includes('thank you') || lowerCaseMessage.includes('thanks')) {
+            botResponse = "You're welcome! Happy to help.";
+        }
+        else {
+             botResponse = "I'm sorry, I don't understand that request. Please try rephrasing or ask about:\n\n- \"Out of tolerance dates\"\n- \"Value for 6X on 2025-06-10\" (useYYYY-MM-DD for dates).";
         }
         
         addChatMessage(botResponse, 'bot');
