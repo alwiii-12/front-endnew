@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LINAC Output Entry</title>
+  <link rel="icon" href="/favicon.png" type="image/png">
+
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="/firebase-init.js"></script> <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <style>
+    /* CSS Variables for Colors */
+    :root {
+      --primary-blue: #007bff;
+      --primary-blue-dark: #0056b3;
+      --primary-blue-light: #e0f7fa;
+      --text-dark: #333;
+      --text-light: #fff;
+      --background-light: #f5f5f5;
+      --background-white-card: #ffffff;
+      --background-dark-card: #333;
+      --background-off-white: #f8f8f8;
+      --border-light: #ccc;
+      --border-darker: #aaa;
+      --success-green: #28a745;
+      --warning-orange: #ffc107;
+      --error-red: #dc3545;
+      --shadow-light: rgba(0,0,0,0.08);
+      --shadow-medium: rgba(0,0,0,0.12);
+      --shadow-strong: rgba(0,0,0,0.2);
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%; /* Ensure html and body take full viewport height */
+      overflow: hidden; /* Prevent overall page scroll unless intended */
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-dark);
+      display: flex;
+      flex-direction: column; /* Body is a column flex container */
+    }
+
+    /* Global Micro-interaction */
+    button, a.button, select {
+      transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover, a.button:hover, select:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px var(--shadow-light);
+    }
+    button:active, a.button:active, select:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 4px var(--shadow-light) inset;
+    }
+
+    /* Card/Panel Base Styling */
+    .card-panel {
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
+      background: #ffffff;
+      border: 1px solid rgba(0,0,0,0.05);
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    /* Topbar styling */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      padding: 10px 20px;
+      border-bottom: 1px solid #ccc;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      min-height: 50px;
+      flex-shrink: 0; /* Prevent topbar from shrinking */
+    }
+    .hospital-info-box {
+        background-color: #e0f7fa;
+        color: #0056b3;
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95em;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .topbar button {
+      padding: 8px 15px;
+      font-size: 14px;
+      margin-left: 10px;
+      margin-right: 0;
+      color: #fff;
+      border-radius: 6px;
+    }
+    .topbar button:first-of-type {
+        background-color: #007bff;
+    }
+    .topbar button:first-of-type:hover {
+        background-color: #0056b3;
+    }
+    /* Adjusted logout button in upload.html */
+    #logoutBtn {
+        background-color: #dc3545;
+        color: #fff;
+        width: 40px; /* Fixed width for a square/circular button */
+        height: 40px; /* Fixed height for a square/circular button */
+        padding: 0; /* Remove padding if using fixed width/height */
+        display: flex; /* Use flexbox to center the icon */
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%; /* Makes it circular */
+        font-size: 1.3em; /* Size of the icon */
+        margin-left: 10px; /* Keep spacing from My Profile button */
+    }
+    #logoutBtn:hover {
+        background-color: #bb2d3b;
+    }
+
+
+    body.dark .topbar {
+      background-color: #2a2a2a;
+      border-color: #444;
+    }
+    body.dark .hospital-info-box {
+        background-color: #0056b3;
+        color: #e0f7fa;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+
+    .content {
+      display: flex;
+      flex: 1; /* Allows content to take remaining height after topbar */
+      overflow: hidden; /* Crucial to contain scrolling within this level */
+      min-height: 0; /* Allow flex item to shrink */
+    }
+    .sidebar {
+      width: 200px;
+      background: #ffffff;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0; /* Prevent sidebar from shrinking */
+      overflow-y: auto; /* Allow sidebar to scroll independently if content (months) overflows */
+    }
+    .sidebar h2 {
+        margin: 0 0 20px;
+        color: #007bff;
+        font-weight: 600;
+        font-size: 1.5em;
+    }
+    .sidebar button {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 10px 8px;
+      background: #eee;
+      color: #333;
+      font-weight: 500;
+      text-align: center;
+      border-radius: 6px;
+    }
+    .sidebar button.active {
+        background: #007bff;
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .sidebar button:hover:not(.active) {
+        background: #e0e0e0;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .sidebar label {
+        display: flex;
+        align-items: center;
+        margin-top: 15px;
+        font-size: 0.95em;
+        color: #333;
+    }
+    .sidebar input[type="checkbox"] {
+        margin-right: 8px;
+        transform: scale(1.2);
+    }
+    .sidebar p {
+        font-size: 0.8em;
+        margin-top: auto;
+        color: #777;
+    }
+
+
+    .main {
+      flex-grow: 1; /* Allows main content to take available width */
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-height: 0; /* Crucial for flex item to shrink below its content size */
+      overflow-y: auto; /* Adds scrollbar to main if content overflows vertically */
+      overflow-x: hidden; /* Hide horizontal scroll on main to avoid double scrollbars */
+    }
+
+    /* Month Header Box */
+    .month-header-box {
+        background: #007bff;
+        color: #fff;
+        padding: 15px 20px;
+        text-align: center;
+        font-size: 1.6em;
+        font-weight: 600;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        flex-shrink: 0; /* Prevent from shrinking */
+    }
+
+    .container {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start; /* Align items to the top */
+      flex-wrap: nowrap; /* Prevent wrapping initially */
+      flex: 1; /* Allows container to grow and shrink in the main column */
+      min-height: 0; /* Needed for flex children to shrink */
+      flex-direction: row; /* Ensure they stay in a row */
+      
+      overflow-x: auto; /* Allow horizontal scroll for this container if its children overflow */
+      min-width: 0; /* Important for allowing flex items to shrink when space is constrained */
+      box-sizing: border-box; /* Include padding in width calculations */
+    }
+
+    /* NEW: Wrapper for Handsontable to control its height strictly */
+    /* This element is now #table-wrapper in HTML. The Handsontable instance will be attached to the inner #table */
+    #table-wrapper { 
+        flex-grow: 1; /* Allow table wrapper to take available horizontal space */
+        flex-shrink: 0; /* Prevents it from shrinking too much if content doesn't fit */
+        flex-basis: auto; /* Let content dictate initial size, then grow/shrink as per flex-grow/shrink */
+        min-width: 400px; /* Minimum width for table to be readable */
+        
+        display: flex; /* Make it a flex container for Handsontable */
+        flex-direction: column;
+        height: 500px; /* Explicit fixed height for the table wrapper */
+        overflow: hidden; /* To ensure Handsontable doesn't break out */
+        overflow-x: auto; /* Allow horizontal scroll within table wrapper for table content */
+        overflow-y: hidden; /* Handsontable manages its own vertical scroll */
+
+
+        /* Apply card-panel base styles directly here */
+        border-radius: 16px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
+        background: #ffffff;
+        border: 1px solid rgba(0,0,0,0.05);
+        padding: 20px; /* Added padding here */
+        box-sizing: border-box;
+    }
+
+    /* Handsontable itself should take full height of its wrapper */
+    #table { /* This is the element where Handsontable will be initialized */
+        flex-grow: 1; 
+        height: 100%; 
+        background: none;
+        border: none;
+        padding: 0;
+    }
+
+
+    /* Handsontable specific overrides for cell background and text */
+    /* Updated selector for the new #table structure */
+    #handsontable-container .ht_master, #handsontable-container .handsontable {
+        background-color: #ffffff;
+        color: #333;
+    }
+    #handsontable-container .handsontable td, #handsontable-container .handsontable th {
+        border-color: #aaa;
+    }
+    /* Corrected: Use specific class for placeholder styling in dark mode */
+    body.dark #handsontable-container .handsontable .htPlaceholder {
+        background-color: #2a2a2a !important;
+    }
+
+    .summary-box {
+      width: 300px; /* Fixed width for the summary box */
+      min-width: 280px; /* Ensure it doesn't shrink too much */
+      padding: 20px;
+      /* Apply card-panel base styles */
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
+      background: #ffffff;
+      border: 1px solid rgba(0,0,0,0.05);
+      flex-shrink: 0; /* Prevent summary box from shrinking below its content */
+      height: 500px; /* Match the height of table for alignment */
+      display: flex; /* Make it flex to align content within */
+      flex-direction: column;
+      justify-content: space-between; /* Distribute content vertically */
+      align-items: center; /* Center content horizontally within the box */
+      
+      flex-grow: 0; /* Ensure it doesn't try to grow */
+      flex-basis: 300px; /* Set a preferred basis to ensure it gets enough space */
+    }
+    .summary-box h3 {
+        margin-top: 0;
+        color: #007bff;
+        font-weight: 600;
+        font-size: 1.4em;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    .summary-box p {
+        font-size: 1em;
+        margin-bottom: 8px;
+        text-align: left; /* Ensure text aligns left within paragraphs */
+        width: 100%; /* Make sure p tags take full width */
+    }
+    .summary-box canvas { /* Specific styling for canvas within summary-box */
+        margin-bottom: 15px;
+        max-width: 100%; /* Ensure canvas is responsive */
+        height: auto; /* Maintain aspect ratio */
+        align-self: center; /* Center the canvas if summary-box is flex */
+    }
+    .summary-box span {
+        font-weight: 500;
+    }
+
+    #save-section {
+      margin-top: 0px;
+      text-align: center;
+      flex-shrink: 0; /* Prevent save section from shrinking */
+    }
+    #save-section button {
+        padding: 10px 20px;
+        font-size: 1em;
+        font-weight: bold;
+        background-color: #007bff;
+        color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    #save-section button:hover {
+        background-color: #0056b3;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+    }
+    button:active, a.button:active, select:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 4px var(--shadow-light) inset;
+    }
+
+    /* NEW: Export Buttons Section Styling */
+    #export-section {
+        margin-top: 20px;
+        text-align: center;
+        flex-shrink: 0; /* Prevent export section from shrinking */
+    }
+    #export-section button {
+        padding: 10px 15px;
+        font-size: 0.95em;
+        font-weight: bold;
+        border-radius: 8px;
+        margin: 0 5px; /* Spacing between buttons */
+        color: var(--text-light);
+    }
+    #export-section button:hover {
+        box-shadow: 0 4px 10px var(--shadow-light);
+    }
+
+
+    .trend-chart-section {
+        margin-top: 0px;
+        padding: 20px;
+        /* Apply card-panel base styles */
+        border-radius: 16px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
+        background: #ffffff;
+        border: 1px solid rgba(0,0,0,0.05);
+        flex-shrink: 0; /* Prevent trend chart section from shrinking */
+    }
+    .trend-chart-section h3 {
+        margin-top: 0;
+        color: #007bff;
+        font-weight: 600;
+        font-size: 1.4em;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    .trend-chart-section label {
+        color: #333;
+        font-weight: 500;
+    }
+    .trend-chart-section select {
+        padding: 10px;
+        border: 1px #ccc solid;
+        background-color: #ffffff;
+        color: #333;
+        font-size: 0.95em;
+        border-radius: 6px;
+    }
+
+
+    /* Dark Mode overrides */
+    body.dark {
+      background-color: #1a1a1a;
+      color: #fff;
+    }
+    body.dark .topbar, body.dark .sidebar, body.dark .summary-box, body.dark .trend-chart-section, #handsontable-container, body.dark .login-container, body.dark .signup-container, body.dark .message-container, body.dark .card, body.dark .month-header-box {
+        background: #2a2a2a;
+        box-shadow: 0 0 15px rgba(0,0,0,0.6);
+        border-color: #444;
+    }
+    body.dark .hospital-info-box {
+        background-color: #0056b3;
+        color: #e0f7fa;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    body.dark .topbar #hospitalName, body.dark h1, body.dark h2, body.dark h3, body.dark .user-info strong {
+        color: #e0f7fa;
+    }
+    body.dark .sidebar button {
+        background: #3a3a3a;
+        color: #fff;
+    }
+    body.dark .sidebar button.active {
+        background: #007bff;
+    }
+    body.dark .sidebar button:hover:not(.active) {
+        background: #4a4a4a;
+    }
+    body.dark select, body.dark input {
+        background-color: #3a3a3a;
+        color: #fff;
+        border-color: #555;
+    }
+    body.dark #handsontable-container .ht_master, body.dark #handsontable-container .handsontable {
+        background-color: #2a2a2a;
+        color: #fff;
+    }
+    body.dark #handsontable-container .handsontable td, body.dark #handsontable-container .handsontable th {
+        border-color: #555;
+    }
+    /* Corrected: Use specific class for placeholder styling in dark mode */
+    body.dark #handsontable-container .handsontable .htPlaceholder {
+        background-color: #2a2a2a !important;
+    }
+    body.dark .summary-box p, body.dark .sidebar label, body.dark .sidebar p, body.dark .trend-chart-section label {
+        color: #bbb;
+    }
+
+
+    /* Loading Overlay & Spinner */
+    #loading-overlay {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 8px solid #ffffff;
+      border-top-color: #007bff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Handsontable Cell Coloring */
+    .within { background-color: #d4edda !important; color: #155724 !important; }
+    .warning { background-color: #fff3cd !important; color: #856404 !important; }
+    .out { background-color: #f8d7da !important; color: #721c24 !important; }
+
+    /* New CSS for future cells to appear read-only */
+    .future-cell-readonly {
+        background-color: #f0f0f0 !important; /* Light grey for disabled look */
+        color: #999 !important; /* Muted text color */
+        cursor: not-allowed !important; /* Indicate it's not editable */
+    }
+    body.dark .future-cell-readonly {
+        background-color: #3a3a3a !important;
+        color: #777 !important;
+    }
+    /* Also ensure the Handsontable "placeholder" style is consistent in dark mode */
+    body.dark #handsontable-container .handsontable .htPlaceholder {
+        background-color: #2a2a2a !important;
+    }
+
+
+    /* NEW CSS for Smooth Transitions */
+    .data-container {
+        transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .data-container.loading-transition {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    /* NEW CSS for Chatbot */
+    #chat-bubble {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: var(--primary-blue);
+        color: white;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.8em;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        z-index: 1000;
+    }
+    #chat-bubble:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+    }
+
+    #chat-window {
+        position: fixed;
+        bottom: 90px; /* Above the bubble */
+        right: 20px;
+        width: 350px;
+        height: 450px;
+        background-color: var(--background-white-card);
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 999;
+        transform: scale(0.8); /* Start smaller for transition */
+        opacity: 0;
+        visibility: hidden; /* Hidden by default */
+        transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s;
+    }
+    #chat-window.open {
+        transform: scale(1);
+        opacity: 1;
+        visibility: visible;
+    }
+
+    #chat-header {
+        background-color: var(--primary-blue);
+        color: white;
+        padding: 15px;
+        font-size: 1.1em;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+    #chat-header button {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2em;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 50%;
+    }
+    #chat-header button:hover {
+        background-color: rgba(255,255,255,0.2);
+    }
+
+    #chat-body {
+        flex-grow: 1;
+        padding: 15px;
+        overflow-y: auto;
+        background-color: var(--background-off-white);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .chat-message {
+        max-width: 80%;
+        padding: 10px 12px;
+        border-radius: 18px;
+        line-height: 1.4;
+        font-size: 0.95em;
+        word-wrap: break-word;
+    }
+    .chat-message.user {
+        align-self: flex-end;
+        background-color: #e6e6e6;
+        color: var(--text-dark);
+        border-bottom-right-radius: 2px;
+    }
+    .chat-message.bot {
+        align-self: flex-start;
+        background-color: var(--primary-blue-light);
+        color: #0036B3;
+        border-bottom-left-radius: 2px;
+    }
+    body.dark #chat-window {
+        background-color: #2a2a2a;
+    }
+    body.dark #chat-body {
+        background-color: #3a3a3a;
+        color: #fff;
+    }
+    body.dark .chat-message.user {
+        background-color: #555;
+        color: #eee;
+    }
+    body.dark .chat-message.bot {
+        background-color: var(--primary-blue-dark);
+        color: var(--primary-blue-light);
+    }
+
+
+    #chat-input-area {
+        padding: 10px 15px;
+        border-top: 1px solid var(--border-light);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    #chat-input-area input {
+        flex-grow: 1;
+        padding: 10px;
+        border: 1px solid var(--border-light);
+        border-radius: 20px;
+        font-size: 0.95em;
+        background-color: var(--background-white-card);
+        color: var(--text-dark);
+    }
+    body.dark #chat-input-area input {
+        background-color: #4a4a4a;
+        border-color: #666;
+        color: #eee;
+    }
+    #chat-input-area button {
+        background-color: var(--primary-blue);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 1.2em;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    #chat-input-area button:hover {
+        background-color: var(--primary-blue-dark);
+    }
+
+    /* NEW: Print-Specific CSS */
+    @media print {
+        /* Hide elements not meant for print */
+        .topbar, .sidebar, #chat-bubble, #chat-window, #save-section button, #loading-overlay, #trendEnergySelect, #showTrendBtn, #export-section {
+            display: none !important;
+        }
+
+        /* Ensure main content takes full width and flows properly */
+        body {
+            display: block;
+        }
+        .content {
+            flex-direction: column !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            height: auto !important;
+        }
+        .main {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            overflow: visible !important;
+            height: auto !important;
+        }
+        .container {
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 20px;
+        }
+        #table, .summary-box, .trend-chart-section {
+            box-shadow: none !important;
+            border: 1px solid #eee !important;
+            background: white !important;
+            width: 95% !important;
+            margin: 0 auto 20px auto !important;
+            page-break-inside: avoid;
+        }
+        #table {
+            overflow: visible !important;
+            height: auto !important;
+        }
+        /* Make Handsontable cells print cleanly */
+        #table .handsontable td, #table .handsontable th {
+            white-space: normal !important;
+        }
+
+        /* Adjust chart canvas for printing if necessary */
+        canvas {
+            max-height: none !important;
+            width: 100% !important;
+        }
+    }
+
+    /* NEW: Styles for Custom Notifications */
+    #notification-container {
+        position: fixed;
+        top: 20px; /* Adjust as needed */
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10000; /* Ensure it's on top of everything */
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none; /* Allows clicks to pass through when no messages are active */
+    }
+
+    .notification-message.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .notification-message.success {
+        background-color: #28a745;
+    }
+
+    .notification-message.error {
+        background-color: #dc3545;
+    }
+
+    .notification-message.warning {
+        background-color: #ffc107;
+        color: #333;
+    }
+
+    .notification-message.info {
+        background-color: #007bff;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div id="hospitalInfoBox" class="hospital-info-box">
+        <span id="hospitalName">Hospital: </span>
+    </div>
+    <span style="flex-grow: 1;"></span>
+    <button id="myProfileBtn"
+            style="background-color: var(--primary-blue); color: var(--text-light);">
+      My Profile
+    </button>
+    <button id="logoutBtn" title="Logout">
+      <i class="fas fa-sign-out-alt"></i>
+    </button>
+  </div>
+
+  <div class="content">
+    <div class="sidebar">
+      <h2>LINAC QA</h2>
+      <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
+        <button id="prevYearBtn">←</button>
+        <span id="year" style="margin: 0 10px;">2025</span>
+        <button id="nextYearBtn">→</button>
+      </div>
+      <div id="months"></div>
+      <label><input type="checkbox" id="darkToggle"> Dark Mode</label>
+      <p style="font-size:12px;margin-top:auto;">© 2025 QA Dashboard</p>
+    </div>
+
+    <div class="main">
+      <div class="month-header-box" id="header">
+        </div>
+      <div class="container">
+        <div id="handsontable-container" class="data-container">
+            <div id="table"></div>
+        </div>
+        <div class="summary-box data-container">
+          <canvas id="summaryChart" width="280" height="280"></canvas>
+          <h3>Summary</h3>
+          <p><strong>Total Entries:</strong> <span id="total">0</span></p>
+          <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within">0</span></p>
+          <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning">0</span></p>
+          <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out">0</span></p>
+        </div>
+      </div>
+      <div id="save-section">
+        <button id="saveBtn" style="font-weight:bold; background-color: var(--primary-blue); color: var(--text-light);">
+            <i class="fas fa-save"></i> Save
+        </button>
+        </div>
+
+      <div id="export-section">
+          <button id="exportExcelBtn" style="background-color: #28a745; color: white;">
+              <i class="fas fa-file-excel"></i> Export Excel
+          </button>
+      </div>
+
+
+      <div class="trend-chart-section data-container" style="margin-top: 30px;">
+        <h3 id="trendChartHeader"></h3> <div style="margin-bottom: 15px;">
+          <label for="trendEnergySelect" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
+          <select id="trendEnergySelect" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart()">
+            </select>
+          </div>
+        <canvas id="trendChart" style="max-height: 350px; width: 100%;"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div id="loading-overlay"><div class="spinner"></div></div>
+
+  <div id="chat-bubble"><i class="fas fa-comment-dots"></i></div>
+  <div id="chat-window">
+      <div id="chat-header">
+          <span>QA Copilot</span> <button id="close-chat-btn"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="chat-body">
+          <div class="chat-message bot">Hello! How can I help you with your QA data today?</div>
+          <div class="chat-message bot">You can ask: "Out of tolerance dates", "Value for 2025-06-10", "All 6X data this month", or "List all warning values". (Please useYYYY-MM-DD for dates).</div>
+      </div>
+      <div id="chat-input-area">
+          <input type="text" id="chat-input" placeholder="Type your question...">
+          <button id="send-chat-btn"><i class="fas fa-paper-plane"></i></button>
+      </div>
+  </div>
+
+  <div id="notification-container"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="/firebase-init.js"></script> <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+  <script>
+    // These now reference the globally initialized Firebase objects from firebase-init.js
+    var auth = firebase.auth();
+    var db = firebase.firestore();
+
+    var currentUID, currentHospital;
+
+    // Declare global variables that will hold Handsontable and Chart.js instances
+    var hot, summaryChart, trendChart;
+
+    // Get references to DOM elements using their IDs - ALL DECLARED ONLY ONCE HERE
+    // UPDATED: Handsontable container now targets #table within #handsontable-container in HTML
+    var container = document.getElementById('table'); 
+    var handsontableContainer = document.getElementById('handsontable-container'); // Reference the new wrapper
+
+    var monthsDiv = document.getElementById('months');
+    var header = document.getElementById('header');
+    var yearLabel = document.getElementById('year');
+    // Removed reference to lastSaved as the element is removed from HTML
+    // var lastSaved = document.getElementById('lastSaved');
+    var darkToggle = document.getElementById('darkToggle');
+    var saveBtn = document.getElementById('saveBtn');
+    var logoutBtn = document.getElementById('logoutBtn');
+    var myProfileBtn = document.getElementById('myProfileBtn');
+    var prevYearBtn = document.getElementById('prevYearBtn');
+    var nextYearBtn = document.getElementById('nextYearBtn');
+
+    // NEW: Get references to Export buttons
+    var exportExcelBtn = document.getElementById('exportExcelBtn'); 
+
+    // Get references for data containers to apply transitions
+    // tableContainer now references the new #handsontable-container
+    var tableContainer = document.getElementById('handsontable-container'); 
+    var summaryBox = document.querySelector('.summary-box');
+    var trendChartSection = document.querySelector('.trend-chart-section');
+    var trendChartHeader = document.getElementById('trendChartHeader');
+
+    // Chatbot UI element references
+    var chatBubble = document.getElementById('chat-bubble');
+    var chatWindow = document.getElementById('chat-window');
+    var closeChatBtn = document.getElementById('close-chat-btn');
+    var chatBody = document.getElementById('chat-body');
+    var chatInput = document.getElementById('chat-input');
+    var sendChatBtn = document.getElementById('send-chat-btn');
+
+    // NEW: Notification Container
+    var notificationContainer = document.getElementById('notification-container');
+
+    // Define the backend URL
+    const BACKEND_URL = "https://back-end-wrxi.onrender.com";
+
+
+    var currentDate = new Date(); currentDate.setDate(1);
+    var energyTypes = ["6X","10X","15X","6X FFF","10X FFF","6E","9E","12E","15E","18E"];
+
+    var outOfToleranceValues = [];
+
+    // --- NEW: Custom Notification Function ---
+    function showNotification(message, type = 'info', duration = 3000) {
+        const notification = document.createElement('div');
+        notification.classList.add('notification-message', type);
+        notification.textContent = message;
+
+        notificationContainer.appendChild(notification);
+
+        void notification.offsetWidth; 
+        notification.classList.add('show');
+
+        setTimeout(() => {
+            notification.classList.remove('show');
+            notification.addEventListener('transitionend', () => {
+                notification.remove();
+            }, { once: true });
+        }, duration);
+    }
+
+
+    // --- Core Functions ---
+    window.logout = async function() { // Make it async to await log event
+      showLoader();
+      const user = auth.currentUser;
+      const userUid = user ? user.uid : "unknown_uid";
+      const userEmail = localStorage.getItem("userEmail") || "unknown_email";
+      const hospitalName = localStorage.getItem("hospitalName") || "unknown_hospital";
+      const userRole = localStorage.getItem("userRole") || "unknown_role";
+
+
+      // --- NEW: Send Logout Log Event ---
+      try {
+          await fetch(`${BACKEND_URL}/log_event`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                  action: "user_logout",
+                  userUid: userUid,
+                  userEmail: userEmail,
+                  hospital: hospitalName,
+                  role: userRole
+              })
+          });
+      } catch (logError) {
+          console.error("Error sending logout log event:", logError);
+      }
+      // --- End Logout Log Event ---
+
+      auth.signOut().then(() => {
+        localStorage.clear();
+        hideLoader();
+        window.location.replace("login.html");
+      }).catch((error) => {
+        console.error("Logout error:", error);
+        showNotification("Logout failed: " + error.message, 'error');
+        hideLoader();
+      });
+    }
+
+    function getMonthDates(date) {
+      var y = date.getFullYear(), m = date.getMonth();
+      var days = new Date(y, m + 1, 0).getDate();
+      return Array.from({ length: days }, (_, i) => `${y}-${String(m + 1).padStart(2, '0')}-${String(i+1).padStart(2, '0')}`);
+    }
+
+    function generateEmptyData(dates) {
+      return energyTypes.map(e => [e, ...new Array(dates.length).fill('')]);
+    }
+
+    function showLoader(){document.getElementById('loading-overlay').style.display='flex';}
+    function hideLoader(){document.getElementById('loading-overlay').style.display='none';}
+
+    async function loadTable() {
+      showLoader();
+      // Ensure hot.destroy() is called before new Handsontable instance is created
+      if (hot) hot.destroy();
+      
+      var dateCols = getMonthDates(currentDate);
+      document.getElementById('header').textContent = `${currentDate.toLocaleString('default',{month:'long'})} ${currentDate.getFullYear()}`;
+      yearLabel.textContent = currentDate.getFullYear();
+      highlightActiveMonth();
+
+      var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
+      try {
+        // Apply loading transitions before fetch
+        if (tableContainer) tableContainer.classList.add('loading-transition');
+        if (summaryBox) summaryBox.classList.add('loading-transition');
+        if (trendChartSection) trendChartSection.classList.add('loading-transition');
+
+        var res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&uid=${currentUID}`);
+        var result = await res.json();
+        var data = Array.isArray(result.data) && result.data.length === energyTypes.length
+          ? result.data.map(r=>r.map(c=> c===null||c==="None"?"":c))
+          : generateEmptyData(dateCols);
+
+        // Get today's date for comparison
+        const today = new Date();
+        const currentMonthYear = new Date(today.getFullYear(), today.getMonth(), 1);
+
+        // Determine if the currently loaded month is in the future
+        const isFutureMonth = currentDate.getFullYear() > today.getFullYear() ||
+                              (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() > today.getMonth());
+
+        // Initialize Handsontable in the inner div #table
+        hot = new Handsontable(document.getElementById('table'), {
+          data,
+          rowHeaders: false,
+          stretchH: 'all',
+          height: 500, // Fixed height for Handsontable
+          licenseKey: 'non-commercial-and-evaluation',
+          colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
+          columns: Array(dateCols.length + 1).fill({ type: 'text' }),
+          afterChange: (changes, source) => {
+            if (!changes || source === 'loadData') return;
+            updateSummaryAndChart(hot.getData());
+            hot.render(); // Re-evaluate cell styling
+          },
+          cells: function (r, c) {
+            var props = {};
+            // Start with an empty className to clear previous ones for this specific cell logic
+            props.className = ''; 
+
+            if (c === 0) { // Energy column (first column) is always read-only
+                props.readOnly = true;
+                return props;
+            }
+            
+            // Check if the current month being displayed is a future month
+            // OR if it's the current month, but the day is in the future
+            if (isFutureMonth || (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() === today.getMonth() && c > today.getDate())) {
+                props.readOnly = true;
+                // Add the future-cell-readonly class
+                props.className = (props.className || '') + ' future-cell-readonly'; 
+            } else {
+                // Ensure it's editable if not a future cell
+                props.readOnly = false;
+            }
+
+            var v = parseFloat(this.instance.getDataAtCell(r, c));
+            if (!isNaN(v)) {
+              props.className = (props.className || '') + ' ' + (Math.abs(v) <= 1.8 ? 'within' : (Math.abs(v) <= 2 ? 'warning' : 'out'));
+            }
+            // If it IS NaN (empty), the coloring classes won't be added,
+            // and because we started with `props.className = '';` they will be effectively removed.
+            return props;
+          }
+        });
+
+        updateSummaryAndChart(data);
+        populateTrendEnergySelect(); // Ensure this runs after table data is loaded and hot is created
+      } catch(e) {
+        console.error("Error loading table data:", e);
+        showNotification("Could not load table data. Please try again.", 'error');
+      } finally {
+        hideLoader();
+        // Remove loading transitions after fetch and render
+        if (tableContainer) tableContainer.classList.remove('loading-transition');
+        if (summaryBox) summaryBox.classList.remove('loading-transition');
+        if (trendChartSection) trendChartSection.classList.remove('loading-transition');
+      }
+    }
+
+    function updateSummaryAndChart(data) {
+      var total=0, within=0, warning=0, out=0;
+      outOfToleranceValues = [];
+
+      var dateCols = getMonthDates(currentDate);
+
+      data.forEach((row, rowIndex) => {
+        var energyType = row[0];
+        row.slice(1).forEach((value, colIndex) => {
+          var n = parseFloat(value);
+          if(!isNaN(n)){
+            total++;
+            if(Math.abs(n)<=1.8) {
+                within++;
+            } else if(Math.abs(n)<=2) {
+                warning++;
+            } else {
+                out++;
+                outOfToleranceValues.push({
+                    energy: energyType,
+                    date: dateCols[colIndex],
+                    value: n
+                });
+            }
+          }
+        });
+      });
+      document.getElementById("total").textContent = total;
+      document.getElementById("within").textContent = within;
+      document.getElementById("warning").textContent = warning;
+      document.getElementById("out").textContent = out;
+
+      var ctx = document.getElementById('summaryChart').getContext('2d');
+      if (summaryChart) summaryChart.destroy();
+
+      // Determine colors for the pie chart
+      let backgroundColors = [];
+      let labels = [];
+      let chartData = [];
+
+      if (total === 0) { // If no data at all, show empty chart or a single neutral slice
+          backgroundColors = ['#cccccc']; // Neutral grey
+          labels = ['No Data'];
+          chartData = [1]; // A single slice to represent "no data"
+      } else if (warning === 0 && out === 0) { // All within tolerance
+          backgroundColors = ['#66cc66']; // Full green
+          labels = ['Within Tolerance'];
+          chartData = [within];
+      } else { // Mix of within, warning, out
+          labels = ['Within Tolerance','Warning','Out of Tolerance'];
+          backgroundColors = ['#66cc66','#ffcc00','#ff6666'];
+          chartData = [within,warning,out];
+      }
+
+
+      summaryChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels, // Use dynamic labels
+          datasets: [{ data: chartData, backgroundColor: backgroundColors }] // Use dynamic data and colors
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false // Hide default legend if you are displaying counts manually
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed !== null) {
+                                label += context.parsed;
+                            }
+                            // Add percentage to tooltip
+                            if (context.dataset.data[context.dataIndex] > 0 && total > 0) {
+                                let percentage = (context.parsed / total * 100).toFixed(1) + '%';
+                                label += ' (' + percentage + ')';
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+      });
+    }
+
+    async function manualSave() {
+      showLoader();
+      var changedData = hot.getData();
+      var month = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
+      try {
+        var saveResponse = await fetch(`${BACKEND_URL}/save`,{
+          method:'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ data: changedData, month, uid: currentUID })
+        });
+
+        if (!saveResponse.ok) {
+            const errorText = await saveResponse.text();
+            throw new Error('Failed to save data: ' + saveResponse.statusText + ' - ' + errorText);
+        }
+
+        // Removed lastSaved.textContent line as the element is removed from HTML
+        // lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
+        showNotification("Data saved successfully!", 'success');
+        updateTrendChart();
+
+        var alertResponse = await fetch(`${BACKEND_URL}/send-alert`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                outValues: outOfToleranceValues, // This will be empty if all resolved
+                hospitalName: currentHospital,
+                uid: currentUID,
+                month: month
+            })
+        });
+        var alertResult = await alertResponse.json();
+        if (alertResult.status === 'alert sent') {
+            console.log("Email alert sent (issues updated).");
+            showNotification("Alert email sent to RSO(s).", 'info');
+        } else if (alertResult.status === 'no_change') {
+            console.log("No new alerts or changes to existing issues. Email not sent.");
+            showNotification("No new critical alerts to send.", 'info');
+        } else {
+            console.warn("Could not send email alert:", alertResult.message || alertResult.status);
+            showNotification("Alert email could not be sent: " + (alertResult.message || "Unknown error."), 'warning');
+        }
+
+
+      } catch(err){
+        console.error("Operation failed:", err);
+        showNotification("Operation failed: " + err.message, 'error');
+      } finally{
+        hideLoader();
+      }
+    }
+
+    function changeMonth(m){ currentDate = new Date(currentDate.getFullYear(), m, 1); loadTable(); updateTrendChart(); }
+    function changeYear(o){ currentDate = new Date(currentDate.getFullYear()+o, currentDate.getMonth(), 1); loadTable(); updateTrendChart(); }
+    function toggleDarkMode(){ document.body.classList.toggle('dark'); }
+
+    function buildMonthButtons(){
+      var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+      monthsDiv.innerHTML='';
+      months.forEach((m,i)=>{
+        var btn = document.createElement('button');
+        btn.textContent = m;
+        btn.addEventListener('click', () => changeMonth(i));
+        monthsDiv.appendChild(btn);
+      });
+      highlightActiveMonth();
+    }
+
+    function highlightActiveMonth(){
+      [...monthsDiv.querySelectorAll('button')].forEach((btn,i)=>{
+        btn.classList.toggle('active', i === currentDate.getMonth());
+      });
+    }
+
+    function populateTrendEnergySelect() {
+        var select = document.getElementById('trendEnergySelect');
+        select.innerHTML = '';
+        energyTypes.forEach(energy => {
+            var option = document.createElement('option');
+            option.value = energy;
+            option.textContent = energy;
+            select.appendChild(option);
+        });
+        if (energyTypes.length > 0) {
+            select.value = energyTypes[0];
+            updateTrendChart();
+        }
+    }
+
+    async function updateTrendChart() {
+        showLoader();
+        if (trendChartSection) trendChartSection.classList.add('loading-transition');
+
+        var selectedEnergy = document.getElementById('trendEnergySelect').value;
+        if (!selectedEnergy) {
+            hideLoader();
+            showNotification("Please select an energy type for trend analysis.", 'info');
+            if (trendChartSection) trendChartSection.classList.remove('loading-transition');
+            return;
+        }
+
+        var dataPoints = [];
+        var labels = [];
+        var currentYear = currentDate.getFullYear();
+        var currentMonth = currentDate.getMonth() + 1;
+
+        var daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+        var monthKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
+        try {
+            var res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&uid=${currentUID}`);
+            var result = await res.json();
+            var monthData = result.data;
+
+            var energyRow = monthData.find(row => row[0] === selectedEnergy);
+
+            if (energyRow) {
+                for (let i = 0; i < daysInMonth; i++) {
+                    var value = energyRow[i + 1];
+                    var n = parseFloat(value);
+                    dataPoints.push(isNaN(n) ? null : n);
+                    labels.push(String(i + 1).padStart(2, '0'));
+                }
+            } else {
+                for (let i = 0; i < daysInMonth; i++) {
+                    dataPoints.push(null);
+                    labels.push(String(i + 1).padStart(2, '0'));
+                }
+            }
+
+            var ctx = document.getElementById('trendChart').getContext('2d');
+            if (trendChart) trendChart.destroy();
+
+            // Corrected: Set the trend chart header to only show the month name
+            var trendChartHeaderElement = document.getElementById('trendChartHeader');
+            if (trendChartHeaderElement) {
+                 trendChartHeaderElement.textContent = `${currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })} Trend`;
+            }
+
+
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `${selectedEnergy} Output Trend (${currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })})`,
+                        data: dataPoints,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                        fill: false,
+                        tension: 0.1,
+                        spanGaps: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Output Value (%)'
+                            },
+                            min: -3,
+                            max: 3,
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    return value.toFixed(1) + '%';
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Day of Month'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + (context.parsed.y !== null ? context.parsed.y.toFixed(2) + '%' : 'No Data');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error("Error fetching trend data:", error);
+            showNotification("Could not load trend data. Please try again.", 'error');
+        } finally {
+            hideLoader();
+            if (trendChartSection) trendChartSection.classList.remove('loading-transition');
+        }
+    }
+
+    // NEW: Function to add message to chat window
+    function addChatMessage(message, sender) {
+        var messageElement = document.createElement('div');
+        messageElement.classList.add('chat-message', sender);
+        messageElement.textContent = message;
+        chatBody.appendChild(messageElement);
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    // NEW: Function to handle sending chat messages
+    async function sendChatMessage() {
+        var message = chatInput.value.trim();
+        if (message === "") return;
+
+        addChatMessage(message, 'user');
+        chatInput.value = '';
+
+        // Send the complete user query text to the backend for NLP processing
+        var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                query_text: message, // Send the full query text
+                month: `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`,
+                uid: currentUID
+            })
+        });
+
+        var result = await response.json();
+        if (result.status === 'success') {
+            botResponse = result.message;
+        } else {
+            // Updated error message to be more user-friendly based on backend's error messages
+            botResponse = "Sorry, I couldn't process that request. " + (result.message || "Please try rephrasing or ask about:\n- Out of tolerance dates\n- Value for 6X on 2025-07-10\n- All 6X data this month\n- List all warning values\n- Average deviation for 6X this month\n- Max/Min value for 10X FFF this month\n- All values for 2025-07-05.");
+        }
+        
+        addChatMessage(botResponse, 'bot');
+    }
+
+    // Export function for Excel (requests XLSX from backend)
+    async function exportToExcel() {
+        showLoader();
+
+        var month = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
+        try {
+            const response = await fetch(`${BACKEND_URL}/export-excel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    month: month,
+                    uid: currentUID
+                })
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `LINAC_QA_Data_${month}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                showNotification("Excel file exported successfully!", 'success');
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to export Excel file.');
+            }
+        } catch (error) {
+            console.error("Error exporting Excel:", error);
+            showNotification("Failed to export Excel: " + error.message, 'error');
+        } finally {
+            hideLoader();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+
+        saveBtn.addEventListener('click', manualSave);
+        logoutBtn.addEventListener('click', window.logout);
+        myProfileBtn.addEventListener('click', function() { window.location.href='my_profile.html'; });
+        darkToggle.addEventListener('change', toggleDarkMode);
+        prevYearBtn.addEventListener('click', function() { changeYear(-1); });
+        nextYearBtn.addEventListener('click', function() { changeYear(1); });
+
+        exportExcelBtn.addEventListener('click', exportToExcel); 
+
+        chatBubble.addEventListener('click', function() {
+            chatWindow.classList.toggle('open');
+            if (chatWindow.classList.contains('open')) {
+                chatInput.focus();
+            }
+        });
+        closeChatBtn.addEventListener('click', function() {
+            chatWindow.classList.remove('open');
+        });
+        sendChatBtn.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
+
+
+        auth.onAuthStateChanged(function(user) {
+            if (user) {
+                currentUID = user.uid;
+                currentHospital = localStorage.getItem("hospitalName") || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
+                var userStatus = localStorage.getItem("userStatus");
+
+                if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
+                    showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000);
+                    window.logout();
+                    return;
+                }
+
+                localStorage.setItem("uid", currentUID);
+                document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
+                buildMonthButtons();
+                loadTable();
+                populateTrendEnergySelect();
+            } else {
+                window.location.replace("login.html");
+            }
+        });
+    });
+
+  </script>
+</body>
+</html>
