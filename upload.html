@@ -18,7 +18,6 @@
   <script src="/firebase-init.js"></script> <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -247,26 +246,24 @@
       min-height: 0; /* Needed for flex children to shrink */
       flex-direction: row; /* Ensure they stay in a row */
       
-      /* NEW: Allow horizontal scroll for this container only */
-      overflow-x: auto; 
-      /* NEW: Important for allowing flex items to shrink when space is constrained */
-      min-width: 0; 
+      overflow-x: auto; /* Allow horizontal scroll for this container if its children overflow */
+      min-width: 0; /* Important for allowing flex items to shrink when space is constrained */
       box-sizing: border-box; /* Include padding in width calculations */
     }
 
     /* NEW: Wrapper for Handsontable to control its height strictly */
-    /* Renaming #table to #handsontable-container and creating a new #table-wrapper for better structure */
-    #handsontable-container { /* This will be the actual target for Handsontable */
-        flex-grow: 1; /* Allow table to take available horizontal space */
-        flex-shrink: 0; /* Prevents it from shrinking too much */
+    /* This element is now #table-wrapper in HTML. The Handsontable instance will be attached to the inner #table */
+    #table-wrapper { 
+        flex-grow: 1; /* Allow table wrapper to take available horizontal space */
+        flex-shrink: 0; /* Prevents it from shrinking too much if content doesn't fit */
         flex-basis: auto; /* Let content dictate initial size, then grow/shrink as per flex-grow/shrink */
         min-width: 400px; /* Minimum width for table to be readable */
         
         display: flex; /* Make it a flex container for Handsontable */
         flex-direction: column;
-        height: 500px; /* Explicit fixed height for the table container */
+        height: 500px; /* Explicit fixed height for the table wrapper */
         overflow: hidden; /* To ensure Handsontable doesn't break out */
-        overflow-x: auto; /* Allow horizontal scroll within table for table content */
+        overflow-x: auto; /* Allow horizontal scroll within table wrapper for table content */
         overflow-y: hidden; /* Handsontable manages its own vertical scroll */
 
 
@@ -279,8 +276,18 @@
         box-sizing: border-box;
     }
 
+    /* Handsontable itself should take full height of its wrapper */
+    #table { /* This is the element where Handsontable will be initialized */
+        flex-grow: 1; 
+        height: 100%; 
+        background: none;
+        border: none;
+        padding: 0;
+    }
+
 
     /* Handsontable specific overrides for cell background and text */
+    /* Updated selector for the new #table structure */
     #handsontable-container .ht_master, #handsontable-container .handsontable {
         background-color: #ffffff;
         color: #333;
@@ -415,7 +422,7 @@
       background-color: #1a1a1a;
       color: #fff;
     }
-    body.dark .topbar, body.dark .sidebar, body.dark .summary-box, body.dark .trend-chart-section, #table, body.dark .login-container, body.dark .signup-container, body.dark .message-container, body.dark .card, body.dark .month-header-box {
+    body.dark .topbar, body.dark .sidebar, body.dark .summary-box, body.dark .trend-chart-section, #handsontable-container, body.dark .login-container, body.dark .signup-container, body.dark .message-container, body.dark .card, body.dark .month-header-box {
         background: #2a2a2a;
         box-shadow: 0 0 15px rgba(0,0,0,0.6);
         border-color: #444;
@@ -791,7 +798,7 @@
       <div class="month-header-box" id="header">
         </div>
       <div class="container">
-        <div id="table-wrapper" class="data-container">
+        <div id="handsontable-container" class="data-container">
             <div id="table"></div>
         </div>
         <div class="summary-box data-container">
@@ -861,9 +868,9 @@
     var hot, summaryChart, trendChart;
 
     // Get references to DOM elements using their IDs - ALL DECLARED ONLY ONCE HERE
-    // UPDATED: Handsontable container now targets #table within #table-wrapper in HTML
-    var container = document.getElementById('table');
-    var tableWrapper = document.getElementById('table-wrapper'); // NEW: Reference to the wrapper
+    // UPDATED: Handsontable container now targets #table within #handsontable-container in HTML
+    var container = document.getElementById('table'); 
+    var handsontableContainer = document.getElementById('handsontable-container'); // Reference the new wrapper
 
     var monthsDiv = document.getElementById('months');
     var header = document.getElementById('header');
@@ -881,11 +888,11 @@
     var exportExcelBtn = document.getElementById('exportExcelBtn'); 
 
     // Get references for data containers to apply transitions
-    // tableContainer now references the new #table-wrapper
-    var tableContainer = document.getElementById('table-wrapper'); 
+    // tableContainer now references the new #handsontable-container
+    var tableContainer = document.getElementById('handsontable-container'); 
     var summaryBox = document.querySelector('.summary-box');
     var trendChartSection = document.querySelector('.trend-chart-section');
-    var trendChartHeader = document.getElementById('trendChartHeader'); // Corrected from h3 to the id for dynamic update
+    var trendChartHeader = document.getElementById('trendChartHeader');
 
     // Chatbot UI element references
     var chatBubble = document.getElementById('chat-bubble');
@@ -1010,7 +1017,8 @@
         const isFutureMonth = currentDate.getFullYear() > today.getFullYear() ||
                               (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() > today.getMonth());
 
-        hot = new Handsontable(container, {
+        // Initialize Handsontable in the inner div #table
+        hot = new Handsontable(document.getElementById('table'), {
           data,
           rowHeaders: false,
           stretchH: 'all',
