@@ -18,7 +18,6 @@
   <script src="/firebase-init.js"></script> <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -30,6 +29,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
   <style>
+    /* ... (your existing CSS remains unchanged) ... */
     /* CSS Variables for Colors */
     :root {
       --primary-blue: #007bff;
@@ -51,17 +51,15 @@
       --shadow-strong: rgba(0,0,0,0.2);
     }
 
-    html, body {
+    body {
       margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%; /* Ensure html and body take full viewport height */
-      overflow: hidden; /* Prevent overall page scroll unless intended */
       font-family: 'Inter', sans-serif;
       background-color: var(--background-light);
       color: var(--text-dark);
       display: flex;
-      flex-direction: column; /* Body is a column flex container */
+      height: 100vh;
+      overflow: hidden;
+      flex-direction: column;
     }
 
     /* Global Micro-interaction */
@@ -100,7 +98,6 @@
       border-bottom: 1px solid #ccc;
       box-shadow: 0 2px 4px rgba(0,0,0,0.08);
       min-height: 50px;
-      flex-shrink: 0; /* Prevent topbar from shrinking */
     }
     .hospital-info-box {
         background-color: #e0f7fa;
@@ -156,9 +153,8 @@
 
     .content {
       display: flex;
-      flex: 1; /* Allows content to take remaining height after topbar */
-      overflow: hidden; /* Crucial to contain scrolling within this level */
-      min-height: 0; /* Allow flex item to shrink */
+      flex: 1;
+      overflow: hidden;
     }
     .sidebar {
       width: 200px;
@@ -167,8 +163,6 @@
       box-shadow: 2px 0 5px rgba(0,0,0,0.08);
       display: flex;
       flex-direction: column;
-      flex-shrink: 0; /* Prevent sidebar from shrinking */
-      overflow-y: auto; /* Allow sidebar to scroll independently if content (months) overflows */
     }
     .sidebar h2 {
         margin: 0 0 20px;
@@ -215,14 +209,12 @@
 
 
     .main {
-      flex-grow: 1; /* Allows main content to take available width */
+      flex-grow: 1;
       padding: 20px;
+      overflow: auto;
       display: flex;
       flex-direction: column;
       gap: 20px;
-      min-height: 0; /* Crucial for flex item to shrink below its content size */
-      overflow-y: auto; /* Adds scrollbar to main if content overflows vertically */
-      overflow-x: hidden; /* Hide horizontal scroll on main to avoid double scrollbars */
     }
 
     /* Month Header Box */
@@ -235,89 +227,48 @@
         font-weight: 600;
         border-radius: 16px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-        flex-shrink: 0; /* Prevent from shrinking */
     }
 
     .container {
       display: flex;
       gap: 20px;
-      align-items: flex-start; /* Align items to the top */
-      flex-wrap: nowrap; /* Prevent wrapping initially to keep side-by-side layout */
-      flex: 1; /* Allows container to grow and shrink horizontally within main */
-      min-height: 0; /* Important for flex children to shrink */
-      flex-direction: row; /* Ensure they stay in a row */
-      
-      overflow-x: auto; /* Allow horizontal scroll for this container if its children overflow */
-      min-width: 0; /* Essential for allowing flex items to shrink when space is constrained */
-      box-sizing: border-box; /* Include padding in width calculations */
+      align-items: flex-start;
+      flex-wrap: wrap;
+      flex: 1;
     }
-
-    /* NEW: Wrapper for Handsontable to control its height strictly */
-    /* This element is now #handsontable-container in HTML */
-    #handsontable-container { 
-        flex-grow: 1; /* Allows it to take available horizontal space */
-        flex-shrink: 0; /* NEW: Prevent this container from shrinking smaller than its content's intrinsic size */
-        flex-basis: auto; /* Let content dictate initial size, then grow/shrink as per flex-grow/shrink */
-        min-width: 400px; /* Minimum width for table to be readable */
-        
-        display: flex; /* Make it a flex container for the actual Handsontable target */
-        flex-direction: column;
-        height: 500px; /* Fixed height for the table area */
-        overflow: hidden; /* To ensure Handsontable doesn't break out */
-        overflow-x: auto; /* Allow horizontal scroll within table for table content */
-        overflow-y: hidden; /* Handsontable manages its own vertical scroll */
-
-
-        /* Apply card-panel base styles directly here */
+    #table {
+        flex-grow: 1;
+        height: 500px;
+        min-width: 400px;
+        /* Apply card-panel base styles */
         border-radius: 16px;
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
         background: #ffffff;
         border: 1px solid rgba(0,0,0,0.05);
-        padding: 20px; /* Added padding here */
-        box-sizing: border-box;
+        overflow: hidden;
     }
-
-    /* Handsontable itself should take full height of its wrapper */
-    #table { /* This is the specific DIV where Handsontable is initialized by JS */
-        flex-grow: 1; 
-        height: 100%; 
-        background: none; /* Clear background inherited from parent if any */
-        border: none; /* Clear border inherited from parent if any */
-        padding: 0; /* Clear padding inherited from parent if any */
-    }
-
-
     /* Handsontable specific overrides for cell background and text */
-    #handsontable-container .ht_master, #handsontable-container .handsontable {
+    #table .ht_master, #table .handsontable {
         background-color: #ffffff;
         color: #333;
     }
-    #handsontable-container .handsontable td, #handsontable-container .handsontable th {
+    #table .handsontable td, #table .handsontable th {
         border-color: #aaa;
     }
     /* Corrected: Use specific class for placeholder styling in dark mode */
-    body.dark #handsontable-container .handsontable .htPlaceholder {
+    body.dark #table .handsontable .htPlaceholder {
         background-color: #2a2a2a !important;
     }
 
     .summary-box {
-      width: 300px; /* Fixed width for the summary box */
-      min-width: 280px; /* Ensure it doesn't shrink too much */
+      width: 300px;
+      min-width: 280px;
       padding: 20px;
       /* Apply card-panel base styles */
       border-radius: 16px;
       box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
       background: #ffffff;
       border: 1px solid rgba(0,0,0,0.05);
-      flex-shrink: 0; /* Prevent summary box from shrinking below its content */
-      height: 500px; /* Match the height of table for alignment */
-      display: flex; /* Make it flex to align content within */
-      flex-direction: column;
-      justify-content: space-between; /* Distribute content vertically */
-      align-items: center; /* Center content horizontally within the box */
-      
-      flex-grow: 0; /* Ensure it doesn't try to grow */
-      flex-basis: 300px; /* Set a preferred basis to ensure it gets enough space */
     }
     .summary-box h3 {
         margin-top: 0;
@@ -330,23 +281,17 @@
     .summary-box p {
         font-size: 1em;
         margin-bottom: 8px;
-        text-align: left; /* Ensure text aligns left within paragraphs */
-        width: 100%; /* Make sure p tags take full width */
-    }
-    .summary-box canvas { /* Specific styling for canvas within summary-box */
-        margin-bottom: 15px;
-        max-width: 100%; /* Ensure canvas is responsive */
-        height: auto; /* Maintain aspect ratio */
-        align-self: center; /* Center the canvas if summary-box is flex */
     }
     .summary-box span {
         font-weight: 500;
+    }
+    canvas {
+        margin-bottom: 15px;
     }
 
     #save-section {
       margin-top: 0px;
       text-align: center;
-      flex-shrink: 0; /* Prevent save section from shrinking */
     }
     #save-section button {
         padding: 10px 20px;
@@ -370,7 +315,6 @@
     #export-section {
         margin-top: 20px;
         text-align: center;
-        flex-shrink: 0; /* Prevent export section from shrinking */
     }
     #export-section button {
         padding: 10px 15px;
@@ -393,7 +337,6 @@
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
         background: #ffffff;
         border: 1px solid rgba(0,0,0,0.05);
-        flex-shrink: 0; /* Prevent trend chart section from shrinking */
     }
     .trend-chart-section h3 {
         margin-top: 0;
@@ -422,7 +365,7 @@
       background-color: #1a1a1a;
       color: #fff;
     }
-    body.dark .topbar, body.dark .sidebar, body.dark .summary-box, body.dark .trend-chart-section, #handsontable-container, body.dark .login-container, body.dark .signup-container, body.dark .message-container, body.dark .card, body.dark .month-header-box {
+    body.dark .topbar, body.dark .sidebar, body.dark .summary-box, body.dark .trend-chart-section, #table, body.dark .login-container, body.dark .signup-container, body.dark .message-container, body.dark .card, body.dark .month-header-box {
         background: #2a2a2a;
         box-shadow: 0 0 15px rgba(0,0,0,0.6);
         border-color: #444;
@@ -450,15 +393,15 @@
         color: #fff;
         border-color: #555;
     }
-    body.dark #handsontable-container .ht_master, body.dark #handsontable-container .handsontable {
+    body.dark #table .ht_master, body.dark #table .handsontable {
         background-color: #2a2a2a;
         color: #fff;
     }
-    body.dark #handsontable-container .handsontable td, body.dark #handsontable-container .handsontable th {
+    body.dark #table .handsontable td, body.dark #table .handsontable th {
         border-color: #555;
     }
     /* Corrected: Use specific class for placeholder styling in dark mode */
-    body.dark #handsontable-container .handsontable .htPlaceholder {
+    body.dark #table .handsontable .htPlaceholder {
         background-color: #2a2a2a !important;
     }
     body.dark .summary-box p, body.dark .sidebar label, body.dark .sidebar p, body.dark .trend-chart-section label {
@@ -502,7 +445,7 @@
         color: #777 !important;
     }
     /* Also ensure the Handsontable "placeholder" style is consistent in dark mode */
-    body.dark #handsontable-container .handsontable .htPlaceholder {
+    body.dark #table .handsontable .htPlaceholder {
         background-color: #2a2a2a !important;
     }
 
@@ -705,7 +648,7 @@
             align-items: center !important;
             gap: 20px;
         }
-        #handsontable-container, .summary-box, .trend-chart-section { /* Updated selector */
+        #table, .summary-box, .trend-chart-section {
             box-shadow: none !important;
             border: 1px solid #eee !important;
             background: white !important;
@@ -713,12 +656,12 @@
             margin: 0 auto 20px auto !important;
             page-break-inside: avoid;
         }
-        #table { /* Reverted to original Handsontable target */
+        #table {
             overflow: visible !important;
             height: auto !important;
         }
         /* Make Handsontable cells print cleanly */
-        #handsontable-container .handsontable td, #handsontable-container .handsontable th { /* Updated selector */
+        #table .handsontable td, #table .handsontable th {
             white-space: normal !important;
         }
 
@@ -740,6 +683,20 @@
         flex-direction: column;
         gap: 10px;
         pointer-events: none; /* Allows clicks to pass through when no messages are active */
+    }
+
+    .notification-message {
+        background-color: #333;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        transform: translateY(-20px);
+        min-width: 250px;
+        text-align: center;
+        pointer-events: auto; /* Re-enable pointer events for the message itself */
     }
 
     .notification-message.show {
@@ -798,8 +755,7 @@
       <div class="month-header-box" id="header">
         </div>
       <div class="container">
-        <div id="handsontable-container" class="data-container">
-            <div id="table"></div> </div>
+        <div id="table" class="data-container"></div>
         <div class="summary-box data-container">
           <canvas id="summaryChart" width="280" height="280"></canvas>
           <h3>Summary</h3>
@@ -813,7 +769,8 @@
         <button id="saveBtn" style="font-weight:bold; background-color: var(--primary-blue); color: var(--text-light);">
             <i class="fas fa-save"></i> Save
         </button>
-        </div>
+        <span id="lastSaved" style="margin-left:15px;font-size:14px;color:gray;"></span>
+      </div>
 
       <div id="export-section">
           <button id="exportExcelBtn" style="background-color: #28a745; color: white;">
@@ -823,7 +780,8 @@
 
 
       <div class="trend-chart-section data-container" style="margin-top: 30px;">
-        <h3 id="trendChartHeader"></h3> <div style="margin-bottom: 15px;">
+        <h3>Energy Trend Analysis (Current Month)</h3>
+        <div style="margin-bottom: 15px;">
           <label for="trendEnergySelect" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
           <select id="trendEnergySelect" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart()">
             </select>
@@ -867,15 +825,11 @@
     var hot, summaryChart, trendChart;
 
     // Get references to DOM elements using their IDs - ALL DECLARED ONLY ONCE HERE
-    // UPDATED: Handsontable container now targets the inner #table div
-    var container = document.getElementById('table'); 
-    var handsontableContainer = document.getElementById('handsontable-container'); // Reference to the new wrapper
-
+    var container = document.getElementById('table');
     var monthsDiv = document.getElementById('months');
     var header = document.getElementById('header');
     var yearLabel = document.getElementById('year');
-    // Removed reference to lastSaved as the element is removed from HTML
-    // var lastSaved = document.getElementById('lastSaved');
+    var lastSaved = document.getElementById('lastSaved');
     var darkToggle = document.getElementById('darkToggle');
     var saveBtn = document.getElementById('saveBtn');
     var logoutBtn = document.getElementById('logoutBtn');
@@ -887,11 +841,9 @@
     var exportExcelBtn = document.getElementById('exportExcelBtn'); 
 
     // Get references for data containers to apply transitions
-    // tableContainer now references the new #handsontable-container
-    var tableContainer = document.getElementById('handsontable-container'); 
+    var tableContainer = document.getElementById('table');
     var summaryBox = document.querySelector('.summary-box');
     var trendChartSection = document.querySelector('.trend-chart-section');
-    var trendChartHeader = document.getElementById('trendChartHeader');
 
     // Chatbot UI element references
     var chatBubble = document.getElementById('chat-bubble');
@@ -905,7 +857,7 @@
     var notificationContainer = document.getElementById('notification-container');
 
     // Define the backend URL
-    const BACKEND_URL = "https://back-end-wrxi.onrender.com";
+    const BACKEND_URL = "https://back-end-wrxi.onrender.com"; // Ensure this matches your backend URL
 
 
     var currentDate = new Date(); currentDate.setDate(1);
@@ -987,9 +939,9 @@
 
     async function loadTable() {
       showLoader();
-      // Ensure hot.destroy() is called before new Handsontable instance is created
-      if (hot) hot.destroy();
-      
+      if (tableContainer) tableContainer.classList.add('loading-transition');
+      if (summaryBox) summaryBox.classList.add('loading-transition');
+
       var dateCols = getMonthDates(currentDate);
       document.getElementById('header').textContent = `${currentDate.toLocaleString('default',{month:'long'})} ${currentDate.getFullYear()}`;
       yearLabel.textContent = currentDate.getFullYear();
@@ -997,11 +949,6 @@
 
       var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
       try {
-        // Apply loading transitions before fetch
-        if (tableContainer) tableContainer.classList.add('loading-transition');
-        if (summaryBox) summaryBox.classList.add('loading-transition');
-        if (trendChartSection) trendChartSection.classList.add('loading-transition');
-
         var res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&uid=${currentUID}`);
         var result = await res.json();
         var data = Array.isArray(result.data) && result.data.length === energyTypes.length
@@ -1016,18 +963,20 @@
         const isFutureMonth = currentDate.getFullYear() > today.getFullYear() ||
                               (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() > today.getMonth());
 
+        if (hot) hot.destroy();
         hot = new Handsontable(container, {
           data,
           rowHeaders: false,
           stretchH: 'all',
-          height: 500, // Fixed height for Handsontable
+          height: 500,
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
           afterChange: (changes, source) => {
             if (!changes || source === 'loadData') return;
             updateSummaryAndChart(hot.getData());
-            hot.render(); // Re-evaluate cell styling
+            // Trigger a re-render of cell styles after changes
+            hot.render(); // This will re-evaluate the 'cells' function for affected cells
           },
           cells: function (r, c) {
             var props = {};
@@ -1061,16 +1010,13 @@
         });
 
         updateSummaryAndChart(data);
-        populateTrendEnergySelect(); // Ensure this runs after table data is loaded and hot is created
       } catch(e) {
         console.error("Error loading table data:", e);
         showNotification("Could not load table data. Please try again.", 'error');
       } finally {
         hideLoader();
-        // Remove loading transitions after fetch and render
         if (tableContainer) tableContainer.classList.remove('loading-transition');
         if (summaryBox) summaryBox.classList.remove('loading-transition');
-        if (trendChartSection) trendChartSection.classList.remove('loading-transition');
       }
     }
 
@@ -1108,60 +1054,11 @@
 
       var ctx = document.getElementById('summaryChart').getContext('2d');
       if (summaryChart) summaryChart.destroy();
-
-      // Determine colors for the pie chart
-      let backgroundColors = [];
-      let labels = [];
-      let chartData = [];
-
-      if (total === 0) { // If no data at all, show empty chart or a single neutral slice
-          backgroundColors = ['#cccccc']; // Neutral grey
-          labels = ['No Data'];
-          chartData = [1]; // A single slice to represent "no data"
-      } else if (warning === 0 && out === 0) { // All within tolerance
-          backgroundColors = ['#66cc66']; // Full green
-          labels = ['Within Tolerance'];
-          chartData = [within];
-      } else { // Mix of within, warning, out
-          labels = ['Within Tolerance','Warning','Out of Tolerance'];
-          backgroundColors = ['#66cc66','#ffcc00','#ff6666'];
-          chartData = [within,warning,out];
-      }
-
-
       summaryChart = new Chart(ctx, {
         type: 'pie',
         data: {
-          labels: labels, // Use dynamic labels
-          datasets: [{ data: chartData, backgroundColor: backgroundColors }] // Use dynamic data and colors
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false // Hide default legend if you are displaying counts manually
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
-                            if (context.parsed !== null) {
-                                label += context.parsed;
-                            }
-                            // Add percentage to tooltip
-                            if (context.dataset.data[context.dataIndex] > 0 && total > 0) {
-                                let percentage = (context.parsed / total * 100).toFixed(1) + '%';
-                                label += ' (' + percentage + ')';
-                            }
-                            return label;
-                        }
-                    }
-                }
-            }
+          labels: ['Within Tolerance','Warning','Out of Tolerance'],
+          datasets: [{ data: [within,warning,out], backgroundColor: ['#66cc66','#ffcc00','#ff6666'] }]
         }
       });
     }
@@ -1182,35 +1079,38 @@
             throw new Error('Failed to save data: ' + saveResponse.statusText + ' - ' + errorText);
         }
 
-        // Removed lastSaved.textContent line as the element is removed from HTML
-        // lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
+        lastSaved.textContent = "Last Saved: " + new Date().toLocaleString();
         showNotification("Data saved successfully!", 'success');
         updateTrendChart();
 
-        var alertResponse = await fetch(`${BACKEND_URL}/send-alert`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                outValues: outOfToleranceValues, // This will be empty if all resolved
-                hospitalName: currentHospital,
-                uid: currentUID,
-                month: month
-            })
-        });
-        var alertResult = await alertResponse.json();
-        if (alertResult.status === 'alert sent') {
-            console.log("Email alert sent (issues updated).");
-            showNotification("Alert email sent to RSO(s).", 'info');
-        } else if (alertResult.status === 'no_change') {
-            console.log("No new alerts or changes to existing issues. Email not sent.");
-            showNotification("No new critical alerts to send.", 'info');
-        } else {
-            console.warn("Could not send email alert:", alertResult.message || alertResult.status);
-            showNotification("Alert email could not be sent: " + (alertResult.message || "Unknown error."), 'warning');
-        }
+        if (outOfToleranceValues.length > 0 || lastSaved.textContent !== '') {
+            var alertResponse = await fetch(`${BACKEND_URL}/send-alert`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    outValues: outOfToleranceValues,
+                    hospitalName: currentHospital,
+                    uid: currentUID,
+                    month: month
+                })
+            });
 
+            var alertResult = await alertResponse.json();
+            if (alertResult.status === 'alert sent') {
+                console.log("Email alert sent for current out of tolerance values.");
+                showNotification("Alert email sent to RSO(s).", 'info');
+            } else if (alertResult.status === 'no_change') {
+                console.log("No new out-of-tolerance values or changes. Email not sent.");
+                showNotification("No new critical alerts to send.", 'info');
+            } else {
+                console.warn("Could not send email alert:", alertResult.message || alertResult.status);
+                showNotification("Alert email could not be sent: " + (alertResult.message || "Unknown error."), 'warning');
+            }
+        } else {
+            console.log("No out-of-tolerance values to send for alert and no prior save to trigger a resolution check.");
+        }
 
       } catch(err){
         console.error("Operation failed:", err);
@@ -1301,13 +1201,6 @@
             var ctx = document.getElementById('trendChart').getContext('2d');
             if (trendChart) trendChart.destroy();
 
-            // Corrected: Set the trend chart header to only show the month name
-            var trendChartHeaderElement = document.getElementById('trendChartHeader');
-            if (trendChartHeaderElement) {
-                 trendChartHeaderElement.textContent = `${currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })} Trend`;
-            }
-
-
             trendChart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -1388,23 +1281,129 @@
         var lowerCaseMessage = message.toLowerCase();
         var botResponse = "";
 
-        // Send the complete user query text to the backend for NLP processing
-        var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                query_text: message, // Send the full query text
-                month: `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`,
-                uid: currentUID
-            })
-        });
+        const energyTypesRegex = new RegExp(`(${energyTypes.join('|').replace(/ /g, '\\s*')})`, 'i');
+        var energyMatch = lowerCaseMessage.match(energyTypesRegex);
+        var dateMatch = lowerCaseMessage.match(/(\d{4}-\d{2}-\d{2})/);
 
-        var result = await response.json();
-        if (result.status === 'success') {
-            botResponse = result.message;
-        } else {
-            // Updated error message to be more user-friendly based on backend's error messages
-            botResponse = "Sorry, I couldn't process that request. " + (result.message || "Please try rephrasing or ask about:\n- Out of tolerance dates\n- Value for 6X on 2025-07-10\n- All 6X data this month\n- List all warning values\n- Average deviation for 6X this month\n- Max/Min value for 10X FFF this month\n- All values for 2025-07-05.");
+        var extractedEnergyType = energyMatch ? energyMatch[1].toUpperCase().replace(/\s/g, '') : null;
+        var extractedDate = dateMatch ? dateMatch[0] : null;
+        
+        var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
+
+        if (lowerCaseMessage.includes('out of tolerance dates')) {
+            addChatMessage("Finding out of tolerance dates for current month...", 'bot');
+            try {
+                var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: 'out_of_tolerance_dates',
+                        month: monthKey,
+                        uid: currentUID
+                    })
+                });
+                var result = await response.json();
+                if (result.status === 'success') {
+                    if (result.dates && result.dates.length > 0) {
+                        botResponse = "The following dates had data beyond tolerance levels: " + result.dates.join(', ');
+                    } else {
+                        botResponse = "Great news! No data went beyond tolerance levels this month.";
+                    }
+                } else {
+                    botResponse = "Sorry, I couldn't retrieve that information: " + (result.message || "Unknown error.");
+                }
+            } catch (error) {
+                console.error("Chatbot query error:", error);
+                botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+            }
+        }
+        else if ((lowerCaseMessage.includes('value for') || lowerCaseMessage.includes('status for')) && extractedEnergyType && extractedDate) {
+            addChatMessage(`Looking up data for ${extractedEnergyType} on ${extractedDate}...`, 'bot');
+            try {
+                var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: 'value_on_date',
+                        month: monthKey,
+                        uid: currentUID,
+                        energy_type: extractedEnergyType,
+                        date: extractedDate
+                    })
+                });
+                var result = await response.json();
+                if (result.status === 'success') {
+                    if (result.value !== undefined && result.value !== null) {
+                        botResponse = `For ${result.energy_type} on ${result.date}: Value is ${result.value}% (Status: ${result.data_status}).`;
+                    } else {
+                        botResponse = `No data found for ${extractedEnergyType} on ${extractedDate}.`;
+                    }
+                } else {
+                    botResponse = `Sorry, I couldn't retrieve that information: ${result.message || "Unknown error."}`;
+                }
+            } catch (error) {
+                console.error("Chatbot query error:", error);
+                botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+            }
+        }
+        else if ((lowerCaseMessage.includes('show all') || lowerCaseMessage.includes('all data')) && extractedEnergyType && lowerCaseMessage.includes('this month')) {
+            addChatMessage(`Getting all data for ${extractedEnergyType} this month...`, 'bot');
+            try {
+                var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: 'energy_data_for_month',
+                        month: monthKey,
+                        uid: currentUID,
+                        energy_type: extractedEnergyType
+                    })
+                });
+                var result = await response.json();
+                if (result.status === 'success' && result.data && result.data.length > 0) {
+                    let formattedData = result.data.map(item => `${item.date}: ${item.value}%`).join('; ');
+                    botResponse = `Here is the data for ${extractedEnergyType} this month: ${formattedData}.`;
+                } else {
+                    botResponse = result.message || `No data found for ${extractedEnergyType} this month.`;
+                }
+            } catch (error) {
+                console.error("Chatbot query error:", error);
+                botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+            }
+        }
+        else if (lowerCaseMessage.includes('list all warning values') || lowerCaseMessage.includes('show warning values')) {
+            addChatMessage(`Getting warning values for this month...`, 'bot');
+            try {
+                var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: 'warning_values_for_month',
+                        month: monthKey,
+                        uid: currentUID
+                    })
+                });
+                var result = await response.json();
+                if (result.status === 'success' && result.warning_entries && result.warning_entries.length > 0) {
+                    let formattedWarnings = result.warning_entries.map(item => `${item.energy} on ${item.date}: ${item.value}%`).join('; ');
+                    botResponse = `Warning values this month: ${formattedWarnings}.`;
+                } else {
+                    botResponse = "No warning values found this month. Great job!";
+                }
+            } catch (error) {
+                console.error("Chatbot query error:", error);
+                botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+            }
+        }
+        else if (lowerCaseMessage.includes('hi') || lowerCaseMessage.includes('hello') || lowerCaseMessage.includes('hey')) {
+            botResponse = "Hello there! How can I assist you with your QA data today?";
+        } else if (lowerCaseMessage.includes('how are you')) {
+            botResponse = "I'm just a bot, but I'm doing great! How can I help you manage your LINAC QA?";
+        } else if (lowerCaseMessage.includes('thank you') || lowerCaseMessage.includes('thanks')) {
+            botResponse = "You're welcome! Happy to help.";
+        }
+        else {
+             botResponse = "I'm sorry, I don't understand that request. Please try rephrasing or ask about:\n\n- \"Out of tolerance dates\"\n- \"Value for 6X on 2025-06-10\" (useYYYY-MM-DD for dates).";
         }
         
         addChatMessage(botResponse, 'bot');
