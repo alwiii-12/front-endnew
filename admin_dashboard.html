@@ -155,7 +155,7 @@
         .filter-search-container select {
             padding: 10px 12px;
             border: 1px solid #ccc;
-            border-radius: 5px;
+            border-radius: 5缘px;
             font-size: 0.95em;
             flex: 1;
             min-width: 150px;
@@ -532,7 +532,7 @@
 
         #hospital-data-access-section:-webkit-full-screen .hospital-qa-table,
         #hospital-data-access-section:-moz-full-screen .hospital-qa-table,
-        #hospital-data-access-section:-ms-full-screen .hospital-qa-table,
+        #hospital-data-access-section:-ms-fullscreen .hospital-qa-table,
         #hospital-data-access-section:fullscreen .hospital-qa-table {
             width: 100%;
             table-layout: fixed;
@@ -540,11 +540,11 @@
 
         #hospital-data-access-section:-webkit-full-screen .hospital-qa-table th,
         #hospital-data-access-section:-moz-full-screen .hospital-qa-table th,
-        #hospital-data-access-section:-ms-full-screen .hospital-qa-table th,
+        #hospital-data-access-section:-ms-fullscreen .hospital-qa-table th,
         #hospital-data-access-section:fullscreen .hospital-qa-table th,
         #hospital-data-access-section:-webkit-full-screen .hospital-qa-table td,
         #hospital-data-access-section:-moz-full-screen .hospital-qa-table td,
-        #hospital-data-access-section:-ms-full-screen .hospital-qa-table td,
+        #hospital-data-access-section:-ms-fullscreen .hospital-qa-table td,
         #hospital-data-access-section:fullscreen .hospital-qa-table td {
             padding: 3px 1px;
             font-size: 0.65em;
@@ -1475,8 +1475,8 @@
 
             logsToRender.forEach(log => {
                 const row = auditLogsTableBody.insertRow();
-                // Format timestamp for display
-                const formattedTimestamp = new Date(log.timestamp).toLocaleString(); 
+                // Directly use log.timestamp as the backend now formats it to the desired string
+                const formattedTimestamp = log.timestamp; 
                 row.innerHTML = `
                     <td>${formattedTimestamp || 'N/A'}</td>
                     <td>${log.action || 'N/A'}</td>
