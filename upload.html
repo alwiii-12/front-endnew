@@ -18,9 +18,6 @@
   <script src="/firebase-init.js"></script> <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1188,6 +1185,8 @@
         if (hots[category]) hots[category].destroy();
 
         // Calculate explicit column widths to ensure full display and proper scrolling
+        // 'Energy' column: fixed width (e.g., 80px)
+        // Date columns: fixed width (e.g., 80px per date)
         const fixedEnergyColWidth = 80;
         const fixedDateColWidth = 80; 
         const numberOfDateColumns = dateCols.length;
@@ -1199,11 +1198,11 @@
         hots[category] = new Handsontable(container, {
           data,
           rowHeaders: false,
-          stretchH: 'none', // Explicitly set to 'none' to rely on autoColumnSize or colWidths
+          stretchH: 'none', // Explicitly set to 'none' to rely on fixed widths/autoColumnSize
           autoColumnSize: true, // Let Handsontable automatically determine column sizes initially
           autoRowSize: true, 
           height: 500, /* Fixed pixel height for stability */
-          width: totalCalculatedContentWidth, // Explicitly set the total content width of the Handsontable instance
+          width: totalCalculatedContentWidth, // Explicitly set the total width of the Handsontable instance
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
@@ -1243,38 +1242,25 @@
             }
             return props;
           },
-          // Use afterRender to ensure proper sizing after view has been built
-          afterRender: function(isFirstRender) {
-              if (hots[category]) {
-                  // A small delay (e.g., 50ms) to allow the browser to fully lay out the DOM 
-                  // before Handsontable attempts to measure its container and render its final state.
-                  setTimeout(() => {
-                    if (hots[category] && hots[category].container.offsetWidth > 0) {
-                        // This forces Handsontable to re-measure its columns and apply its width/scrolling
-                        hots[category].render(); 
-                        // It's also sometimes useful to call updateSettings({}) with no changes
-                        // as it forces a full internal recalculation by Handsontable.
-                        // hots[category].updateSettings({}); 
-                    }
-                  }, 100); // Increased delay slightly for more robustness
-              }
-          },
-          // Adding a global afterGetColHeader hook to adjust header styling if needed,
-          afterGetColHeader: function(col, TH) {
-              if (col === 0) { // Make the 'Energy' header static width
-                  TH.style.minWidth = `${fixedEnergyColWidth}px`; 
-                  TH.style.maxWidth = `${fixedEnergyColWidth}px`;
-              } else {
-                  // Ensure other headers are not excessively wide, allowing more columns to fit
-                  TH.style.minWidth = `${fixedDateColWidth}px`; // Fixed width for date columns
-                  TH.style.maxWidth = `${fixedDateColWidth}px`;
-              }
-          }
+          // Removed afterViewRender hook entirely to prevent potential render loops
+          // The rendering is now strictly controlled externally.
         });
 
         // Explicitly load data and render after Handsontable initialization
         hots[category].loadData(data);
         hots[category].render(); 
+
+        // CRUCIAL: Force Handsontable to re-measure and re-render after its container has settled
+        // and after the initial data is loaded. This is done with a longer, more robust delay.
+        setTimeout(() => {
+            if (hots[category] && handsontableContainer.offsetWidth > 0 && handsontableContainer.offsetHeight > 0) {
+                // Manually trigger a render, and then update settings (even if no change)
+                // This forces Handsontable to re-evaluate its dimensions and redraw.
+                hots[category].render(); 
+                hots[category].updateSettings({}); // Forces a deeper internal recalculation
+            }
+        }, 300); // Increased delay to 300ms for maximal stability
+
 
         // Update summary and chart for the current category
         updateSummaryAndChart(data, category);
@@ -1507,6 +1493,22 @@
                 var ctx = trendChartCanvas.getContext('2d');
                 if (trendCharts[category]) trendCharts[category].destroy();
 
+                // Dynamic min/max for Y-axis with a small padding
+                const filteredDataPoints = dataPoints.filter(n => n !== null);
+                let yMin = -3;
+                let yMax = 3;
+                if (filteredDataPoints.length > 0) {
+                    const dataMin = Math.min(...filteredDataPoints);
+                    const dataMax = Math.max(...filteredDataPoints);
+                    // Add padding unless data range is very small
+                    yMin = dataMin - (Math.abs(dataMin) > 0.1 ? 0.5 : 0.1); 
+                    yMax = dataMax + (Math.abs(dataMax) > 0.1 ? 0.5 : 0.1);
+                    // Ensure min and max don't cross zero if values are consistently positive/negative
+                    if (dataMin >= 0 && yMin < 0) yMin = 0;
+                    if (dataMax <= 0 && yMax > 0) yMax = 0;
+                }
+
+
                 trendCharts[category] = new Chart(ctx, {
                     type: 'line',
                     data: {
@@ -1531,9 +1533,8 @@
                                     display: true,
                                     text: 'Output Value (%)'
                                 },
-                                // Dynamically calculate min/max for Y-axis with a small padding
-                                min: Math.min(...dataPoints.filter(n => n !== null)) - 0.5, 
-                                max: Math.max(...dataPoints.filter(n => n !== null)) + 0.5, 
+                                min: yMin,
+                                max: yMax,
                                 ticks: {
                                     callback: function(value, index, values) {
                                         return value.toFixed(1) + '%';
@@ -1586,7 +1587,7 @@
         if (message === "") return;
 
         addChatMessage(message, 'user');
-        chatInput.value = '';
+        if (chatInput) chatInput.value = '';
 
         var lowerCaseMessage = message.toLowerCase();
         var botResponse = "";
@@ -1602,11 +1603,11 @@
 
         // Prepare a generic query object to send to the backend
         let queryBody = {
-            query_text: message, // Send the full query text
+            query_text: message, 
             month: monthKey,
             uid: AppState.currentUID,
-            category: AppState.activeCategory, // Crucially, send the active category
-            energy_type: extractedEnergyType, // Pass extracted entities if available
+            category: AppState.activeCategory, 
+            energy_type: extractedEnergyType, 
             date: extractedDate
         };
 
@@ -1619,7 +1620,6 @@
             var result = await response.json();
 
             if (result.status === 'success') {
-                // If backend provides a message, use it directly
                 botResponse = result.message;
             } else {
                 botResponse = "Sorry, I couldn't retrieve that information: " + (result.message || "Unknown error.");
@@ -1780,7 +1780,7 @@
             if (hots[AppState.activeCategory]) {
                 const container = $(`handsontable-container-${AppState.activeCategory}`);
                 if (container) {
-                    // Recalculate and apply width
+                    // Recalculate based on current container size
                     const energyColWidth = 80;
                     const dateCols = getMonthDates(AppState.currentDate);
                     const fixedDateColWidth = 80; 
