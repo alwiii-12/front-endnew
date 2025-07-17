@@ -15,7 +15,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="/firebase-init.js"></script> <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="/firebase-init.js"></script> 
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
 
@@ -26,7 +27,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
   <style>
-    /* ... (your existing CSS remains unchanged) ... */
     /* CSS Variables for Colors */
     :root {
       --primary-blue: #007bff;
@@ -316,7 +316,8 @@
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
         background: #ffffff;
         border: 1px solid rgba(0,0,0,0.05);
-        overflow-x: auto; /* CRUCIAL: Ensure horizontal scrollbar for the container */
+        /* CRUCIAL: Enable horizontal scrolling for the container */
+        overflow-x: auto; 
         overflow-y: hidden; /* Handsontable manages its own vertical scrollbar */
     }
 
@@ -1000,7 +1001,8 @@
   <div id="notification-container"></div>
 
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="/firebase-init.js"></script> <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="/firebase-init.js"></script> 
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
@@ -1077,17 +1079,21 @@
         notification.classList.add('notification-message', type);
         notification.textContent = message;
 
-        notificationContainer.appendChild(notification);
+        if (notificationContainer) { // Null check for notification container
+            notificationContainer.appendChild(notification);
 
-        void notification.offsetWidth; 
-        notification.classList.add('show');
+            void notification.offsetWidth; 
+            notification.classList.add('show');
 
-        setTimeout(() => {
-            notification.classList.remove('show');
-            notification.addEventListener('transitionend', () => {
-                notification.remove();
-            }, { once: true });
-        }, duration);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                notification.addEventListener('transitionend', () => {
+                    notification.remove();
+                }, { once: true });
+            }, duration);
+        } else {
+            console.warn("Notification container not found.", message);
+        }
     }
 
 
@@ -1184,25 +1190,15 @@
         // Destroy existing Handsontable for this category if it exists
         if (hots[category]) hots[category].destroy();
 
-        // Calculate explicit column widths to ensure full display and proper scrolling
-        // 'Energy' column: fixed width (e.g., 80px)
-        // Date columns: fixed width (e.g., 80px per date)
-        const fixedEnergyColWidth = 80;
-        const fixedDateColWidth = 80; 
-        const numberOfDateColumns = dateCols.length;
-
-        // Calculate total required width for all columns
-        const totalCalculatedContentWidth = fixedEnergyColWidth + (numberOfDateColumns * fixedDateColWidth);
-        
         // Initialize Handsontable for the current category
         hots[category] = new Handsontable(container, {
           data,
           rowHeaders: false,
-          stretchH: 'none', // Explicitly set to 'none' to rely on fixed widths/autoColumnSize
-          autoColumnSize: true, // Let Handsontable automatically determine column sizes initially
+          stretchH: 'none', // Explicitly set to 'none' for better scroll control
+          autoColumnSize: true, // Let Handsontable automatically determine column sizes
           autoRowSize: true, 
           height: 500, /* Fixed pixel height for stability */
-          width: totalCalculatedContentWidth, // Explicitly set the total width of the Handsontable instance
+          // width: calculated based on container and content
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
@@ -1243,19 +1239,17 @@
             return props;
           },
           // Removed afterViewRender hook entirely to prevent potential render loops
-          // The rendering is now strictly controlled externally.
         });
 
         // Explicitly load data and render after Handsontable initialization
         hots[category].loadData(data);
         hots[category].render(); 
 
-        // CRUCIAL: Force Handsontable to re-measure and re-render after its container has settled
-        // and after the initial data is loaded. This is done with a longer, more robust delay.
+        // CRUCIAL: Force Handsontable to re-measure and re-render after its container has settled.
+        // This is done with a longer, more robust delay.
         setTimeout(() => {
-            if (hots[category] && handsontableContainer.offsetWidth > 0 && handsontableContainer.offsetHeight > 0) {
-                // Manually trigger a render, and then update settings (even if no change)
-                // This forces Handsontable to re-evaluate its dimensions and redraw.
+            if (hots[category] && handsontableContainer.offsetWidth > 0) {
+                // Manually trigger a render, and then update settings to force full recalculation
                 hots[category].render(); 
                 hots[category].updateSettings({}); // Forces a deeper internal recalculation
             }
