@@ -314,8 +314,6 @@
     .handsontable-container {
         flex-grow: 1; /* Allow it to take available width */
         height: 500px; /* Fixed pixel height for Handsontable */
-        /* Removed min-width, letting flex and autoColumnSize manage fluidly */
-        
         border-radius: 16px;
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
         background: #ffffff;
@@ -841,14 +839,14 @@
         <div class="month-header-box" id="header"></div>
 
         <div class="category-selection">
-            <button id="btnOutput" data-category="Output">OUTPUT</button>
-            <button id="btnFlatness" data-category="Flatness">FLATNESS</button>
-            <button id="btnInlineSymmetry" data-category="Inline Symmetry">INLINE SYMMETRY</button>
-            <button id="btnCrosslineSymmetry" data-category="Crossline Symmetry">CROSSLINE SYMMETRY</button>
+            <button id="btn-Output" data-category="Output">OUTPUT</button>
+            <button id="btn-Flatness" data-category="Flatness">FLATNESS</button>
+            <button id="btn-Inline-Symmetry" data-category="Inline Symmetry">INLINE SYMMETRY</button>
+            <button id="btn-Crossline-Symmetry" data-category="Crossline Symmetry">CROSSLINE SYMMETRY</button>
         </div>
 
         <div class="category-panel-container">
-            <div id="panelOutput" class="category-panel"> 
+            <div id="panel-Output" class="category-panel">
                 <div class="data-display-area">
                     <div id="handsontable-container-Output" class="handsontable-container card-panel"></div>
                     <div id="summary-box-Output" class="summary-box">
@@ -881,7 +879,7 @@
                 </div>
             </div>
 
-            <div id="panelFlatness" class="category-panel">
+            <div id="panel-Flatness" class="category-panel">
                 <div class="data-display-area">
                     <div id="handsontable-container-Flatness" class="handsontable-container card-panel"></div>
                     <div id="summary-box-Flatness" class="summary-box">
@@ -914,69 +912,69 @@
                 </div>
             </div>
 
-            <div id="panelInline Symmetry" class="category-panel">
+            <div id="panel-Inline-Symmetry" class="category-panel">
                 <div class="data-display-area">
-                    <div id="handsontable-container-Inline Symmetry" class="handsontable-container card-panel"></div>
-                    <div id="summary-box-Inline Symmetry" class="summary-box">
-                        <canvas id="summaryChart-Inline Symmetry" width="280" height="280"></canvas>
+                    <div id="handsontable-container-Inline-Symmetry" class="handsontable-container card-panel"></div>
+                    <div id="summary-box-Inline-Symmetry" class="summary-box">
+                        <canvas id="summaryChart-Inline-Symmetry" width="280" height="280"></canvas>
                         <h3>Summary - Inline Symmetry</h3>
-                        <p><strong>Total Entries:</strong> <span id="total-Inline Symmetry">0</span></p>
-                        <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within-Inline Symmetry">0</span></p>
-                        <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning-Inline Symmetry">0</span></p>
-                        <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out-Inline Symmetry">0</span></p>
+                        <p><strong>Total Entries:</strong> <span id="total-Inline-Symmetry">0</span></p>
+                        <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within-Inline-Symmetry">0</span></p>
+                        <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning-Inline-Symmetry">0</span></p>
+                        <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out-Inline-Symmetry">0</span></p>
                     </div>
                 </div>
-                <div id="save-section-Inline Symmetry" class="save-section" style="text-align: center;">
+                <div id="save-section-Inline-Symmetry" class="save-section" style="text-align: center;">
                     <button class="save-btn" data-category="Inline Symmetry" style="font-weight:bold; background-color: var(--primary-blue); color: var(--text-light);">
                         <i class="fas fa-save"></i> Save Inline Symmetry
                     </button>
-                    <span id="lastSaved-Inline Symmetry" style="margin-left:15px;font-size:14px;color:gray;"></span>
+                    <span id="lastSaved-Inline-Symmetry" style="margin-left:15px;font-size:14px;color:gray;"></span>
                 </div>
-                <div id="export-section-Inline Symmetry" class="export-section" style="margin-top: 20px; text-align: center;">
+                <div id="export-section-Inline-Symmetry" class="export-section" style="margin-top: 20px; text-align: center;">
                     <button class="export-excel-btn" data-category="Inline Symmetry" style="background-color: #28a745; color: white;">
                         <i class="fas fa-file-excel"></i> Export Inline Symmetry Excel
                     </button>
                 </div>
-                <div id="trend-chart-section-Inline Symmetry" class="trend-chart-section" style="margin-top: 30px;">
+                <div id="trend-chart-section-Inline-Symmetry" class="trend-chart-section" style="margin-top: 30px;">
                     <h3>Energy Trend Analysis (Current Month) - Inline Symmetry</h3>
                     <div style="margin-bottom: 15px;">
-                        <label for="trendEnergySelect-Inline Symmetry" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
-                        <select id="trendEnergySelect-Inline Symmetry" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart('Inline Symmetry')"></select>
+                        <label for="trendEnergySelect-Inline-Symmetry" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
+                        <select id="trendEnergySelect-Inline-Symmetry" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart('Inline Symmetry')"></select>
                     </div>
-                    <canvas id="trendChart-Inline Symmetry" style="max-height: 350px; width: 100%;"></canvas>
+                    <canvas id="trendChart-Inline-Symmetry" style="max-height: 350px; width: 100%;"></canvas>
                 </div>
             </div>
 
-            <div id="panelCrossline Symmetry" class="category-panel">
+            <div id="panel-Crossline-Symmetry" class="category-panel">
                 <div class="data-display-area">
-                    <div id="handsontable-container-Crossline Symmetry" class="handsontable-container card-panel"></div>
-                    <div id="summary-box-Crossline Symmetry" class="summary-box">
-                        <canvas id="summaryChart-Crossline Symmetry" width="280" height="280"></canvas>
+                    <div id="handsontable-container-Crossline-Symmetry" class="handsontable-container card-panel"></div>
+                    <div id="summary-box-Crossline-Symmetry" class="summary-box">
+                        <canvas id="summaryChart-Crossline-Symmetry" width="280" height="280"></canvas>
                         <h3>Summary - Crossline Symmetry</h3>
-                        <p><strong>Total Entries:</strong> <span id="total-Crossline Symmetry">0</span></p>
-                        <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within-Crossline Symmetry">0</span></p>
-                        <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning-Crossline Symmetry">0</span></p>
-                        <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out-Crossline Symmetry">0</span></p>
+                        <p><strong>Total Entries:</strong> <span id="total-Crossline-Symmetry">0</span></p>
+                        <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within-Crossline-Symmetry">0</span></p>
+                        <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning-Crossline-Symmetry">0</span></p>
+                        <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out-Crossline-Symmetry">0</span></p>
                     </div>
                 </div>
-                <div id="save-section-Crossline Symmetry" class="save-section" style="text-align: center;">
+                <div id="save-section-Crossline-Symmetry" class="save-section" style="text-align: center;">
                     <button class="save-btn" data-category="Crossline Symmetry" style="font-weight:bold; background-color: var(--primary-blue); color: var(--text-light);">
                         <i class="fas fa-save"></i> Save Crossline Symmetry
                     </button>
-                    <span id="lastSaved-Crossline Symmetry" style="margin-left:15px;font-size:14px;color:gray;"></span>
+                    <span id="lastSaved-Crossline-Symmetry" style="margin-left:15px;font-size:14px;color:gray;"></span>
                 </div>
-                <div id="export-section-Crossline Symmetry" class="export-section" style="margin-top: 20px; text-align: center;">
+                <div id="export-section-Crossline-Symmetry" class="export-section" style="margin-top: 20px; text-align: center;">
                     <button class="export-excel-btn" data-category="Crossline Symmetry" style="background-color: #28a745; color: white;">
                         <i class="fas fa-file-excel"></i> Export Crossline Symmetry Excel
                     </button>
                 </div>
-                <div id="trend-chart-section-Crossline Symmetry" class="trend-chart-section" style="margin-top: 30px;">
+                <div id="trend-chart-section-Crossline-Symmetry" class="trend-chart-section" style="margin-top: 30px;">
                     <h3>Energy Trend Analysis (Current Month) - Crossline Symmetry</h3>
                     <div style="margin-bottom: 15px;">
-                        <label for="trendEnergySelect-Crossline Symmetry" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
-                        <select id="trendEnergySelect-Crossline Symmetry" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart('Crossline Symmetry')"></select>
+                        <label for="trendEnergySelect-Crossline-Symmetry" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
+                        <select id="trendEnergySelect-Crossline-Symmetry" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart('Crossline Symmetry')"></select>
                     </div>
-                    <canvas id="trendChart-Crossline Symmetry" style="max-height: 350px; width: 100%;"></canvas>
+                    <canvas id="trendChart-Crossline-Symmetry" style="max-height: 350px; width: 100%;"></canvas>
                 </div>
             </div>
         </div>
@@ -1067,6 +1065,11 @@
         "Crossline Symmetry": [],
     };
 
+    // --- NEW: Helper function to sanitize strings for use as IDs ---
+    function sanitizeForId(text) {
+        return text.replace(/\s+/g, '-');
+    }
+
     // --- NEW: Custom Notification Function ---
     function showNotification(message, type = 'info', duration = 3000) {
         const notification = document.createElement('div');
@@ -1075,7 +1078,7 @@
 
         notificationContainer.appendChild(notification);
 
-        void notification.offsetWidth; 
+        void notification.offsetWidth;
         notification.classList.add('show');
 
         setTimeout(() => {
@@ -1141,11 +1144,12 @@
 
     async function loadTable(category = activeCategory) {
       showLoader();
-      
+
+      const sanitizedCategory = sanitizeForId(category);
       // Apply loading transition to all relevant elements for the active category
-      document.getElementById(`handsontable-container-${category}`).classList.add('loading-transition');
-      document.getElementById(`summary-box-${category}`).classList.add('loading-transition');
-      document.getElementById(`trend-chart-section-${category}`).classList.add('loading-transition');
+      document.getElementById(`handsontable-container-${sanitizedCategory}`).classList.add('loading-transition');
+      document.getElementById(`summary-box-${sanitizedCategory}`).classList.add('loading-transition');
+      document.getElementById(`trend-chart-section-${sanitizedCategory}`).classList.add('loading-transition');
 
       var dateCols = getMonthDates(currentDate);
       document.getElementById('header').textContent = `${currentDate.toLocaleString('default',{month:'long'})} ${currentDate.getFullYear()} - ${category}`; // Updated header
@@ -1168,7 +1172,7 @@
                               (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() > today.getMonth());
 
         // Get the container for the specific Handsontable
-        const containerId = `handsontable-container-${category}`;
+        const containerId = `handsontable-container-${sanitizedCategory}`;
         const container = document.getElementById(containerId);
 
         // Destroy existing Handsontable for this category if it exists
@@ -1178,10 +1182,11 @@
         hots[category] = new Handsontable(container, {
           data,
           rowHeaders: false,
-          // Removed stretchH: 'all' to let autoColumnSize determine widths for better initial rendering and scrolling
-          autoColumnSize: true, // Explicitly enable autoColumnSize
-          autoRowSize: true, // Explicitly enable autoRowSize
-          height: 500, /* Fixed pixel height for stability */
+          // -- TABLE FIX: REMOVED autoColumnSize and ADDED explicit colWidths for stability --
+          colWidths: [85, ...Array(dateCols.length).fill(100)], // Energy column: 85px, Date columns: 100px
+          manualColumnResize: true, // Allow user to resize columns
+          autoRowSize: true,
+          height: 500,
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
@@ -1194,22 +1199,18 @@
           },
           cells: function (r, c) {
             var props = {};
-            // Start with an empty className to clear previous ones for this specific cell logic
-            props.className = ''; 
+            props.className = '';
 
             if (c === 0) { // Energy column (first column) is always read-only
                 props.readOnly = true;
                 return props;
             }
-            
-            // Check if the current month being displayed is a future month
-            // OR if it's the current month, but the day is in the future
+
+            // Check if the current cell is in the future
             if (isFutureMonth || (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() === today.getMonth() && c > today.getDate())) {
                 props.readOnly = true;
-                // Add the future-cell-readonly class
-                props.className = (props.className || '') + ' future-cell-readonly'; 
+                props.className = (props.className || '') + ' future-cell-readonly';
             } else {
-                // Ensure it's editable if not a future cell
                 props.readOnly = false;
             }
 
@@ -1220,40 +1221,9 @@
               props.className = (props.className || '') + ' ' + (Math.abs(v) <= tolerance.within ? 'within' : (Math.abs(v) <= tolerance.warning ? 'warning' : 'out'));
             }
             return props;
-          },
-          // Added afterRender hook and explicit sizing calls for robustness
-          afterRender: function(isFirstRender) {
-              if (hots[category]) {
-                  // After rendering, ensure the table updates its internal dimensions.
-                  // This is crucial for horizontal scrolling when columns don't fit.
-                  setTimeout(() => {
-                    if (hots[category]) { 
-                        // Call render() to force a redraw based on new dimensions
-                        hots[category].render(); 
-                        // Update dimensions is more specific to force re-measurement of table size
-                        // This helps with scrollbar appearance and horizontal layout.
-                        hots[category].updateDimensions(); 
-                    }
-                  }, 50); // Small delay to allow DOM to settle
-              }
-          },
-          // Adding a global afterGetColHeader hook to adjust header styling if needed,
-          // though this is more for visual consistency than functionality.
-          afterGetColHeader: function(col, TH) {
-              if (col === 0) { // Make the 'Energy' header static width
-                  TH.style.minWidth = '80px'; 
-                  TH.style.maxWidth = '80px';
-              } else {
-                  // Ensure other headers are not excessively wide, allowing more columns to fit
-                  TH.style.minWidth = 'auto'; // Reset min/max width for data columns if any
-                  TH.style.maxWidth = 'auto';
-              }
           }
+          // -- TABLE FIX: Removed unnecessary afterRender and afterGetColHeader hooks --
         });
-
-        // Explicitly load data and render after Handsontable initialization
-        hots[category].loadData(data);
-        hots[category].render(); 
 
         // Update summary and chart for the current category
         updateSummaryAndChart(data, category);
@@ -1266,9 +1236,9 @@
       } finally {
         hideLoader();
         // Remove loading transition from relevant elements for the active category
-        document.getElementById(`handsontable-container-${category}`).classList.remove('loading-transition');
-        document.getElementById(`summary-box-${category}`).classList.remove('loading-transition');
-        document.getElementById(`trend-chart-section-${category}`).classList.remove('loading-transition');
+        document.getElementById(`handsontable-container-${sanitizedCategory}`).classList.remove('loading-transition');
+        document.getElementById(`summary-box-${sanitizedCategory}`).classList.remove('loading-transition');
+        document.getElementById(`trend-chart-section-${sanitizedCategory}`).classList.remove('loading-transition');
       }
     }
 
@@ -1278,6 +1248,7 @@
 
       const dateCols = getMonthDates(currentDate);
       const tolerance = TOLERANCE_SETTINGS[category];
+      const sanitizedCategory = sanitizeForId(category);
 
       data.forEach((row, rowIndex) => {
         var energyType = row[0];
@@ -1301,12 +1272,12 @@
         });
       });
 
-      document.getElementById(`total-${category}`).textContent = total;
-      document.getElementById(`within-${category}`).textContent = within;
-      document.getElementById(`warning-${category}`).textContent = warning;
-      document.getElementById(`out-${category}`).textContent = out;
+      document.getElementById(`total-${sanitizedCategory}`).textContent = total;
+      document.getElementById(`within-${sanitizedCategory}`).textContent = within;
+      document.getElementById(`warning-${sanitizedCategory}`).textContent = warning;
+      document.getElementById(`out-${sanitizedCategory}`).textContent = out;
 
-      var ctx = document.getElementById(`summaryChart-${category}`).getContext('2d');
+      var ctx = document.getElementById(`summaryChart-${sanitizedCategory}`).getContext('2d');
       if (summaryCharts[category]) summaryCharts[category].destroy();
       summaryCharts[category] = new Chart(ctx, {
         type: 'pie',
@@ -1333,7 +1304,7 @@
             throw new Error('Failed to save data: ' + saveResponse.statusText + ' - ' + errorText);
         }
 
-        document.getElementById(`lastSaved-${category}`).textContent = "Last Saved: " + new Date().toLocaleString(); // Update specific last saved time
+        document.getElementById(`lastSaved-${sanitizeForId(category)}`).textContent = "Last Saved: " + new Date().toLocaleString(); // Update specific last saved time
         showNotification(`Data for ${category} saved successfully!`, 'success');
         updateTrendChart(category); // Update trend chart for the saved category
 
@@ -1378,15 +1349,13 @@
       }
     }
 
-    function changeMonth(m){ 
-        currentDate = new Date(currentDate.getFullYear(), m, 1); 
+    function changeMonth(m){
+        currentDate = new Date(currentDate.getFullYear(), m, 1);
         loadTable(activeCategory); // Load table for current active category
-        // No need to call updateTrendChart here, as loadTable already calls it
     }
-    function changeYear(o){ 
-        currentDate = new Date(currentDate.getFullYear()+o, currentDate.getMonth(), 1); 
+    function changeYear(o){
+        currentDate = new Date(currentDate.getFullYear()+o, currentDate.getMonth(), 1);
         loadTable(activeCategory); // Load table for current active category
-        // No need to call updateTrendChart here, as loadTable already calls it
     }
     function toggleDarkMode(){ document.body.classList.toggle('dark'); }
 
@@ -1409,7 +1378,8 @@
     }
 
     function populateTrendEnergySelect(category = activeCategory) {
-        var select = document.getElementById(`trendEnergySelect-${category}`);
+        const sanitizedCategory = sanitizeForId(category);
+        var select = document.getElementById(`trendEnergySelect-${sanitizedCategory}`);
         select.innerHTML = '';
         energyTypes.forEach(energy => {
             var option = document.createElement('option');
@@ -1423,14 +1393,15 @@
     }
 
     async function updateTrendChart(category = activeCategory) {
+        const sanitizedCategory = sanitizeForId(category);
         showLoader();
-        document.getElementById(`trend-chart-section-${category}`).classList.add('loading-transition');
+        document.getElementById(`trend-chart-section-${sanitizedCategory}`).classList.add('loading-transition');
 
-        var selectedEnergy = document.getElementById(`trendEnergySelect-${category}`).value;
+        var selectedEnergy = document.getElementById(`trendEnergySelect-${sanitizedCategory}`).value;
         if (!selectedEnergy) {
             hideLoader();
             showNotification("Please select an energy type for trend analysis.", 'info');
-            document.getElementById(`trend-chart-section-${category}`).classList.remove('loading-transition');
+            document.getElementById(`trend-chart-section-${sanitizedCategory}`).classList.remove('loading-transition');
             return;
         }
 
@@ -1463,7 +1434,7 @@
                 }
             }
 
-            var ctx = document.getElementById(`trendChart-${category}`).getContext('2d');
+            var ctx = document.getElementById(`trendChart-${sanitizedCategory}`).getContext('2d');
             if (trendCharts[category]) trendCharts[category].destroy();
 
             trendCharts[category] = new Chart(ctx, {
@@ -1522,7 +1493,7 @@
             showNotification(`Could not load trend data for ${category}. Please try again.`, 'error');
         } finally {
             hideLoader();
-            document.getElementById(`trend-chart-section-${category}`).classList.remove('loading-transition');
+            document.getElementById(`trend-chart-section-${sanitizedCategory}`).classList.remove('loading-transition');
         }
     }
 
@@ -1552,7 +1523,7 @@
 
         var extractedEnergyType = energyMatch ? energyMatch[1].toUpperCase().replace(/\s/g, '') : null;
         var extractedDate = dateMatch ? dateMatch[0] : null;
-        
+
         var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
 
         // Prepare a generic query object to send to the backend
@@ -1583,7 +1554,7 @@
             console.error("Chatbot query error:", error);
             botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
         }
-        
+
         addChatMessage(botResponse, 'bot');
     }
 
@@ -1632,15 +1603,18 @@
     async function switchCategory(newCategory) {
         if (activeCategory === newCategory) return; // No change needed
 
+        const oldSanitized = sanitizeForId(activeCategory);
+        const newSanitized = sanitizeForId(newCategory);
+
         // Deactivate current category button and panel
-        document.getElementById(`btn${activeCategory.replace(/\s/g, '')}`).classList.remove('active-category');
-        document.getElementById(`panel${activeCategory}`).classList.remove('active-panel');
+        document.getElementById(`btn-${oldSanitized}`).classList.remove('active-category');
+        document.getElementById(`panel-${oldSanitized}`).classList.remove('active-panel');
 
         activeCategory = newCategory;
 
         // Activate new category button and panel
-        document.getElementById(`btn${activeCategory.replace(/\s/g, '')}`).classList.add('active-category');
-        document.getElementById(`panel${activeCategory}`).classList.add('active-panel');
+        document.getElementById(`btn-${newSanitized}`).classList.add('active-category');
+        document.getElementById(`panel-${newSanitized}`).classList.add('active-panel');
 
         // Load data for the new active category
         await loadTable(activeCategory);
@@ -1705,12 +1679,12 @@
                 localStorage.setItem("uid", currentUID);
                 document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
                 buildMonthButtons();
-                
+
                 // Initialize the active category (default to Output)
-                // This ensures the correct button and panel are active on initial load
-                document.getElementById(`btn${activeCategory.replace(/\s/g, '')}`).classList.add('active-category');
-                document.getElementById(`panel${activeCategory}`).classList.add('active-panel');
-                
+                const activeSanitized = sanitizeForId(activeCategory);
+                document.getElementById(`btn-${activeSanitized}`).classList.add('active-category');
+                document.getElementById(`panel-${activeSanitized}`).classList.add('active-panel');
+
                 await loadTable(activeCategory); // Load data for the initial active category
             } else {
                 window.location.replace("login.html");
