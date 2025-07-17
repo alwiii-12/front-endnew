@@ -380,7 +380,7 @@
     }
     .save-section button:hover {
         background-color: #0056b3;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+        box_shadow: 0 4px 10px rgba(0,0,0,0.12);
     }
     button:active, a.button:active, select:active {
         transform: translateY(0);
@@ -888,7 +888,7 @@
                         <canvas id="summaryChart-Flatness" width="280" height="280"></canvas>
                         <h3>Summary - Flatness</h3>
                         <p><strong>Total Entries:</strong> <span id="total-Flatness">0</span></p>
-                        <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within-Flatness">0</span></p>
+                        <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</b> <span id="within-Flatness">0</span></p>
                         <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning-Flatness">0</span></p>
                         <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out-Flatness">0</span></p>
                     </div>
@@ -1219,16 +1219,17 @@
             }
             return props;
           },
-          // Fixed afterViewRender hook syntax, added call to render() after a small timeout for stability
+          // Fixed afterViewRender hook syntax
           afterViewRender: function(isFirstRender) {
               if (hots[category]) {
-                  // A small delay (0ms to 50ms) can sometimes help ensure the DOM is fully stable before rendering
-                  // This is the most reliable way to get Handsontable to re-measure and redraw correctly
+                  // This forces Handsontable to recalculate its dimensions after its container is visible.
+                  // It's crucial for `stretchH: 'all'` to work correctly in dynamically sized containers.
                   setTimeout(() => {
                     if (hots[category]) { 
+                        // Call render() to force a redraw based on new dimensions
                         hots[category].render();
                     }
-                  }, 50); 
+                  }, 50); // A small delay is often needed for browser layout to settle
               }
           }
         });
