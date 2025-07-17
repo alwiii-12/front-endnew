@@ -314,13 +314,13 @@
     .handsontable-container {
         flex-grow: 1; /* Allow it to take available width */
         height: 500px; /* Fixed pixel height for Handsontable */
-        /* Removed min-width for better flex distribution. */
+        /* Removed min-width, letting flex and autoColumnSize manage fluidly */
         
         border-radius: 16px;
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
         background: #ffffff;
         border: 1px solid rgba(0,0,0,0.05);
-        overflow: hidden; /* Keep this for Handsontable's internal scrolling */
+        overflow: hidden; /* Handsontable's internal scrolling needs this */
     }
 
     /* Handsontable specific overrides for cell background and text */
@@ -380,7 +380,7 @@
     }
     .save-section button:hover {
         background-color: #0056b3;
-        box_shadow: 0 4px 10px rgba(0,0,0,0.12);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.12);
     }
     button:active, a.button:active, select:active {
         transform: translateY(0);
@@ -1178,9 +1178,9 @@
         hots[category] = new Handsontable(container, {
           data,
           rowHeaders: false,
-          // Removed stretchH: 'all' as it seems to be causing conflicts
-          autoColumnSize: true, // Let Handsontable automatically size columns
-          autoRowSize: true, // Let Handsontable automatically size rows
+          // Removed stretchH: 'all' to let autoColumnSize determine widths for better initial rendering and scrolling
+          autoColumnSize: true, // Explicitly enable autoColumnSize
+          autoRowSize: true, // Explicitly enable autoRowSize
           height: 500, /* Fixed pixel height for stability */
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
@@ -1221,17 +1221,32 @@
             }
             return props;
           },
-          // Fixed afterViewRender hook syntax
-          afterViewRender: function(isFirstRender) {
+          // Added afterRender hook and explicit sizing calls for robustness
+          afterRender: function(isFirstRender) {
               if (hots[category]) {
-                  // A small delay (0ms to 50ms) can help ensure the DOM is fully stable before rendering.
+                  // After rendering, ensure the table updates its internal dimensions.
+                  // This is crucial for horizontal scrolling when columns don't fit.
                   setTimeout(() => {
                     if (hots[category]) { 
-                        hots[category].render(); // Force re-render
-                        // Calling updateSettings({}) after render can sometimes force a full recalculation of dimensions if needed.
-                        hots[category].updateSettings({});
+                        // Call render() to force a redraw based on new dimensions
+                        hots[category].render(); 
+                        // Update dimensions is more specific to force re-measurement of table size
+                        // This helps with scrollbar appearance and horizontal layout.
+                        hots[category].updateDimensions(); 
                     }
-                  }, 50); 
+                  }, 50); // Small delay to allow DOM to settle
+              }
+          },
+          // Adding a global afterGetColHeader hook to adjust header styling if needed,
+          // though this is more for visual consistency than functionality.
+          afterGetColHeader: function(col, TH) {
+              if (col === 0) { // Make the 'Energy' header static width
+                  TH.style.minWidth = '80px'; 
+                  TH.style.maxWidth = '80px';
+              } else {
+                  // Ensure other headers are not excessively wide, allowing more columns to fit
+                  TH.style.minWidth = 'auto'; // Reset min/max width for data columns if any
+                  TH.style.maxWidth = 'auto';
               }
           }
         });
