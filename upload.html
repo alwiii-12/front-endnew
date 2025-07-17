@@ -1182,20 +1182,20 @@
         hots[category] = new Handsontable(container, {
           data,
           rowHeaders: false,
-          // -- TABLE FIX: REMOVED autoColumnSize and ADDED explicit colWidths for stability --
-          colWidths: [85, ...Array(dateCols.length).fill(100)], // Energy column: 85px, Date columns: 100px
-          manualColumnResize: true, // Allow user to resize columns
+          // -- TABLE FIX v2: Added robust settings for rendering in a flexbox layout --
+          colWidths: [85, ...Array(dateCols.length).fill(100)],
+          manualColumnResize: true,
           autoRowSize: true,
           height: 500,
+          stretchH: 'none', // Explicitly prevent columns from stretching
+          observeDOMVisibility: true, // Re-render the table when its container becomes visible
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
           afterChange: (changes, source) => {
             if (!changes || source === 'loadData') return;
-            // Ensure summary and chart update is specific to the changed category
             updateSummaryAndChart(hots[category].getData(), category);
-            // Trigger a re-render of cell styles after changes
-            hots[category].render(); // This will re-evaluate the 'cells' function for affected cells
+            hots[category].render();
           },
           cells: function (r, c) {
             var props = {};
@@ -1221,8 +1221,18 @@
               props.className = (props.className || '') + ' ' + (Math.abs(v) <= tolerance.within ? 'within' : (Math.abs(v) <= tolerance.warning ? 'warning' : 'out'));
             }
             return props;
+          },
+          afterRender: function(isFirstRender) {
+              if (isFirstRender) {
+                  // This timeout helps fix rendering issues on initial load
+                  // by forcing a re-render after the browser has settled the layout.
+                  setTimeout(() => {
+                      if (hots[category] && !hots[category].isDestroyed) {
+                          hots[category].render();
+                      }
+                  }, 10);
+              }
           }
-          // -- TABLE FIX: Removed unnecessary afterRender and afterGetColHeader hooks --
         });
 
         // Update summary and chart for the current category
