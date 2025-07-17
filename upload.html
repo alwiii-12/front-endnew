@@ -314,16 +314,19 @@
       align-items: flex-start;
       flex-wrap: wrap;
       flex: 1;
+      min-height: 500px; /* Ensure sufficient height for this flex container */
     }
     .handsontable-container { /* Replaced #table with this class */
         flex-grow: 1;
-        height: 500px;
+        /* Removed fixed height: 500px; from here */
         min-width: 400px;
         /* Apply card-panel base styles */
         border-radius: 16px;
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
         background: #ffffff;
         border: 1px solid rgba(0,0,0,0.05);
+        /* Added height: 100% to fill parent flex item */
+        height: 100%; 
         overflow: hidden;
     }
     /* Handsontable specific overrides for cell background and text */
@@ -383,7 +386,7 @@
     }
     .save-section button:hover { /* Changed #save-section to .save-section */
         background-color: #0056b3;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+        box_shadow: 0 4px 10px rgba(0,0,0,0.12);
     }
     button:active, a.button:active, select:active {
         transform: translateY(0);
@@ -1231,6 +1234,10 @@
             return props;
           }
         });
+
+        // Explicitly load data and render after Handsontable initialization
+        hots[category].loadData(data); [cite_start]// [cite: 1]
+        hots[category].render(); [cite_start]// [cite: 1]
 
         // Update summary and chart for the current category
         updateSummaryAndChart(data, category);
