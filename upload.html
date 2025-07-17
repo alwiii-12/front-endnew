@@ -155,7 +155,7 @@
       display: flex;
       flex: 1;
       overflow: hidden;
-      position: relative; /* For absolute positioning of category panels */
+      /* Removed position: relative; */
     }
     .sidebar {
       width: 200px;
@@ -283,37 +283,28 @@
     }
 
 
-    /* NEW: Category Panel Container */
+    /* NEW: Category Panel Container (Adjusted for normal flow) */
     .category-panel-container {
-        position: relative; /* For absolute positioning of individual panels */
-        flex-grow: 1;
+        /* Removed position: relative; */
+        /* This container will directly hold the active panel's content */
         display: flex;
         flex-direction: column;
         gap: 20px;
-        min-height: 500px; /* Ensure space for content */
+        flex-grow: 1; /* Allow it to take up remaining vertical space */
+        /* min-height: 500px; Remove if children dynamically provide height */
     }
 
+    /* Individual category panels - will be toggled with display: flex/none */
     .category-panel {
-        position: absolute; /* Allows panels to overlap in the same space */
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
         display: none; /* Hidden by default */
-        flex-direction: column;
+        flex-direction: column; /* Ensure internal content stacks vertically */
         gap: 20px;
-        transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
-        opacity: 0;
-        transform: translateY(10px);
-        pointer-events: none; /* So elements don't block interaction when hidden */
+        width: 100%; /* Take full width of its parent */
+        /* Remove transitions that rely on opacity/transform as display changes */
     }
 
     .category-panel.active-panel {
-        display: flex; /* Show active panel */
-        opacity: 1;
-        transform: translateY(0);
-        pointer-events: auto; /* Enable interaction for active panel */
-        position: relative; /* Ensure it takes up space in the flex container */
+        display: flex; /* Show active panel as flex container */
     }
 
     /* Existing container for table and summary now within category-panel */
@@ -324,7 +315,7 @@
       flex-wrap: wrap;
       flex: 1;
     }
-    #table { /* This ID will now be dynamically assigned to the active Handsontable container */
+    .handsontable-container { /* Replaced #table with this class */
         flex-grow: 1;
         height: 500px;
         min-width: 400px;
@@ -377,11 +368,11 @@
         margin-bottom: 15px;
     }
 
-    #save-section {
+    .save-section { /* Changed #save-section to .save-section */
       margin-top: 0px;
       text-align: center;
     }
-    #save-section button {
+    .save-section button { /* Changed #save-section to .save-section */
         padding: 10px 20px;
         font-size: 1em;
         font-weight: bold;
@@ -390,7 +381,7 @@
         border-radius: 8px;
         box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
-    #save-section button:hover {
+    .save-section button:hover { /* Changed #save-section to .save-section */
         background-color: #0056b3;
         box-shadow: 0 4px 10px rgba(0,0,0,0.12);
     }
@@ -400,11 +391,11 @@
     }
 
     /* NEW: Export Buttons Section Styling */
-    #export-section {
+    .export-section { /* Changed #export-section to .export-section */
         margin-top: 20px;
         text-align: center;
     }
-    #export-section button {
+    .export-section button { /* Changed #export-section to .export-section */
         padding: 10px 15px;
         font-size: 0.95em;
         font-weight: bold;
@@ -412,7 +403,7 @@
         margin: 0 5px; /* Spacing between buttons */
         color: var(--text-light);
     }
-    #export-section button:hover {
+    .export-section button:hover { /* Changed #export-section to .export-section */
         box-shadow: 0 4px 10px var(--shadow-light);
     }
 
@@ -539,16 +530,21 @@
 
 
     /* NEW CSS for Smooth Transitions */
-    .data-container {
-        transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
-        opacity: 1;
-        transform: translateY(0);
+    .data-container { /* This class is now primarily for general panel elements, not handsontable itself */
+        /* Removed transitions here, as display:none/flex handles visibility */
+        /* opacity: 1; */
+        /* transform: translateY(0); */
     }
 
-    .data-container.loading-transition {
+    /* Keep transition for loading, applied to specific elements */
+    .handsontable-container.loading-transition,
+    .summary-box.loading-transition,
+    .trend-chart-section.loading-transition {
         opacity: 0;
         transform: translateY(10px);
+        transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out; /* Apply transition here */
     }
+
 
     /* NEW CSS for Chatbot */
     #chat-bubble {
@@ -708,7 +704,7 @@
     /* NEW: Print-Specific CSS */
     @media print {
         /* Hide elements not meant for print */
-        .topbar, .sidebar, #chat-bubble, #chat-window, #save-section button, #loading-overlay, #trendEnergySelect, #showTrendBtn, #export-section, .category-selection {
+        .topbar, .sidebar, #chat-bubble, #chat-window, .save-section, .export-section, .category-selection {
             display: none !important;
         }
 
@@ -732,9 +728,9 @@
             height: auto !important;
         }
         /* Adjusted for category-panel to be printable */
-        .category-panel.active-panel {
-            position: relative !important;
-            display: block !important; /* Changed to block for print flow */
+        .category-panel { /* Target all panels */
+            display: flex !important; /* Force all panels to display */
+            flex-direction: column !important; /* Maintain flex layout */
             opacity: 1 !important;
             transform: translateY(0) !important;
             page-break-after: always; /* Ensure each category starts on a new page */
@@ -861,9 +857,9 @@
         </div>
 
         <div class="category-panel-container">
-            <div id="panelOutput" class="category-panel active-panel">
+            <div id="panelOutput" class="category-panel"> 
                 <div class="data-display-area">
-                    <div id="handsontable-container-Output" class="handsontable-container card-panel" style="flex-grow: 1; height: 500px; min-width: 400px; overflow: hidden;"></div>
+                    <div id="handsontable-container-Output" class="handsontable-container card-panel"></div>
                     <div id="summary-box-Output" class="summary-box">
                         <canvas id="summaryChart-Output" width="280" height="280"></canvas>
                         <h3>Summary - Output</h3>
@@ -896,7 +892,7 @@
 
             <div id="panelFlatness" class="category-panel">
                 <div class="data-display-area">
-                    <div id="handsontable-container-Flatness" class="handsontable-container card-panel" style="flex-grow: 1; height: 500px; min-width: 400px; overflow: hidden;"></div>
+                    <div id="handsontable-container-Flatness" class="handsontable-container card-panel"></div>
                     <div id="summary-box-Flatness" class="summary-box">
                         <canvas id="summaryChart-Flatness" width="280" height="280"></canvas>
                         <h3>Summary - Flatness</h3>
@@ -929,7 +925,7 @@
 
             <div id="panelInline Symmetry" class="category-panel">
                 <div class="data-display-area">
-                    <div id="handsontable-container-Inline Symmetry" class="handsontable-container card-panel" style="flex-grow: 1; height: 500px; min-width: 400px; overflow: hidden;"></div>
+                    <div id="handsontable-container-Inline Symmetry" class="handsontable-container card-panel"></div>
                     <div id="summary-box-Inline Symmetry" class="summary-box">
                         <canvas id="summaryChart-Inline Symmetry" width="280" height="280"></canvas>
                         <h3>Summary - Inline Symmetry</h3>
@@ -962,7 +958,7 @@
 
             <div id="panelCrossline Symmetry" class="category-panel">
                 <div class="data-display-area">
-                    <div id="handsontable-container-Crossline Symmetry" class="handsontable-container card-panel" style="flex-grow: 1; height: 500px; min-width: 400px; overflow: hidden;"></div>
+                    <div id="handsontable-container-Crossline Symmetry" class="handsontable-container card-panel"></div>
                     <div id="summary-box-Crossline Symmetry" class="summary-box">
                         <canvas id="summaryChart-Crossline Symmetry" width="280" height="280"></canvas>
                         <h3>Summary - Crossline Symmetry</h3>
@@ -1688,6 +1684,7 @@
                 buildMonthButtons();
                 
                 // Initialize the active category (default to Output)
+                // This ensures the correct button and panel are active on initial load
                 document.getElementById(`btn${activeCategory.replace(/\s/g, '')}`).classList.add('active-category');
                 document.getElementById(`panel${activeCategory}`).classList.add('active-panel');
                 
