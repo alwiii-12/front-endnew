@@ -155,7 +155,6 @@
       display: flex;
       flex: 1;
       overflow: hidden;
-      /* Removed position: relative; */
     }
     .sidebar {
       width: 200px;
@@ -283,52 +282,49 @@
     }
 
 
-    /* NEW: Category Panel Container (Adjusted for normal flow) */
+    /* Category Panel Container - Now acts as a wrapper for the currently active panel */
     .category-panel-container {
-        /* Removed position: relative; */
-        /* This container will directly hold the active panel's content */
         display: flex;
-        flex-direction: column;
+        flex-direction: column; /* Stack active panel's content vertically */
         gap: 20px;
-        flex-grow: 1; /* Allow it to take up remaining vertical space */
-        /* min-height: 500px; Remove if children dynamically provide height */
+        flex-grow: 1;
+        /* No specific height needed here, children will define content size */
     }
 
     /* Individual category panels - will be toggled with display: flex/none */
     .category-panel {
         display: none; /* Hidden by default */
-        flex-direction: column; /* Ensure internal content stacks vertically */
+        flex-direction: column; /* Stack internal content vertically */
         gap: 20px;
         width: 100%; /* Take full width of its parent */
-        /* Remove transitions that rely on opacity/transform as display changes */
     }
 
     .category-panel.active-panel {
         display: flex; /* Show active panel as flex container */
     }
 
-    /* Existing container for table and summary now within category-panel */
+    /* Original container for table and summary, now within each category-panel */
     .data-display-area {
-      display: flex;
+      display: flex; /* Make children (handsontable and summary) sit side-by-side */
       gap: 20px;
-      align-items: flex-start;
-      flex-wrap: wrap;
-      flex: 1;
-      min-height: 500px; /* Ensure sufficient height for this flex container */
+      align-items: flex-start; /* Align content to the top */
+      flex-wrap: wrap; /* Allow wrapping on smaller screens */
+      flex: 1; /* Allow this section to grow */
+      min-height: 500px; /* Ensure a minimum height for this entire area */
     }
-    .handsontable-container { /* Replaced #table with this class */
-        flex-grow: 1;
-        /* Removed fixed height: 500px; from here */
-        min-width: 400px;
+
+    .handsontable-container {
+        flex-grow: 1; /* Allow it to take available width */
+        height: 500px; /* Explicit fixed height for Handsontable */
+        min-width: 400px; /* Minimum width before wrapping */
         /* Apply card-panel base styles */
         border-radius: 16px;
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
         background: #ffffff;
         border: 1px solid rgba(0,0,0,0.05);
-        /* Added height: 100% to fill parent flex item */
-        height: 100%; 
-        overflow: hidden;
+        overflow: hidden; /* Keep this for Handsontable's internal scrolling */
     }
+
     /* Handsontable specific overrides for cell background and text */
     .handsontable-container .ht_master, .handsontable-container .handsontable {
         background-color: #ffffff;
@@ -343,8 +339,8 @@
     }
 
     .summary-box {
-      width: 300px;
-      min-width: 280px;
+      width: 300px; /* Fixed width for the summary box */
+      min-width: 280px; /* Minimum width */
       padding: 20px;
       /* Apply card-panel base styles */
       border-radius: 16px;
@@ -371,11 +367,11 @@
         margin-bottom: 15px;
     }
 
-    .save-section { /* Changed #save-section to .save-section */
-      margin-top: 0px;
+    .save-section {
+      margin-top: 0px; /* Adjusted as it's now inside category-panel */
       text-align: center;
     }
-    .save-section button { /* Changed #save-section to .save-section */
+    .save-section button {
         padding: 10px 20px;
         font-size: 1em;
         font-weight: bold;
@@ -384,21 +380,21 @@
         border-radius: 8px;
         box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
-    .save-section button:hover { /* Changed #save-section to .save-section */
+    .save-section button:hover {
         background-color: #0056b3;
-        box_shadow: 0 4px 10px rgba(0,0,0,0.12);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.12);
     }
     button:active, a.button:active, select:active {
         transform: translateY(0);
         box-shadow: 0 1px 4px var(--shadow-light) inset;
     }
 
-    /* NEW: Export Buttons Section Styling */
-    .export-section { /* Changed #export-section to .export-section */
-        margin-top: 20px;
+    /* Export Buttons Section Styling */
+    .export-section {
+        margin-top: 20px; /* Adjusted as it's now inside category-panel */
         text-align: center;
     }
-    .export-section button { /* Changed #export-section to .export-section */
+    .export-section button {
         padding: 10px 15px;
         font-size: 0.95em;
         font-weight: bold;
@@ -406,13 +402,13 @@
         margin: 0 5px; /* Spacing between buttons */
         color: var(--text-light);
     }
-    .export-section button:hover { /* Changed #export-section to .export-section */
+    .export-section button:hover {
         box-shadow: 0 4px 10px var(--shadow-light);
     }
 
 
     .trend-chart-section {
-        margin-top: 0px;
+        margin-top: 30px; /* Adjusted as it's now inside category-panel */
         padding: 20px;
         /* Apply card-panel base styles */
         border-radius: 16px;
@@ -533,13 +529,7 @@
 
 
     /* NEW CSS for Smooth Transitions */
-    .data-container { /* This class is now primarily for general panel elements, not handsontable itself */
-        /* Removed transitions here, as display:none/flex handles visibility */
-        /* opacity: 1; */
-        /* transform: translateY(0); */
-    }
-
-    /* Keep transition for loading, applied to specific elements */
+    /* Transitions applied to specific loading elements only */
     .handsontable-container.loading-transition,
     .summary-box.loading-transition,
     .trend-chart-section.loading-transition {
@@ -1175,7 +1165,6 @@
 
         // Get today's date for comparison
         const today = new Date();
-        // const currentMonthYear = new Date(today.getFullYear(), today.getMonth(), 1); // Not directly used anymore
 
         // Determine if the currently loaded month is in the future
         const isFutureMonth = currentDate.getFullYear() > today.getFullYear() ||
@@ -1193,7 +1182,7 @@
           data,
           rowHeaders: false,
           stretchH: 'all',
-          height: 500,
+          height: 'auto', /* Changed to 'auto' or a fixed pixel value for predictable rendering */
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
@@ -1236,8 +1225,8 @@
         });
 
         // Explicitly load data and render after Handsontable initialization
-        hots[category].loadData(data); [cite_start]// [cite: 1]
-        hots[category].render(); [cite_start]// [cite: 1]
+        hots[category].loadData(data);
+        hots[category].render(); 
 
         // Update summary and chart for the current category
         updateSummaryAndChart(data, category);
