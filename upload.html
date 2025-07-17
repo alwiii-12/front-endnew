@@ -315,7 +315,14 @@
         flex-grow: 1; /* Allow it to take available width */
         height: 500px; /* Fixed pixel height for Handsontable */
         min-width: 400px; /* Minimum width before wrapping */
-        /* Apply card-panel base styles */
+        /* Explicitly set width to take all available space minus summary box width and gap */
+        /* The summary box is 300px + 20px gap = 320px */
+        /* This calc() was causing issues with flex-grow and scrollbars */
+        /* width: calc(100% - 320px); */ 
+        
+        /* Removed `width: calc(100% - 320px);` and relied on `flex-grow: 1`
+           and the parent `data-display-area` for width distribution */
+
         border-radius: 16px;
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
         background: #ffffff;
@@ -1218,17 +1225,26 @@
               props.className = (props.className || '') + ' ' + (Math.abs(v) <= tolerance.within ? 'within' : (Math.abs(v) <= tolerance.warning ? 'warning' : 'out'));
             }
             return props;
-          }
-        });
+          },
+          // Add afterViewRender hook to force a render/resize
+          afterViewRender: function(is*/
+        afterViewRender: function(isFirstRender) {
+            if (hots[category]) {
+                // This forces Handsontable to recalculate its dimensions after its container is visible
+                // and the browser has potentially laid out the page.
+                hots[category].render();
+            }
+        }
+    });
 
-        // Explicitly load data and render after Handsontable initialization
-        hots[category].loadData(data);
-        hots[category].render(); 
+    // Explicitly load data and render after Handsontable initialization
+    hots[category].loadData(data);
+    hots[category].render(); 
 
-        // Update summary and chart for the current category
-        updateSummaryAndChart(data, category);
-        populateTrendEnergySelect(category); // Populate trend select for the active category
-        updateTrendChart(category); // Update trend chart for the active category
+    // Update summary and chart for the current category
+    updateSummaryAndChart(data, category);
+    populateTrendEnergySelect(category); // Populate trend select for the active category
+    updateTrendChart(category); // Update trend chart for the active category
 
       } catch(e) {
         console.error(`Error loading table data for ${category}:`, e);
