@@ -319,7 +319,8 @@
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
         background: #ffffff;
         border: 1px solid rgba(0,0,0,0.05);
-        overflow: hidden; /* Keep this for Handsontable's internal scrolling */
+        overflow-x: auto; /* CRUCIAL: Ensure horizontal scrollbar for the container */
+        overflow-y: hidden; /* Handsontable manages its own vertical scrollbar */
     }
 
     /* Handsontable specific overrides for cell background and text */
@@ -372,7 +373,7 @@
         padding: 10px 20px;
         font-size: 1em;
         font-weight: bold;
-        background-color: #007bff;
+        background-color: var(--primary-blue);
         color: #fff;
         border-radius: 8px;
         box-shadow: 0 2px 6px rgba(0,0,0,0.08);
@@ -694,7 +695,7 @@
     /* NEW: Print-Specific CSS */
     @media print {
         /* Hide elements not meant for print */
-        .topbar, .sidebar, #chat-bubble, #chat-window, #save-section button, #loading-overlay, #trendEnergySelect, #showTrendBtn, #export-section {
+        .topbar, .sidebar, #chat-bubble, #chat-window, .save-section, .export-section, .category-selection {
             display: none !important;
         }
 
@@ -717,12 +718,23 @@
             overflow: visible !important;
             height: auto !important;
         }
-        .container {
+        /* Adjusted for category-panel to be printable */
+        .category-panel { /* Target all panels */
+            display: flex !important; /* Force all panels to display */
+            flex-direction: column !important; /* Maintain flex layout */
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+            page-break-after: always; /* Ensure each category starts on a new page */
+            height: auto !important; /* Allow content to dictate height */
+        }
+        .data-display-area {
             flex-direction: column !important;
             align-items: center !important;
             gap: 20px;
+            page-break-inside: avoid;
         }
-        #table, .summary-box, .trend-chart-section {
+
+        .handsontable-container, .summary-box, .trend-chart-section {
             box-shadow: none !important;
             border: 1px solid #eee !important;
             background: white !important;
@@ -730,12 +742,12 @@
             margin: 0 auto 20px auto !important;
             page-break-inside: avoid;
         }
-        #table {
+        .handsontable-container {
             overflow: visible !important;
             height: auto !important;
         }
         /* Make Handsontable cells print cleanly */
-        #table .handsontable td, #table .handsontable th {
+        .handsontable-container .handsontable td, .handsontable-container .handsontable th {
             white-space: normal !important;
         }
 
@@ -999,47 +1011,54 @@
     var auth = firebase.auth();
     var db = firebase.firestore();
 
-    var currentUID, currentHospital;
+    // Centralized AppState for better global variable management
+    const AppState = {
+        currentDate: new Date(), 
+        currentUID: null,
+        activeCategory: 'Output', // Default active category
+        currentHospital: ''
+    };
+
+    // Helper function for document.getElementById
+    const $ = id => document.getElementById(id);
+
 
     // Declare global variables that will hold Handsontable and Chart.js instances
-    // These will now be objects mapping category names to their instances
     var hots = {}; // Stores Handsontable instances: hots['Output'], hots['Flatness'], etc.
     var summaryCharts = {}; // Stores Chart.js summary chart instances
     var trendCharts = {}; // Stores Chart.js trend chart instances
 
-    // Get references to DOM elements using their IDs - ALL DECLARED ONLY ONCE HERE
-    var monthsDiv = document.getElementById('months');
-    var header = document.getElementById('header');
-    var yearLabel = document.getElementById('year');
-    var darkToggle = document.getElementById('darkToggle');
-    var logoutBtn = document.getElementById('logoutBtn');
-    var myProfileBtn = document.getElementById('myProfileBtn');
-    var prevYearBtn = document.getElementById('prevYearBtn');
-    var nextYearBtn = document.getElementById('nextYearBtn');
+    // Get references to DOM elements using the new $ helper
+    var monthsDiv = $('months');
+    var header = $('header');
+    var yearLabel = $('year');
+    var darkToggle = $('darkToggle');
+    var logoutBtn = $('logoutBtn');
+    var myProfileBtn = $('myProfileBtn');
+    var prevYearBtn = $('prevYearBtn');
+    var nextYearBtn = $('nextYearBtn');
 
-    // NEW: Category specific UI elements
+    // Category specific UI elements
     const CATEGORIES = ["Output", "Flatness", "Inline Symmetry", "Crossline Symmetry"];
-    let activeCategory = "Output"; // Default active category
 
     // Chatbot UI element references
-    var chatBubble = document.getElementById('chat-bubble');
-    var chatWindow = document.getElementById('chat-window');
-    var closeChatBtn = document.getElementById('close-chat-btn');
-    var chatBody = document.getElementById('chat-body');
-    var chatInput = document.getElementById('chat-input');
-    var sendChatBtn = document.getElementById('send-chat-btn');
+    var chatBubble = $('chat-bubble');
+    var chatWindow = $('chat-window');
+    var closeChatBtn = $('close-chat-btn');
+    var chatBody = $('chat-body');
+    var chatInput = $('chat-input');
+    var sendChatBtn = $('send-chat-btn');
 
-    // NEW: Notification Container
-    var notificationContainer = document.getElementById('notification-container');
+    // Notification Container
+    var notificationContainer = $('notification-container');
 
     // Define the backend URL
-    const BACKEND_URL = "https://back-end-wrxi.onrender.com"; // Ensure this matches your backend URL
+    const BACKEND_URL = "https://back-end-wrxi.onrender.com";
 
 
-    var currentDate = new Date(); currentDate.setDate(1);
     var energyTypes = ["6X","10X","15X","6X FFF","10X FFF","6E","9E","12E","15E","18E"];
 
-    // NEW: Tolerance settings mapped to categories
+    // Tolerance settings mapped to categories
     const TOLERANCE_SETTINGS = {
         "Output": { within: 1.8, warning: 2.0, out: 2.0 },
         "Flatness": { within: 0.9, warning: 1.0, out: 1.0 },
@@ -1055,7 +1074,7 @@
         "Crossline Symmetry": [],
     };
 
-    // --- NEW: Custom Notification Function ---
+    // --- Custom Notification Function ---
     function showNotification(message, type = 'info', duration = 3000) {
         const notification = document.createElement('div');
         notification.classList.add('notification-message', type);
@@ -1076,16 +1095,14 @@
 
 
     // --- Core Functions ---
-    window.logout = async function() { // Make it async to await log event
+    window.logout = async function() { 
       showLoader();
       const user = auth.currentUser;
-      const userUid = user ? user.uid : "unknown_uid";
+      const userUid = AppState.currentUID || (user ? user.uid : "unknown_uid");
       const userEmail = localStorage.getItem("userEmail") || "unknown_email";
-      const hospitalName = localStorage.getItem("hospitalName") || "unknown_hospital";
+      const hospitalName = AppState.currentHospital || "unknown_hospital";
       const userRole = localStorage.getItem("userRole") || "unknown_role";
 
-
-      // --- NEW: Send Logout Log Event ---
       try {
           await fetch(`${BACKEND_URL}/log_event`, {
               method: "POST",
@@ -1101,7 +1118,6 @@
       } catch (logError) {
           console.error("Error sending logout log event:", logError);
       }
-      // --- End Logout Log Event ---
 
       auth.signOut().then(() => {
         localStorage.clear();
@@ -1124,25 +1140,28 @@
       return energyTypes.map(e => [e, ...new Array(dates.length).fill('')]);
     }
 
-    function showLoader(){document.getElementById('loading-overlay').style.display='flex';}
-    function hideLoader(){document.getElementById('loading-overlay').style.display='none';}
+    function showLoader(){ $('loading-overlay').style.display='flex'; }
+    function hideLoader(){ $('loading-overlay').style.display='none'; }
 
-    async function loadTable(category = activeCategory) {
+    async function loadTable(category = AppState.activeCategory) {
       showLoader();
       
-      // Apply loading transition to all relevant elements for the active category
-      document.getElementById(`handsontable-container-${category}`).classList.add('loading-transition');
-      document.getElementById(`summary-box-${category}`).classList.add('loading-transition');
-      document.getElementById(`trend-chart-section-${category}`).classList.add('loading-transition');
+      const handsontableContainer = $(`handsontable-container-${category}`);
+      const summaryBox = $(`summary-box-${category}`);
+      const trendChartSection = $(`trend-chart-section-${category}`);
 
-      var dateCols = getMonthDates(currentDate);
-      document.getElementById('header').textContent = `${currentDate.toLocaleString('default',{month:'long'})} ${currentDate.getFullYear()} - ${category}`; // Updated header
-      yearLabel.textContent = currentDate.getFullYear();
+      if (handsontableContainer) handsontableContainer.classList.add('loading-transition');
+      if (summaryBox) summaryBox.classList.add('loading-transition');
+      if (trendChartSection) trendChartSection.classList.add('loading-transition');
+
+      var dateCols = getMonthDates(AppState.currentDate);
+      if (header) header.textContent = `${AppState.currentDate.toLocaleString('default',{month:'long'})} ${AppState.currentDate.getFullYear()} - ${category}`;
+      if (yearLabel) yearLabel.textContent = AppState.currentDate.getFullYear();
       highlightActiveMonth();
 
-      var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
+      var monthKey = `${AppState.currentDate.getFullYear()}-${String(AppState.currentDate.getMonth()+1).padStart(2,'0')}`;
       try {
-        var res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&uid=${currentUID}&category=${category}`); // Pass category to backend
+        var res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&uid=${AppState.currentUID}&category=${category}`);
         var result = await res.json();
         var data = Array.isArray(result.data) && result.data.length === energyTypes.length
           ? result.data.map(r=>r.map(c=> c===null||c==="None"?"":c))
@@ -1152,25 +1171,29 @@
         const today = new Date();
 
         // Determine if the currently loaded month is in the future
-        const isFutureMonth = currentDate.getFullYear() > today.getFullYear() ||
-                              (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() > today.getMonth());
+        const isFutureMonth = AppState.currentDate.getFullYear() > today.getFullYear() ||
+                              (AppState.currentDate.getFullYear() === today.getFullYear() && AppState.currentDate.getMonth() > today.getMonth());
 
         // Get the container for the specific Handsontable
-        const containerId = `handsontable-container-${category}`;
-        const container = document.getElementById(containerId);
+        const container = $(`handsontable-container-${category}`);
+        
+        // CRUCIAL: Check if container exists before proceeding
+        if (!container) {
+            console.error(`Handsontable container not found for category: ${category}`);
+            showNotification(`Error: Handsontable display area not found for ${category}.`, 'error');
+            return; // Exit if container is missing
+        }
 
         // Destroy existing Handsontable for this category if it exists
         if (hots[category]) hots[category].destroy();
 
         // Calculate explicit column widths to ensure full display and proper scrolling
-        // 'Energy' column: fixed width (e.g., 80px)
-        // Date columns: fixed width (e.g., 80px per date)
         const fixedEnergyColWidth = 80;
         const fixedDateColWidth = 80; 
         const numberOfDateColumns = dateCols.length;
 
         // Calculate total required width for all columns
-        const totalCalculatedWidth = fixedEnergyColWidth + (numberOfDateColumns * fixedDateColWidth);
+        const totalCalculatedContentWidth = fixedEnergyColWidth + (numberOfDateColumns * fixedDateColWidth);
         
         // Initialize Handsontable for the current category
         hots[category] = new Handsontable(container, {
@@ -1180,7 +1203,7 @@
           autoColumnSize: true, // Let Handsontable automatically determine column sizes initially
           autoRowSize: true, 
           height: 500, /* Fixed pixel height for stability */
-          width: totalCalculatedWidth, // Explicitly set the total width of the Handsontable instance
+          width: totalCalculatedContentWidth, // Explicitly set the total content width of the Handsontable instance
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
@@ -1203,7 +1226,7 @@
             
             // Check if the current month being displayed is a future month
             // OR if it's the current month, but the day is in the future
-            if (isFutureMonth || (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() === today.getMonth() && c > today.getDate())) {
+            if (isFutureMonth || (AppState.currentDate.getFullYear() === today.getFullYear() && AppState.currentDate.getMonth() === today.getMonth() && c > today.getDate())) {
                 props.readOnly = true;
                 // Add the future-cell-readonly class
                 props.className = (props.className || '') + ' future-cell-readonly'; 
@@ -1220,21 +1243,23 @@
             }
             return props;
           },
-          // Fixed afterViewRender hook syntax
-          afterViewRender: function(isFirstRender) {
-              // This timeout is crucial to allow the browser to fully lay out the DOM
-              // before Handsontable attempts to measure its container and render.
-              // It forces a redraw based on the most up-to-date container dimensions.
-              setTimeout(() => {
-                if (hots[category]) { 
-                    hots[category].render(); // Force re-render
-                    // Also trigger a refresh of dimensions explicitly, which can help with scrollbars
-                    hots[category].view.render(); // This forces the view to recalculate its visible area
-                }
-              }, 50); // Small delay
+          // Use afterRender to ensure proper sizing after view has been built
+          afterRender: function(isFirstRender) {
+              if (hots[category]) {
+                  // A small delay (e.g., 50ms) to allow the browser to fully lay out the DOM 
+                  // before Handsontable attempts to measure its container and render its final state.
+                  setTimeout(() => {
+                    if (hots[category] && hots[category].container.offsetWidth > 0) {
+                        // This forces Handsontable to re-measure its columns and apply its width/scrolling
+                        hots[category].render(); 
+                        // It's also sometimes useful to call updateSettings({}) with no changes
+                        // as it forces a full internal recalculation by Handsontable.
+                        // hots[category].updateSettings({}); 
+                    }
+                  }, 100); // Increased delay slightly for more robustness
+              }
           },
           // Adding a global afterGetColHeader hook to adjust header styling if needed,
-          // though this is more for visual consistency than functionality.
           afterGetColHeader: function(col, TH) {
               if (col === 0) { // Make the 'Energy' header static width
                   TH.style.minWidth = `${fixedEnergyColWidth}px`; 
@@ -1251,15 +1276,6 @@
         hots[category].loadData(data);
         hots[category].render(); 
 
-        // After initialization, a final render/updateSettings after a small delay can help
-        // ensure everything is stable, especially for the very first load or after a category switch.
-        setTimeout(() => {
-            if(hots[category]) {
-                hots[category].render();
-            }
-        }, 150); // A larger delay for ultimate stability
-
-
         // Update summary and chart for the current category
         updateSummaryAndChart(data, category);
         populateTrendEnergySelect(category); // Populate trend select for the active category
@@ -1270,10 +1286,9 @@
         showNotification(`Could not load table data for ${category}. Please try again.`, 'error');
       } finally {
         hideLoader();
-        // Remove loading transition from relevant elements for the active category
-        document.getElementById(`handsontable-container-${category}`).classList.remove('loading-transition');
-        document.getElementById(`summary-box-${category}`).classList.remove('loading-transition');
-        document.getElementById(`trend-chart-section-${category}`).classList.remove('loading-transition');
+        if (handsontableContainer) handsontableContainer.classList.remove('loading-transition');
+        if (summaryBox) summaryBox.classList.remove('loading-transition');
+        if (trendChartSection) trendChartSection.classList.remove('loading-transition');
       }
     }
 
@@ -1281,7 +1296,7 @@
       var total=0, within=0, warning=0, out=0;
       outOfToleranceValuesByCategory[category] = []; // Reset out of tolerance values for this category
 
-      const dateCols = getMonthDates(currentDate);
+      const dateCols = getMonthDates(AppState.currentDate);
       const tolerance = TOLERANCE_SETTINGS[category];
 
       data.forEach((row, rowIndex) => {
@@ -1306,31 +1321,46 @@
         });
       });
 
-      document.getElementById(`total-${category}`).textContent = total;
-      document.getElementById(`within-${category}`).textContent = within;
-      document.getElementById(`warning-${category}`).textContent = warning;
-      document.getElementById(`out-${category}`).textContent = out;
+      const totalEl = $(`total-${category}`);
+      const withinEl = $(`within-${category}`);
+      const warningEl = $(`warning-${category}`);
+      const outEl = $(`out-${category}`);
+      const summaryChartCanvas = $(`summaryChart-${category}`);
 
-      var ctx = document.getElementById(`summaryChart-${category}`).getContext('2d');
-      if (summaryCharts[category]) summaryCharts[category].destroy();
-      summaryCharts[category] = new Chart(ctx, {
-        type: 'pie',
-        data: {
-          labels: ['Within Tolerance','Warning','Out of Tolerance'],
-          datasets: [{ data: [within,warning,out], backgroundColor: ['#66cc66','#ffcc00','#ff6666'] }]
-        }
-      });
+      if (totalEl) totalEl.textContent = total;
+      if (withinEl) withinEl.textContent = within;
+      if (warningEl) warningEl.textContent = warning;
+      if (outEl) outEl.textContent = out;
+
+      if (summaryChartCanvas) {
+        var ctx = summaryChartCanvas.getContext('2d');
+        if (summaryCharts[category]) summaryCharts[category].destroy();
+        summaryCharts[category] = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: ['Within Tolerance','Warning','Out of Tolerance'],
+            datasets: [{ data: [within,warning,out], backgroundColor: ['#66cc66','#ffcc00','#ff6666'] }]
+          }
+        });
+      }
     }
 
-    async function manualSave(category = activeCategory) { // Accept category as argument
+    async function manualSave(category = AppState.activeCategory) { 
       showLoader();
-      var changedData = hots[category].getData(); // Get data from active Handsontable
-      var month = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
+      const hotInstance = hots[category];
+      if (!hotInstance) {
+          console.error(`Handsontable instance not found for category: ${category}. Cannot save.`);
+          showNotification(`Error: Cannot save. Table not loaded for ${category}.`, 'error');
+          hideLoader();
+          return;
+      }
+      var changedData = hotInstance.getData(); 
+      var month = `${AppState.currentDate.getFullYear()}-${String(AppState.currentDate.getMonth()+1).padStart(2,'0')}`;
       try {
         var saveResponse = await fetch(`${BACKEND_URL}/save`,{
           method:'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ data: changedData, month, uid: currentUID, category: category }) // Pass category
+          body: JSON.stringify({ data: changedData, month, uid: AppState.currentUID, category: category }) 
         });
 
         if (!saveResponse.ok) {
@@ -1338,9 +1368,10 @@
             throw new Error('Failed to save data: ' + saveResponse.statusText + ' - ' + errorText);
         }
 
-        document.getElementById(`lastSaved-${category}`).textContent = "Last Saved: " + new Date().toLocaleString(); // Update specific last saved time
+        const lastSavedEl = $(`lastSaved-${category}`);
+        if (lastSavedEl) lastSavedEl.textContent = "Last Saved: " + new Date().toLocaleString(); 
         showNotification(`Data for ${category} saved successfully!`, 'success');
-        updateTrendChart(category); // Update trend chart for the saved category
+        updateTrendChart(category); 
 
         // Send alert if there are out-of-tolerance values for THIS category
         const outValuesForCategory = outOfToleranceValuesByCategory[category];
@@ -1352,10 +1383,10 @@
                 },
                 body: JSON.stringify({
                     outValues: outValuesForCategory,
-                    hospitalName: currentHospital,
-                    uid: currentUID,
+                    hospitalName: AppState.currentHospital,
+                    uid: AppState.currentUID,
                     month: month,
-                    category: category // Pass category to alert endpoint
+                    category: category 
                 })
             });
 
@@ -1384,71 +1415,74 @@
     }
 
     function changeMonth(m){ 
-        currentDate = new Date(currentDate.getFullYear(), m, 1); 
-        loadTable(activeCategory); // Load table for current active category
-        // No need to call updateTrendChart here, as loadTable already calls it
+        AppState.currentDate = new Date(AppState.currentDate.getFullYear(), m, 1); 
+        loadTable(AppState.activeCategory); 
     }
     function changeYear(o){ 
-        currentDate = new Date(currentDate.getFullYear()+o, currentDate.getMonth(), 1); 
-        loadTable(activeCategory); // Load table for current active category
-        // No need to call updateTrendChart here, as loadTable already calls it
+        AppState.currentDate = new Date(AppState.currentDate.getFullYear()+o, AppState.currentDate.getMonth(), 1); 
+        loadTable(AppState.activeCategory); 
     }
     function toggleDarkMode(){ document.body.classList.toggle('dark'); }
 
     function buildMonthButtons(){
       var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
-      monthsDiv.innerHTML='';
+      if (monthsDiv) monthsDiv.innerHTML='';
       months.forEach((m,i)=>{
         var btn = document.createElement('button');
         btn.textContent = m;
         btn.addEventListener('click', () => changeMonth(i));
-        monthsDiv.appendChild(btn);
+        if (monthsDiv) monthsDiv.appendChild(btn);
       });
       highlightActiveMonth();
     }
 
     function highlightActiveMonth(){
-      [...monthsDiv.querySelectorAll('button')].forEach((btn,i)=>{
-        btn.classList.toggle('active', i === currentDate.getMonth());
-      });
+      if (monthsDiv) {
+        [...monthsDiv.querySelectorAll('button')].forEach((btn,i)=>{
+          btn.classList.toggle('active', i === AppState.currentDate.getMonth());
+        });
+      }
     }
 
-    function populateTrendEnergySelect(category = activeCategory) {
-        var select = document.getElementById(`trendEnergySelect-${category}`);
-        select.innerHTML = '';
-        energyTypes.forEach(energy => {
-            var option = document.createElement('option');
-            option.value = energy;
-            option.textContent = energy;
-            select.appendChild(option);
-        });
-        if (energyTypes.length > 0) {
-            select.value = energyTypes[0]; // Set default selection
+    function populateTrendEnergySelect(category = AppState.activeCategory) {
+        var select = $(`trendEnergySelect-${category}`);
+        if (select) {
+            select.innerHTML = '';
+            energyTypes.forEach(energy => {
+                var option = document.createElement('option');
+                option.value = energy;
+                option.textContent = energy;
+                select.appendChild(option);
+            });
+            if (energyTypes.length > 0) {
+                select.value = energyTypes[0]; 
+            }
         }
     }
 
-    async function updateTrendChart(category = activeCategory) {
+    async function updateTrendChart(category = AppState.activeCategory) {
         showLoader();
-        document.getElementById(`trend-chart-section-${category}`).classList.add('loading-transition');
+        const trendChartSectionEl = $(`trend-chart-section-${category}`);
+        if (trendChartSectionEl) trendChartSectionEl.classList.add('loading-transition');
 
-        var selectedEnergy = document.getElementById(`trendEnergySelect-${category}`).value;
+        var selectedEnergy = $(`trendEnergySelect-${category}`).value;
         if (!selectedEnergy) {
             hideLoader();
             showNotification("Please select an energy type for trend analysis.", 'info');
-            document.getElementById(`trend-chart-section-${category}`).classList.remove('loading-transition');
+            if (trendChartSectionEl) trendChartSectionEl.classList.remove('loading-transition');
             return;
         }
 
         var dataPoints = [];
         var labels = [];
-        var currentYear = currentDate.getFullYear();
-        var currentMonth = currentDate.getMonth() + 1;
+        var currentYear = AppState.currentDate.getFullYear();
+        var currentMonth = AppState.currentDate.getMonth() + 1;
 
         var daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
 
         var monthKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
         try {
-            var res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&uid=${currentUID}&category=${category}`); // Pass category
+            var res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&uid=${AppState.currentUID}&category=${category}`); 
             var result = await res.json();
             var monthData = result.data;
 
@@ -1468,79 +1502,85 @@
                 }
             }
 
-            var ctx = document.getElementById(`trendChart-${category}`).getContext('2d');
-            if (trendCharts[category]) trendCharts[category].destroy();
+            const trendChartCanvas = $(`trendChart-${category}`);
+            if (trendChartCanvas) {
+                var ctx = trendChartCanvas.getContext('2d');
+                if (trendCharts[category]) trendCharts[category].destroy();
 
-            trendCharts[category] = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: `${selectedEnergy} Trend (${currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}) - ${category}`, // Label includes category
-                        data: dataPoints,
-                        borderColor: '#007bff',
-                        backgroundColor: 'rgba(0, 123, 255, 0.2)',
-                        fill: false,
-                        tension: 0.1,
-                        spanGaps: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            title: {
-                                display: true,
-                                text: 'Output Value (%)'
+                trendCharts[category] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: `${selectedEnergy} Trend (${AppState.currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}) - ${category}`, 
+                            data: dataPoints,
+                            borderColor: '#007bff',
+                            backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                            fill: false,
+                            tension: 0.1,
+                            spanGaps: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                title: {
+                                    display: true,
+                                    text: 'Output Value (%)'
+                                },
+                                // Dynamically calculate min/max for Y-axis with a small padding
+                                min: Math.min(...dataPoints.filter(n => n !== null)) - 0.5, 
+                                max: Math.max(...dataPoints.filter(n => n !== null)) + 0.5, 
+                                ticks: {
+                                    callback: function(value, index, values) {
+                                        return value.toFixed(1) + '%';
+                                    }
+                                }
                             },
-                            min: -3,
-                            max: 3,
-                            ticks: {
-                                callback: function(value, index, values) {
-                                    return value.toFixed(1) + '%';
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Day of Month'
                                 }
                             }
                         },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Day of Month'
-                            }
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': ' + (context.parsed.y !== null ? context.parsed.y.toFixed(2) + '%' : 'No Data');
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + (context.parsed.y !== null ? context.parsed.y.toFixed(2) + '%' : 'No Data');
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            });
+                });
+            }
 
         } catch (error) {
             console.error(`Error fetching trend data for ${category}:`, error);
             showNotification(`Could not load trend data for ${category}. Please try again.`, 'error');
         } finally {
             hideLoader();
-            document.getElementById(`trend-chart-section-${category}`).classList.remove('loading-transition');
+            if (trendChartSectionEl) trendChartSectionEl.classList.remove('loading-transition');
         }
     }
 
-    // NEW: Function to add message to chat window
+    // --- Function to add message to chat window ---
     function addChatMessage(message, sender) {
         var messageElement = document.createElement('div');
         messageElement.classList.add('chat-message', sender);
         messageElement.textContent = message;
-        chatBody.appendChild(messageElement);
-        chatBody.scrollTop = chatBody.scrollHeight;
+        if (chatBody) {
+            chatBody.appendChild(messageElement);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
     }
 
-    // NEW: Function to handle sending chat messages
+    // --- Function to handle sending chat messages ---
     async function sendChatMessage() {
         var message = chatInput.value.trim();
         if (message === "") return;
@@ -1558,14 +1598,14 @@
         var extractedEnergyType = energyMatch ? energyMatch[1].toUpperCase().replace(/\s/g, '') : null;
         var extractedDate = dateMatch ? dateMatch[0] : null;
         
-        var monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
+        var monthKey = `${AppState.currentDate.getFullYear()}-${String(AppState.currentDate.getMonth()+1).padStart(2,'0')}`;
 
         // Prepare a generic query object to send to the backend
         let queryBody = {
             query_text: message, // Send the full query text
             month: monthKey,
-            uid: currentUID,
-            category: activeCategory, // Crucially, send the active category
+            uid: AppState.currentUID,
+            category: AppState.activeCategory, // Crucially, send the active category
             energy_type: extractedEnergyType, // Pass extracted entities if available
             date: extractedDate
         };
@@ -1593,10 +1633,10 @@
     }
 
     // Export function for Excel (requests XLSX from backend)
-    async function exportToExcel(category = activeCategory) { // Accept category as argument
+    async function exportToExcel(category = AppState.activeCategory) { 
         showLoader();
 
-        var month = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
+        var month = `${AppState.currentDate.getFullYear()}-${String(AppState.currentDate.getMonth()+1).padStart(2,'0')}`;
         try {
             const response = await fetch(`${BACKEND_URL}/export-excel`, {
                 method: 'POST',
@@ -1605,8 +1645,8 @@
                 },
                 body: JSON.stringify({
                     month: month,
-                    uid: currentUID,
-                    category: category // Pass category
+                    uid: AppState.currentUID,
+                    category: category 
                 })
             });
 
@@ -1616,7 +1656,7 @@
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                a.download = `LINAC_QA_Data_${category}_${month}.xlsx`; // Filename includes category
+                a.download = `LINAC_QA_Data_${category}_${month}.xlsx`; 
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
@@ -1633,22 +1673,26 @@
         }
     }
 
-    // NEW: Function to switch category views
+    // --- Function to switch category views ---
     async function switchCategory(newCategory) {
-        if (activeCategory === newCategory) return; // No change needed
+        if (AppState.activeCategory === newCategory) return; 
 
         // Deactivate current category button and panel
-        document.getElementById(`btn${activeCategory.replace(/\s/g, '')}`).classList.remove('active-category');
-        document.getElementById(`panel${activeCategory}`).classList.remove('active-panel');
+        const currentBtn = $(`btn${AppState.activeCategory.replace(/\s/g, '')}`);
+        const currentPanel = $(`panel${AppState.activeCategory}`);
+        if (currentBtn) currentBtn.classList.remove('active-category');
+        if (currentPanel) currentPanel.classList.remove('active-panel');
 
-        activeCategory = newCategory;
+        AppState.activeCategory = newCategory;
 
         // Activate new category button and panel
-        document.getElementById(`btn${activeCategory.replace(/\s/g, '')}`).classList.add('active-category');
-        document.getElementById(`panel${activeCategory}`).classList.add('active-panel');
+        const newBtn = $(`btn${AppState.activeCategory.replace(/\s/g, '')}`);
+        const newPanel = $(`panel${AppState.activeCategory}`);
+        if (newBtn) newBtn.classList.add('active-category');
+        if (newPanel) newPanel.classList.add('active-panel');
 
         // Load data for the new active category
-        await loadTable(activeCategory);
+        await loadTable(AppState.activeCategory);
     }
 
 
@@ -1672,33 +1716,41 @@
             button.addEventListener('click', () => exportToExcel(button.dataset.category));
         });
 
-        logoutBtn.addEventListener('click', window.logout);
-        myProfileBtn.addEventListener('click', function() { window.location.href='my_profile.html'; });
-        darkToggle.addEventListener('change', toggleDarkMode);
-        prevYearBtn.addEventListener('click', function() { changeYear(-1); });
-        nextYearBtn.addEventListener('click', function() { changeYear(1); });
+        if (logoutBtn) logoutBtn.addEventListener('click', window.logout);
+        if (myProfileBtn) myProfileBtn.addEventListener('click', function() { window.location.href='my_profile.html'; });
+        if (darkToggle) darkToggle.addEventListener('change', toggleDarkMode);
+        if (prevYearBtn) prevYearBtn.addEventListener('click', function() { changeYear(-1); });
+        if (nextYearBtn) nextYearBtn.addEventListener('click', function() { changeYear(1); });
 
-        chatBubble.addEventListener('click', function() {
-            chatWindow.classList.toggle('open');
-            if (chatWindow.classList.contains('open')) {
-                chatInput.focus();
-            }
-        });
-        closeChatBtn.addEventListener('click', function() {
-            chatWindow.classList.remove('open');
-        });
-        sendChatBtn.addEventListener('click', sendChatMessage);
-        chatInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendChatMessage();
-            }
-        });
+        if (chatBubble) {
+            chatBubble.addEventListener('click', function() {
+                if (chatWindow) {
+                    chatWindow.classList.toggle('open');
+                    if (chatWindow.classList.contains('open') && chatInput) {
+                        chatInput.focus();
+                    }
+                }
+            });
+        }
+        if (closeChatBtn) {
+            closeChatBtn.addEventListener('click', function() {
+                if (chatWindow) chatWindow.classList.remove('open');
+            });
+        }
+        if (sendChatBtn) sendChatBtn.addEventListener('click', sendChatMessage);
+        if (chatInput) {
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendChatMessage();
+                }
+            });
+        }
 
 
         auth.onAuthStateChanged(async function(user) {
             if (user) {
-                currentUID = user.uid;
-                currentHospital = localStorage.getItem("hospitalName") || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
+                AppState.currentUID = user.uid;
+                AppState.currentHospital = localStorage.getItem("hospitalName") || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
                 var userStatus = localStorage.getItem("userStatus");
 
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
@@ -1707,16 +1759,17 @@
                     return;
                 }
 
-                localStorage.setItem("uid", currentUID);
-                document.getElementById("hospitalName").textContent = "Hospital: " + currentHospital;
+                localStorage.setItem("uid", AppState.currentUID);
+                if ($('hospitalName')) $('hospitalName').textContent = "Hospital: " + AppState.currentHospital;
                 buildMonthButtons();
                 
                 // Initialize the active category (default to Output)
-                // This ensures the correct button and panel are active on initial load
-                document.getElementById(`btn${activeCategory.replace(/\s/g, '')}`).classList.add('active-category');
-                document.getElementById(`panel${activeCategory}`).classList.add('active-panel');
+                const defaultBtn = $(`btn${AppState.activeCategory.replace(/\s/g, '')}`);
+                const defaultPanel = $(`panel${AppState.activeCategory}`);
+                if (defaultBtn) defaultBtn.classList.add('active-category');
+                if (defaultPanel) defaultPanel.classList.add('active-panel');
                 
-                await loadTable(activeCategory); // Load data for the initial active category
+                await loadTable(AppState.activeCategory); 
             } else {
                 window.location.replace("login.html");
             }
@@ -1724,22 +1777,22 @@
 
         // Add a global resize listener to ensure Handsontable adjusts if the window changes size
         window.addEventListener('resize', () => {
-            if (hots[activeCategory]) {
-                const container = document.getElementById(`handsontable-container-${activeCategory}`);
+            if (hots[AppState.activeCategory]) {
+                const container = $(`handsontable-container-${AppState.activeCategory}`);
                 if (container) {
                     // Recalculate and apply width
                     const energyColWidth = 80;
-                    const dateCols = getMonthDates(currentDate);
+                    const dateCols = getMonthDates(AppState.currentDate);
                     const fixedDateColWidth = 80; 
-                    const numberOfDateColumns = dateCols.length;
-                    const totalCalculatedWidth = energyColWidth + (numberOfDateColumns * fixedDateColWidth);
+                    const numberOfDateCols = dateCols.length;
+                    const totalCalculatedContentWidth = energyColWidth + (numberOfDateCols * fixedDateColWidth);
 
                     // Update Handsontable's width setting and force a render
-                    hots[activeCategory].updateSettings({
-                        width: totalCalculatedWidth,
-                        stretchH: 'none' // Keep 'none' here because we are explicitly setting width
+                    hots[AppState.activeCategory].updateSettings({
+                        width: totalCalculatedContentWidth,
+                        stretchH: 'none' // Keep 'none' as we are explicitly setting width
                     });
-                    hots[activeCategory].render();
+                    hots[AppState.activeCategory].render();
                 }
             }
         });
