@@ -314,7 +314,7 @@
     .handsontable-container {
         flex-grow: 1; /* Allow it to take available width */
         height: 500px; /* Fixed pixel height for Handsontable */
-        min-width: 400px; /* Minimum width before wrapping */
+        /* min-width: 400px;  Removed min-width, let flex and stretchH handle it more fluidly */
         
         border-radius: 16px;
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
@@ -1221,14 +1221,13 @@
           },
           // Fixed afterViewRender hook syntax
           afterViewRender: function(isFirstRender) {
-              if (hots[category]) {
-                  // This forces Handsontable to recalculate its dimensions after its container is visible
-                  // and the browser has potentially laid out the page.
-                  // A small delay can sometimes help ensure the DOM is fully stable before rendering.
-                  setTimeout(() => {
+              // Only trigger render on subsequent renders, or if the container needs a nudge.
+              // A small delay (0ms to 50ms) can ensure the DOM has settled after display:flex makes it visible.
+              setTimeout(() => {
+                if (hots[category]) {
                     hots[category].render();
-                  }, 50); // Small delay
-              }
+                }
+              }, 50); 
           }
         });
 
