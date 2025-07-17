@@ -309,12 +309,11 @@
       align-items: flex-start; /* Align content to the top */
       flex-wrap: wrap; /* Allow wrapping on smaller screens */
       flex: 1; /* Allow this section to grow */
-      /* Removed min-height here, will control via handsontable-container directly */
     }
 
     .handsontable-container {
         flex-grow: 1; /* Allow it to take available width */
-        height: 500px; /* CRITICAL FIX: Fixed pixel height for Handsontable */
+        height: 500px; /* Fixed pixel height for Handsontable */
         min-width: 400px; /* Minimum width before wrapping */
         /* Apply card-panel base styles */
         border-radius: 16px;
