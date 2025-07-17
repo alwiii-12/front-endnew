@@ -319,7 +319,7 @@
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
         background: #ffffff;
         border: 1px solid rgba(0,0,0,0.05);
-        overflow: hidden; /* Handsontable's internal scrolling needs this */
+        overflow: hidden; /* Keep this for Handsontable's internal scrolling */
     }
 
     /* Handsontable specific overrides for cell background and text */
@@ -379,7 +379,7 @@
     }
     .save-section button:hover {
         background-color: #0056b3;
-        box_shadow: 0 4px 10px rgba(0,0,0,0.12);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.12);
     }
     button:active, a.button:active, select:active {
         transform: translateY(0);
@@ -694,7 +694,7 @@
     /* NEW: Print-Specific CSS */
     @media print {
         /* Hide elements not meant for print */
-        .topbar, .sidebar, #chat-bubble, #chat-window, .save-section, .export-section, .category-selection {
+        .topbar, .sidebar, #chat-bubble, #chat-window, #save-section button, #loading-overlay, #trendEnergySelect, #showTrendBtn, #export-section {
             display: none !important;
         }
 
@@ -717,23 +717,12 @@
             overflow: visible !important;
             height: auto !important;
         }
-        /* Adjusted for category-panel to be printable */
-        .category-panel { /* Target all panels */
-            display: flex !important; /* Force all panels to display */
-            flex-direction: column !important; /* Maintain flex layout */
-            opacity: 1 !important;
-            transform: translateY(0) !important;
-            page-break-after: always; /* Ensure each category starts on a new page */
-            height: auto !important; /* Allow content to dictate height */
-        }
-        .data-display-area {
+        .container {
             flex-direction: column !important;
             align-items: center !important;
             gap: 20px;
-            page-break-inside: avoid;
         }
-
-        .handsontable-container, .summary-box, .trend-chart-section {
+        #table, .summary-box, .trend-chart-section {
             box-shadow: none !important;
             border: 1px solid #eee !important;
             background: white !important;
@@ -741,12 +730,12 @@
             margin: 0 auto 20px auto !important;
             page-break-inside: avoid;
         }
-        .handsontable-container {
+        #table {
             overflow: visible !important;
             height: auto !important;
         }
         /* Make Handsontable cells print cleanly */
-        .handsontable-container .handsontable td, .handsontable-container .handsontable th {
+        #table .handsontable td, #table .handsontable th {
             white-space: normal !important;
         }
 
@@ -1187,8 +1176,8 @@
         hots[category] = new Handsontable(container, {
           data,
           rowHeaders: false,
-          stretchH: 'none', // Explicitly set to 'none' if using colWidths
-          autoColumnSize: false, // Explicitly set to false if using colWidths
+          stretchH: 'none', // Explicitly set to 'none' to rely on autoColumnSize or colWidths
+          autoColumnSize: true, // Let Handsontable automatically determine column sizes initially
           autoRowSize: true, 
           height: 500, /* Fixed pixel height for stability */
           width: totalCalculatedWidth, // Explicitly set the total width of the Handsontable instance
@@ -1231,17 +1220,29 @@
             }
             return props;
           },
-          // Fixed afterViewRender hook syntax (corrected from previous error)
+          // Fixed afterViewRender hook syntax
           afterViewRender: function(isFirstRender) {
-              if (hots[category]) {
-                  // This timeout is crucial to allow the browser to fully lay out the DOM
-                  // before Handsontable attempts to measure its container and render.
-                  // It forces a redraw based on the most up-to-date container dimensions.
-                  setTimeout(() => {
-                    if (hots[category]) { 
-                        hots[category].render(); // Force re-render
-                    }
-                  }, 50); // Small delay
+              // This timeout is crucial to allow the browser to fully lay out the DOM
+              // before Handsontable attempts to measure its container and render.
+              // It forces a redraw based on the most up-to-date container dimensions.
+              setTimeout(() => {
+                if (hots[category]) { 
+                    hots[category].render(); // Force re-render
+                    // Also trigger a refresh of dimensions explicitly, which can help with scrollbars
+                    hots[category].view.render(); // This forces the view to recalculate its visible area
+                }
+              }, 50); // Small delay
+          },
+          // Adding a global afterGetColHeader hook to adjust header styling if needed,
+          // though this is more for visual consistency than functionality.
+          afterGetColHeader: function(col, TH) {
+              if (col === 0) { // Make the 'Energy' header static width
+                  TH.style.minWidth = `${fixedEnergyColWidth}px`; 
+                  TH.style.maxWidth = `${fixedEnergyColWidth}px`;
+              } else {
+                  // Ensure other headers are not excessively wide, allowing more columns to fit
+                  TH.style.minWidth = `${fixedDateColWidth}px`; // Fixed width for date columns
+                  TH.style.maxWidth = `${fixedDateColWidth}px`;
               }
           }
         });
@@ -1249,6 +1250,15 @@
         // Explicitly load data and render after Handsontable initialization
         hots[category].loadData(data);
         hots[category].render(); 
+
+        // After initialization, a final render/updateSettings after a small delay can help
+        // ensure everything is stable, especially for the very first load or after a category switch.
+        setTimeout(() => {
+            if(hots[category]) {
+                hots[category].render();
+            }
+        }, 150); // A larger delay for ultimate stability
+
 
         // Update summary and chart for the current category
         updateSummaryAndChart(data, category);
@@ -1727,7 +1737,7 @@
                     // Update Handsontable's width setting and force a render
                     hots[activeCategory].updateSettings({
                         width: totalCalculatedWidth,
-                        stretchH: 'all' // Re-add stretchH here to force it to use the new dimensions after resize
+                        stretchH: 'none' // Keep 'none' here because we are explicitly setting width
                     });
                     hots[activeCategory].render();
                 }
