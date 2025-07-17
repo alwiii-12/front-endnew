@@ -1219,12 +1219,15 @@
             }
             return props;
           },
-          // Fix the afterViewRender hook syntax
+          // Fixed afterViewRender hook syntax
           afterViewRender: function(isFirstRender) {
-              if (isFirstRender && hots[category]) {
+              if (hots[category]) {
                   // This forces Handsontable to recalculate its dimensions after its container is visible
                   // and the browser has potentially laid out the page.
-                  hots[category].render();
+                  // A small delay can sometimes help ensure the DOM is fully stable before rendering.
+                  setTimeout(() => {
+                    hots[category].render();
+                  }, 50); // Small delay
               }
           }
         });
@@ -1351,7 +1354,7 @@
       } catch(err){
         console.error("Operation failed:", err);
         showNotification("Operation failed: " + err.message, 'error');
-      } finally{
+      } finally {
         hideLoader();
       }
     }
