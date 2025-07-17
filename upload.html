@@ -310,12 +310,12 @@
       align-items: flex-start; /* Align content to the top */
       flex-wrap: wrap; /* Allow wrapping on smaller screens */
       flex: 1; /* Allow this section to grow */
-      min-height: 500px; /* Ensure a minimum height for this entire area */
+      /* min-height removed, fixed height on handsontable-container now ensures space */
     }
 
     .handsontable-container {
         flex-grow: 1; /* Allow it to take available width */
-        height: 500px; /* Explicit fixed height for Handsontable */
+        height: 500px; /* <--- CRITICAL FIX: Fixed pixel height for Handsontable */
         min-width: 400px; /* Minimum width before wrapping */
         /* Apply card-panel base styles */
         border-radius: 16px;
@@ -515,7 +515,7 @@
     /* New CSS for future cells to appear read-only */
     .future-cell-readonly {
         background-color: #f0f0f0 !important; /* Light grey for disabled look */
-        color: #999 !important; /* Muted text color */
+        color: #999 !important; /* Muted text text-color */
         cursor: not-allowed !important; /* Indicate it's not editable */
     }
     body.dark .future-cell-readonly {
@@ -1022,7 +1022,6 @@
     var trendCharts = {}; // Stores Chart.js trend chart instances
 
     // Get references to DOM elements using their IDs - ALL DECLARED ONLY ONCE HERE
-    // Removed direct #table reference, will use dynamic IDs
     var monthsDiv = document.getElementById('months');
     var header = document.getElementById('header');
     var yearLabel = document.getElementById('year');
@@ -1182,7 +1181,7 @@
           data,
           rowHeaders: false,
           stretchH: 'all',
-          height: 'auto', /* Changed to 'auto' or a fixed pixel value for predictable rendering */
+          height: 500, /* Reverted to fixed pixel height for stability */
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
