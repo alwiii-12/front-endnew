@@ -314,7 +314,7 @@
     .handsontable-container {
         flex-grow: 1; /* Allow it to take available width */
         height: 500px; /* Fixed pixel height for Handsontable */
-        /* min-width: 400px;  Removed min-width, let flex and stretchH handle it more fluidly */
+        /* Removed min-width, letting flex and stretchH manage fluidly */
         
         border-radius: 16px;
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
@@ -1219,21 +1219,36 @@
             }
             return props;
           },
-          // Fixed afterViewRender hook syntax
+          // Fixed afterViewRender hook syntax (corrected from previous error)
           afterViewRender: function(isFirstRender) {
-              // Only trigger render on subsequent renders, or if the container needs a nudge.
-              // A small delay (0ms to 50ms) can ensure the DOM has settled after display:flex makes it visible.
-              setTimeout(() => {
-                if (hots[category]) {
-                    hots[category].render();
-                }
-              }, 50); 
+              if (hots[category]) {
+                  // This forces Handsontable to recalculate its dimensions after its container is visible
+                  // and the browser has potentially laid out the page.
+                  // A small delay (e.g., 0ms or 50ms) can sometimes help ensure the DOM is fully stable before rendering.
+                  setTimeout(() => {
+                    if (hots[category]) { // Double check if hot instance still exists after delay
+                        hots[category].render();
+                        // Also try calling updateDimensions which is more specific for sizing changes
+                        hots[category].updateDimensions(); 
+                    }
+                  }, 50); // Small delay
+              }
           }
         });
 
         // Explicitly load data and render after Handsontable initialization
         hots[category].loadData(data);
         hots[category].render(); 
+
+        // After initialization, it's also good to trigger a render or updateSettings again
+        // after a tiny delay, in case the initial DOM layout wasn't fully settled.
+        setTimeout(() => {
+            if(hots[category]) {
+                hots[category].render();
+                // hots[category].updateSettings({}); // Can sometimes trigger full recalculation
+            }
+        }, 100); // A slightly larger delay after initial setup
+
 
         // Update summary and chart for the current category
         updateSummaryAndChart(data, category);
