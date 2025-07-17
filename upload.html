@@ -1219,19 +1219,16 @@
             }
             return props;
           },
-          // Fixed afterViewRender hook syntax (corrected from previous error)
+          // Fixed afterViewRender hook syntax, added call to render() after a small timeout for stability
           afterViewRender: function(isFirstRender) {
               if (hots[category]) {
-                  // This forces Handsontable to recalculate its dimensions after its container is visible
-                  // and the browser has potentially laid out the page.
-                  // A small delay (e.g., 0ms or 50ms) can sometimes help ensure the DOM is fully stable before rendering.
+                  // A small delay (0ms to 50ms) can sometimes help ensure the DOM is fully stable before rendering
+                  // This is the most reliable way to get Handsontable to re-measure and redraw correctly
                   setTimeout(() => {
-                    if (hots[category]) { // Double check if hot instance still exists after delay
+                    if (hots[category]) { 
                         hots[category].render();
-                        // Also try calling updateDimensions which is more specific for sizing changes
-                        hots[category].updateDimensions(); 
                     }
-                  }, 50); // Small delay
+                  }, 50); 
               }
           }
         });
@@ -1239,16 +1236,6 @@
         // Explicitly load data and render after Handsontable initialization
         hots[category].loadData(data);
         hots[category].render(); 
-
-        // After initialization, it's also good to trigger a render or updateSettings again
-        // after a tiny delay, in case the initial DOM layout wasn't fully settled.
-        setTimeout(() => {
-            if(hots[category]) {
-                hots[category].render();
-                // hots[category].updateSettings({}); // Can sometimes trigger full recalculation
-            }
-        }, 100); // A slightly larger delay after initial setup
-
 
         // Update summary and chart for the current category
         updateSummaryAndChart(data, category);
