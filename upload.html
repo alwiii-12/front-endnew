@@ -314,13 +314,12 @@
     .handsontable-container {
         flex-grow: 1; /* Allow it to take available width */
         height: 500px; /* Fixed pixel height for Handsontable */
-        /* Removed min-width, letting flex and autoColumnSize manage fluidly */
         
         border-radius: 16px;
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
         background: #ffffff;
         border: 1px solid rgba(0,0,0,0.05);
-        overflow: hidden; /* Keep this for Handsontable's internal scrolling */
+        overflow: hidden; /* Handsontable's internal scrolling needs this */
     }
 
     /* Handsontable specific overrides for cell background and text */
@@ -380,7 +379,7 @@
     }
     .save-section button:hover {
         background-color: #0056b3;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+        box_shadow: 0 4px 10px rgba(0,0,0,0.12);
     }
     button:active, a.button:active, select:active {
         transform: translateY(0);
@@ -1174,33 +1173,27 @@
         // Destroy existing Handsontable for this category if it exists
         if (hots[category]) hots[category].destroy();
 
-        // Calculate approximate column widths to ensure all columns render
-        const firstColWidth = 80; // For 'Energy' column
-        const minDateColWidth = 80; // Minimum width for each date column
-        const totalCols = dateCols.length + 1;
-        const availableContainerWidth = container.offsetWidth; // Get current rendered width of container
+        // Calculate explicit column widths to ensure full display and proper scrolling
+        // 'Energy' column: fixed width (e.g., 80px)
+        // Date columns: fixed width (e.g., 80px per date)
+        const fixedEnergyColWidth = 80;
+        const fixedDateColWidth = 80; 
+        const numberOfDateColumns = dateCols.length;
 
-        let calculatedColWidths = [];
-        calculatedColWidths.push(firstColWidth); // First column width
-
-        // Distribute remaining width among date columns, ensuring minimum width
-        let remainingWidth = availableContainerWidth - firstColWidth;
-        let numDateCols = dateCols.length;
-        let dynamicColWidth = Math.max(minDateColWidth, remainingWidth / numDateCols);
-
-        for (let i = 0; i < numDateCols; i++) {
-            calculatedColWidths.push(dynamicColWidth);
+        let colWidthsArray = [fixedEnergyColWidth]; // Start with the energy column width
+        for (let i = 0; i < numberOfDateColumns; i++) {
+            colWidthsArray.push(fixedDateColWidth); // Add width for each date column
         }
 
         // Initialize Handsontable for the current category
         hots[category] = new Handsontable(container, {
           data,
           rowHeaders: false,
-          // Removed stretchH: 'all' as it causes persistent issues with dynamic sizing
-          autoColumnSize: false, // Handsontable will not auto-size if colWidths are set
+          stretchH: 'none', // Explicitly set to 'none' if using colWidths
+          autoColumnSize: false, // Explicitly set to false if using colWidths
           autoRowSize: true, 
           height: 500, /* Fixed pixel height for stability */
-          colWidths: calculatedColWidths, // Explicitly set calculated column widths
+          colWidths: colWidthsArray, // Directly set column widths
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
@@ -1240,27 +1233,47 @@
             }
             return props;
           },
-          // Fixed afterViewRender hook syntax
-          afterViewRender: function(isFirstRender) {
-              if (hots[category]) {
-                  // After rendering, ensure the table updates its internal dimensions.
-                  // This is crucial for horizontal scrolling when columns don't fit.
-                  setTimeout(() => {
-                    if (hots[category]) { 
-                        hots[category].render(); // Force re-render
-                        // This next line is critical for recalculating internal dimensions,
-                        // especially after container size changes or initial display.
-                        hots[category].updateSettings({}); // Triggers full recalculation
-                    }
-                  }, 50); // Small delay to allow DOM to settle
-              }
-          }
+          // IMPORTANT: Remove or simplify afterViewRender for stability. 
+          // Explicit calls to render/updateSettings will be made externally.
+          // afterViewRender: function(isFirstRender) { /* Removed for debugging stability */ }
+          // Removed the afterViewRender hook entirely for now to prevent loops
         });
 
         // Explicitly load data and render after Handsontable initialization
-        // This is called twice to ensure the table renders correctly
         hots[category].loadData(data);
         hots[category].render(); 
+
+        // CRUCIAL: Force Handsontable to re-measure and re-render after its container has settled.
+        // This is often needed when Handsontable is in a dynamically shown/hidden element.
+        setTimeout(() => {
+            if (hots[category] && container.offsetWidth > 0 && container.offsetHeight > 0) {
+                // Get the current actual width of the container
+                const currentContainerActualWidth = container.offsetWidth;
+                
+                // Recalculate column widths based on the *actual* container width
+                const energyColWidth = 80; // Fixed for energy column
+                const remainingContainerWidth = currentContainerActualWidth - energyColWidth;
+                const numDateCols = dateCols.length;
+                const minDateColWidth = 80; // Minimum desired width for each date column
+
+                let newColWidths = [energyColWidth];
+                if (numDateCols > 0) {
+                    let calculatedDateColWidth = Math.max(minDateColWidth, remainingContainerWidth / numDateCols);
+                    for (let i = 0; i < numDateCols; i++) {
+                        newColWidths.push(calculatedDateColWidth);
+                    }
+                }
+
+                // Update settings with the new column widths and force a re-render
+                hots[category].updateSettings({
+                    colWidths: newColWidths,
+                    // If you still want stretching for responsive behavior:
+                    stretchH: 'all' // Re-add stretchH here to force it to use the new dimensions
+                });
+                hots[category].render(); // Force render again
+            }
+        }, 200); // Increased delay for more stability
+
 
         // Update summary and chart for the current category
         updateSummaryAndChart(data, category);
@@ -1727,8 +1740,23 @@
         // Add a global resize listener to ensure Handsontable adjusts if the window changes size
         window.addEventListener('resize', () => {
             if (hots[activeCategory]) {
-                hots[activeCategory].render();
-                hots[activeCategory].updateSettings({}); // Force full recalculation
+                const container = document.getElementById(`handsontable-container-${activeCategory}`);
+                if (container) {
+                    // Recalculate and apply width
+                    const energyColWidth = 80;
+                    const dateCols = getMonthDates(currentDate);
+                    const fixedDateColWidth = 80; 
+                    const numberOfDateColumns = dateCols.length;
+                    const totalCalculatedWidth = energyColWidth + (numberOfDateColumns * fixedDateColWidth);
+
+                    // Update Handsontable's width setting and force a render
+                    hots[activeCategory].updateSettings({
+                        width: totalCalculatedWidth,
+                        // Re-add stretchH here to force it to use the new dimensions after resize
+                        stretchH: 'all' 
+                    });
+                    hots[activeCategory].render();
+                }
             }
         });
     });
