@@ -304,35 +304,27 @@
       display: flex; /* Make children (handsontable and summary) sit side-by-side */
       gap: 20px;
       align-items: flex-start; /* Align content to the top */
-      flex-wrap: nowrap; /* Prevents items from wrapping and pushes overflow to the next container */
+      flex-wrap: wrap; /* Allow wrapping on smaller screens */
       flex: 1; /* Allow this section to grow */
-      min-width: 0; /* Crucial: Allows flex item to shrink below its content size */
-      /* overflow: hidden; /* Removed to avoid hiding content if for some reason child overflows */
-      /* border: 2px solid orange !important; /* Debugging border for data-display-area */
     }
 
     .handsontable-container {
-        /* Adjusted flex property: flex-grow, flex-shrink, flex-basis */
-        flex: 1 1 auto; /* Using 'auto' as flex-basis to let content influence initial size, but still grow/shrink */
+        flex-grow: 1; /* Allow it to take available width */
         height: 500px; /* Fixed pixel height for Handsontable */
-        background-color: var(--background-white-card); /* Ensure white background */
         
         border-radius: 16px;
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
+        background: #ffffff;
         border: 1px solid rgba(0,0,0,0.05);
         /* CRUCIAL: Enable horizontal scrolling for the container */
         overflow-x: auto; 
         overflow-y: hidden; /* Handsontable manages its own vertical scrollbar */
-        min-width: 300px; /* Ensure handsontable container doesn't shrink too much below a readable size */
-        /* TEMPORARY DEBUG BORDER - KEEP THIS WHILE DEBUGGING */
-        border: 2px dashed red !important; /* Visual cue for the container */
     }
 
     /* Handsontable specific overrides for cell background and text */
     .handsontable-container .ht_master, .handsontable-container .handsontable {
-        background-color: #ffffff !important;
-        color: #333 !important;
-        /* No explicit width here. Handsontable will size itself within its container. */
+        background-color: #ffffff;
+        color: #333;
     }
     .handsontable-container .handsontable td, .handsontable-container .handsontable th {
         border-color: #aaa;
@@ -351,12 +343,6 @@
       box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
       background: #ffffff;
       border: 1px solid rgba(0,0,0,0.05);
-      flex-shrink: 0; /* Prevent summary box from shrinking */
-      /* TEMPORARY DEBUG BORDER - KEEP THIS WHILE DEBUGGING */
-      border: 2px dashed blue !important; /* Visual cue for the summary box */
-      
-      /* Crucial: Override any display: none or conflicting display styles */
-      display: block !important; /* Force it to be visible */
     }
     .summary-box h3 {
         margin-top: 0;
@@ -482,8 +468,8 @@
         border-color: #555;
     }
     body.dark .handsontable-container .ht_master, body.dark .handsontable-container .handsontable {
-        background-color: #2a2a2a !important;
-        color: #fff !important;
+        background-color: #2a2a2a;
+        color: #fff;
     }
     body.dark .handsontable-container .handsontable td, body.dark .handsontable-container .handsontable th {
         border-color: #555;
@@ -1096,7 +1082,6 @@
         if (notificationContainer) { // Null check for notification container
             notificationContainer.appendChild(notification);
 
-            // Force reflow before adding 'show' to ensure transition applies
             void notification.offsetWidth; 
             notification.classList.add('show');
 
@@ -1106,6 +1091,8 @@
                     notification.remove();
                 }, { once: true });
             }, duration);
+        } else {
+            console.warn("Notification container not found.", message);
         }
     }
 
@@ -1166,7 +1153,6 @@
       const summaryBox = $(`summary-box-${category}`);
       const trendChartSection = $(`trend-chart-section-${category}`);
 
-      // Apply transition classes before loading to ensure smooth entry/exit
       if (handsontableContainer) handsontableContainer.classList.add('loading-transition');
       if (summaryBox) summaryBox.classList.add('loading-transition');
       if (trendChartSection) trendChartSection.classList.add('loading-transition');
@@ -1202,43 +1188,26 @@
         }
 
         // Destroy existing Handsontable for this category if it exists
-        if (hots[category]) {
-            console.log(`Handsontable Debug: Destroying existing instance for ${category}.`);
-            hots[category].destroy();
-            hots[category] = null; // Explicitly set to null after destruction
-        }
+        if (hots[category]) hots[category].destroy();
 
-        // Before initializing Handsontable, ensure its container is properly visible and sized.
-        // It's a div, and it's inside a flex container. We need to make sure the flex container
-        // gives it a non-zero width before Handsontable attempts to draw.
-        // We'll trust the CSS to size the container, but force Handsontable to re-evaluate.
-
-        console.log(`Handsontable Debug: Initializing Handsontable for ${category}. Current container clientWidth: ${container.clientWidth}px`);
-
+        // Initialize Handsontable for the current category
         hots[category] = new Handsontable(container, {
           data,
           rowHeaders: false,
-          // Removed explicit 'width' from constructor. Let Handsontable size automatically.
           stretchH: 'none', // Explicitly set to 'none' for better scroll control
           autoColumnSize: true, // Let Handsontable automatically determine column sizes
           autoRowSize: true, 
           height: 500, /* Fixed pixel height for stability */
+          // width: calculated based on container and content
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
-          // Allow more columns to be rendered outside the viewport to prevent auto-size issues
-          viewportColumnRenderingOffset: 30, // Increased offset for better scrolling/rendering of wide tables
           afterChange: (changes, source) => {
             if (!changes || source === 'loadData') return;
             // Ensure summary and chart update is specific to the changed category
             updateSummaryAndChart(hots[category].getData(), category);
             // Trigger a re-render of cell styles after changes
-            requestAnimationFrame(() => {
-                if (hots[category]) {
-                    hots[category].render(); 
-                    hots[category].refreshDimensions(); 
-                }
-            });
+            hots[category].render(); // This will re-evaluate the 'cells' function for affected cells
           },
           cells: function (r, c) {
             var props = {};
@@ -1269,25 +1238,22 @@
             }
             return props;
           },
+          // Removed afterViewRender hook entirely to prevent potential render loops
         });
 
-        // Load data explicitly. This will trigger Handsontable's internal first render.
-        hots[category].loadData(data); 
+        // Explicitly load data and render after Handsontable initialization
+        hots[category].loadData(data);
+        hots[category].render(); 
 
-        // Use requestAnimationFrame for next visual update, then a fallback setTimeout
-        requestAnimationFrame(() => {
-            // Give it another chance after the initial paint
-            setTimeout(() => {
-                if (hots[category] && container.offsetWidth > 0) {
-                    console.log(`Handsontable Debug: FINAL RENDER (after RAF & timeout) - Container width: ${container.offsetWidth}px`);
-                    // Ensure Handsontable refreshes its dimensions after the container has settled.
-                    hots[category].render(); // Force a redraw
-                    hots[category].refreshDimensions(); // Recalculate based on parent
-                } else {
-                    console.warn(`Handsontable Debug: FINAL RENDER (after RAF & timeout) - Instance or container not ready, or zero width. Container width: ${container.offsetWidth}px`);
-                }
-            }, 50); // Reduced delay slightly, but still allowing a microtask queue to clear
-        });
+        // CRUCIAL: Force Handsontable to re-measure and re-render after its container has settled.
+        // This is done with a longer, more robust delay.
+        setTimeout(() => {
+            if (hots[category] && handsontableContainer.offsetWidth > 0) {
+                // Manually trigger a render, and then update settings to force full recalculation
+                hots[category].render(); 
+                hots[category].updateSettings({}); // Forces a deeper internal recalculation
+            }
+        }, 300); // Increased delay to 300ms for maximal stability
 
 
         // Update summary and chart for the current category
@@ -1300,12 +1266,9 @@
         showNotification(`Could not load table data for ${category}. Please try again.`, 'error');
       } finally {
         hideLoader();
-        // Remove transition classes after a short delay to allow content to fade in
-        setTimeout(() => {
-            if (handsontableContainer) handsontableContainer.classList.remove('loading-transition');
-            if (summaryBox) summaryBox.classList.remove('loading-transition');
-            if (trendChartSection) trendChartSection.classList.remove('loading-transition');
-        }, 100); 
+        if (handsontableContainer) handsontableContainer.classList.remove('loading-transition');
+        if (summaryBox) summaryBox.classList.remove('loading-transition');
+        if (trendChartSection) trendChartSection.classList.remove('loading-transition');
       }
     }
 
@@ -1357,15 +1320,6 @@
           data: {
             labels: ['Within Tolerance','Warning','Out of Tolerance'],
             datasets: [{ data: [within,warning,out], backgroundColor: ['#66cc66','#ffcc00','#ff6666'] }]
-          },
-          options: {
-              responsive: true,
-              maintainAspectRatio: false, // Allows chart to take available space
-              plugins: {
-                  legend: {
-                      position: 'bottom', // Move legend to bottom to save horizontal space
-                  },
-              }
           }
         });
       }
@@ -1794,7 +1748,7 @@
                 var userStatus = localStorage.getItem("userStatus");
 
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
-                    showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000); 
+                    showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000);
                     window.logout();
                     return;
                 }
@@ -1820,13 +1774,19 @@
             if (hots[AppState.activeCategory]) {
                 const container = $(`handsontable-container-${AppState.activeCategory}`);
                 if (container) {
-                    requestAnimationFrame(() => {
-                        if (hots[AppState.activeCategory]) {
-                            console.log(`Handsontable Debug: RESIZE_RAF - Container clientWidth: ${container.clientWidth}px`);
-                            hots[AppState.activeCategory].render();
-                            hots[AppState.activeCategory].refreshDimensions(); 
-                        }
+                    // Recalculate based on current container size
+                    const energyColWidth = 80;
+                    const dateCols = getMonthDates(AppState.currentDate);
+                    const fixedDateColWidth = 80; 
+                    const numberOfDateCols = dateCols.length;
+                    const totalCalculatedContentWidth = energyColWidth + (numberOfDateCols * fixedDateColWidth);
+
+                    // Update Handsontable's width setting and force a render
+                    hots[AppState.activeCategory].updateSettings({
+                        width: totalCalculatedContentWidth,
+                        stretchH: 'none' // Keep 'none' as we are explicitly setting width
                     });
+                    hots[AppState.activeCategory].render();
                 }
             }
         });
