@@ -213,7 +213,7 @@
         box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     }
     
-    /* NEW: Tab Navigation Styles */
+    /* Tab Navigation Styles */
     .tab-nav {
         display: flex;
         border-bottom: 2px solid #ccc;
@@ -238,7 +238,7 @@
         border-bottom-color: #007bff;
     }
 
-    /* NEW: Tab Content Panels */
+    /* Tab Content Panels */
     .tab-content {
         display: none;
         flex-direction: column;
@@ -264,6 +264,16 @@
         border: 1px solid rgba(0,0,0,0.05);
         overflow: hidden;
     }
+    
+    /* NEW: Style for the first column (Energy) in Handsontable */
+    .handsontable .htCore td:first-child,
+    .handsontable .htCore th:first-child {
+        background-color: #f0f0f0 !important;
+        font-weight: bold;
+        color: #333 !important;
+    }
+
+
     .summary-box {
       width: 300px;
       min-width: 280px;
@@ -420,7 +430,7 @@
     // --- Global Variables & Constants ---
     const auth = firebase.auth();
     const db = firebase.firestore();
-    const BACKEND_URL = "https://back-end-wrxi.onrender.com"; // Ensure this matches your backend URL
+    const BACKEND_URL = "https://back-end-wrxi.onrender.com";
     
     let currentUID, currentHospital;
     let currentDate = new Date();
@@ -428,7 +438,7 @@
 
     const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
     
-    // NEW: Configuration for each data type
+    // MODIFIED: Configuration for each data type with new tolerance rules
     const dataTypesConfig = {
       output: { 
         label: 'Output', 
@@ -439,24 +449,23 @@
       flatness: { 
         label: 'Flatness', 
         tolerance: 1.0, 
-        warning: 1.0, // No warning threshold for 1%
+        warning: 0.9, // NEW: Warning threshold is 0.9
         initialized: false
       },
       inline: { 
         label: 'Inline Symmetry', 
         tolerance: 1.0, 
-        warning: 1.0, // No warning threshold for 1%
+        warning: 0.9, // NEW: Warning threshold is 0.9
         initialized: false
       },
       crossline: { 
         label: 'Crossline Symmetry', 
         tolerance: 1.0, 
-        warning: 1.0, // No warning threshold for 1%
+        warning: 0.9, // NEW: Warning threshold is 0.9
         initialized: false
       }
     };
     
-    // NEW: Object to hold all instances (Handsontable, Charts, etc.) for each tab
     let instances = {
       output: {},
       flatness: {},
@@ -464,7 +473,7 @@
       crossline: {}
     };
 
-    let activeTab = 'output'; // Track the currently active tab
+    let activeTab = 'output';
 
     // --- DOM Element References ---
     const yearLabel = document.getElementById('year');
@@ -490,7 +499,6 @@
 
     async function logout() {
       showLoader();
-      // Logic for logging event and signing out
       auth.signOut().then(() => {
         localStorage.clear();
         window.location.replace("login.html");
@@ -537,15 +545,12 @@
 
     async function switchTab(dataType) {
         activeTab = dataType;
-        // Update tab button styles
         document.querySelectorAll('.tab-nav-button').forEach(btn => btn.classList.remove('active'));
         document.querySelector(`.tab-nav-button[onclick="switchTab('${dataType}')"]`).classList.add('active');
 
-        // Update tab content visibility
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
         document.getElementById(`tab-content-${dataType}`).classList.add('active');
 
-        // Initialize content if it's the first time this tab is opened
         if (!dataTypesConfig[dataType].initialized) {
             await initializeTab(dataType);
         }
@@ -592,7 +597,9 @@
                 columns: Array(dateCols.length + 1).fill({ type: 'text' }),
                 afterChange: (changes, source) => {
                     if (source !== 'loadData') {
+                        // FIX: Update trend chart along with the summary
                         updateSummaryAndChart(dataType, instances[dataType].hot.getData());
+                        updateTrendChart(dataType); 
                     }
                 },
                 cells: function (r, c) {
@@ -610,7 +617,8 @@
                     } else {
                         const val = parseFloat(this.instance.getDataAtCell(r, c));
                         if (!isNaN(val)) {
-                            if (Math.abs(val) <= config.warning) props.className = 'within';
+                            // MODIFIED: Logic now uses warning/tolerance from config
+                            if (Math.abs(val) < config.warning) props.className = 'within';
                             else if (Math.abs(val) <= config.tolerance) props.className = 'warning';
                             else props.className = 'out';
                         }
@@ -647,7 +655,6 @@
             document.getElementById(`lastSaved-${dataType}`).textContent = "Saved: " + new Date().toLocaleTimeString();
             showNotification(`${config.label} data saved successfully!`, 'success');
             
-            // Send alert if needed
             const outOfToleranceValues = getOutOfToleranceValues(dataType, changedData);
             if(outOfToleranceValues.length > 0) {
                  await fetch(`${BACKEND_URL}/send-alert`, {
@@ -701,7 +708,6 @@
         }
     }
 
-
     // --- Charting and Analysis ---
     function updateSummaryAndChart(dataType, data) {
         const config = dataTypesConfig[dataType];
@@ -712,7 +718,8 @@
                 const n = parseFloat(value);
                 if (!isNaN(n)) {
                     total++;
-                    if (Math.abs(n) <= config.warning) within++;
+                    // MODIFIED: Logic now uses warning/tolerance from config
+                    if (Math.abs(n) < config.warning) within++;
                     else if (Math.abs(n) <= config.tolerance) warning++;
                     else out++;
                 }
@@ -770,12 +777,17 @@
         if (!hotInstance) return;
 
         const data = hotInstance.getData();
-        const selectedEnergy = document.getElementById(`trendEnergySelect-${dataType}`).value;
+        const selectElement = document.getElementById(`trendEnergySelect-${dataType}`);
+        if (!selectElement) return;
+
+        const selectedEnergy = selectElement.value;
         const energyRow = data.find(row => row[0] === selectedEnergy);
         const dataPoints = energyRow ? energyRow.slice(1).map(v => v === '' ? null : parseFloat(v)) : [];
         const labels = getMonthDates(currentDate).map(d => d.split('-')[2]);
 
-        const ctx = document.getElementById(`trendChart-${dataType}`).getContext('2d');
+        const canvasElement = document.getElementById(`trendChart-${dataType}`);
+        if (!canvasElement) return;
+        const ctx = canvasElement.getContext('2d');
         if (instances[dataType].trendChart) instances[dataType].trendChart.destroy();
         
         instances[dataType].trendChart = new Chart(ctx, {
@@ -803,13 +815,11 @@
         currentDate.setMonth(monthIndex);
         header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
         highlightActiveMonth();
-        // Reload data for the currently active tab
         loadDataForTab(activeTab);
     }
     function changeYear(offset) {
         currentDate.setFullYear(currentDate.getFullYear() + offset);
         yearLabel.textContent = currentDate.getFullYear();
-        // Reload data for the currently active tab
         loadDataForTab(activeTab);
     }
     function buildMonthButtons() {
@@ -843,7 +853,6 @@
                 currentHospital = localStorage.getItem("hospitalName") || 'QA Portal';
                 document.getElementById("hospitalName").textContent = `Hospital: ${currentHospital}`;
                 
-                // Sidebar and Header Setup
                 yearLabel.textContent = currentDate.getFullYear();
                 header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
                 buildMonthButtons();
@@ -852,14 +861,12 @@
                 document.getElementById('logoutBtn').onclick = logout;
                 document.getElementById('myProfileBtn').onclick = () => window.location.href='my_profile.html';
 
-                // Initialize the first tab (output)
                 switchTab('output');
 
             } else {
                 window.location.replace("login.html");
             }
         });
-        // Chatbot event listeners
         document.getElementById('chat-bubble').addEventListener('click', () => document.getElementById('chat-window').classList.toggle('open'));
         document.getElementById('close-chat-btn').addEventListener('click', () => document.getElementById('chat-window').classList.remove('open'));
     });
