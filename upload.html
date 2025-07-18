@@ -323,8 +323,9 @@
 
     /* Handsontable specific overrides for cell background and text */
     .handsontable-container .ht_master, .handsontable-container .handsontable {
-        background-color: #ffffff;
-        color: #333;
+        background-color: #ffffff !important;
+        color: #333 !important;
+        width: 100% !important; /* FIX: Force Handsontable to fill its container */
     }
     .handsontable-container .handsontable td, .handsontable-container .handsontable th {
         border-color: #aaa;
@@ -468,8 +469,8 @@
         border-color: #555;
     }
     body.dark .handsontable-container .ht_master, body.dark .handsontable-container .handsontable {
-        background-color: #2a2a2a;
-        color: #fff;
+        background-color: #2a2a2a !important;
+        color: #fff !important;
     }
     body.dark .handsontable-container .handsontable td, body.dark .handsontable-container .handsontable th {
         border-color: #555;
