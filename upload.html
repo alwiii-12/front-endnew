@@ -1,1781 +1,1798 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LINAC QA Entry</title>
-  <link rel="icon" href="/favicon.png" type="image/png">
-
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="/firebase-init.js"></script> 
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-  <style>
-    /* CSS Variables for Colors */
-    :root {
-      --primary-blue: #007bff;
-      --primary-blue-dark: #0056b3;
-      --primary-blue-light: #e0f7fa;
-      --text-dark: #333;
-      --text-light: #fff;
-      --background-light: #f5f5f5;
-      --background-white-card: #ffffff;
-      --background-dark-card: #333;
-      --background-off-white: #f8f8f8;
-      --border-light: #ccc;
-      --border-darker: #aaa;
-      --success-green: #28a745;
-      --warning-orange: #ffc107;
-      --error-red: #dc3545;
-      --shadow-light: rgba(0,0,0,0.08);
-      --shadow-medium: rgba(0,0,0,0.12);
-      --shadow-strong: rgba(0,0,0,0.2);
-    }
-
-    body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background-color: var(--background-light);
-      color: var(--text-dark);
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-      flex-direction: column;
-    }
-
-    /* Global Micro-interaction */
-    button, a.button, select {
-      transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover, a.button:hover, select:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px var(--shadow-light);
-    }
-    button:active, a.button:active, select:active {
-        transform: translateY(0);
-        box-shadow: 0 1px 4px var(--shadow-light) inset;
-    }
-
-    /* Card/Panel Base Styling */
-    .card-panel {
-      border-radius: 16px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
-      background: #ffffff;
-      border: 1px solid rgba(0,0,0,0.05);
-      padding: 20px;
-      box-sizing: border-box;
-    }
-
-    /* Topbar styling */
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #ffffff;
-      padding: 10px 20px;
-      border-bottom: 1px solid #ccc;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-      min-height: 50px;
-    }
-    .hospital-info-box {
-        background-color: #e0f7fa;
-        color: #0056b3;
-        padding: 8px 15px;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.95em;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-    .topbar button {
-      padding: 8px 15px;
-      font-size: 14px;
-      margin-left: 10px;
-      margin-right: 0;
-      color: #fff;
-      border-radius: 6px;
-    }
-    .topbar button:first-of-type {
-        background-color: #007bff;
-    }
-    .topbar button:first-of-type:hover {
-        background-color: #0056b3;
-    }
-    /* Adjusted logout button in upload.html */
-    #logoutBtn {
-        background-color: #dc3545;
-        color: #fff;
-        width: 40px; /* Fixed width for a square/circular button */
-        height: 40px; /* Fixed height for a square/circular button */
-        padding: 0; /* Remove padding if using fixed width/height */
-        display: flex; /* Use flexbox to center the icon */
-        justify-content: center;
-        align-items: center;
-        border-radius: 50%; /* Makes it circular */
-        font-size: 1.3em; /* Size of the icon */
-        margin-left: 10px; /* Keep spacing from My Profile button */
-    }
-    #logoutBtn:hover {
-        background-color: #bb2d3b;
-    }
-
-
-    body.dark .topbar {
-      background-color: #2a2a2a;
-      border-color: #444;
-    }
-    body.dark .hospital-info-box {
-        background-color: #0056b3;
-        color: #e0f7fa;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.5);
-    }
-
-    .content {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-    .sidebar {
-      width: 200px;
-      background: #ffffff;
-      padding: 20px;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.08);
-      display: flex;
-      flex-direction: column;
-    }
-    .sidebar h2 {
-        margin: 0 0 20px;
-        color: #007bff;
-        font-weight: 600;
-        font-size: 1.5em;
-    }
-    .sidebar button {
-      width: 100%;
-      margin-bottom: 8px;
-      padding: 10px 8px;
-      background: #eee;
-      color: #333;
-      font-weight: 500;
-      text-align: center;
-      border-radius: 6px;
-    }
-    .sidebar button.active {
-        background: #007bff;
-        color: #fff;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
-    .sidebar button:hover:not(.active) {
-        background: #e0e0e0;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
-    .sidebar label {
-        display: flex;
-        align-items: center;
-        margin-top: 15px;
-        font-size: 0.95em;
-        color: #333;
-    }
-    .sidebar input[type="checkbox"] {
-        margin-right: 8px;
-        transform: scale(1.2);
-    }
-    .sidebar p {
-        font-size: 0.8em;
-        margin-top: auto;
-        color: #777;
-    }
-
-
-    .main {
-      flex-grow: 1;
-      padding: 20px;
-      overflow: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    /* Month Header Box */
-    .month-header-box {
-        background: #007bff;
-        color: #fff;
-        padding: 15px 20px;
-        text-align: center;
-        font-size: 1.6em;
-        font-weight: 600;
-        border-radius: 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    }
-
-    /* NEW: Category Selection */
-    .category-selection {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-    }
-
-    .category-selection button {
-        padding: 10px 20px;
-        font-size: 1.1em;
-        font-weight: 600;
-        background-color: #f0f0f0;
-        color: #333;
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        min-width: 150px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-
-    .category-selection button.active-category {
-        background-color: var(--primary-blue);
-        color: white;
-        border-color: var(--primary-blue-dark);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        transform: translateY(-2px);
-    }
-
-    .category-selection button:hover:not(.active-category) {
-        background-color: #e5e5e5;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
-
-    body.dark .category-selection button {
-        background-color: #3a3a3a;
-        color: #eee;
-        border-color: #555;
-    }
-
-    body.dark .category-selection button.active-category {
-        background-color: var(--primary-blue);
-        color: white;
-        border-color: var(--primary-blue-dark);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-    }
-
-    body.dark .category-selection button:hover:not(.active-category) {
-        background-color: #4a4a4a;
-    }
-
-
-    /* Category Panel Container - Now acts as a wrapper for the currently active panel */
-    .category-panel-container {
-        display: flex;
-        flex-direction: column; /* Stack active panel's content vertically */
-        gap: 20px;
-        flex-grow: 1;
-    }
-
-    /* Individual category panels - will be toggled with display: flex/none */
-    .category-panel {
-        display: none; /* Hidden by default */
-        flex-direction: column; /* Stack internal content vertically */
-        gap: 20px;
-        width: 100%; /* Take full width of its parent */
-    }
-
-    .category-panel.active-panel {
-        display: flex; /* Show active panel as flex container */
-    }
-
-    /* Container for table and summary, now within each category-panel */
-    .data-display-area {
-      display: flex; /* Make children (handsontable and summary) sit side-by-side */
-      gap: 20px;
-      align-items: flex-start; /* Align content to the top */
-      flex-wrap: nowrap; /* CRITICAL FIX: Prevents items from wrapping and pushes overflow to the next container */
-      flex: 1; /* Allow this section to grow */
-    }
-
-    .handsontable-container {
-        flex: 1 1 70%; /* CRITICAL FIX: Give it a flex basis to constrain its width */
-        height: 500px; /* Fixed pixel height for Handsontable */
-        background-color: var(--background-white-card); /* FIX: Change background to match the table */
-        
-        border-radius: 16px;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
-        border: 1px solid rgba(0,0,0,0.05);
-        /* CRUCIAL: Enable horizontal scrolling for the container */
-        overflow-x: auto; 
-        overflow-y: hidden; /* Handsontable manages its own vertical scrollbar */
-    }
-
-    /* Handsontable specific overrides for cell background and text */
-    .handsontable-container .ht_master, .handsontable-container .handsontable {
-        background-color: #ffffff !important;
-        color: #333 !important;
-        width: 100% !important; /* FIX: Force Handsontable to fill its container */
-    }
-    .handsontable-container .handsontable td, .handsontable-container .handsontable th {
-        border-color: #aaa;
-    }
-    /* Corrected: Use specific class for placeholder styling in dark mode */
-    body.dark .handsontable-container .handsontable .htPlaceholder {
-        background-color: #2a2a2a !important;
-    }
-
-    .summary-box {
-      width: 300px; /* Fixed width for the summary box */
-      min-width: 280px; /* Minimum width */
-      padding: 20px;
-      /* Apply card-panel base styles */
-      border-radius: 16px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
-      background: #ffffff;
-      border: 1px solid rgba(0,0,0,0.05);
-    }
-    .summary-box h3 {
-        margin-top: 0;
-        color: #007bff;
-        font-weight: 600;
-        font-size: 1.4em;
-        margin-bottom: 15px;
-        text-align: center;
-    }
-    .summary-box p {
-        font-size: 1em;
-        margin-bottom: 8px;
-    }
-    .summary-box span {
-        font-weight: 500;
-    }
-    canvas {
-        margin-bottom: 15px;
-    }
-
-    .save-section {
-      margin-top: 0px; /* Adjusted as it's now inside category-panel */
-      text-align: center;
-    }
-    .save-section button {
-        padding: 10px 20px;
-        font-size: 1em;
-        font-weight: bold;
-        background-color: var(--primary-blue);
-        color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
-    .save-section button:hover {
-        background-color: #0056b3;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-    }
-    button:active, a.button:active, select:active {
-        transform: translateY(0);
-        box-shadow: 0 1px 4px var(--shadow-light) inset;
-    }
-
-    /* Export Buttons Section Styling */
-    .export-section {
-        margin-top: 20px; /* Adjusted as it's now inside category-panel */
-        text-align: center;
-    }
-    .export-section button {
-        padding: 10px 15px;
-        font-size: 0.95em;
-        font-weight: bold;
-        border-radius: 8px;
-        margin: 0 5px; /* Spacing between buttons */
-        color: var(--text-light);
-    }
-    .export-section button:hover {
-        box-shadow: 0 4px 10px var(--shadow-light);
-    }
-
-
-    .trend-chart-section {
-        margin-top: 30px; /* Adjusted as it's now inside category-panel */
-        padding: 20px;
-        /* Apply card-panel base styles */
-        border-radius: 16px;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
-        background: #ffffff;
-        border: 1px solid rgba(0,0,0,0.05);
-    }
-    .trend-chart-section h3 {
-        margin-top: 0;
-        color: #007bff;
-        font-weight: 600;
-        font-size: 1.4em;
-        margin-bottom: 15px;
-        text-align: center;
-    }
-    .trend-chart-section label {
-        color: #333;
-        font-weight: 500;
-    }
-    .trend-chart-section select {
-        padding: 10px;
-        border: 1px #ccc solid;
-        background-color: #ffffff;
-        color: #333;
-        font-size: 0.95em;
-        border-radius: 6px;
-    }
-
-
-    /* Dark Mode overrides */
-    body.dark {
-      background-color: #1a1a1a;
-      color: #fff;
-    }
-    body.dark .topbar, body.dark .sidebar, body.dark .summary-box, body.dark .trend-chart-section, .handsontable-container, body.dark .login-container, body.dark .signup-container, body.dark .message-container, body.dark .card, body.dark .month-header-box {
-        background: #2a2a2a;
-        box-shadow: 0 0 15px rgba(0,0,0,0.6);
-        border-color: #444;
-    }
-    body.dark .hospital-info-box {
-        background-color: #0056b3;
-        color: #e0f7fa;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.5);
-    }
-    body.dark .topbar #hospitalName, body.dark h1, body.dark h2, body.dark h3, body.dark .user-info strong {
-        color: #e0f7fa;
-    }
-    body.dark .sidebar button {
-        background: #3a3a3a;
-        color: #fff;
-    }
-    body.dark .sidebar button.active {
-        background: #007bff;
-    }
-    body.dark .sidebar button:hover:not(.active) {
-        background: #4a4a4a;
-    }
-    body.dark select, body.dark input {
-        background-color: #3a3a3a;
-        color: #fff;
-        border-color: #555;
-    }
-    body.dark .handsontable-container .ht_master, body.dark .handsontable-container .handsontable {
-        background-color: #2a2a2a !important;
-        color: #fff !important;
-    }
-    body.dark .handsontable-container .handsontable td, body.dark .handsontable-container .handsontable th {
-        border-color: #555;
-    }
-    /* Corrected: Use specific class for placeholder styling in dark mode */
-    body.dark .handsontable-container .handsontable .htPlaceholder {
-        background-color: #2a2a2a !important;
-    }
-    body.dark .summary-box p, body.dark .sidebar label, body.dark .sidebar p, body.dark .trend-chart-section label {
-        color: #bbb;
-    }
-
-
-    /* Loading Overlay & Spinner */
-    #loading-overlay {
-      position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-    .spinner {
-      width: 60px;
-      height: 60px;
-      border: 8px solid #ffffff;
-      border-top-color: #007bff;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Handsontable Cell Coloring */
-    .within { background-color: #d4edda !important; color: #155724 !important; }
-    .warning { background-color: #fff3cd !important; color: #856404 !important; }
-    .out { background-color: #f8d7da !important; color: #721c24 !important; }
-
-    /* New CSS for future cells to appear read-only */
-    .future-cell-readonly {
-        background-color: #f0f0f0 !important; /* Light grey for disabled look */
-        color: #999 !important; /* Muted text text-color */
-        cursor: not-allowed !important; /* Indicate it's not editable */
-    }
-    body.dark .future-cell-readonly {
-        background-color: #3a3a3a !important;
-        color: #777 !important;
-    }
-    /* Also ensure the Handsontable "placeholder" style is consistent in dark mode */
-    body.dark .handsontable-container .handsontable .htPlaceholder {
-        background-color: #2a2a2a !important;
-    }
-
-
-    /* NEW CSS for Smooth Transitions */
-    /* Transitions applied to specific loading elements only */
-    .handsontable-container.loading-transition,
-    .summary-box.loading-transition,
-    .trend-chart-section.loading-transition {
-        opacity: 0;
-        transform: translateY(10px);
-        transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out; /* Apply transition here */
-    }
-
-
-    /* NEW CSS for Chatbot */
-    #chat-bubble {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: var(--primary-blue);
-        color: white;
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 1.8em;
-        cursor: pointer;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        z-index: 1000;
-    }
-    #chat-bubble:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(0,0,0,0.3);
-    }
-
-    #chat-window {
-        position: fixed;
-        bottom: 90px; /* Above the bubble */
-        right: 20px;
-        width: 350px;
-        height: 450px;
-        background-color: var(--background-white-card);
-        border-radius: 12px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        z-index: 999;
-        transform: scale(0.8); /* Start smaller for transition */
-        opacity: 0;
-        visibility: hidden; /* Hidden by default */
-        transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s;
-    }
-    #chat-window.open {
-        transform: scale(1);
-        opacity: 1;
-        visibility: visible;
-    }
-
-    #chat-header {
-        background-color: var(--primary-blue);
-        color: white;
-        padding: 15px;
-        font-size: 1.1em;
-        font-weight: 600;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-top-left-radius: 12px;
-        border-top-right-radius: 12px;
-    }
-    #chat-header button {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 1.2em;
-        cursor: pointer;
-        padding: 5px;
-        border-radius: 50%;
-    }
-    #chat-header button:hover {
-        background-color: rgba(255,255,255,0.2);
-    }
-
-    #chat-body {
-        flex-grow: 1;
-        padding: 15px;
-        overflow-y: auto;
-        background-color: var(--background-off-white);
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-    .chat-message {
-        max-width: 80%;
-        padding: 10px 12px;
-        border-radius: 18px;
-        line-height: 1.4;
-        font-size: 0.95em;
-        word-wrap: break-word;
-    }
-    .chat-message.user {
-        align-self: flex-end;
-        background-color: #e6e6e6;
-        color: var(--text-dark);
-        border-bottom-right-radius: 2px;
-    }
-    .chat-message.bot {
-        align-self: flex-start;
-        background-color: var(--primary-blue-light);
-        color: #0036B3;
-        border-bottom-left-radius: 2px;
-    }
-    body.dark #chat-window {
-        background-color: #2a2a2a;
-    }
-    body.dark #chat-body {
-        background-color: #3a3a3a;
-        color: #fff;
-    }
-    body.dark .chat-message.user {
-        background-color: #555;
-        color: #eee;
-    }
-    body.dark .chat-message.bot {
-        background-color: var(--primary-blue-dark);
-        color: var(--primary-blue-light);
-    }
-
-
-    #chat-input-area {
-        padding: 10px 15px;
-        border-top: 1px solid var(--border-light);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    #chat-input-area input {
-        flex-grow: 1;
-        padding: 10px;
-        border: 1px solid var(--border-light);
-        border-radius: 20px;
-        font-size: 0.95em;
-        background-color: var(--background-white-card);
-        color: var(--text-dark);
-    }
-    body.dark #chat-input-area input {
-        background-color: #4a4a4a;
-        border-color: #666;
-        color: #eee;
-    }
-    #chat-input-area button {
-        background-color: var(--primary-blue);
-        color: white;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        font-size: 1.2em;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    #chat-input-area button:hover {
-        background-color: var(--primary-blue-dark);
-    }
-
-    /* NEW: Print-Specific CSS */
-    @media print {
-        /* Hide elements not meant for print */
-        .topbar, .sidebar, #chat-bubble, #chat-window, .save-section, .export-section, .category-selection {
-            display: none !important;
-        }
-
-        /* Ensure main content takes full width and flows properly */
-        body {
-            display: block;
-        }
-        .content {
-            flex-direction: column !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: visible !important;
-            height: auto !important;
-        }
-        .main {
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 20px !important;
-            overflow: visible !important;
-            height: auto !important;
-        }
-        /* Adjusted for category-panel to be printable */
-        .category-panel { /* Target all panels */
-            display: flex !important; /* Force all panels to display */
-            flex-direction: column !important; /* Maintain flex layout */
-            opacity: 1 !important;
-            transform: translateY(0) !important;
-            page-break-after: always; /* Ensure each category starts on a new page */
-            height: auto !important; /* Allow content to dictate height */
-        }
-        .data-display-area {
-            flex-direction: column !important;
-            align-items: center !important;
-            gap: 20px;
-            page-break-inside: avoid;
-        }
-
-        .handsontable-container, .summary-box, .trend-chart-section {
-            box-shadow: none !important;
-            border: 1px solid #eee !important;
-            background: white !important;
-            width: 95% !important;
-            margin: 0 auto 20px auto !important;
-            page-break-inside: avoid;
-        }
-        .handsontable-container {
-            overflow: visible !important;
-            height: auto !important;
-        }
-        /* Make Handsontable cells print cleanly */
-        .handsontable-container .handsontable td, .handsontable-container .handsontable th {
-            white-space: normal !important;
-        }
-
-        /* Adjust chart canvas for printing if necessary */
-        canvas {
-            max-height: none !important;
-            width: 100% !important;
-        }
-    }
-
-    /* NEW: Styles for Custom Notifications */
-    #notification-container {
-        position: fixed;
-        top: 20px; /* Adjust as needed */
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 10000; /* Ensure it's on top of everything */
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        pointer-events: none; /* Allows clicks to pass through when no messages are active */
-    }
-
-    .notification-message {
-        background-color: #333;
-        color: white;
-        padding: 12px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        opacity: 0;
-        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-        transform: translateY(-20px);
-        min-width: 250px;
-        text-align: center;
-        pointer-events: auto; /* Re-enable pointer events for the message itself */
-    }
-
-    .notification-message.show {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    .notification-message.success {
-        background-color: #28a745;
-    }
-
-    .notification-message.error {
-        background-color: #dc3545;
-    }
-
-    .notification-message.warning {
-        background-color: #ffc107;
-        color: #333;
-    }
-
-    .notification-message.info {
-        background-color: #007bff;
-    }
-
-  </style>
-</head>
-<body>
-  <div class="topbar">
-    <div id="hospitalInfoBox" class="hospital-info-box">
-        <span id="hospitalName">Hospital: </span>
-    </div>
-    <span style="flex-grow: 1;"></span>
-    <button id="myProfileBtn"
-            style="background-color: var(--primary-blue); color: var(--text-light);">
-      My Profile
-    </button>
-    <button id="logoutBtn" title="Logout">
-      <i class="fas fa-sign-out-alt"></i>
-    </button>
-  </div>
-
-  <div class="content">
-    <div class="sidebar">
-      <h2>LINAC QA</h2>
-      <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
-        <button id="prevYearBtn">←</button>
-        <span id="year" style="margin: 0 10px;">2025</span>
-        <button id="nextYearBtn">→</button>
-      </div>
-      <div id="months"></div>
-      <label><input type="checkbox" id="darkToggle"> Dark Mode</label>
-      <p style="font-size:12px;margin-top:auto;">© 2025 QA Dashboard</p>
-    </div>
-
-    <div class="main">
-        <div class="month-header-box" id="header"></div>
-
-        <div class="category-selection">
-            <button id="btnOutput" data-category="Output">OUTPUT</button>
-            <button id="btnFlatness" data-category="Flatness">FLATNESS</button>
-            <button id="btnInlineSymmetry" data-category="Inline Symmetry">INLINE SYMMETRY</button>
-            <button id="btnCrosslineSymmetry" data-category="Crossline Symmetry">CROSSLINE SYMMETRY</button>
-        </div>
-
-        <div class="category-panel-container">
-            <div id="panelOutput" class="category-panel"> 
-                <div class="data-display-area">
-                    <div id="handsontable-container-Output" class="handsontable-container card-panel"></div>
-                    <div id="summary-box-Output" class="summary-box">
-                        <canvas id="summaryChart-Output" width="280" height="280"></canvas>
-                        <h3>Summary - Output</h3>
-                        <p><strong>Total Entries:</strong> <span id="total-Output">0</span></p>
-                        <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within-Output">0</span></p>
-                        <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning-Output">0</span></p>
-                        <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out-Output">0</span></p>
-                    </div>
-                </div>
-                <div id="save-section-Output" class="save-section" style="text-align: center;">
-                    <button class="save-btn" data-category="Output" style="font-weight:bold; background-color: var(--primary-blue); color: var(--text-light);">
-                        <i class="fas fa-save"></i> Save Output
-                    </button>
-                    <span id="lastSaved-Output" style="margin-left:15px;font-size:14px;color:gray;"></span>
-                </div>
-                <div id="export-section-Output" class="export-section" style="margin-top: 20px; text-align: center;">
-                    <button class="export-excel-btn" data-category="Output" style="background-color: #28a745; color: white;">
-                        <i class="fas fa-file-excel"></i> Export Output Excel
-                    </button>
-                </div>
-                <div id="trend-chart-section-Output" class="trend-chart-section" style="margin-top: 30px;">
-                    <h3>Energy Trend Analysis (Current Month) - Output</h3>
-                    <div style="margin-bottom: 15px;">
-                        <label for="trendEnergySelect-Output" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
-                        <select id="trendEnergySelect-Output" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart('Output')"></select>
-                    </div>
-                    <canvas id="trendChart-Output" style="max-height: 350px; width: 100%;"></canvas>
-                </div>
-            </div>
-
-            <div id="panelFlatness" class="category-panel">
-                <div class="data-display-area">
-                    <div id="handsontable-container-Flatness" class="handsontable-container card-panel"></div>
-                    <div id="summary-box-Flatness" class="summary-box">
-                        <canvas id="summaryChart-Flatness" width="280" height="280"></canvas>
-                        <h3>Summary - Flatness</h3>
-                        <p><strong>Total Entries:</strong> <span id="total-Flatness">0</span></p>
-                        <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within-Flatness">0</span></p>
-                        <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning-Flatness">0</span></p>
-                        <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out-Flatness">0</span></p>
-                    </div>
-                </div>
-                <div id="save-section-Flatness" class="save-section" style="text-align: center;">
-                    <button class="save-btn" data-category="Flatness" style="font-weight:bold; background-color: var(--primary-blue); color: var(--text-light);">
-                        <i class="fas fa-save"></i> Save Flatness
-                    </button>
-                    <span id="lastSaved-Flatness" style="margin-left:15px;font-size:14px;color:gray;"></span>
-                </div>
-                <div id="export-section-Flatness" class="export-section" style="margin-top: 20px; text-align: center;">
-                    <button class="export-excel-btn" data-category="Flatness" style="background-color: #28a745; color: white;">
-                        <i class="fas fa-file-excel"></i> Export Flatness Excel
-                    </button>
-                </div>
-                <div id="trend-chart-section-Flatness" class="trend-chart-section" style="margin-top: 30px;">
-                    <h3>Energy Trend Analysis (Current Month) - Flatness</h3>
-                    <div style="margin-bottom: 15px;">
-                        <label for="trendEnergySelect-Flatness" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
-                        <select id="trendEnergySelect-Flatness" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart('Flatness')"></select>
-                    </div>
-                    <canvas id="trendChart-Flatness" style="max-height: 350px; width: 100%;"></canvas>
-                </div>
-            </div>
-
-            <div id="panelInline Symmetry" class="category-panel">
-                <div class="data-display-area">
-                    <div id="handsontable-container-Inline Symmetry" class="handsontable-container card-panel"></div>
-                    <div id="summary-box-Inline Symmetry" class="summary-box">
-                        <canvas id="summaryChart-Inline Symmetry" width="280" height="280"></canvas>
-                        <h3>Summary - Inline Symmetry</h3>
-                        <p><strong>Total Entries:</strong> <span id="total-Inline Symmetry">0</span></p>
-                        <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within-Inline Symmetry">0</span></p>
-                        <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning-Inline Symmetry">0</span></p>
-                        <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out-Inline Symmetry">0</span></p>
-                    </div>
-                </div>
-                <div id="save-section-Inline Symmetry" class="save-section" style="text-align: center;">
-                    <button class="save-btn" data-category="Inline Symmetry" style="font-weight:bold; background-color: var(--primary-blue); color: var(--text-light);">
-                        <i class="fas fa-save"></i> Save Inline Symmetry
-                    </button>
-                    <span id="lastSaved-Inline Symmetry" style="margin-left:15px;font-size:14px;color:gray;"></span>
-                </div>
-                <div id="export-section-Inline Symmetry" class="export-section" style="margin-top: 20px; text-align: center;">
-                    <button class="export-excel-btn" data-category="Inline Symmetry" style="background-color: #28a745; color: white;">
-                        <i class="fas fa-file-excel"></i> Export Inline Symmetry Excel
-                    </button>
-                </div>
-                <div id="trend-chart-section-Inline Symmetry" class="trend-chart-section" style="margin-top: 30px;">
-                    <h3>Energy Trend Analysis (Current Month) - Inline Symmetry</h3>
-                    <div style="margin-bottom: 15px;">
-                        <label for="trendEnergySelect-Inline Symmetry" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
-                        <select id="trendEnergySelect-Inline Symmetry" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart('Inline Symmetry')"></select>
-                    </div>
-                    <canvas id="trendChart-Inline Symmetry" style="max-height: 350px; width: 100%;"></canvas>
-                </div>
-            </div>
-
-            <div id="panelCrossline Symmetry" class="category-panel">
-                <div class="data-display-area">
-                    <div id="handsontable-container-Crossline Symmetry" class="handsontable-container card-panel"></div>
-                    <div id="summary-box-Crossline Symmetry" class="summary-box">
-                        <canvas id="summaryChart-Crossline Symmetry" width="280" height="280"></canvas>
-                        <h3>Summary - Crossline Symmetry</h3>
-                        <p><strong>Total Entries:</strong> <span id="total-Crossline Symmetry">0</span></p>
-                        <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within-Crossline Symmetry">0</span></p>
-                        <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning-Crossline Symmetry">0</span></p>
-                        <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out-Crossline Symmetry">0</span></p>
-                    </div>
-                </div>
-                <div id="save-section-Crossline Symmetry" class="save-section" style="text-align: center;">
-                    <button class="save-btn" data-category="Crossline Symmetry" style="font-weight:bold; background-color: var(--primary-blue); color: var(--text-light);">
-                        <i class="fas fa-save"></i> Save Crossline Symmetry
-                    </button>
-                    <span id="lastSaved-Crossline Symmetry" style="margin-left:15px;font-size:14px;color:gray;"></span>
-                </div>
-                <div id="export-section-Crossline Symmetry" class="export-section" style="margin-top: 20px; text-align: center;">
-                    <button class="export-excel-btn" data-category="Crossline Symmetry" style="background-color: #28a745; color: white;">
-                        <i class="fas fa-file-excel"></i> Export Crossline Symmetry Excel
-                    </button>
-                </div>
-                <div id="trend-chart-section-Crossline Symmetry" class="trend-chart-section" style="margin-top: 30px;">
-                    <h3>Energy Trend Analysis (Current Month) - Crossline Symmetry</h3>
-                    <div style="margin-bottom: 15px;">
-                        <label for="trendEnergySelect-Crossline Symmetry" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
-                        <select id="trendEnergySelect-Crossline Symmetry" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart('Crossline Symmetry')"></select>
-                    </div>
-                    <canvas id="trendChart-Crossline Symmetry" style="max-height: 350px; width: 100%;"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-  </div>
-
-  <div id="loading-overlay"><div class="spinner"></div></div>
-
-  <div id="chat-bubble"><i class="fas fa-comment-dots"></i></div>
-  <div id="chat-window">
-      <div id="chat-header">
-          <span>QA Copilot</span> <button id="close-chat-btn"><i class="fas fa-times"></i></button>
-      </div>
-      <div id="chat-body">
-          <div class="chat-message bot">Hello! How can I help you with your QA data today?</div>
-          <div class="chat-message bot">You can ask: "Out of tolerance dates", "Value for 2025-06-10", "All 6X data this month", or "List all warning values". (Please useYYYY-MM-DD for dates).</div>
-      </div>
-      <div id="chat-input-area">
-          <input type="text" id="chat-input" placeholder="Type your question...">
-          <button id="send-chat-btn"><i class="fas fa-paper-plane"></i></button>
-      </div>
-  </div>
-
-  <div id="notification-container"></div>
-
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="/firebase-init.js"></script> 
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-
-  <script>
-    // These now reference the globally initialized Firebase objects from firebase-init.js
-    var auth = firebase.auth();
-    var db = firebase.firestore();
-
-    // Centralized AppState for better global variable management
-    const AppState = {
-        currentDate: new Date(), 
-        currentUID: null,
-        activeCategory: 'Output', // Default active category
-        currentHospital: ''
-    };
-
-    // Helper function for document.getElementById
-    const $ = id => document.getElementById(id);
-
-
-    // Declare global variables that will hold Handsontable and Chart.js instances
-    var hots = {}; // Stores Handsontable instances: hots['Output'], hots['Flatness'], etc.
-    var summaryCharts = {}; // Stores Chart.js summary chart instances
-    var trendCharts = {}; // Stores Chart.js trend chart instances
-
-    // Get references to DOM elements using the new $ helper
-    var monthsDiv = $('months');
-    var header = $('header');
-    var yearLabel = $('year');
-    var darkToggle = $('darkToggle');
-    var logoutBtn = $('logoutBtn');
-    var myProfileBtn = $('myProfileBtn');
-    var prevYearBtn = $('prevYearBtn');
-    var nextYearBtn = $('nextYearBtn');
-
-    // Category specific UI elements
-    const CATEGORIES = ["Output", "Flatness", "Inline Symmetry", "Crossline Symmetry"];
-
-    // Chatbot UI element references
-    var chatBubble = $('chat-bubble');
-    var chatWindow = $('chat-window');
-    var closeChatBtn = $('close-chat-btn');
-    var chatBody = $('chat-body');
-    var chatInput = $('chat-input');
-    var sendChatBtn = $('send-chat-btn');
-
-    // Notification Container
-    var notificationContainer = $('notification-container');
-
-    // Define the backend URL
-    const BACKEND_URL = "https://back-end-wrxi.onrender.com";
-
-
-    var energyTypes = ["6X","10X","15X","6X FFF","10X FFF","6E","9E","12E","15E","18E"];
-
-    // Tolerance settings mapped to categories
-    const TOLERANCE_SETTINGS = {
-        "Output": { within: 1.8, warning: 2.0, out: 2.0 },
-        "Flatness": { within: 0.9, warning: 1.0, out: 1.0 },
-        "Inline Symmetry": { within: 0.9, warning: 1.0, out: 1.0 },
-        "Crossline Symmetry": { within: 0.9, warning: 1.0, out: 1.0 },
-    };
-
-    // Store outOfToleranceValues for each category
-    const outOfToleranceValuesByCategory = {
-        "Output": [],
-        "Flatness": [],
-        "Inline Symmetry": [],
-        "Crossline Symmetry": [],
-    };
-
-    // --- Custom Notification Function ---
-    function showNotification(message, type = 'info', duration = 3000) {
-        const notification = document.createElement('div');
-        notification.classList.add('notification-message', type);
-        notification.textContent = message;
-
-        if (notificationContainer) { // Null check for notification container
-            notificationContainer.appendChild(notification);
-
-            void notification.offsetWidth; 
-            notification.classList.add('show');
-
-            setTimeout(() => {
-                notification.classList.remove('show');
-                notification.addEventListener('transitionend', () => {
-                    notification.remove();
-                }, { once: true });
-            }, duration);
-        } else {
-            console.warn("Notification container not found.", message);
-        }
-    }
-
-
-    // --- Core Functions ---
-    window.logout = async function() { 
-      showLoader();
-      const user = auth.currentUser;
-      const userUid = AppState.currentUID || (user ? user.uid : "unknown_uid");
-      const userEmail = localStorage.getItem("userEmail") || "unknown_email";
-      const hospitalName = AppState.currentHospital || "unknown_hospital";
-      const userRole = localStorage.getItem("userRole") || "unknown_role";
-
-      try {
-          await fetch(`${BACKEND_URL}/log_event`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                  action: "user_logout",
-                  userUid: userUid,
-                  userEmail: userEmail,
-                  hospital: hospitalName,
-                  role: userRole
-              })
-          });
-      } catch (logError) {
-          console.error("Error sending logout log event:", logError);
-      }
-
-      auth.signOut().then(() => {
-        localStorage.clear();
-        hideLoader();
-        window.location.replace("login.html");
-      }).catch((error) => {
-        console.error("Logout error:", error);
-        showNotification("Logout failed: " + error.message, 'error');
-        hideLoader();
-      });
-    }
-
-    function getMonthDates(date) {
-      var y = date.getFullYear(), m = date.getMonth();
-      var days = new Date(y, m + 1, 0).getDate();
-      return Array.from({ length: days }, (_, i) => `${y}-${String(m + 1).padStart(2, '0')}-${String(i+1).padStart(2, '0')}`);
-    }
-
-    function generateEmptyData(dates) {
-      return energyTypes.map(e => [e, ...new Array(dates.length).fill('')]);
-    }
-
-    function showLoader(){ $('loading-overlay').style.display='flex'; }
-    function hideLoader(){ $('loading-overlay').style.display='none'; }
-
-    async function loadTable(category = AppState.activeCategory) {
-        const handsontableContainer = $(`handsontable-container-${category}`);
-        const summaryBox = $(`summary-box-${category}`);
-        const trendChartSection = $(`trend-chart-section-${category}`);
-
-        // Apply the transition classes immediately for the fade-in effect
-        if (handsontableContainer) handsontableContainer.classList.add('loading-transition');
-        if (summaryBox) summaryBox.classList.add('loading-transition');
-        if (trendChartSection) trendChartSection.classList.add('loading-transition');
-
-        // Hide the full-page loader as it's no longer needed for this new approach
-        hideLoader();
-
-        var dateCols = getMonthDates(AppState.currentDate);
-        if (header) header.textContent = `${AppState.currentDate.toLocaleString('default', { month: 'long' })} ${AppState.currentDate.getFullYear()} - ${category}`;
-        if (yearLabel) yearLabel.textContent = AppState.currentDate.getFullYear();
-        highlightActiveMonth();
-
-        var monthKey = `${AppState.currentDate.getFullYear()}-${String(AppState.currentDate.getMonth() + 1).padStart(2, '0')}`;
-
-        try {
-            var res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&uid=${AppState.currentUID}&category=${category}`);
-            if (!res.ok) {
-                throw new Error('Network response was not ok');
-            }
-            var result = await res.json();
-            var data = Array.isArray(result.data) && result.data.length === energyTypes.length
-                ? result.data.map(r => r.map(c => c === null || c === "None" ? "" : c))
-                : generateEmptyData(dateCols);
-
-            const today = new Date();
-            const isFutureMonth = AppState.currentDate.getFullYear() > today.getFullYear() ||
-                                  (AppState.currentDate.getFullYear() === today.getFullYear() && AppState.currentDate.getMonth() > today.getMonth());
-
-            const container = $(`handsontable-container-${category}`);
-            if (!container) {
-                console.error(`Handsontable container not found for category: ${category}`);
-                showNotification(`Error: Handsontable display area not found for ${category}.`, 'error');
-                return;
-            }
-
-            // Destroy existing Handsontable for this category if it exists
-            if (hots[category]) hots[category].destroy();
-
-            // Initialize Handsontable with all data and settings
-            hots[category] = new Handsontable(container, {
-                data, // Pass data directly
-                rowHeaders: false,
-                stretchH: 'all', // Crucial: forces columns to stretch to fill the container
-                autoColumnSize: true,
-                autoRowSize: true,
-                height: 500, // Fixed pixel height as defined in CSS
-                licenseKey: 'non-commercial-and-evaluation',
-                colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
-                columns: Array(dateCols.length + 1).fill({ type: 'text' }),
-                afterChange: (changes, source) => {
-                    if (!changes || source === 'loadData') return;
-                    updateSummaryAndChart(hots[category].getData(), category);
-                    // Trigger a re-render of cell styles after changes
-                    hots[category].render();
-                },
-                cells: function (r, c) {
-                    var props = {};
-                    props.className = '';
-                    if (c === 0) {
-                        props.readOnly = true;
-                        return props;
-                    }
-
-                    if (isFutureMonth || (AppState.currentDate.getFullYear() === today.getFullYear() && AppState.currentDate.getMonth() === today.getMonth() && c > today.getDate())) {
-                        props.readOnly = true;
-                        props.className += ' future-cell-readonly';
-                    } else {
-                        props.readOnly = false;
-                    }
-
-                    const tolerance = TOLERANCE_SETTINGS[category];
-                    var v = parseFloat(this.instance.getDataAtCell(r, c));
-                    if (!isNaN(v)) {
-                        props.className += ' ' + (Math.abs(v) <= tolerance.within ? 'within' : (Math.abs(v) <= tolerance.warning ? 'warning' : 'out'));
-                    }
-                    return props;
-                },
-            });
-
-            // Wait for a short time after the table is initialized to let it fully render.
-            // This is the key to preventing the "blank" appearance.
-            setTimeout(() => {
-                if (handsontableContainer) handsontableContainer.classList.remove('loading-transition');
-                if (summaryBox) summaryBox.classList.remove('loading-transition');
-                if (trendChartSection) trendChartSection.classList.remove('loading-transition');
-            }, 100);
-
-            // Update summary and chart for the current category
-            updateSummaryAndChart(data, category);
-            populateTrendEnergySelect(category);
-            updateTrendChart(category);
-
-        } catch (e) {
-            console.error(`Error loading table data for ${category}:`, e);
-            showNotification(`Could not load table data for ${category}. Please try again.`, 'error');
-
-            // Ensure transition classes are removed on error as well
-            if (handsontableContainer) handsontableContainer.classList.remove('loading-transition');
-            if (summaryBox) summaryBox.classList.remove('loading-transition');
-            if (trendChartSection) trendChartSection.classList.remove('loading-transition');
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LINAC QA Entry</title>
+  <link rel="icon" href="/favicon.png" type="image/png">
+
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="/firebase-init.js"></script> 
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <style>
+    /* CSS Variables for Colors */
+    :root {
+      --primary-blue: #007bff;
+      --primary-blue-dark: #0056b3;
+      --primary-blue-light: #e0f7fa;
+      --text-dark: #333;
+      --text-light: #fff;
+      --background-light: #f5f5f5;
+      --background-white-card: #ffffff;
+      --background-dark-card: #333;
+      --background-off-white: #f8f8f8;
+      --border-light: #ccc;
+      --border-darker: #aaa;
+      --success-green: #28a745;
+      --warning-orange: #ffc107;
+      --error-red: #dc3545;
+      --shadow-light: rgba(0,0,0,0.08);
+      --shadow-medium: rgba(0,0,0,0.12);
+      --shadow-strong: rgba(0,0,0,0.2);
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-dark);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      flex-direction: column;
+    }
+
+    /* Global Micro-interaction */
+    button, a.button, select {
+      transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover, a.button:hover, select:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px var(--shadow-light);
+    }
+    button:active, a.button:active, select:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 4px var(--shadow-light) inset;
+    }
+
+    /* Card/Panel Base Styling */
+    .card-panel {
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
+      background: #ffffff;
+      border: 1px solid rgba(0,0,0,0.05);
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    /* Topbar styling */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      padding: 10px 20px;
+      border-bottom: 1px solid #ccc;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      min-height: 50px;
+    }
+    .hospital-info-box {
+        background-color: #e0f7fa;
+        color: #0056b3;
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95em;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .topbar button {
+      padding: 8px 15px;
+      font-size: 14px;
+      margin-left: 10px;
+      margin-right: 0;
+      color: #fff;
+      border-radius: 6px;
+    }
+    .topbar button:first-of-type {
+        background-color: #007bff;
+    }
+    .topbar button:first-of-type:hover {
+        background-color: #0056b3;
+    }
+    /* Adjusted logout button in upload.html */
+    #logoutBtn {
+        background-color: #dc3545;
+        color: #fff;
+        width: 40px; /* Fixed width for a square/circular button */
+        height: 40px; /* Fixed height for a square/circular button */
+        padding: 0; /* Remove padding if using fixed width/height */
+        display: flex; /* Use flexbox to center the icon */
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%; /* Makes it circular */
+        font-size: 1.3em; /* Size of the icon */
+        margin-left: 10px; /* Keep spacing from My Profile button */
+    }
+    #logoutBtn:hover {
+        background-color: #bb2d3b;
+    }
+
+
+    body.dark .topbar {
+      background-color: #2a2a2a;
+      border-color: #444;
+    }
+    body.dark .hospital-info-box {
+        background-color: #0056b3;
+        color: #e0f7fa;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+
+    .content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 200px;
+      background: #ffffff;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar h2 {
+        margin: 0 0 20px;
+        color: #007bff;
+        font-weight: 600;
+        font-size: 1.5em;
+    }
+    .sidebar button {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 10px 8px;
+      background: #eee;
+      color: #333;
+      font-weight: 500;
+      text-align: center;
+      border-radius: 6px;
+    }
+    .sidebar button.active {
+        background: #007bff;
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .sidebar button:hover:not(.active) {
+        background: #e0e0e0;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .sidebar label {
+        display: flex;
+        align-items: center;
+        margin-top: 15px;
+        font-size: 0.95em;
+        color: #333;
+    }
+    .sidebar input[type="checkbox"] {
+        margin-right: 8px;
+        transform: scale(1.2);
+    }
+    .sidebar p {
+        font-size: 0.8em;
+        margin-top: auto;
+        color: #777;
+    }
+
+
+    .main {
+      flex-grow: 1;
+      padding: 20px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Month Header Box */
+    .month-header-box {
+        background: #007bff;
+        color: #fff;
+        padding: 15px 20px;
+        text-align: center;
+        font-size: 1.6em;
+        font-weight: 600;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+
+    /* NEW: Category Selection */
+    .category-selection {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .category-selection button {
+        padding: 10px 20px;
+        font-size: 1.1em;
+        font-weight: 600;
+        background-color: #f0f0f0;
+        color: #333;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        min-width: 150px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .category-selection button.active-category {
+        background-color: var(--primary-blue);
+        color: white;
+        border-color: var(--primary-blue-dark);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+    }
+
+    .category-selection button:hover:not(.active-category) {
+        background-color: #e5e5e5;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    body.dark .category-selection button {
+        background-color: #3a3a3a;
+        color: #eee;
+        border-color: #555;
+    }
+
+    body.dark .category-selection button.active-category {
+        background-color: var(--primary-blue);
+        color: white;
+        border-color: var(--primary-blue-dark);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+
+    body.dark .category-selection button:hover:not(.active-category) {
+        background-color: #4a4a4a;
+    }
+
+
+    /* Category Panel Container - Now acts as a wrapper for the currently active panel */
+    .category-panel-container {
+        display: flex;
+        flex-direction: column; /* Stack active panel's content vertically */
+        gap: 20px;
+        flex-grow: 1;
+    }
+
+    /* Individual category panels - will be toggled with display: flex/none */
+    .category-panel {
+        display: none; /* Hidden by default */
+        flex-direction: column; /* Stack internal content vertically */
+        gap: 20px;
+        width: 100%; /* Take full width of its parent */
+    }
+
+    .category-panel.active-panel {
+        display: flex; /* Show active panel as flex container */
+    }
+
+    /* Container for table and summary, now within each category-panel */
+    .data-display-area {
+      display: flex; /* Make children (handsontable and summary) sit side-by-side */
+      gap: 20px;
+      align-items: flex-start; /* Align content to the top */
+      flex-wrap: nowrap; /* CRITICAL FIX: Prevents items from wrapping and pushes overflow to the next container */
+      flex: 1; /* Allow this section to grow */
+    }
+
+    .handsontable-container {
+        flex: 1 1 70%; /* CRITICAL FIX: Give it a flex basis to constrain its width */
+        height: 500px; /* Fixed pixel height for Handsontable */
+        background-color: var(--background-white-card); /* FIX: Change background to match the table */
+        
+        border-radius: 16px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
+        border: 1px solid rgba(0,0,0,0.05);
+        /* CRUCIAL: Enable horizontal scrolling for the container */
+        overflow-x: auto; 
+        overflow-y: hidden; /* Handsontable manages its own vertical scrollbar */
+    }
+
+    /* Handsontable specific overrides for cell background and text */
+    .handsontable-container .ht_master, .handsontable-container .handsontable {
+        background-color: #ffffff !important;
+        color: #333 !important;
+        width: 100% !important; /* FIX: Force Handsontable to fill its container */
+    }
+    .handsontable-container .handsontable td, .handsontable-container .handsontable th {
+        border-color: #aaa;
+    }
+    /* Corrected: Use specific class for placeholder styling in dark mode */
+    body.dark .handsontable-container .handsontable .htPlaceholder {
+        background-color: #2a2a2a !important;
+    }
+
+    .summary-box {
+      width: 300px; /* Fixed width for the summary box */
+      min-width: 280px; /* Minimum width */
+      padding: 20px;
+      /* Apply card-panel base styles */
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
+      background: #ffffff;
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+    .summary-box h3 {
+        margin-top: 0;
+        color: #007bff;
+        font-weight: 600;
+        font-size: 1.4em;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    .summary-box p {
+        font-size: 1em;
+        margin-bottom: 8px;
+    }
+    .summary-box span {
+        font-weight: 500;
+    }
+    canvas {
+        margin-bottom: 15px;
+    }
+
+    .save-section {
+      margin-top: 0px; /* Adjusted as it's now inside category-panel */
+      text-align: center;
+    }
+    .save-section button {
+        padding: 10px 20px;
+        font-size: 1em;
+        font-weight: bold;
+        background-color: var(--primary-blue);
+        color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .save-section button:hover {
+        background-color: #0056b3;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+    }
+    button:active, a.button:active, select:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 4px var(--shadow-light) inset;
+    }
+
+    /* Export Buttons Section Styling */
+    .export-section {
+        margin-top: 20px; /* Adjusted as it's now inside category-panel */
+        text-align: center;
+    }
+    .export-section button {
+        padding: 10px 15px;
+        font-size: 0.95em;
+        font-weight: bold;
+        border-radius: 8px;
+        margin: 0 5px; /* Spacing between buttons */
+        color: var(--text-light);
+    }
+    .export-section button:hover {
+        box-shadow: 0 4px 10px var(--shadow-light);
+    }
+
+
+    .trend-chart-section {
+        margin-top: 30px; /* Adjusted as it's now inside category-panel */
+        padding: 20px;
+        /* Apply card-panel base styles */
+        border-radius: 16px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
+        background: #ffffff;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .trend-chart-section h3 {
+        margin-top: 0;
+        color: #007bff;
+        font-weight: 600;
+        font-size: 1.4em;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    .trend-chart-section label {
+        color: #333;
+        font-weight: 500;
+    }
+    .trend-chart-section select {
+        padding: 10px;
+        border: 1px #ccc solid;
+        background-color: #ffffff;
+        color: #333;
+        font-size: 0.95em;
+        border-radius: 6px;
+    }
+
+
+    /* Dark Mode overrides */
+    body.dark {
+      background-color: #1a1a1a;
+      color: #fff;
+    }
+    body.dark .topbar, body.dark .sidebar, body.dark .summary-box, body.dark .trend-chart-section, .handsontable-container, body.dark .login-container, body.dark .signup-container, body.dark .message-container, body.dark .card, body.dark .month-header-box {
+        background: #2a2a2a;
+        box-shadow: 0 0 15px rgba(0,0,0,0.6);
+        border-color: #444;
+    }
+    body.dark .hospital-info-box {
+        background-color: #0056b3;
+        color: #e0f7fa;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    body.dark .topbar #hospitalName, body.dark h1, body.dark h2, body.dark h3, body.dark .user-info strong {
+        color: #e0f7fa;
+    }
+    body.dark .sidebar button {
+        background: #3a3a3a;
+        color: #fff;
+    }
+    body.dark .sidebar button.active {
+        background: #007bff;
+    }
+    body.dark .sidebar button:hover:not(.active) {
+        background: #4a4a4a;
+    }
+    body.dark select, body.dark input {
+        background-color: #3a3a3a;
+        color: #fff;
+        border-color: #555;
+    }
+    body.dark .handsontable-container .ht_master, body.dark .handsontable-container .handsontable {
+        background-color: #2a2a2a !important;
+        color: #fff !important;
+    }
+    body.dark .handsontable-container .handsontable td, body.dark .handsontable-container .handsontable th {
+        border-color: #555;
+    }
+    /* Corrected: Use specific class for placeholder styling in dark mode */
+    body.dark .handsontable-container .handsontable .htPlaceholder {
+        background-color: #2a2a2a !important;
+    }
+    body.dark .summary-box p, body.dark .sidebar label, body.dark .sidebar p, body.dark .trend-chart-section label {
+        color: #bbb;
+    }
+
+
+    /* Loading Overlay & Spinner */
+    #loading-overlay {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 8px solid #ffffff;
+      border-top-color: #007bff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Handsontable Cell Coloring */
+    .within { background-color: #d4edda !important; color: #155724 !important; }
+    .warning { background-color: #fff3cd !important; color: #856404 !important; }
+    .out { background-color: #f8d7da !important; color: #721c24 !important; }
+
+    /* New CSS for future cells to appear read-only */
+    .future-cell-readonly {
+        background-color: #f0f0f0 !important; /* Light grey for disabled look */
+        color: #999 !important; /* Muted text text-color */
+        cursor: not-allowed !important; /* Indicate it's not editable */
+    }
+    body.dark .future-cell-readonly {
+        background-color: #3a3a3a !important;
+        color: #777 !important;
+    }
+    /* Also ensure the Handsontable "placeholder" style is consistent in dark mode */
+    body.dark .handsontable-container .handsontable .htPlaceholder {
+        background-color: #2a2a2a !important;
+    }
+
+
+    /* NEW CSS for Smooth Transitions */
+    /* Transitions applied to specific loading elements only */
+    .handsontable-container.loading-transition,
+    .summary-box.loading-transition,
+    .trend-chart-section.loading-transition {
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out; /* Apply transition here */
+    }
+
+
+    /* NEW CSS for Chatbot */
+    #chat-bubble {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: var(--primary-blue);
+        color: white;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.8em;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        z-index: 1000;
+    }
+    #chat-bubble:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+    }
+
+    #chat-window {
+        position: fixed;
+        bottom: 90px; /* Above the bubble */
+        right: 20px;
+        width: 350px;
+        height: 450px;
+        background-color: var(--background-white-card);
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 999;
+        transform: scale(0.8); /* Start smaller for transition */
+        opacity: 0;
+        visibility: hidden; /* Hidden by default */
+        transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s;
+    }
+    #chat-window.open {
+        transform: scale(1);
+        opacity: 1;
+        visibility: visible;
+    }
+
+    #chat-header {
+        background-color: var(--primary-blue);
+        color: white;
+        padding: 15px;
+        font-size: 1.1em;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+    #chat-header button {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2em;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 50%;
+    }
+    #chat-header button:hover {
+        background-color: rgba(255,255,255,0.2);
+    }
+
+    #chat-body {
+        flex-grow: 1;
+        padding: 15px;
+        overflow-y: auto;
+        background-color: var(--background-off-white);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .chat-message {
+        max-width: 80%;
+        padding: 10px 12px;
+        border-radius: 18px;
+        line-height: 1.4;
+        font-size: 0.95em;
+        word-wrap: break-word;
+    }
+    .chat-message.user {
+        align-self: flex-end;
+        background-color: #e6e6e6;
+        color: var(--text-dark);
+        border-bottom-right-radius: 2px;
+    }
+    .chat-message.bot {
+        align-self: flex-start;
+        background-color: var(--primary-blue-light);
+        color: #0036B3;
+        border-bottom-left-radius: 2px;
+    }
+    body.dark #chat-window {
+        background-color: #2a2a2a;
+    }
+    body.dark #chat-body {
+        background-color: #3a3a3a;
+        color: #fff;
+    }
+    body.dark .chat-message.user {
+        background-color: #555;
+        color: #eee;
+    }
+    body.dark .chat-message.bot {
+        background-color: var(--primary-blue-dark);
+        color: var(--primary-blue-light);
+    }
+
+
+    #chat-input-area {
+        padding: 10px 15px;
+        border-top: 1px solid var(--border-light);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    #chat-input-area input {
+        flex-grow: 1;
+        padding: 10px;
+        border: 1px solid var(--border-light);
+        border-radius: 20px;
+        font-size: 0.95em;
+        background-color: var(--background-white-card);
+        color: var(--text-dark);
+    }
+    body.dark #chat-input-area input {
+        background-color: #4a4a4a;
+        border-color: #666;
+        color: #eee;
+    }
+    #chat-input-area button {
+        background-color: var(--primary-blue);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 1.2em;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    #chat-input-area button:hover {
+        background-color: var(--primary-blue-dark);
+    }
+
+    /* NEW: Print-Specific CSS */
+    @media print {
+        /* Hide elements not meant for print */
+        .topbar, .sidebar, #chat-bubble, #chat-window, .save-section, .export-section, .category-selection {
+            display: none !important;
+        }
+
+        /* Ensure main content takes full width and flows properly */
+        body {
+            display: block;
+        }
+        .content {
+            flex-direction: column !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            height: auto !important;
+        }
+        .main {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            overflow: visible !important;
+            height: auto !important;
+        }
+        /* Adjusted for category-panel to be printable */
+        .category-panel { /* Target all panels */
+            display: flex !important; /* Force all panels to display */
+            flex-direction: column !important; /* Maintain flex layout */
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+            page-break-after: always; /* Ensure each category starts on a new page */
+            height: auto !important; /* Allow content to dictate height */
+        }
+        .data-display-area {
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 20px;
+            page-break-inside: avoid;
+        }
+
+        .handsontable-container, .summary-box, .trend-chart-section {
+            box-shadow: none !important;
+            border: 1px solid #eee !important;
+            background: white !important;
+            width: 95% !important;
+            margin: 0 auto 20px auto !important;
+            page-break-inside: avoid;
+        }
+        .handsontable-container {
+            overflow: visible !important;
+            height: auto !important;
+        }
+        /* Make Handsontable cells print cleanly */
+        .handsontable-container .handsontable td, .handsontable-container .handsontable th {
+            white-space: normal !important;
+        }
+
+        /* Adjust chart canvas for printing if necessary */
+        canvas {
+            max-height: none !important;
+            width: 100% !important;
         }
     }
 
-    function updateSummaryAndChart(data, category) {
-      var total=0, within=0, warning=0, out=0;
-      outOfToleranceValuesByCategory[category] = []; // Reset out of tolerance values for this category
+    /* NEW: Styles for Custom Notifications */
+    #notification-container {
+        position: fixed;
+        top: 20px; /* Adjust as needed */
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10000; /* Ensure it's on top of everything */
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none; /* Allows clicks to pass through when no messages are active */
+    }
 
-      const dateCols = getMonthDates(AppState.currentDate);
-      const tolerance = TOLERANCE_SETTINGS[category];
+    .notification-message {
+        background-color: #333;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        transform: translateY(-20px);
+        min-width: 250px;
+        text-align: center;
+        pointer-events: auto; /* Re-enable pointer events for the message itself */
+    }
 
-      data.forEach((row, rowIndex) => {
-        var energyType = row[0];
-        row.slice(1).forEach((value, colIndex) => {
-          var n = parseFloat(value);
-          if(!isNaN(n)){
-            total++;
-            if(Math.abs(n) <= tolerance.within) { // Use category-specific 'within' tolerance
-                within++;
-            } else if(Math.abs(n) <= tolerance.warning) { // Use category-specific 'warning' tolerance
-                warning++;
-            } else { // Use category-specific 'out' tolerance (if not warning/within, it's out)
-                out++;
-                outOfToleranceValuesByCategory[category].push({
-                    energy: energyType,
-                    date: dateCols[colIndex],
-                    value: n
-                });
-            }
-          }
-        });
-      });
+    .notification-message.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
 
-      const totalEl = $(`total-${category}`);
-      const withinEl = $(`within-${category}`);
-      const warningEl = $(`warning-${category}`);
-      const outEl = $(`out-${category}`);
-      const summaryChartCanvas = $(`summaryChart-${category}`);
+    .notification-message.success {
+        background-color: #28a745;
+    }
 
-      if (totalEl) totalEl.textContent = total;
-      if (withinEl) withinEl.textContent = within;
-      if (warningEl) warningEl.textContent = warning;
-      if (outEl) outEl.textContent = out;
+    .notification-message.error {
+        background-color: #dc3545;
+    }
 
-      if (summaryChartCanvas) {
-        var ctx = summaryChartCanvas.getContext('2d');
-        if (summaryCharts[category]) summaryCharts[category].destroy();
-        summaryCharts[category] = new Chart(ctx, {
-          type: 'pie',
-          data: {
-            labels: ['Within Tolerance','Warning','Out of Tolerance'],
-            datasets: [{ data: [within,warning,out], backgroundColor: ['#66cc66','#ffcc00','#ff6666'] }]
-          }
-        });
-      }
-    }
+    .notification-message.warning {
+        background-color: #ffc107;
+        color: #333;
+    }
 
-    async function manualSave(category = AppState.activeCategory) { 
-      showLoader();
-      const hotInstance = hots[category];
-      if (!hotInstance) {
-          console.error(`Handsontable instance not found for category: ${category}. Cannot save.`);
-          showNotification(`Error: Cannot save. Table not loaded for ${category}.`, 'error');
-          hideLoader();
-          return;
-      }
-      var changedData = hotInstance.getData(); 
-      var month = `${AppState.currentDate.getFullYear()}-${String(AppState.currentDate.getMonth()+1).padStart(2,'0')}`;
-      try {
-        var saveResponse = await fetch(`${BACKEND_URL}/save`,{
-          method:'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ data: changedData, month, uid: AppState.currentUID, category: category }) 
-        });
+    .notification-message.info {
+        background-color: #007bff;
+    }
 
-        if (!saveResponse.ok) {
-            const errorText = await saveResponse.text();
-            throw new Error('Failed to save data: ' + saveResponse.statusText + ' - ' + errorText);
-        }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div id="hospitalInfoBox" class="hospital-info-box">
+        <span id="hospitalName">Hospital: </span>
+    </div>
+    <span style="flex-grow: 1;"></span>
+    <button id="myProfileBtn"
+            style="background-color: var(--primary-blue); color: var(--text-light);">
+      My Profile
+    </button>
+    <button id="logoutBtn" title="Logout">
+      <i class="fas fa-sign-out-alt"></i>
+    </button>
+  </div>
 
-        const lastSavedEl = $(`lastSaved-${category}`);
-        if (lastSavedEl) lastSavedEl.textContent = "Last Saved: " + new Date().toLocaleString(); 
-        showNotification(`Data for ${category} saved successfully!`, 'success');
-        updateTrendChart(category); 
+  <div class="content">
+    <div class="sidebar">
+      <h2>LINAC QA</h2>
+      <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
+        <button id="prevYearBtn">←</button>
+        <span id="year" style="margin: 0 10px;">2025</span>
+        <button id="nextYearBtn">→</button>
+      </div>
+      <div id="months"></div>
+      <label><input type="checkbox" id="darkToggle"> Dark Mode</label>
+      <p style="font-size:12px;margin-top:auto;">© 2025 QA Dashboard</p>
+    </div>
 
-        // Send alert if there are out-of-tolerance values for THIS category
-        const outValuesForCategory = outOfToleranceValuesByCategory[category];
-        if (outValuesForCategory.length > 0) {
-            var alertResponse = await fetch(`${BACKEND_URL}/send-alert`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    outValues: outValuesForCategory,
-                    hospitalName: AppState.currentHospital,
-                    uid: AppState.currentUID,
-                    month: month,
-                    category: category 
-                })
-            });
+    <div class="main">
+        <div class="month-header-box" id="header"></div>
 
-            var alertResult = await alertResponse.json();
-            if (alertResult.status === 'alert sent') {
-                console.log(`Email alert sent for current out of tolerance values for ${category}.`);
-                showNotification(`Alert email sent to RSO(s) for ${category}.`, 'info');
-            } else if (alertResult.status === 'no_change') {
-                console.log(`No new out-of-tolerance values or changes for ${category}. Email not sent.`);
-                showNotification(`No new critical alerts to send for ${category}.`, 'info');
-            } else {
-                console.warn(`Could not send email alert for ${category}:`, alertResult.message || alertResult.status);
-                showNotification(`Alert email for ${category} could not be sent: ` + (alertResult.message || "Unknown error."), 'warning');
-            }
-        } else {
-            console.log(`No out-of-tolerance values for ${category} to send for alert and no prior save to trigger a resolution check.`);
-            showNotification(`All values for ${category} are within tolerance.`, 'info');
-        }
+        <div class="category-selection">
+            <button id="btnOutput" data-category="Output">OUTPUT</button>
+            <button id="btnFlatness" data-category="Flatness">FLATNESS</button>
+            <button id="btnInlineSymmetry" data-category="Inline Symmetry">INLINE SYMMETRY</button>
+            <button id="btnCrosslineSymmetry" data-category="Crossline Symmetry">CROSSLINE SYMMETRY</button>
+        </div>
 
-      } catch(err){
-        console.error("Operation failed:", err);
-        showNotification("Operation failed: " + err.message, 'error');
-      } finally {
-        hideLoader();
-      }
-    }
+        <div class="category-panel-container">
+            <div id="panelOutput" class="category-panel"> 
+                <div class="data-display-area">
+                    <div id="handsontable-container-Output" class="handsontable-container card-panel"></div>
+                    <div id="summary-box-Output" class="summary-box">
+                        <canvas id="summaryChart-Output" width="280" height="280"></canvas>
+                        <h3>Summary - Output</h3>
+                        <p><strong>Total Entries:</strong> <span id="total-Output">0</span></p>
+                        <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within-Output">0</span></p>
+                        <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning-Output">0</span></p>
+                        <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out-Output">0</span></p>
+                    </div>
+                </div>
+                <div id="save-section-Output" class="save-section" style="text-align: center;">
+                    <button class="save-btn" data-category="Output" style="font-weight:bold; background-color: var(--primary-blue); color: var(--text-light);">
+                        <i class="fas fa-save"></i> Save Output
+                    </button>
+                    <span id="lastSaved-Output" style="margin-left:15px;font-size:14px;color:gray;"></span>
+                </div>
+                <div id="export-section-Output" class="export-section" style="margin-top: 20px; text-align: center;">
+                    <button class="export-excel-btn" data-category="Output" style="background-color: #28a745; color: white;">
+                        <i class="fas fa-file-excel"></i> Export Output Excel
+                    </button>
+                </div>
+                <div id="trend-chart-section-Output" class="trend-chart-section" style="margin-top: 30px;">
+                    <h3>Energy Trend Analysis (Current Month) - Output</h3>
+                    <div style="margin-bottom: 15px;">
+                        <label for="trendEnergySelect-Output" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
+                        <select id="trendEnergySelect-Output" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart('Output')"></select>
+                    </div>
+                    <canvas id="trendChart-Output" style="max-height: 350px; width: 100%;"></canvas>
+                </div>
+            </div>
 
-    function changeMonth(m){ 
-        AppState.currentDate = new Date(AppState.currentDate.getFullYear(), m, 1); 
-        loadTable(AppState.activeCategory); 
-    }
-    function changeYear(o){ 
-        AppState.currentDate = new Date(AppState.currentDate.getFullYear()+o, AppState.currentDate.getMonth(), 1); 
-        loadTable(AppState.activeCategory); 
-    }
-    function toggleDarkMode(){ document.body.classList.toggle('dark'); }
+            <div id="panelFlatness" class="category-panel">
+                <div class="data-display-area">
+                    <div id="handsontable-container-Flatness" class="handsontable-container card-panel"></div>
+                    <div id="summary-box-Flatness" class="summary-box">
+                        <canvas id="summaryChart-Flatness" width="280" height="280"></canvas>
+                        <h3>Summary - Flatness</h3>
+                        <p><strong>Total Entries:</strong> <span id="total-Flatness">0</span></p>
+                        <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within-Flatness">0</span></p>
+                        <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning-Flatness">0</span></p>
+                        <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out-Flatness">0</span></p>
+                    </div>
+                </div>
+                <div id="save-section-Flatness" class="save-section" style="text-align: center;">
+                    <button class="save-btn" data-category="Flatness" style="font-weight:bold; background-color: var(--primary-blue); color: var(--text-light);">
+                        <i class="fas fa-save"></i> Save Flatness
+                    </button>
+                    <span id="lastSaved-Flatness" style="margin-left:15px;font-size:14px;color:gray;"></span>
+                </div>
+                <div id="export-section-Flatness" class="export-section" style="margin-top: 20px; text-align: center;">
+                    <button class="export-excel-btn" data-category="Flatness" style="background-color: #28a745; color: white;">
+                        <i class="fas fa-file-excel"></i> Export Flatness Excel
+                    </button>
+                </div>
+                <div id="trend-chart-section-Flatness" class="trend-chart-section" style="margin-top: 30px;">
+                    <h3>Energy Trend Analysis (Current Month) - Flatness</h3>
+                    <div style="margin-bottom: 15px;">
+                        <label for="trendEnergySelect-Flatness" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
+                        <select id="trendEnergySelect-Flatness" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart('Flatness')"></select>
+                    </div>
+                    <canvas id="trendChart-Flatness" style="max-height: 350px; width: 100%;"></canvas>
+                </div>
+            </div>
 
-    function buildMonthButtons(){
-      var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
-      if (monthsDiv) monthsDiv.innerHTML='';
-      months.forEach((m,i)=>{
-        var btn = document.createElement('button');
-        btn.textContent = m;
-        btn.addEventListener('click', () => changeMonth(i));
-        if (monthsDiv) monthsDiv.appendChild(btn);
-      });
-      highlightActiveMonth();
-    }
+            <div id="panelInline Symmetry" class="category-panel">
+                <div class="data-display-area">
+                    <div id="handsontable-container-Inline Symmetry" class="handsontable-container card-panel"></div>
+                    <div id="summary-box-Inline Symmetry" class="summary-box">
+                        <canvas id="summaryChart-Inline Symmetry" width="280" height="280"></canvas>
+                        <h3>Summary - Inline Symmetry</h3>
+                        <p><strong>Total Entries:</strong> <span id="total-Inline Symmetry">0</span></p>
+                        <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within-Inline Symmetry">0</span></p>
+                        <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning-Inline Symmetry">0</span></p>
+                        <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out-Inline Symmetry">0</span></p>
+                    </div>
+                </div>
+                <div id="save-section-Inline Symmetry" class="save-section" style="text-align: center;">
+                    <button class="save-btn" data-category="Inline Symmetry" style="font-weight:bold; background-color: var(--primary-blue); color: var(--text-light);">
+                        <i class="fas fa-save"></i> Save Inline Symmetry
+                    </button>
+                    <span id="lastSaved-Inline Symmetry" style="margin-left:15px;font-size:14px;color:gray;"></span>
+                </div>
+                <div id="export-section-Inline Symmetry" class="export-section" style="margin-top: 20px; text-align: center;">
+                    <button class="export-excel-btn" data-category="Inline Symmetry" style="background-color: #28a745; color: white;">
+                        <i class="fas fa-file-excel"></i> Export Inline Symmetry Excel
+                    </button>
+                </div>
+                <div id="trend-chart-section-Inline Symmetry" class="trend-chart-section" style="margin-top: 30px;">
+                    <h3>Energy Trend Analysis (Current Month) - Inline Symmetry</h3>
+                    <div style="margin-bottom: 15px;">
+                        <label for="trendEnergySelect-Inline Symmetry" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
+                        <select id="trendEnergySelect-Inline Symmetry" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart('Inline Symmetry')"></select>
+                    </div>
+                    <canvas id="trendChart-Inline Symmetry" style="max-height: 350px; width: 100%;"></canvas>
+                </div>
+            </div>
 
-    function highlightActiveMonth(){
-      if (monthsDiv) {
-        [...monthsDiv.querySelectorAll('button')].forEach((btn,i)=>{
-          btn.classList.toggle('active', i === AppState.currentDate.getMonth());
-        });
-      }
-    }
+            <div id="panelCrossline Symmetry" class="category-panel">
+                <div class="data-display-area">
+                    <div id="handsontable-container-Crossline Symmetry" class="handsontable-container card-panel"></div>
+                    <div id="summary-box-Crossline Symmetry" class="summary-box">
+                        <canvas id="summaryChart-Crossline Symmetry" width="280" height="280"></canvas>
+                        <h3>Summary - Crossline Symmetry</h3>
+                        <p><strong>Total Entries:</strong> <span id="total-Crossline Symmetry">0</span></p>
+                        <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within-Crossline Symmetry">0</span></p>
+                        <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning-Crossline Symmetry">0</span></p>
+                        <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out-Crossline Symmetry">0</span></p>
+                    </div>
+                </div>
+                <div id="save-section-Crossline Symmetry" class="save-section" style="text-align: center;">
+                    <button class="save-btn" data-category="Crossline Symmetry" style="font-weight:bold; background-color: var(--primary-blue); color: var(--text-light);">
+                        <i class="fas fa-save"></i> Save Crossline Symmetry
+                    </button>
+                    <span id="lastSaved-Crossline Symmetry" style="margin-left:15px;font-size:14px;color:gray;"></span>
+                </div>
+                <div id="export-section-Crossline Symmetry" class="export-section" style="margin-top: 20px; text-align: center;">
+                    <button class="export-excel-btn" data-category="Crossline Symmetry" style="background-color: #28a745; color: white;">
+                        <i class="fas fa-file-excel"></i> Export Crossline Symmetry Excel
+                    </button>
+                </div>
+                <div id="trend-chart-section-Crossline Symmetry" class="trend-chart-section" style="margin-top: 30px;">
+                    <h3>Energy Trend Analysis (Current Month) - Crossline Symmetry</h3>
+                    <div style="margin-bottom: 15px;">
+                        <label for="trendEnergySelect-Crossline Symmetry" style="font-weight: bold; margin-right: 10px;">Select Energy Type:</label>
+                        <select id="trendEnergySelect-Crossline Symmetry" style="padding: 8px; border: 1px var(--border-light) solid;" onchange="updateTrendChart('Crossline Symmetry')"></select>
+                    </div>
+                    <canvas id="trendChart-Crossline Symmetry" style="max-height: 350px; width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
 
-    function populateTrendEnergySelect(category = AppState.activeCategory) {
-        var select = $(`trendEnergySelect-${category}`);
-        if (select) {
-            select.innerHTML = '';
-            energyTypes.forEach(energy => {
-                var option = document.createElement('option');
-                option.value = energy;
-                option.textContent = energy;
-                select.appendChild(option);
-            });
-            if (energyTypes.length > 0) {
-                select.value = energyTypes[0]; 
-            }
-        }
-    }
+  <div id="loading-overlay"><div class="spinner"></div></div>
 
-    async function updateTrendChart(category = AppState.activeCategory) {
-        showLoader();
-        const trendChartSectionEl = $(`trend-chart-section-${category}`);
-        if (trendChartSectionEl) trendChartSectionEl.classList.add('loading-transition');
+  <div id="chat-bubble"><i class="fas fa-comment-dots"></i></div>
+  <div id="chat-window">
+      <div id="chat-header">
+          <span>QA Copilot</span> <button id="close-chat-btn"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="chat-body">
+          <div class="chat-message bot">Hello! How can I help you with your QA data today?</div>
+          <div class="chat-message bot">You can ask: "Out of tolerance dates", "Value for 2025-06-10", "All 6X data this month", or "List all warning values". (Please useYYYY-MM-DD for dates).</div>
+      </div>
+      <div id="chat-input-area">
+          <input type="text" id="chat-input" placeholder="Type your question...">
+          <button id="send-chat-btn"><i class="fas fa-paper-plane"></i></button>
+      </div>
+  </div>
 
-        var selectedEnergy = $(`trendEnergySelect-${category}`).value;
-        if (!selectedEnergy) {
-            hideLoader();
-            showNotification("Please select an energy type for trend analysis.", 'info');
-            if (trendChartSectionEl) trendChartSectionEl.classList.remove('loading-transition');
-            return;
-        }
+  <div id="notification-container"></div>
 
-        var dataPoints = [];
-        var labels = [];
-        var currentYear = AppState.currentDate.getFullYear();
-        var currentMonth = AppState.currentDate.getMonth() + 1;
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="/firebase-init.js"></script> 
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-        var daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+  <script>
+    // These now reference the globally initialized Firebase objects from firebase-init.js
+    var auth = firebase.auth();
+    var db = firebase.firestore();
 
-        var monthKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
-        try {
-            var res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&uid=${AppState.currentUID}&category=${category}`); 
-            var result = await res.json();
-            var monthData = result.data;
+    // Centralized AppState for better global variable management
+    const AppState = {
+        currentDate: new Date(), 
+        currentUID: null,
+        activeCategory: 'Output', // Default active category
+        currentHospital: ''
+    };
 
-            var energyRow = monthData.find(row => row[0] === selectedEnergy);
-
-            if (energyRow) {
-                for (let i = 0; i < daysInMonth; i++) {
-                    var value = energyRow[i + 1];
-                    var n = parseFloat(value);
-                    dataPoints.push(isNaN(n) ? null : n);
-                    labels.push(String(i + 1).padStart(2, '0'));
-                }
-            } else {
-                for (let i = 0; i < daysInMonth; i++) {
-                    dataPoints.push(null);
-                    labels.push(String(i + 1).padStart(2, '0'));
-                }
-            }
-
-            const trendChartCanvas = $(`trendChart-${category}`);
-            if (trendChartCanvas) {
-                var ctx = trendChartCanvas.getContext('2d');
-                if (trendCharts[category]) trendCharts[category].destroy();
-
-                // Dynamic min/max for Y-axis with a small padding
-                const filteredDataPoints = dataPoints.filter(n => n !== null);
-                let yMin = -3;
-                let yMax = 3;
-                if (filteredDataPoints.length > 0) {
-                    const dataMin = Math.min(...filteredDataPoints);
-                    const dataMax = Math.max(...filteredDataPoints);
-                    // Add padding unless data range is very small
-                    yMin = dataMin - (Math.abs(dataMin) > 0.1 ? 0.5 : 0.1); 
-                    yMax = dataMax + (Math.abs(dataMax) > 0.1 ? 0.5 : 0.1);
-                    // Ensure min and max don't cross zero if values are consistently positive/negative
-                    if (dataMin >= 0 && yMin < 0) yMin = 0;
-                    if (dataMax <= 0 && yMax > 0) yMax = 0;
-                }
-
-
-                trendCharts[category] = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: `${selectedEnergy} Trend (${AppState.currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}) - ${category}`, 
-                            data: dataPoints,
-                            borderColor: '#007bff',
-                            backgroundColor: 'rgba(0, 123, 255, 0.2)',
-                            fill: false,
-                            tension: 0.1,
-                            spanGaps: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: false,
-                                title: {
-                                    display: true,
-                                    text: 'Output Value (%)'
-                                },
-                                min: yMin,
-                                max: yMax,
-                                ticks: {
-                                    callback: function(value, index, values) {
-                                        return value.toFixed(1) + '%';
-                                    }
-                                }
-                            },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Day of Month'
-                                }
-                            }
-                        },
-                        plugins: {
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return context.dataset.label + ': ' + (context.parsed.y !== null ? context.parsed.y.toFixed(2) + '%' : 'No Data');
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
-        } catch (error) {
-            console.error(`Error fetching trend data for ${category}:`, error);
-            showNotification(`Could not load trend data for ${category}. Please try again.`, 'error');
-        } finally {
-            hideLoader();
-            if (trendChartSectionEl) trendChartSectionEl.classList.remove('loading-transition');
-        }
-    }
-
-    // --- Function to add message to chat window ---
-    function addChatMessage(message, sender) {
-        var messageElement = document.createElement('div');
-        messageElement.classList.add('chat-message', sender);
-        messageElement.textContent = message;
-        if (chatBody) {
-            chatBody.appendChild(messageElement);
-            chatBody.scrollTop = chatBody.scrollHeight;
-        }
-    }
-
-    // --- Function to handle sending chat messages ---
-    async function sendChatMessage() {
-        var message = chatInput.value.trim();
-        if (message === "") return;
-
-        addChatMessage(message, 'user');
-        if (chatInput) chatInput.value = '';
-
-        var lowerCaseMessage = message.toLowerCase();
-        var botResponse = "";
-
-        const energyTypesRegex = new RegExp(`(${energyTypes.join('|').replace(/ /g, '\\s*')})`, 'i');
-        var energyMatch = lowerCaseMessage.match(energyTypesRegex);
-        var dateMatch = lowerCaseMessage.match(/(\d{4}-\d{2}-\d{2})/);
-
-        var extractedEnergyType = energyMatch ? energyMatch[1].toUpperCase().replace(/\s/g, '') : null;
-        var extractedDate = dateMatch ? dateMatch[0] : null;
-        
-        var monthKey = `${AppState.currentDate.getFullYear()}-${String(AppState.currentDate.getMonth()+1).padStart(2,'0')}`;
-
-        // Prepare a generic query object to send to the backend
-        let queryBody = {
-            query_text: message, 
-            month: monthKey,
-            uid: AppState.currentUID,
-            category: AppState.activeCategory, 
-            energy_type: extractedEnergyType, 
-            date: extractedDate
-        };
-
-        try {
-            var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(queryBody)
-            });
-            var result = await response.json();
-
-            if (result.status === 'success') {
-                botResponse = result.message;
-            } else {
-                botResponse = "Sorry, I couldn't retrieve that information: " + (result.message || "Unknown error.");
-            }
-        } catch (error) {
-            console.error("Chatbot query error:", error);
-            botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
-        }
-        
-        addChatMessage(botResponse, 'bot');
-    }
-
-    // Export function for Excel (requests XLSX from backend)
-    async function exportToExcel(category = AppState.activeCategory) { 
-        showLoader();
-
-        var month = `${AppState.currentDate.getFullYear()}-${String(AppState.currentDate.getMonth()+1).padStart(2,'0')}`;
-        try {
-            const response = await fetch(`${BACKEND_URL}/export-excel`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    month: month,
-                    uid: AppState.currentUID,
-                    category: category 
-                })
-            });
-
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = `LINAC_QA_Data_${category}_${month}.xlsx`; 
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                showNotification(`Excel file for ${category} exported successfully!`, 'success');
-            } else {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to export Excel file.');
-            }
-        } catch (error) {
-            console.error("Error exporting Excel:", error);
-            showNotification("Failed to export Excel: " + error.message, 'error');
-        } finally {
-            hideLoader();
-        }
-    }
-
-    // --- Function to switch category views ---
-    async function switchCategory(newCategory) {
-        if (AppState.activeCategory === newCategory) return; 
-
-        // Deactivate current category button and panel
-        const currentBtn = $(`btn${AppState.activeCategory.replace(/\s/g, '')}`);
-        const currentPanel = $(`panel${AppState.activeCategory}`);
-        if (currentBtn) currentBtn.classList.remove('active-category');
-        if (currentPanel) currentPanel.classList.remove('active-panel');
-
-        AppState.activeCategory = newCategory;
-
-        // Activate new category button and panel
-        const newBtn = $(`btn${AppState.activeCategory.replace(/\s/g, '')}`);
-        const newPanel = $(`panel${AppState.activeCategory}`);
-        if (newBtn) newBtn.classList.add('active-category');
-        if (newPanel) newPanel.classList.add('active-panel');
-
-        // Load data for the new active category
-        await loadTable(AppState.activeCategory);
-    }
+    // Helper function for document.getElementById
+    const $ = id => document.getElementById(id);
 
 
-    document.addEventListener('DOMContentLoaded', function() {
-        window.addEventListener('pageshow', function(event) {
-            if (event.persisted) {
-                window.location.reload();
-            }
-        });
+    // Declare global variables that will hold Handsontable and Chart.js instances
+    var hots = {}; // Stores Handsontable instances: hots['Output'], hots['Flatness'], etc.
+    var summaryCharts = {}; // Stores Chart.js summary chart instances
+    var trendCharts = {}; // Stores Chart.js trend chart instances
 
-        // Event listeners for category buttons
-        document.querySelectorAll('.category-selection button').forEach(button => {
-            button.addEventListener('click', () => switchCategory(button.dataset.category));
-        });
+    // Get references to DOM elements using the new $ helper
+    var monthsDiv = $('months');
+    var header = $('header');
+    var yearLabel = $('year');
+    var darkToggle = $('darkToggle');
+    var logoutBtn = $('logoutBtn');
+    var myProfileBtn = $('myProfileBtn');
+    var prevYearBtn = $('prevYearBtn');
+    var nextYearBtn = $('nextYearBtn');
 
-        // Event listeners for Save and Export buttons (delegate using data-category)
-        document.querySelectorAll('.save-btn').forEach(button => {
-            button.addEventListener('click', () => manualSave(button.dataset.category));
-        });
-        document.querySelectorAll('.export-excel-btn').forEach(button => {
-            button.addEventListener('click', () => exportToExcel(button.dataset.category));
-        });
+    // Category specific UI elements
+    const CATEGORIES = ["Output", "Flatness", "Inline Symmetry", "Crossline Symmetry"];
 
-        if (logoutBtn) logoutBtn.addEventListener('click', window.logout);
-        if (myProfileBtn) myProfileBtn.addEventListener('click', function() { window.location.href='my_profile.html'; });
-        if (darkToggle) darkToggle.addEventListener('change', toggleDarkMode);
-        if (prevYearBtn) prevYearBtn.addEventListener('click', function() { changeYear(-1); });
-        if (nextYearBtn) nextYearBtn.addEventListener('click', function() { changeYear(1); });
+    // Chatbot UI element references
+    var chatBubble = $('chat-bubble');
+    var chatWindow = $('chat-window');
+    var closeChatBtn = $('close-chat-btn');
+    var chatBody = $('chat-body');
+    var chatInput = $('chat-input');
+    var sendChatBtn = $('send-chat-btn');
 
-        if (chatBubble) {
-            chatBubble.addEventListener('click', function() {
-                if (chatWindow) {
-                    chatWindow.classList.toggle('open');
-                    if (chatWindow.classList.contains('open') && chatInput) {
-                        chatInput.focus();
-                    }
-                }
-            });
-        }
-        if (closeChatBtn) {
-            closeChatBtn.addEventListener('click', function() {
-                if (chatWindow) chatWindow.classList.remove('open');
-            });
-        }
-        if (sendChatBtn) sendChatBtn.addEventListener('click', sendChatMessage);
-        if (chatInput) {
-            chatInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    sendChatMessage();
-                }
-            });
-        }
+    // Notification Container
+    var notificationContainer = $('notification-container');
+
+    // Define the backend URL
+    const BACKEND_URL = "https://back-end-wrxi.onrender.com";
 
 
-        auth.onAuthStateChanged(async function(user) {
-            if (user) {
-                AppState.currentUID = user.uid;
-                AppState.currentHospital = localStorage.getItem("hospitalName") || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
-                var userStatus = localStorage.getItem("userStatus");
+    var energyTypes = ["6X","10X","15X","6X FFF","10X FFF","6E","9E","12E","15E","18E"];
 
-                if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
-                    showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000);
-                    window.logout();
-                    return;
-                }
+    // Tolerance settings mapped to categories
+    const TOLERANCE_SETTINGS = {
+        "Output": { within: 1.8, warning: 2.0, out: 2.0 },
+        "Flatness": { within: 0.9, warning: 1.0, out: 1.0 },
+        "Inline Symmetry": { within: 0.9, warning: 1.0, out: 1.0 },
+        "Crossline Symmetry": { within: 0.9, warning: 1.0, out: 1.0 },
+    };
 
-                localStorage.setItem("uid", AppState.currentUID);
-                if ($('hospitalName')) $('hospitalName').textContent = "Hospital: " + AppState.currentHospital;
-                buildMonthButtons();
-                
-                // Initialize the active category (default to Output)
-                const defaultBtn = $(`btn${AppState.activeCategory.replace(/\s/g, '')}`);
-                const defaultPanel = $(`panel${AppState.activeCategory}`);
-                if (defaultBtn) defaultBtn.classList.add('active-category');
-                if (defaultPanel) defaultPanel.classList.add('active-panel');
-                
-                await loadTable(AppState.activeCategory); 
-            } else {
-                window.location.replace("login.html");
-            }
-        });
+    // Store outOfToleranceValues for each category
+    const outOfToleranceValuesByCategory = {
+        "Output": [],
+        "Flatness": [],
+        "Inline Symmetry": [],
+        "Crossline Symmetry": [],
+    };
 
-        // Add a global resize listener to ensure Handsontable adjusts if the window changes size
-        window.addEventListener('resize', () => {
-            if (hots[AppState.activeCategory]) {
-                const container = $(`handsontable-container-${AppState.activeCategory}`);
-                if (container) {
-                    // Recalculate based on current container size
-                    const energyColWidth = 80;
-                    const dateCols = getMonthDates(AppState.currentDate);
-                    const fixedDateColWidth = 80; 
-                    const numberOfDateCols = dateCols.length;
-                    const totalCalculatedContentWidth = energyColWidth + (numberOfDateCols * fixedDateColWidth);
+    // --- Custom Notification Function ---
+    function showNotification(message, type = 'info', duration = 3000) {
+        const notification = document.createElement('div');
+        notification.classList.add('notification-message', type);
+        notification.textContent = message;
 
-                    // Update Handsontable's width setting and force a render
-                    hots[AppState.activeCategory].updateSettings({
-                        width: totalCalculatedContentWidth,
-                        stretchH: 'none' // Keep 'none' as we are explicitly setting width
-                    });
-                    hots[AppState.activeCategory].render();
-                }
-            }
-        });
-    });
+        if (notificationContainer) { // Null check for notification container
+            notificationContainer.appendChild(notification);
 
-  </script>
+            void notification.offsetWidth; 
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+                notification.addEventListener('transitionend', () => {
+                    notification.remove();
+                }, { once: true });
+            }, duration);
+        } else {
+            console.warn("Notification container not found.", message);
+        }
+    }
+
+
+    // --- Core Functions ---
+    window.logout = async function() { 
+      showLoader();
+      const user = auth.currentUser;
+      const userUid = AppState.currentUID || (user ? user.uid : "unknown_uid");
+      const userEmail = localStorage.getItem("userEmail") || "unknown_email";
+      const hospitalName = AppState.currentHospital || "unknown_hospital";
+      const userRole = localStorage.getItem("userRole") || "unknown_role";
+
+      try {
+          await fetch(`${BACKEND_URL}/log_event`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                  action: "user_logout",
+                  userUid: userUid,
+                  userEmail: userEmail,
+                  hospital: hospitalName,
+                  role: userRole
+              })
+          });
+      } catch (logError) {
+          console.error("Error sending logout log event:", logError);
+      }
+
+      auth.signOut().then(() => {
+        localStorage.clear();
+        hideLoader();
+        window.location.replace("login.html");
+      }).catch((error) => {
+        console.error("Logout error:", error);
+        showNotification("Logout failed: " + error.message, 'error');
+        hideLoader();
+      });
+    }
+
+    function getMonthDates(date) {
+      var y = date.getFullYear(), m = date.getMonth();
+      var days = new Date(y, m + 1, 0).getDate();
+      return Array.from({ length: days }, (_, i) => `${y}-${String(m + 1).padStart(2, '0')}-${String(i+1).padStart(2, '0')}`);
+    }
+
+    function generateEmptyData(dates) {
+      return energyTypes.map(e => [e, ...new Array(dates.length).fill('')]);
+    }
+
+    function showLoader(){ $('loading-overlay').style.display='flex'; }
+    function hideLoader(){ $('loading-overlay').style.display='none'; }
+
+    async function loadTable(category = AppState.activeCategory) {
+      showLoader();
+      
+      const handsontableContainer = $(`handsontable-container-${category}`);
+      const summaryBox = $(`summary-box-${category}`);
+      const trendChartSection = $(`trend-chart-section-${category}`);
+
+      if (handsontableContainer) handsontableContainer.classList.add('loading-transition');
+      if (summaryBox) summaryBox.classList.add('loading-transition');
+      if (trendChartSection) trendChartSection.classList.add('loading-transition');
+
+      var dateCols = getMonthDates(AppState.currentDate);
+      if (header) header.textContent = `${AppState.currentDate.toLocaleString('default',{month:'long'})} ${AppState.currentDate.getFullYear()} - ${category}`;
+      if (yearLabel) yearLabel.textContent = AppState.currentDate.getFullYear();
+      highlightActiveMonth();
+
+      var monthKey = `${AppState.currentDate.getFullYear()}-${String(AppState.currentDate.getMonth()+1).padStart(2,'0')}`;
+      try {
+        var res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&uid=${AppState.currentUID}&category=${category}`);
+        var result = await res.json();
+        var data = Array.isArray(result.data) && result.data.length === energyTypes.length
+          ? result.data.map(r=>r.map(c=> c===null||c==="None"?"":c))
+          : generateEmptyData(dateCols);
+
+        // Get today's date for comparison
+        const today = new Date();
+
+        // Determine if the currently loaded month is in the future
+        const isFutureMonth = AppState.currentDate.getFullYear() > today.getFullYear() ||
+                              (AppState.currentDate.getFullYear() === today.getFullYear() && AppState.currentDate.getMonth() > today.getMonth());
+
+        // Get the container for the specific Handsontable
+        const container = $(`handsontable-container-${category}`);
+        
+        // CRUCIAL: Check if container exists before proceeding
+        if (!container) {
+            console.error(`Handsontable container not found for category: ${category}`);
+            showNotification(`Error: Handsontable display area not found for ${category}.`, 'error');
+            return; // Exit if container is missing
+        }
+
+        // Destroy existing Handsontable for this category if it exists
+        if (hots[category]) hots[category].destroy();
+
+        // Initialize Handsontable for the current category
+        hots[category] = new Handsontable(container, {
+          data,
+          rowHeaders: false,
+          stretchH: 'none', // Explicitly set to 'none' for better scroll control
+          autoColumnSize: true, // Let Handsontable automatically determine column sizes
+          autoRowSize: true, 
+          height: 500, /* Fixed pixel height for stability */
+          // width: calculated based on container and content
+          licenseKey: 'non-commercial-and-evaluation',
+          colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
+          columns: Array(dateCols.length + 1).fill({ type: 'text' }),
+          afterChange: (changes, source) => {
+            if (!changes || source === 'loadData') return;
+            // Ensure summary and chart update is specific to the changed category
+            updateSummaryAndChart(hots[category].getData(), category);
+            // Trigger a re-render of cell styles after changes
+            hots[category].render(); // This will re-evaluate the 'cells' function for affected cells
+          },
+          cells: function (r, c) {
+            var props = {};
+            // Start with an empty className to clear previous ones for this specific cell logic
+            props.className = ''; 
+
+            if (c === 0) { // Energy column (first column) is always read-only
+                props.readOnly = true;
+                return props;
+            }
+            
+            // Check if the current month being displayed is a future month
+            // OR if it's the current month, but the day is in the future
+            if (isFutureMonth || (AppState.currentDate.getFullYear() === today.getFullYear() && AppState.currentDate.getMonth() === today.getMonth() && c > today.getDate())) {
+                props.readOnly = true;
+                // Add the future-cell-readonly class
+                props.className = (props.className || '') + ' future-cell-readonly'; 
+            } else {
+                // Ensure it's editable if not a future cell
+                props.readOnly = false;
+            }
+
+            // Apply coloring based on category-specific tolerances
+            const tolerance = TOLERANCE_SETTINGS[category];
+            var v = parseFloat(this.instance.getDataAtCell(r, c));
+            if (!isNaN(v)) {
+              props.className = (props.className || '') + ' ' + (Math.abs(v) <= tolerance.within ? 'within' : (Math.abs(v) <= tolerance.warning ? 'warning' : 'out'));
+            }
+            return props;
+          },
+          // Removed afterViewRender hook entirely to prevent potential render loops
+        });
+
+        // Explicitly load data and render after Handsontable initialization
+        hots[category].loadData(data);
+        hots[category].render(); 
+
+        // CRUCIAL: Force Handsontable to re-measure and re-render after its container has settled.
+        // This is done with a longer, more robust delay.
+        setTimeout(() => {
+            if (hots[category] && handsontableContainer.offsetWidth > 0) {
+                // Manually trigger a render, and then update settings to force full recalculation
+                hots[category].render(); 
+                hots[category].updateSettings({}); // Forces a deeper internal recalculation
+            }
+        }, 300); // Increased delay to 300ms for maximal stability
+
+
+        // Update summary and chart for the current category
+        updateSummaryAndChart(data, category);
+        populateTrendEnergySelect(category); // Populate trend select for the active category
+        updateTrendChart(category); // Update trend chart for the active category
+
+      } catch(e) {
+        console.error(`Error loading table data for ${category}:`, e);
+        showNotification(`Could not load table data for ${category}. Please try again.`, 'error');
+      } finally {
+        hideLoader();
+        if (handsontableContainer) handsontableContainer.classList.remove('loading-transition');
+        if (summaryBox) summaryBox.classList.remove('loading-transition');
+        if (trendChartSection) trendChartSection.classList.remove('loading-transition');
+      }
+    }
+
+    function updateSummaryAndChart(data, category) {
+      var total=0, within=0, warning=0, out=0;
+      outOfToleranceValuesByCategory[category] = []; // Reset out of tolerance values for this category
+
+      const dateCols = getMonthDates(AppState.currentDate);
+      const tolerance = TOLERANCE_SETTINGS[category];
+
+      data.forEach((row, rowIndex) => {
+        var energyType = row[0];
+        row.slice(1).forEach((value, colIndex) => {
+          var n = parseFloat(value);
+          if(!isNaN(n)){
+            total++;
+            if(Math.abs(n) <= tolerance.within) { // Use category-specific 'within' tolerance
+                within++;
+            } else if(Math.abs(n) <= tolerance.warning) { // Use category-specific 'warning' tolerance
+                warning++;
+            } else { // Use category-specific 'out' tolerance (if not warning/within, it's out)
+                out++;
+                outOfToleranceValuesByCategory[category].push({
+                    energy: energyType,
+                    date: dateCols[colIndex],
+                    value: n
+                });
+            }
+          }
+        });
+      });
+
+      const totalEl = $(`total-${category}`);
+      const withinEl = $(`within-${category}`);
+      const warningEl = $(`warning-${category}`);
+      const outEl = $(`out-${category}`);
+      const summaryChartCanvas = $(`summaryChart-${category}`);
+
+      if (totalEl) totalEl.textContent = total;
+      if (withinEl) withinEl.textContent = within;
+      if (warningEl) warningEl.textContent = warning;
+      if (outEl) outEl.textContent = out;
+
+      if (summaryChartCanvas) {
+        var ctx = summaryChartCanvas.getContext('2d');
+        if (summaryCharts[category]) summaryCharts[category].destroy();
+        summaryCharts[category] = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: ['Within Tolerance','Warning','Out of Tolerance'],
+            datasets: [{ data: [within,warning,out], backgroundColor: ['#66cc66','#ffcc00','#ff6666'] }]
+          }
+        });
+      }
+    }
+
+    async function manualSave(category = AppState.activeCategory) { 
+      showLoader();
+      const hotInstance = hots[category];
+      if (!hotInstance) {
+          console.error(`Handsontable instance not found for category: ${category}. Cannot save.`);
+          showNotification(`Error: Cannot save. Table not loaded for ${category}.`, 'error');
+          hideLoader();
+          return;
+      }
+      var changedData = hotInstance.getData(); 
+      var month = `${AppState.currentDate.getFullYear()}-${String(AppState.currentDate.getMonth()+1).padStart(2,'0')}`;
+      try {
+        var saveResponse = await fetch(`${BACKEND_URL}/save`,{
+          method:'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ data: changedData, month, uid: AppState.currentUID, category: category }) 
+        });
+
+        if (!saveResponse.ok) {
+            const errorText = await saveResponse.text();
+            throw new Error('Failed to save data: ' + saveResponse.statusText + ' - ' + errorText);
+        }
+
+        const lastSavedEl = $(`lastSaved-${category}`);
+        if (lastSavedEl) lastSavedEl.textContent = "Last Saved: " + new Date().toLocaleString(); 
+        showNotification(`Data for ${category} saved successfully!`, 'success');
+        updateTrendChart(category); 
+
+        // Send alert if there are out-of-tolerance values for THIS category
+        const outValuesForCategory = outOfToleranceValuesByCategory[category];
+        if (outValuesForCategory.length > 0) {
+            var alertResponse = await fetch(`${BACKEND_URL}/send-alert`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    outValues: outValuesForCategory,
+                    hospitalName: AppState.currentHospital,
+                    uid: AppState.currentUID,
+                    month: month,
+                    category: category 
+                })
+            });
+
+            var alertResult = await alertResponse.json();
+            if (alertResult.status === 'alert sent') {
+                console.log(`Email alert sent for current out of tolerance values for ${category}.`);
+                showNotification(`Alert email sent to RSO(s) for ${category}.`, 'info');
+            } else if (alertResult.status === 'no_change') {
+                console.log(`No new out-of-tolerance values or changes for ${category}. Email not sent.`);
+                showNotification(`No new critical alerts to send for ${category}.`, 'info');
+            } else {
+                console.warn(`Could not send email alert for ${category}:`, alertResult.message || alertResult.status);
+                showNotification(`Alert email for ${category} could not be sent: ` + (alertResult.message || "Unknown error."), 'warning');
+            }
+        } else {
+            console.log(`No out-of-tolerance values for ${category} to send for alert and no prior save to trigger a resolution check.`);
+            showNotification(`All values for ${category} are within tolerance.`, 'info');
+        }
+
+      } catch(err){
+        console.error("Operation failed:", err);
+        showNotification("Operation failed: " + err.message, 'error');
+      } finally {
+        hideLoader();
+      }
+    }
+
+    function changeMonth(m){ 
+        AppState.currentDate = new Date(AppState.currentDate.getFullYear(), m, 1); 
+        loadTable(AppState.activeCategory); 
+    }
+    function changeYear(o){ 
+        AppState.currentDate = new Date(AppState.currentDate.getFullYear()+o, AppState.currentDate.getMonth(), 1); 
+        loadTable(AppState.activeCategory); 
+    }
+    function toggleDarkMode(){ document.body.classList.toggle('dark'); }
+
+    function buildMonthButtons(){
+      var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+      if (monthsDiv) monthsDiv.innerHTML='';
+      months.forEach((m,i)=>{
+        var btn = document.createElement('button');
+        btn.textContent = m;
+        btn.addEventListener('click', () => changeMonth(i));
+        if (monthsDiv) monthsDiv.appendChild(btn);
+      });
+      highlightActiveMonth();
+    }
+
+    function highlightActiveMonth(){
+      if (monthsDiv) {
+        [...monthsDiv.querySelectorAll('button')].forEach((btn,i)=>{
+          btn.classList.toggle('active', i === AppState.currentDate.getMonth());
+        });
+      }
+    }
+
+    function populateTrendEnergySelect(category = AppState.activeCategory) {
+        var select = $(`trendEnergySelect-${category}`);
+        if (select) {
+            select.innerHTML = '';
+            energyTypes.forEach(energy => {
+                var option = document.createElement('option');
+                option.value = energy;
+                option.textContent = energy;
+                select.appendChild(option);
+            });
+            if (energyTypes.length > 0) {
+                select.value = energyTypes[0]; 
+            }
+        }
+    }
+
+    async function updateTrendChart(category = AppState.activeCategory) {
+        showLoader();
+        const trendChartSectionEl = $(`trend-chart-section-${category}`);
+        if (trendChartSectionEl) trendChartSectionEl.classList.add('loading-transition');
+
+        var selectedEnergy = $(`trendEnergySelect-${category}`).value;
+        if (!selectedEnergy) {
+            hideLoader();
+            showNotification("Please select an energy type for trend analysis.", 'info');
+            if (trendChartSectionEl) trendChartSectionEl.classList.remove('loading-transition');
+            return;
+        }
+
+        var dataPoints = [];
+        var labels = [];
+        var currentYear = AppState.currentDate.getFullYear();
+        var currentMonth = AppState.currentDate.getMonth() + 1;
+
+        var daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+        var monthKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
+        try {
+            var res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&uid=${AppState.currentUID}&category=${category}`); 
+            var result = await res.json();
+            var monthData = result.data;
+
+            var energyRow = monthData.find(row => row[0] === selectedEnergy);
+
+            if (energyRow) {
+                for (let i = 0; i < daysInMonth; i++) {
+                    var value = energyRow[i + 1];
+                    var n = parseFloat(value);
+                    dataPoints.push(isNaN(n) ? null : n);
+                    labels.push(String(i + 1).padStart(2, '0'));
+                }
+            } else {
+                for (let i = 0; i < daysInMonth; i++) {
+                    dataPoints.push(null);
+                    labels.push(String(i + 1).padStart(2, '0'));
+                }
+            }
+
+            const trendChartCanvas = $(`trendChart-${category}`);
+            if (trendChartCanvas) {
+                var ctx = trendChartCanvas.getContext('2d');
+                if (trendCharts[category]) trendCharts[category].destroy();
+
+                // Dynamic min/max for Y-axis with a small padding
+                const filteredDataPoints = dataPoints.filter(n => n !== null);
+                let yMin = -3;
+                let yMax = 3;
+                if (filteredDataPoints.length > 0) {
+                    const dataMin = Math.min(...filteredDataPoints);
+                    const dataMax = Math.max(...filteredDataPoints);
+                    // Add padding unless data range is very small
+                    yMin = dataMin - (Math.abs(dataMin) > 0.1 ? 0.5 : 0.1); 
+                    yMax = dataMax + (Math.abs(dataMax) > 0.1 ? 0.5 : 0.1);
+                    // Ensure min and max don't cross zero if values are consistently positive/negative
+                    if (dataMin >= 0 && yMin < 0) yMin = 0;
+                    if (dataMax <= 0 && yMax > 0) yMax = 0;
+                }
+
+
+                trendCharts[category] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: `${selectedEnergy} Trend (${AppState.currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}) - ${category}`, 
+                            data: dataPoints,
+                            borderColor: '#007bff',
+                            backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                            fill: false,
+                            tension: 0.1,
+                            spanGaps: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                title: {
+                                    display: true,
+                                    text: 'Output Value (%)'
+                                },
+                                min: yMin,
+                                max: yMax,
+                                ticks: {
+                                    callback: function(value, index, values) {
+                                        return value.toFixed(1) + '%';
+                                    }
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Day of Month'
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + (context.parsed.y !== null ? context.parsed.y.toFixed(2) + '%' : 'No Data');
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+        } catch (error) {
+            console.error(`Error fetching trend data for ${category}:`, error);
+            showNotification(`Could not load trend data for ${category}. Please try again.`, 'error');
+        } finally {
+            hideLoader();
+            if (trendChartSectionEl) trendChartSectionEl.classList.remove('loading-transition');
+        }
+    }
+
+    // --- Function to add message to chat window ---
+    function addChatMessage(message, sender) {
+        var messageElement = document.createElement('div');
+        messageElement.classList.add('chat-message', sender);
+        messageElement.textContent = message;
+        if (chatBody) {
+            chatBody.appendChild(messageElement);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+    }
+
+    // --- Function to handle sending chat messages ---
+    async function sendChatMessage() {
+        var message = chatInput.value.trim();
+        if (message === "") return;
+
+        addChatMessage(message, 'user');
+        if (chatInput) chatInput.value = '';
+
+        var lowerCaseMessage = message.toLowerCase();
+        var botResponse = "";
+
+        const energyTypesRegex = new RegExp(`(${energyTypes.join('|').replace(/ /g, '\\s*')})`, 'i');
+        var energyMatch = lowerCaseMessage.match(energyTypesRegex);
+        var dateMatch = lowerCaseMessage.match(/(\d{4}-\d{2}-\d{2})/);
+
+        var extractedEnergyType = energyMatch ? energyMatch[1].toUpperCase().replace(/\s/g, '') : null;
+        var extractedDate = dateMatch ? dateMatch[0] : null;
+        
+        var monthKey = `${AppState.currentDate.getFullYear()}-${String(AppState.currentDate.getMonth()+1).padStart(2,'0')}`;
+
+        // Prepare a generic query object to send to the backend
+        let queryBody = {
+            query_text: message, 
+            month: monthKey,
+            uid: AppState.currentUID,
+            category: AppState.activeCategory, 
+            energy_type: extractedEnergyType, 
+            date: extractedDate
+        };
+
+        try {
+            var response = await fetch(`${BACKEND_URL}/query-qa-data`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(queryBody)
+            });
+            var result = await response.json();
+
+            if (result.status === 'success') {
+                botResponse = result.message;
+            } else {
+                botResponse = "Sorry, I couldn't retrieve that information: " + (result.message || "Unknown error.");
+            }
+        } catch (error) {
+            console.error("Chatbot query error:", error);
+            botResponse = "Oops! Something went wrong while trying to get that information. Please try again later.";
+        }
+        
+        addChatMessage(botResponse, 'bot');
+    }
+
+    // Export function for Excel (requests XLSX from backend)
+    async function exportToExcel(category = AppState.activeCategory) { 
+        showLoader();
+
+        var month = `${AppState.currentDate.getFullYear()}-${String(AppState.currentDate.getMonth()+1).padStart(2,'0')}`;
+        try {
+            const response = await fetch(`${BACKEND_URL}/export-excel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    month: month,
+                    uid: AppState.currentUID,
+                    category: category 
+                })
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `LINAC_QA_Data_${category}_${month}.xlsx`; 
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                showNotification(`Excel file for ${category} exported successfully!`, 'success');
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to export Excel file.');
+            }
+        } catch (error) {
+            console.error("Error exporting Excel:", error);
+            showNotification("Failed to export Excel: " + error.message, 'error');
+        } finally {
+            hideLoader();
+        }
+    }
+
+    // --- Function to switch category views ---
+    async function switchCategory(newCategory) {
+        if (AppState.activeCategory === newCategory) return; 
+
+        // Deactivate current category button and panel
+        const currentBtn = $(`btn${AppState.activeCategory.replace(/\s/g, '')}`);
+        const currentPanel = $(`panel${AppState.activeCategory}`);
+        if (currentBtn) currentBtn.classList.remove('active-category');
+        if (currentPanel) currentPanel.classList.remove('active-panel');
+
+        AppState.activeCategory = newCategory;
+
+        // Activate new category button and panel
+        const newBtn = $(`btn${AppState.activeCategory.replace(/\s/g, '')}`);
+        const newPanel = $(`panel${AppState.activeCategory}`);
+        if (newBtn) newBtn.classList.add('active-category');
+        if (newPanel) newPanel.classList.add('active-panel');
+
+        // Load data for the new active category
+        await loadTable(AppState.activeCategory);
+    }
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+
+        // Event listeners for category buttons
+        document.querySelectorAll('.category-selection button').forEach(button => {
+            button.addEventListener('click', () => switchCategory(button.dataset.category));
+        });
+
+        // Event listeners for Save and Export buttons (delegate using data-category)
+        document.querySelectorAll('.save-btn').forEach(button => {
+            button.addEventListener('click', () => manualSave(button.dataset.category));
+        });
+        document.querySelectorAll('.export-excel-btn').forEach(button => {
+            button.addEventListener('click', () => exportToExcel(button.dataset.category));
+        });
+
+        if (logoutBtn) logoutBtn.addEventListener('click', window.logout);
+        if (myProfileBtn) myProfileBtn.addEventListener('click', function() { window.location.href='my_profile.html'; });
+        if (darkToggle) darkToggle.addEventListener('change', toggleDarkMode);
+        if (prevYearBtn) prevYearBtn.addEventListener('click', function() { changeYear(-1); });
+        if (nextYearBtn) nextYearBtn.addEventListener('click', function() { changeYear(1); });
+
+        if (chatBubble) {
+            chatBubble.addEventListener('click', function() {
+                if (chatWindow) {
+                    chatWindow.classList.toggle('open');
+                    if (chatWindow.classList.contains('open') && chatInput) {
+                        chatInput.focus();
+                    }
+                }
+            });
+        }
+        if (closeChatBtn) {
+            closeChatBtn.addEventListener('click', function() {
+                if (chatWindow) chatWindow.classList.remove('open');
+            });
+        }
+        if (sendChatBtn) sendChatBtn.addEventListener('click', sendChatMessage);
+        if (chatInput) {
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendChatMessage();
+                }
+            });
+        }
+
+
+        auth.onAuthStateChanged(async function(user) {
+            if (user) {
+                AppState.currentUID = user.uid;
+                AppState.currentHospital = localStorage.getItem("hospitalName") || (user.email?.split('@')[0] ?? 'UNKNOWN').toUpperCase();
+                var userStatus = localStorage.getItem("userStatus");
+
+                if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
+                    showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000);
+                    window.logout();
+                    return;
+                }
+
+                localStorage.setItem("uid", AppState.currentUID);
+                if ($('hospitalName')) $('hospitalName').textContent = "Hospital: " + AppState.currentHospital;
+                buildMonthButtons();
+                
+                // Initialize the active category (default to Output)
+                const defaultBtn = $(`btn${AppState.activeCategory.replace(/\s/g, '')}`);
+                const defaultPanel = $(`panel${AppState.activeCategory}`);
+                if (defaultBtn) defaultBtn.classList.add('active-category');
+                if (defaultPanel) defaultPanel.classList.add('active-panel');
+                
+                await loadTable(AppState.activeCategory); 
+            } else {
+                window.location.replace("login.html");
+            }
+        });
+
+        // Add a global resize listener to ensure Handsontable adjusts if the window changes size
+        window.addEventListener('resize', () => {
+            if (hots[AppState.activeCategory]) {
+                const container = $(`handsontable-container-${AppState.activeCategory}`);
+                if (container) {
+                    // Recalculate based on current container size
+                    const energyColWidth = 80;
+                    const dateCols = getMonthDates(AppState.currentDate);
+                    const fixedDateColWidth = 80; 
+                    const numberOfDateCols = dateCols.length;
+                    const totalCalculatedContentWidth = energyColWidth + (numberOfDateCols * fixedDateColWidth);
+
+                    // Update Handsontable's width setting and force a render
+                    hots[AppState.activeCategory].updateSettings({
+                        width: totalCalculatedContentWidth,
+                        stretchH: 'none' // Keep 'none' as we are explicitly setting width
+                    });
+                    hots[AppState.activeCategory].render();
+                }
+            }
+        });
+    });
+
+  </script>
 </body>
 </html>
