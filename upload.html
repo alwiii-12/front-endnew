@@ -1253,20 +1253,21 @@
         // This setTimeout is the most critical part for addressing rendering glitches.
         setTimeout(() => {
             if (hots[category] && container.offsetWidth > 0) {
-                console.log(`Handsontable container for ${category} has width: ${container.offsetWidth}px`); // Debugging line
+                console.log(`Handsontable container for ${category} has width: ${container.offsetWidth}px at final setTimeout.`); // Debugging line
                 // Trigger a full re-render, forcing Handsontable to re-evaluate its dimensions.
-                // This is often more effective than just updateSettings({}).
                 hots[category].render(); 
                 // Then, update settings to force deeper internal recalculations, including column widths.
                 // It's crucial to call updateSettings after render, as render might not update all dimensions.
                 hots[category].updateSettings({
-                    width: Math.max(container.scrollWidth, container.offsetWidth), // Ensure width is at least container's current width or content width
+                    // Use a slightly more aggressive width setting, ensuring it takes up space.
+                    // Combining container.scrollWidth (needed content width) and container.clientWidth (available visual width)
+                    width: Math.max(container.scrollWidth, container.clientWidth),
                     stretchH: 'none' // Keep 'none' as we are explicitly setting width
                 }); 
             } else {
                 console.warn(`Handsontable instance for ${category} not ready for final render/updateSettings. Container width: ${container.offsetWidth}px`); // Debugging line
             }
-        }, 800); // Increased delay to 800ms for maximal stability
+        }, 1000); // Increased delay to 1000ms (1 second) for maximal stability
 
 
         // Update summary and chart for the current category
@@ -1284,7 +1285,7 @@
             if (handsontableContainer) handsontableContainer.classList.remove('loading-transition');
             if (summaryBox) summaryBox.classList.remove('loading-transition');
             if (trendChartSection) trendChartSection.classList.remove('loading-transition');
-        }, 900); // Slightly longer than the setTimeout for Handsontable
+        }, 1100); // Slightly longer than the setTimeout for Handsontable
       }
     }
 
@@ -1773,7 +1774,7 @@
                 var userStatus = localStorage.getItem("userStatus");
 
                 if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
-                    showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 'warning', 5000);
+                    showNotification("Your account status is: " + userStatus.toUpperCase() + ". Please await admin approval or contact support.", 5000, 'warning'); // Changed order of arguments to match function signature
                     window.logout();
                     return;
                 }
