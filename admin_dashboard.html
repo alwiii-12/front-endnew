@@ -97,6 +97,14 @@
             <div class="card-section" id="audit-logs-section">
                 <h2>View Audit Logs</h2>
                 <div class="filter-search-container">
+                    <select id="auditLogHospitalFilter" onchange="loadAuditLogs()"><option value="">All Hospitals</option></select>
+                    <select id="auditLogActionFilter" onchange="loadAuditLogs()">
+                        <option value="">All Actions</option>
+                        <option value="user_login">User Login</option>
+                        <option value="user_logout">User Logout</option>
+                        <option value="user_update">User Update</option>
+                        <option value="user_deletion">User Deletion</option>
+                    </select>
                     <input type="date" id="auditLogDateFilter" onchange="loadAuditLogs()">
                     <button onclick="loadAuditLogs()">Refresh Logs</button>
                 </div>
@@ -171,7 +179,7 @@
         
         function populateCommonFilters() {
             const hospitals = [...new Set(allUsersData.map(u => u.hospital).filter(Boolean))].sort();
-            const hospitalFilters = [filterHospital, document.getElementById('adminHospitalSelect')];
+            const hospitalFilters = [filterHospital, document.getElementById('adminHospitalSelect'), document.getElementById('auditLogHospitalFilter')];
             hospitalFilters.forEach(select => {
                 if(select) {
                     const currentVal = select.value;
@@ -224,7 +232,7 @@
             if(yearSelect.options.length > 0) return;
             const currentYear = new Date().getFullYear();
             for (let i = currentYear; i >= currentYear - 5; i--) yearSelect.innerHTML += `<option value="${i}">${i}</option>`;
-            const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             months.forEach((m, i) => monthSelect.innerHTML += `<option value="${String(i+1).padStart(2,'0')}">${m}</option>`);
             monthSelect.value = String(new Date().getMonth() + 1).padStart(2, '0');
         }
@@ -239,14 +247,13 @@
             const hospitalId = document.getElementById('adminHospitalSelect').value;
             const year = document.getElementById('adminYearSelect').value;
             const month = document.getElementById('adminMonthSelect').value;
-            if (!hospitalId || !year || !month) {
-                document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message">Please select a hospital, year, and month.</p>`;
-                return;
-            }
+            if (!hospitalId || !year || !month) return;
             showLoader();
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
-                const response = await fetch(`${BACKEND_URL}/admin/hospital-data?hospitalId=${hospitalId}&month=${year}-${month}`, { headers: { 'Authorization': `Bearer ${idToken}` } });
+                const response = await fetch(`${BACKEND_URL}/admin/hospital-data?hospitalId=${hospitalId}&month=${year}-${month}`, {
+                    headers: { 'Authorization': `Bearer ${idToken}` }
+                });
                 if (!response.ok) throw new Error('Failed to fetch data');
                 const result = await response.json();
                 lastFetchedHospitalData = result.data;
@@ -284,7 +291,7 @@
                         else if (Math.abs(val) <= config.t) className = 'warning';
                         else className = 'out';
                     }
-                    tableHTML += `<td class="${className}">${cell === null ? '' : cell}</td>`;
+                    tableHTML += `<td class="${className}">${cell === null || cell === undefined ? '' : cell}</td>`;
                 });
                 tableHTML += '</tr>';
             });
@@ -294,17 +301,25 @@
 
         window.loadAuditLogs = async function() {
             showLoader();
+            const hospitalId = document.getElementById('auditLogHospitalFilter').value;
+            const action = document.getElementById('auditLogActionFilter').value;
             const date = document.getElementById('auditLogDateFilter').value;
             const logsTableBody = document.getElementById('auditLogsTableBody');
             logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">Loading logs...</td></tr>`;
+            
+            let url = `${BACKEND_URL}/admin/audit-logs?`;
+            if(date) url += `date=${date}&`;
+            if(hospitalId) url += `hospitalId=${hospitalId}&`;
+            if(action) url += `action=${action}&`;
+
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
-                const response = await fetch(`${BACKEND_URL}/admin/audit-logs?date=${date}`, { headers: { 'Authorization': `Bearer ${idToken}` } });
+                const response = await fetch(url, { headers: { 'Authorization': `Bearer ${idToken}` } });
                 if (!response.ok) throw new Error('Failed to fetch logs');
                 const result = await response.json();
                 logsTableBody.innerHTML = '';
                 if(result.logs.length === 0) {
-                    logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No logs found for this date.</td></tr>`;
+                    logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No logs found for the selected filters.</td></tr>`;
                     return;
                 }
                 result.logs.forEach(log => {
