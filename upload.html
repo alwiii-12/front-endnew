@@ -306,6 +306,7 @@
       align-items: flex-start; /* Align content to the top */
       flex-wrap: nowrap; /* CRITICAL FIX: Prevents items from wrapping and pushes overflow to the next container */
       flex: 1; /* Allow this section to grow */
+      min-width: 0; /* Add this to prevent flex item from overflowing its container */
     }
 
     .handsontable-container {
@@ -319,6 +320,7 @@
         /* CRUCIAL: Enable horizontal scrolling for the container */
         overflow-x: auto; 
         overflow-y: hidden; /* Handsontable manages its own vertical scrollbar */
+        min-width: 300px; /* Ensure handsontable container doesn't shrink too much */
     }
 
     /* Handsontable specific overrides for cell background and text */
@@ -344,6 +346,7 @@
       box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
       background: #ffffff;
       border: 1px solid rgba(0,0,0,0.05);
+      flex-shrink: 0; /* Prevent summary box from shrinking */
     }
     .summary-box h3 {
         margin-top: 0;
@@ -1154,6 +1157,7 @@
       const summaryBox = $(`summary-box-${category}`);
       const trendChartSection = $(`trend-chart-section-${category}`);
 
+      // Apply transition classes before loading to ensure smooth entry/exit
       if (handsontableContainer) handsontableContainer.classList.add('loading-transition');
       if (summaryBox) summaryBox.classList.add('loading-transition');
       if (trendChartSection) trendChartSection.classList.add('loading-transition');
@@ -1189,7 +1193,10 @@
         }
 
         // Destroy existing Handsontable for this category if it exists
-        if (hots[category]) hots[category].destroy();
+        if (hots[category]) {
+            hots[category].destroy();
+            hots[category] = null; // Explicitly set to null after destruction
+        }
 
         // Initialize Handsontable for the current category
         hots[category] = new Handsontable(container, {
@@ -1199,7 +1206,6 @@
           autoColumnSize: true, // Let Handsontable automatically determine column sizes
           autoRowSize: true, 
           height: 500, /* Fixed pixel height for stability */
-          // width: calculated based on container and content
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
@@ -1239,23 +1245,27 @@
             }
             return props;
           },
-          // Removed afterViewRender hook entirely to prevent potential render loops
         });
 
-        // Explicitly load data and render after Handsontable initialization
-        hots[category].loadData(data);
-        hots[category].render(); 
+        // Load data explicitly. No need for hots[category].render() immediately after loadData,
+        // as Handsontable's internal process will handle the initial render after data is loaded.
+        hots[category].loadData(data); 
 
-        // CRUCIAL: Force Handsontable to re-measure and re-render after its container has settled.
-        // This is done with a longer, more robust delay.
+        // CRUCIAL: Force Handsontable to re-measure and re-render AFTER the DOM has settled.
+        // This setTimeout is the most critical part for addressing rendering glitches.
+        // Increased delay to allow browser more time to compute layout and for CSS transitions to complete.
         setTimeout(() => {
-            if (hots[category] && handsontableContainer.offsetWidth > 0) {
-                // Manually trigger a render, and then update settings to force full recalculation
+            if (hots[category] && container.offsetWidth > 0) {
+                // Trigger a full re-render, forcing Handsontable to re-evaluate its dimensions.
+                // This is often more effective than just updateSettings({}).
                 hots[category].render(); 
-                hots[category].updateSettings({}); // Forces a deeper internal recalculation
+                // Then, update settings to force deeper internal recalculations, including column widths.
+                // It's crucial to call updateSettings after render, as render might not update all dimensions.
+                hots[category].updateSettings({}); 
+            } else {
+                console.warn(`Handsontable instance for ${category} not ready for final render/updateSettings.`);
             }
-        }, 300); // Increased delay to 300ms for maximal stability
-
+        }, 500); // Increased delay to 500ms
 
         // Update summary and chart for the current category
         updateSummaryAndChart(data, category);
@@ -1267,9 +1277,12 @@
         showNotification(`Could not load table data for ${category}. Please try again.`, 'error');
       } finally {
         hideLoader();
-        if (handsontableContainer) handsontableContainer.classList.remove('loading-transition');
-        if (summaryBox) summaryBox.classList.remove('loading-transition');
-        if (trendChartSection) trendChartSection.classList.remove('loading-transition');
+        // Remove transition classes after a short delay to allow content to fade in
+        setTimeout(() => {
+            if (handsontableContainer) handsontableContainer.classList.remove('loading-transition');
+            if (summaryBox) summaryBox.classList.remove('loading-transition');
+            if (trendChartSection) trendChartSection.classList.remove('loading-transition');
+        }, 600); // Slightly longer than the CSS transition duration
       }
     }
 
@@ -1321,6 +1334,15 @@
           data: {
             labels: ['Within Tolerance','Warning','Out of Tolerance'],
             datasets: [{ data: [within,warning,out], backgroundColor: ['#66cc66','#ffcc00','#ff6666'] }]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false, // Allows chart to take available space
+              plugins: {
+                  legend: {
+                      position: 'bottom', // Move legend to bottom to save horizontal space
+                  },
+              }
           }
         });
       }
