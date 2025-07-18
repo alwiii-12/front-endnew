@@ -307,12 +307,12 @@
       flex-wrap: nowrap; /* Prevents items from wrapping and pushes overflow to the next container */
       flex: 1; /* Allow this section to grow */
       min-width: 0; /* Crucial: Allows flex item to shrink below its content size */
-      /* Add overflow-x: auto here as well, in case main itself overflows */
-      overflow-x: auto; /* Ensure if child expands, this container scrolls */
+      overflow: hidden; /* Prevent this container from overflowing its parent */
     }
 
     .handsontable-container {
-        flex: 1 1 70%; /* Give it a flex basis to constrain its width, allowing it to grow */
+        /* Adjusted flex property: flex-grow, flex-shrink, flex-basis */
+        flex: 1 1 0px; /* IMPORTANT: flex-basis: 0px combined with flex-grow: 1 makes it take all available space */
         height: 500px; /* Fixed pixel height for Handsontable */
         background-color: var(--background-white-card); /* Ensure white background */
         
@@ -322,16 +322,17 @@
         /* CRUCIAL: Enable horizontal scrolling for the container */
         overflow-x: auto; 
         overflow-y: hidden; /* Handsontable manages its own vertical scrollbar */
-        min-width: 300px; /* Ensure handsontable container doesn't shrink too much */
-        /* Temporary debug border - REMOVE THIS ONCE FIXED */
-        /* border: 2px solid red !important; */ 
+        min-width: 300px; /* Ensure handsontable container doesn't shrink too much below a readable size */
+        /* Temporary debug border - Keep this active when debugging if needed to see container bounds */
+        border: 2px dashed red !important; /* Visual cue for the container */
     }
 
     /* Handsontable specific overrides for cell background and text */
     .handsontable-container .ht_master, .handsontable-container .handsontable {
         background-color: #ffffff !important;
         color: #333 !important;
-        width: 100% !important; /* Force Handsontable to fill its container */
+        /* Remove width: 100% !important; from here if handsontable-container has proper flex-basis/width */
+        /* Handsontable should manage its internal width based on its own settings and container size */
     }
     .handsontable-container .handsontable td, .handsontable-container .handsontable th {
         border-color: #aaa;
@@ -1204,23 +1205,24 @@
 
         // Initialize Handsontable for the current category
         // Before initialization, ensure the container has a temporary display to get a size.
-        // This is usually handled by `display: flex` and `flex: 1 1 70%`, but reinforcing.
+        // This is usually handled by `display: flex` and `flex: 1 1 0px`, but reinforcing.
         // Also, explicitly define initial dimensions for Handsontable if possible.
-        const initialWidth = container.clientWidth > 0 ? container.clientWidth : 800; // Fallback width
-        const initialHeight = container.clientHeight > 0 ? container.clientHeight : 500; // Fallback height
+        // Get actual computed width, or fallback to a reasonable default.
+        const computedContainerWidth = container.clientWidth > 0 ? container.clientWidth : (window.innerWidth * 0.5); // Estimate 50% of window width if 0
+        const computedContainerHeight = container.clientHeight > 0 ? container.clientHeight : 500; // Fallback height to fixed value
         
-        console.log(`Handsontable Debug: Initializing Handsontable for ${category}. Container clientWidth: ${container.clientWidth}px`);
+        console.log(`Handsontable Debug: Initializing Handsontable for ${category}. Container clientWidth: ${container.clientWidth}px, using initial width: ${computedContainerWidth}px`);
 
         hots[category] = new Handsontable(container, {
           data,
           rowHeaders: false,
           // Set an explicit width during initialization to help it render correctly initially
           // This will be overridden by updateSettings later, but provides a starting point.
-          width: initialWidth, 
+          width: computedContainerWidth, 
           stretchH: 'none', // Explicitly set to 'none' for better scroll control
           autoColumnSize: true, // Let Handsontable automatically determine column sizes
           autoRowSize: true, 
-          height: initialHeight, /* Fixed pixel height for stability */
+          height: computedContainerHeight, /* Fixed pixel height for stability */
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
@@ -1267,30 +1269,17 @@
 
         // Use requestAnimationFrame for next visual update, then a fallback setTimeout
         requestAnimationFrame(() => {
-            if (hots[category] && container.offsetWidth > 0) {
-                console.log(`Handsontable Debug: RENDER_ANIM_FRAME - Container width: ${container.offsetWidth}px`);
-                hots[category].render();
-                hots[category].updateSettings({
-                    width: Math.max(container.scrollWidth, container.clientWidth),
-                    stretchH: 'none'
-                });
-            } else {
-                console.warn(`Handsontable Debug: RENDER_ANIM_FRAME - Instance or container not ready.`);
-            }
-            
-            // Fallback: A slightly longer setTimeout in case requestAnimationFrame isn't enough
+            // Give it another chance after the initial paint
             setTimeout(() => {
                 if (hots[category] && container.offsetWidth > 0) {
-                    console.log(`Handsontable Debug: RENDER_TIMEOUT - Container width: ${container.offsetWidth}px`);
-                    hots[category].render();
-                    hots[category].updateSettings({
-                        width: Math.max(container.scrollWidth, container.clientWidth),
-                        stretchH: 'none'
-                    });
+                    console.log(`Handsontable Debug: RENDER_TIMEOUT (after RAF) - Container width: ${container.offsetWidth}px`);
+                    hots[category].render(); 
+                    // No explicit width on updateSettings here, let Handsontable calculate based on flex container
+                    hots[category].updateSettings({}); 
                 } else {
-                    console.warn(`Handsontable Debug: RENDER_TIMEOUT - Instance or container not ready.`);
+                    console.warn(`Handsontable Debug: RENDER_TIMEOUT (after RAF) - Instance or container not ready, or zero width. Container width: ${container.offsetWidth}px`);
                 }
-            }, 1000); // 1 second delay
+            }, 500); // Small delay after RAF
         });
 
 
@@ -1305,12 +1294,11 @@
       } finally {
         hideLoader();
         // Remove transition classes after a short delay to allow content to fade in
-        // This delay should be longer than the longest setTimeout for rendering.
         setTimeout(() => {
             if (handsontableContainer) handsontableContainer.classList.remove('loading-transition');
             if (summaryBox) summaryBox.classList.remove('loading-transition');
             if (trendChartSection) trendChartSection.classList.remove('loading-transition');
-        }, 1200); 
+        }, 600); // Sufficient delay after the final Handsontable rendering attempts
       }
     }
 
@@ -1825,20 +1813,10 @@
             if (hots[AppState.activeCategory]) {
                 const container = $(`handsontable-container-${AppState.activeCategory}`);
                 if (container) {
-                    // Recalculate based on current container size
-                    const energyColWidth = 80;
-                    const dateCols = getMonthDates(AppState.currentDate);
-                    const fixedDateColWidth = 80; 
-                    const numberOfDateCols = dateCols.length;
-                    // Calculate total width needed by Handsontable content
-                    const totalCalculatedContentWidth = energyColWidth + (numberOfDateCols * fixedDateColWidth);
-
-                    // Update Handsontable's width setting and force a render
-                    hots[AppState.activeCategory].updateSettings({
-                        width: Math.max(container.scrollWidth, container.clientWidth, totalCalculatedContentWidth),
-                        stretchH: 'none' // Keep 'none' as we are explicitly setting width
-                    });
+                    // It's generally better to let Handsontable figure out its width within its flex container
+                    // after its container has settled. Removed explicit width calculation from here.
                     hots[AppState.activeCategory].render();
+                    hots[AppState.activeCategory].updateSettings({}); // Forces a deeper internal recalculation
                 }
             }
         });
