@@ -8,9 +8,139 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* All CSS is unchanged */
+        :root {
+          --primary-blue: #007bff;
+          --primary-blue-dark: #0056b3;
+          --primary-blue-light: #e0f7fa;
+          --text-dark: #333;
+          --text-light: #fff;
+          --background-light: #f5f5f5;
+          --background-white-card: #ffffff;
+          --border-light: #ccc;
+          --success-green: #28a745;
+          --warning-orange: #ffc107;
+          --error-red: #dc3545;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--primary-blue-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .signup-container {
+            background-color: var(--background-white-card);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .signup-container h2 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            text-align: center;
+            color: var(--primary-blue);
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .form-group label {
+            text-align: left;
+            font-weight: bold;
+            color: var(--text-dark);
+        }
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="password"],
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid var(--border-light);
+            box-sizing: border-box;
+        }
+        .password-input-container {
+            position: relative;
+            margin: 0;
+        }
+        .password-input-container input {
+            padding-right: 40px;
+            margin: 0;
+            height: 40px;
+            line-height: 20px;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+        }
+        .signup-container button {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--primary-blue);
+            color: var(--text-light);
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .signup-container p {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+        .signup-container p a {
+            color: var(--primary-blue);
+            text-decoration: none;
+        }
+        .message {
+            color: var(--error-red);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .required {
+            color: var(--error-red);
+            margin-left: 4px;
+        }
+        .password-strength {
+            font-size: 0.85em;
+            margin-top: 5px;
+            margin-bottom: 0;
+            text-align: left;
+            font-weight: 500;
+            min-height: 1.2em;
+        }
+        .password-strength.weak { color: var(--error-red); }
+        .password-strength.intermediate { color: var(--warning-orange); }
+        .password-strength.strong { color: var(--success-green); }
+        #notification-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+        }
     </style>
 </head>
 <body>
@@ -27,7 +157,7 @@
     <div class="form-group">
       <label for="password">Password:<span class="required">*</span></label>
       <div class="password-input-container">
-        <input type="password" id="password" placeholder="Choose a password" required autocomplete="new-password"/>
+        <input type="password" id="password" placeholder="Choose a password" required autocomplete="new-password" spellcheck="false"/>
         <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span>
       </div>
       <div id="passwordStrength" class="password-strength"></div>
@@ -38,6 +168,9 @@
         <option value="">-- Select Hospital --</option>
         <option value="aoi_gurugram">AOI GURUGRAM</option>
         <option value="medanta_gurugram">Medanta Gurugram</option>
+        <option value="fortis_delhi">Fortis Hospital Delhi</option>
+        <option value="apollo_chennai">Apollo Hospitals Chennai</option>
+        <option value="max_delhi">Max Healthcare Delhi</option>
       </select>
     </div>
     <div class="form-group">
@@ -51,6 +184,7 @@
     <button onclick="signup()" id="signupButton">Sign Up</button>
     <p>Already have an account? <a href="login.html">Log in</a></p>
   </div>
+
   <div id="notification-container"></div>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -59,7 +193,124 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // Script content is unchanged
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const notificationContainer = document.getElementById('notification-container');
+    const passwordInput = document.getElementById('password');
+    const passwordStrengthDiv = document.getElementById('passwordStrength');
+    const signupButton = document.getElementById('signupButton');
+    document.querySelectorAll('.toggle-password').forEach(function(toggle) {
+        toggle.addEventListener('click', function() {
+            const passwordInput = document.querySelector(this.getAttribute('toggle'));
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                this.classList.remove('fa-eye');
+                this.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                this.classList.remove('fa-eye-slash');
+                this.classList.add('fa-eye');
+            }
+        });
+    });
+    function showNotification(message, type = 'info', duration = 3000) {
+        const notification = document.createElement('div');
+        notification.classList.add('notification-message', type);
+        notification.textContent = message;
+        notificationContainer.appendChild(notification);
+        void notification.offsetWidth;
+        notification.classList.add('show');
+        setTimeout(() => {
+            notification.classList.remove('show');
+            notification.addEventListener('transitionend', () => {
+                notification.remove();
+            }, { once: true });
+        }, duration);
+    }
+    function checkPasswordStrength() {
+        const password = passwordInput.value;
+        let strength = 0;
+        let message = '';
+        let type = '';
+        if (password.length > 0) {
+            if (password.length >= 8) strength++;
+            if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+            if (password.match(/\d/)) strength++;
+            if (password.match(/[^a-zA-Z0-9]/)) strength++;
+            if (strength < 2) { message = 'Weak'; type = 'weak'; }
+            else if (strength < 4) { message = 'Intermediate'; type = 'intermediate'; }
+            else { message = 'Strong'; type = 'strong'; }
+        }
+        passwordStrengthDiv.textContent = message;
+        passwordStrengthDiv.className = 'password-strength ' + type;
+    }
+    passwordInput.addEventListener('input', checkPasswordStrength);
+    async function signup() {
+      signupButton.disabled = true;
+      signupButton.textContent = 'Signing Up...';
+      const getName = document.getElementById("name");
+      const getEmail = document.getElementById("email");
+      const getPassword = document.getElementById("password");
+      const getHospital = document.getElementById("hospital");
+      const getRole = document.getElementById("role");
+      if (!getName || !getEmail || !getPassword || !getHospital || !getRole) {
+          showNotification("Error: Required form elements not found.", 'error', 5000);
+          signupButton.disabled = false;
+          signupButton.textContent = 'Sign Up';
+          return;
+      }
+      const name = getName.value.trim();
+      const email = getEmail.value.trim();
+      const password = getPassword.value.trim();
+      const hospital = getHospital.value.trim();
+      const role = getRole.value.trim();
+      if (!name || !email || !password || !hospital || hospital === "" || !role || role === "") {
+        showNotification("Please fill in all fields.", 'warning');
+        signupButton.disabled = false;
+        signupButton.textContent = 'Sign Up';
+        return;
+      }
+      const currentPasswordStrengthClass = passwordStrengthDiv.className;
+      if (currentPasswordStrengthClass.includes('weak')) {
+          showNotification("Please choose a stronger password.", 'warning');
+          signupButton.disabled = false;
+          signupButton.textContent = 'Sign Up';
+          return;
+      }
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const uid = userCredential.user.uid;
+        const BACKEND_URL = "https://back-end-wrxi.onrender.com";
+        const response = await fetch(`${BACKEND_URL}/signup`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ uid, name, email, hospital, role, status: "pending" })
+        });
+        const data = await response.json();
+        if (data.status === "success") {
+            localStorage.setItem("hospitalName", hospital.toUpperCase());
+            showNotification("Signup successful! Your account is awaiting approval.", 'success', 5000);
+            setTimeout(() => {
+                window.location.href = "awaiting_approval.html";
+            }, 3000);
+        } else {
+            showNotification("Signup failed: " + data.message, 'error');
+        }
+      } catch (error) {
+        console.error(error);
+        let errorMessage = "An unknown error occurred.";
+        switch (error.code) {
+          case 'auth/email-already-in-use': errorMessage = "The email address is already registered."; break;
+          case 'auth/invalid-email': errorMessage = "The email address format is invalid."; break;
+          case 'auth/weak-password': errorMessage = "The password is too weak."; break;
+          default: errorMessage = "Firebase signup error: " + error.message;
+        }
+        showNotification(errorMessage, 'error');
+      } finally {
+        signupButton.disabled = false;
+        signupButton.textContent = 'Sign Up';
+      }
+    }
   </script>
 </body>
 </html>
