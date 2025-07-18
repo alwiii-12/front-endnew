@@ -307,7 +307,9 @@
             const logsTableBody = document.getElementById('auditLogsTableBody');
             logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">Loading logs...</td></tr>`;
             
-            let url = `${BACKEND_URL}/admin/audit-logs?`;
+            // MODIFIED: Added a cache-busting parameter
+            const cacheBuster = new Date().getTime();
+            let url = `${BACKEND_URL}/admin/audit-logs?cache=${cacheBuster}&`;
             if(date) url += `date=${date}&`;
             if(hospitalId) url += `hospitalId=${hospitalId}&`;
             if(action) url += `action=${action}&`;
