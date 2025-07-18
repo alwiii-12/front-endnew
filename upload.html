@@ -1095,8 +1095,6 @@
                     notification.remove();
                 }, { once: true });
             }, duration);
-        } else {
-            console.warn("Notification container not found.", message);
         }
     }
 
@@ -1253,19 +1251,23 @@
 
         // CRUCIAL: Force Handsontable to re-measure and re-render AFTER the DOM has settled.
         // This setTimeout is the most critical part for addressing rendering glitches.
-        // Increased delay to allow browser more time to compute layout and for CSS transitions to complete.
         setTimeout(() => {
             if (hots[category] && container.offsetWidth > 0) {
+                console.log(`Handsontable container for ${category} has width: ${container.offsetWidth}px`); // Debugging line
                 // Trigger a full re-render, forcing Handsontable to re-evaluate its dimensions.
                 // This is often more effective than just updateSettings({}).
                 hots[category].render(); 
                 // Then, update settings to force deeper internal recalculations, including column widths.
                 // It's crucial to call updateSettings after render, as render might not update all dimensions.
-                hots[category].updateSettings({}); 
+                hots[category].updateSettings({
+                    width: Math.max(container.scrollWidth, container.offsetWidth), // Ensure width is at least container's current width or content width
+                    stretchH: 'none' // Keep 'none' as we are explicitly setting width
+                }); 
             } else {
-                console.warn(`Handsontable instance for ${category} not ready for final render/updateSettings.`);
+                console.warn(`Handsontable instance for ${category} not ready for final render/updateSettings. Container width: ${container.offsetWidth}px`); // Debugging line
             }
-        }, 500); // Increased delay to 500ms
+        }, 800); // Increased delay to 800ms for maximal stability
+
 
         // Update summary and chart for the current category
         updateSummaryAndChart(data, category);
@@ -1282,7 +1284,7 @@
             if (handsontableContainer) handsontableContainer.classList.remove('loading-transition');
             if (summaryBox) summaryBox.classList.remove('loading-transition');
             if (trendChartSection) trendChartSection.classList.remove('loading-transition');
-        }, 600); // Slightly longer than the CSS transition duration
+        }, 900); // Slightly longer than the setTimeout for Handsontable
       }
     }
 
