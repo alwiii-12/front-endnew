@@ -331,7 +331,7 @@
     .handsontable-container .ht_master, .handsontable-container .handsontable {
         background-color: #ffffff !important;
         color: #333 !important;
-        /* No explicit width here. Handsontable will size itself within its container. */
+        /* Removed width: 100% !important; from here. Handsontable will size itself within its container. */
     }
     .handsontable-container .handsontable td, .handsontable-container .handsontable th {
         border-color: #aaa;
@@ -1203,8 +1203,8 @@
         }
 
         // Initialize Handsontable for the current category
-        // Get actual computed width, or fallback to a reasonable default.
-        const computedContainerWidth = container.clientWidth > 0 ? container.clientWidth : (window.innerWidth * 0.5); // Estimate 50% of window width if 0
+        // Get actual computed width of the container. Fallback if it's zero.
+        const computedContainerWidth = container.clientWidth > 0 ? container.clientWidth : (window.innerWidth * 0.7); // Estimate 70% of window width if 0
         const computedContainerHeight = container.clientHeight > 0 ? container.clientHeight : 500; // Fallback height to fixed value
         
         console.log(`Handsontable Debug: Initializing Handsontable for ${category}. Container clientWidth: ${container.clientWidth}px, using initial width: ${computedContainerWidth}px`);
@@ -1213,7 +1213,7 @@
           data,
           rowHeaders: false,
           // Set an explicit width during initialization based on available container width
-          width: computedContainerWidth, 
+          width: computedContainerWidth, // Use the dynamically computed width here
           stretchH: 'none', // Explicitly set to 'none' for better scroll control
           autoColumnSize: true, // Let Handsontable automatically determine column sizes
           autoRowSize: true, 
@@ -1268,10 +1268,10 @@
             setTimeout(() => {
                 if (hots[category] && container.offsetWidth > 0) {
                     console.log(`Handsontable Debug: RENDER_TIMEOUT (after RAF) - Container width: ${container.offsetWidth}px`);
-                    hots[category].render(); 
-                    // Use refreshDimensions() to tell Handsontable its container might have resized.
-                    // This is more appropriate than updateSettings({}) for re-evaluating container size.
-                    hots[category].refreshDimensions(); 
+                    // Ensure Handsontable refreshes its dimensions after the container has settled.
+                    // This is crucial for it to correctly draw its content within the allocated space.
+                    hots[category].render(); // Force a redraw
+                    hots[category].refreshDimensions(); // Recalculate based on parent
                 } else {
                     console.warn(`Handsontable Debug: RENDER_TIMEOUT (after RAF) - Instance or container not ready, or zero width. Container width: ${container.offsetWidth}px`);
                 }
@@ -1809,12 +1809,13 @@
             if (hots[AppState.activeCategory]) {
                 const container = $(`handsontable-container-${AppState.activeCategory}`);
                 if (container) {
-                    // Use requestAnimationFrame for resize events as well for smoother updates
                     requestAnimationFrame(() => {
                         if (hots[AppState.activeCategory]) {
                             console.log(`Handsontable Debug: RESIZE_RAF - Container clientWidth: ${container.clientWidth}px`);
+                            // It's crucial here to *not* set a specific width in updateSettings from resize,
+                            // but rather let Handsontable's refreshDimensions re-evaluate.
                             hots[AppState.activeCategory].render();
-                            hots[AppState.activeCategory].refreshDimensions(); // Force recalculate based on new container size
+                            hots[AppState.activeCategory].refreshDimensions(); 
                         }
                     });
                 }
