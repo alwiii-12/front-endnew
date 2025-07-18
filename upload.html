@@ -309,7 +309,10 @@
     }
 
     .handsontable-container {
-        flex-grow: 1; /* Allow it to take available width */
+        flex-grow: 1; /* Allows it to take available width */
+        flex-shrink: 1; /* Allows it to shrink if needed */
+        flex-basis: auto; /* Base size is determined by content */
+        min-width: 300px; /* Ensures it doesn't get too small before wrapping */
         height: 500px; /* Fixed pixel height for Handsontable */
         
         border-radius: 16px;
