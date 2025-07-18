@@ -13,43 +13,35 @@
         .admin-header h1 { margin: 0; font-size: 1.2em; flex-grow: 1; text-align: center; }
         .logout-button { width: 38px; height: 38px; display: flex; justify-content: center; align-items: center; padding: 0; font-size: 1.2em; background-color: #dc3545; color: white; border: none; border-radius: 50%; cursor: pointer; transition: background-color 0.3s ease; }
         .logout-button:hover { background-color: #c82333; }
-        .main-admin-layout { display: flex; flex-grow: 1; width: 100%; max-width: unset; margin: 0; box-sizing: border-box; }
-        .sidebar-nav { width: 200px; background-color: #ffffff; box-shadow: 2px 0 5px rgba(0,0,0,0.08); padding: 20px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; box-sizing: border-box; }
-        .sidebar-nav .nav-btn { width: 100%; padding: 15px 10px; border: none; background-color: #eee; color: #333; font-size: 1em; font-weight: 600; text-align: left; border-radius: 8px; cursor: pointer; transition: background-color 0.3s ease, color 0.3s ease; }
+        .main-admin-layout { display: flex; flex-grow: 1; width: 100%; }
+        .sidebar-nav { width: 200px; background-color: #ffffff; box-shadow: 2px 0 5px rgba(0,0,0,0.08); padding: 20px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+        .sidebar-nav .nav-btn { width: 100%; padding: 15px 10px; border: none; background-color: #eee; color: #333; font-size: 1em; font-weight: 600; text-align: left; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
         .sidebar-nav .nav-btn:hover:not(.active) { background-color: #e0e0e0; }
         .sidebar-nav .nav-btn.active { background-color: #007bff; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-        .content-display-area { flex-grow: 1; padding: 20px; display: flex; flex-direction: column; gap: 30px; overflow-y: auto; box-sizing: border-box; }
-        .card-section { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 100%; max-width: unset; margin: 0; box-sizing: border-box; display: none; }
+        .content-display-area { flex-grow: 1; padding: 20px; display: flex; flex-direction: column; gap: 30px; overflow-y: auto; }
+        .card-section { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: none; }
         .card-section.active-section { display: block; }
         .card-section h2 { margin-top: 0; margin-bottom: 20px; }
-        .filter-search-container { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; justify-content: center; }
+        .filter-search-container { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; align-items: center; }
         .filter-search-container input, .filter-search-container select { padding: 10px 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.95em; flex: 1; min-width: 150px; }
         .filter-search-container button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s ease; font-size: 0.95em; }
         .filter-search-container button:hover { background-color: #0056b3; }
         .user-table-container { max-height: 500px; overflow-y: auto; overflow-x: auto; border: 1px solid #eee; border-radius: 8px; background-color: #f9f9f9; }
-        .user-table { width: 100%; border-collapse: collapse; table-layout: auto; }
+        .user-table { width: 100%; border-collapse: collapse; }
         .user-table th, .user-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
         .user-table th { background-color: #e0f7fa; color: #007bff; font-weight: 600; position: sticky; top: 0; z-index: 1; }
-        .user-table td.user-actions-cell { white-space: nowrap; display: flex; gap: 5px; justify-content: flex-start; align-items: center; }
-        .user-actions-cell button { padding: 5px 8px; font-size: 0.8em; border-radius: 8px; margin: 0; cursor: pointer; transition: background-color 0.2s ease; border: none; color: white; }
-        .approve-btn { background-color: #28a745; } .approve-btn:hover { background-color: #218838; }
-        .reject-btn { background-color: #ffc107; color: #333; } .reject-btn:hover { background-color: #e0a800; }
-        .edit-btn { background-color: #17a2b8; } .edit-btn:hover { background-color: #138496; }
-        .delete-btn { background-color: #dc3545; } .delete-btn:hover { background-color: #c82333; }
+        .user-actions-cell button { padding: 5px 8px; font-size: 0.8em; border-radius: 8px; margin: 0 2px; cursor: pointer; border: none; color: white; }
+        .approve-btn { background-color: #28a745; }
+        .reject-btn { background-color: #ffc107; color: #333; }
+        .edit-btn { background-color: #17a2b8; }
+        .delete-btn { background-color: #dc3545; }
         .no-users-message { text-align: center; padding: 20px; color: #666; font-style: italic; }
-        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 9999; }
-        .spinner { width: 60px; height: 60px; border: 8px solid #ffffff; border-top-color: #007bff; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .modal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); align-items: center; justify-content: center; }
-        .modal-content { background-color: #fefefe; margin: auto; padding: 30px; border: 1px solid #888; border-radius: 10px; width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative; }
-        .close-button { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; }
-        .modal h3 { color: #007bff; margin-top: 0; text-align: center; }
-        .modal label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
-        .modal input, .modal select { width: calc(100% - 22px); padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; }
-        .modal-buttons { text-align: center; margin-top: 20px; }
-        .modal-buttons button { padding: 10px 20px; margin: 0 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .modal-buttons .save-btn { background-color: #28a745; color: white; }
-        .modal-buttons .cancel-btn { background-color: #6c757d; color: white; }
+        .within { background-color: #d4edda !important; color: #155724 !important; }
+        .warning { background-color: #fff3cd !important; color: #856404 !important; }
+        .out { background-color: #f8d7da !important; color: #721c24 !important; }
+        .hospital-qa-table { width: max-content; min-width: 100%; border: 1px solid #999; }
+        .hospital-qa-table th, .hospital-qa-table td { padding: 5px; text-align: center; border: 1px solid #999; }
+        .hospital-qa-table th:first-child, .hospital-qa-table td:first-child { width: 100px; min-width: 100px; text-align: left; }
     </style>
 </head>
 <body>
@@ -59,17 +51,16 @@
     </div>
     <div class="main-admin-layout">
         <div class="sidebar-nav">
-            <button id="manageUsersBtn" class="nav-btn active" onclick="showAdminSection('manage-users-section')">MANAGE USERS</button>
-            <button id="viewHospitalDataBtn" class="nav-btn" onclick="showAdminSection('hospital-data-access-section')">VIEW HOSPITAL DATA</button>
-            <button id="viewAuditLogsBtn" class="nav-btn" onclick="showAdminSection('audit-logs-section')">VIEW AUDIT LOGS</button>
+            <button class="nav-btn" onclick="showAdminSection('manage-users-section')">MANAGE USERS</button>
+            <button class="nav-btn" onclick="showAdminSection('hospital-data-access-section')">VIEW HOSPITAL DATA</button>
+            <button class="nav-btn" onclick="showAdminSection('audit-logs-section')">VIEW AUDIT LOGS</button>
         </div>
         <div class="content-display-area">
-            <div class="card-section active-section" id="manage-users-section">
+            <div class="card-section" id="manage-users-section">
                 <h2>Manage User Accounts</h2>
                 <div class="filter-search-container">
                     <input type="text" id="searchUserInput" placeholder="Search..." onkeyup="filterUsers()">
                     <select id="filterStatus" onchange="filterUsers()"><option value="">All Statuses</option><option value="pending">Pending</option><option value="active">Active</option><option value="rejected">Rejected</option></select>
-                    <select id="filterRole" onchange="filterUsers()"><option value="">All Roles</option><option value="Medical physicist">Medical physicist</option><option value="RSO">RSO</option><option value="Admin">Admin</option></select>
                     <select id="filterHospital" onchange="filterUsers()"><option value="">All Hospitals</option></select>
                     <button onclick="loadAllUsers()">Refresh</button>
                 </div>
@@ -86,13 +77,20 @@
                     <select id="adminHospitalSelect" onchange="loadHospitalQaData()"><option value="">Select Hospital</option></select>
                     <select id="adminYearSelect" onchange="loadHospitalQaData()"></select>
                     <select id="adminMonthSelect" onchange="loadHospitalQaData()"></select>
+                    <select id="adminDataTypeSelect" onchange="renderHospitalQaDataTable()">
+                        <option value="output">Output</option>
+                        <option value="flatness">Flatness</option>
+                        <option value="inline">Inline Symmetry</option>
+                        <option value="crossline">Crossline Symmetry</option>
+                    </select>
                 </div>
-                <div class="user-table-container" id="hospitalQaTableContainer"></div>
+                <div class="user-table-container" id="hospitalQaTableContainer">
+                    <p class="no-users-message">Select a hospital, year, and month to view data.</p>
+                </div>
             </div>
             <div class="card-section" id="audit-logs-section">
                 <h2>View Audit Logs</h2>
                 <div class="filter-search-container">
-                    <select id="auditLogHospitalFilter" onchange="loadAuditLogs()"><option value="">All Hospitals</option></select>
                     <input type="date" id="auditLogDateFilter" onchange="loadAuditLogs()">
                     <button onclick="loadAuditLogs()">Refresh Logs</button>
                 </div>
@@ -105,230 +103,222 @@
             </div>
         </div>
     </div>
-    <div id="loading-overlay"><div class="spinner"></div></div>
-    <div id="userEditModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" onclick="closeEditModal()">&times;</span>
-            <h3>Edit User Details</h3>
-            <input type="hidden" id="editUserId">
-            <label>Name:</label><input type="text" id="editUserName" readonly>
-            <label>Email:</label><input type="text" id="editUserEmail" readonly>
-            <label>Hospital:</label><select id="editUserHospital"></select>
-            <label>Role:</label><select id="editUserRole"><option value="Medical physicist">Medical physicist</option><option value="RSO">RSO</option><option value="Admin">Admin</option></select>
-            <label>Status:</label><select id="editUserStatus"><option value="pending">Pending</option><option value="active">Active</option><option value="rejected">Rejected</option></select>
-            <div class="modal-buttons">
-                <button class="save-btn" onclick="saveUserChanges()">Save</button>
-                <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
-            </div>
-        </div>
-    </div>
-
+    <div id="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 9999;"><div class="spinner"></div></div>
+    
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="firebase-init.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const auth = firebase.auth();
-            const db = firebase.firestore();
-            const BACKEND_URL = "https://back-end-wrxi.onrender.com";
-            let allUsersData = [];
-            let currentAdminUid = null;
-            const loadingOverlay = document.getElementById('loading-overlay');
-            const usersTableBody = document.getElementById('usersTableBody');
-            const searchUserInput = document.getElementById('searchUserInput');
-            const filterStatus = document.getElementById('filterStatus');
-            const filterRole = document.getElementById('filterRole');
-            const filterHospital = document.getElementById('filterHospital');
-            const userEditModal = document.getElementById('userEditModal');
-            const editUserId = document.getElementById('editUserId');
-            const editUserName = document.getElementById('editUserName');
-            const editUserEmail = document.getElementById('editUserEmail');
-            const editUserHospital = document.getElementById('editUserHospital');
-            const editUserRole = document.getElementById('editUserRole');
-            const editUserStatus = document.getElementById('editUserStatus');
+    document.addEventListener('DOMContentLoaded', () => {
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const BACKEND_URL = "https://back-end-wrxi.onrender.com";
+        let allUsersData = [];
+        let currentAdminUid = null;
+        let lastFetchedHospitalData = {}; // NEW: Cache for hospital data
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const usersTableBody = document.getElementById('usersTableBody');
+        const searchUserInput = document.getElementById('searchUserInput');
+        const filterStatus = document.getElementById('filterStatus');
+        const filterHospital = document.getElementById('filterHospital');
 
-            function showLoader() { loadingOverlay.style.display = 'flex'; }
-            function hideLoader() { loadingOverlay.style.display = 'none'; }
-            
-            window.logout = function() {
-                auth.signOut().then(() => {
-                    localStorage.clear();
-                    window.location.href = "login.html";
-                }).catch(console.error);
+        function showLoader() { loadingOverlay.style.display = 'flex'; }
+        function hideLoader() { loadingOverlay.style.display = 'none'; }
+        
+        window.logout = function() { auth.signOut().then(() => { localStorage.clear(); window.location.href = "login.html"; }); }
+
+        window.showAdminSection = async function(sectionId) {
+            document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`button[onclick="showAdminSection('${sectionId}')"]`).classList.add('active');
+            document.querySelectorAll('.content-display-area .card-section').forEach(section => section.classList.remove('active-section'));
+            document.getElementById(sectionId).classList.add('active-section');
+
+            if (allUsersData.length === 0 && (sectionId === 'manage-users-section' || sectionId === 'hospital-data-access-section' || sectionId === 'audit-logs-section')) {
+                await loadAllUsers();
             }
 
-            window.showAdminSection = async function(sectionId) {
-                document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => btn.classList.remove('active'));
-                document.querySelector(`button[onclick="showAdminSection('${sectionId}')"]`).classList.add('active');
-                document.querySelectorAll('.content-display-area .card-section').forEach(section => section.classList.remove('active-section'));
-                document.getElementById(sectionId).classList.add('active-section');
-
-                if (allUsersData.length === 0) {
-                    await loadAllUsers();
-                }
-
-                if (sectionId === 'hospital-data-access-section' && document.getElementById('adminYearSelect').options.length === 0) {
-                    populateHospitalDataFilters();
-                }
+            if (sectionId === 'hospital-data-access-section') {
+                populateHospitalDataFilters();
+            } else if (sectionId === 'audit-logs-section') {
+                populateAuditLogFilters();
             }
+        }
 
-            window.loadAllUsers = async function() {
-                showLoader();
-                try {
-                    const idToken = await auth.currentUser.getIdToken(true);
-                    const response = await fetch(`${BACKEND_URL}/admin/users`, { headers: { 'Authorization': `Bearer ${idToken}` } });
-                    if (!response.ok) throw new Error('Failed to fetch users');
-                    allUsersData = await response.json();
-                    populateUserFilters();
-                    renderUsers(allUsersData);
-                } catch (error) {
-                    console.error("Error loading users:", error);
-                    usersTableBody.innerHTML = `<tr><td colspan="6" class="no-users-message">Error loading users.</td></tr>`;
-                } finally {
-                    hideLoader();
-                }
+        window.loadAllUsers = async function() {
+            showLoader();
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const response = await fetch(`${BACKEND_URL}/admin/users`, { headers: { 'Authorization': `Bearer ${idToken}` } });
+                if (!response.ok) throw new Error('Failed to fetch users');
+                allUsersData = await response.json();
+                populateCommonFilters();
+                renderUsers(allUsersData);
+            } catch (error) {
+                console.error("Error loading users:", error);
+                usersTableBody.innerHTML = `<tr><td colspan="6" class="no-users-message">Error loading users.</td></tr>`;
+            } finally {
+                hideLoader();
             }
-            
-            function populateUserFilters() {
-                const hospitals = [...new Set(allUsersData.map(u => u.hospital).filter(Boolean))].sort();
-                filterHospital.innerHTML = '<option value="">All Hospitals</option>';
-                hospitals.forEach(h => filterHospital.innerHTML += `<option value="${h}">${h}</option>`);
-            }
-
-            window.filterUsers = function() {
-                const searchTerm = searchUserInput.value.toLowerCase();
-                const status = filterStatus.value;
-                const role = filterRole.value;
-                const hospital = filterHospital.value;
-                const filtered = allUsersData.filter(user => 
-                    (user.name?.toLowerCase().includes(searchTerm) || user.email?.toLowerCase().includes(searchTerm)) &&
-                    (status === "" || user.status === status) &&
-                    (role === "" || user.role === role) &&
-                    (hospital === "" || user.hospital === hospital)
-                );
-                renderUsers(filtered);
-            }
-
-            function renderUsers(usersToRender) {
-                usersTableBody.innerHTML = '';
-                if (usersToRender.length === 0) {
-                    usersTableBody.innerHTML = '<tr><td colspan="6" class="no-users-message">No users found.</td></tr>';
-                    return;
-                }
-                usersToRender.forEach(user => {
-                    const row = usersTableBody.insertRow();
-                    row.innerHTML = `
-                        <td>${user.name || 'N/A'}</td>
-                        <td>${user.email || 'N/A'}</td>
-                        <td>${user.hospital || 'N/A'}</td>
-                        <td>${user.role || 'N/A'}</td>
-                        <td><span style="font-weight:bold; color:${user.status === 'active' ? 'green' : 'orange'}">${user.status?.toUpperCase() || 'N/A'}</span></td>
-                        <td class="user-actions-cell">
-                            <button class="approve-btn" onclick="updateUserStatus('${user.uid}', 'active')">Approve</button>
-                            <button class="reject-btn" onclick="updateUserStatus('${user.uid}', 'rejected')">Reject</button>
-                            <button class="edit-btn" onclick="openEditModal('${user.uid}')">Edit</button>
-                            <button class="delete-btn" onclick="deleteUser('${user.uid}', '${user.name}')"><i class="fas fa-trash"></i></button>
-                        </td>
-                    `;
-                });
-            }
-
-            window.updateUserStatus = async function(uid, newStatus) {
-                if (!confirm(`Are you sure you want to set status to ${newStatus.toUpperCase()}?`)) return;
-                showLoader();
-                try {
-                    const idToken = await auth.currentUser.getIdToken(true);
-                    await fetch(`${BACKEND_URL}/admin/update-user-status`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-                        body: JSON.stringify({ uid, status: newStatus, admin_uid: currentAdminUid })
-                    });
-                    await loadAllUsers();
-                } catch (error) {
-                    console.error("Error updating status:", error);
-                    alert("Failed to update user status.");
-                } finally {
-                    hideLoader();
-                }
-            }
-
-            window.openEditModal = function(uid) {
-                const user = allUsersData.find(u => u.uid === uid);
-                if (!user) return;
-                editUserId.value = user.uid;
-                editUserName.value = user.name;
-                editUserEmail.value = user.email;
-                const hospitals = [...new Set(allUsersData.map(u => u.hospital).filter(Boolean))].sort();
-                editUserHospital.innerHTML = '';
-                hospitals.forEach(h => editUserHospital.innerHTML += `<option value="${h}">${h}</option>`);
-                editUserHospital.value = user.hospital;
-                editUserRole.value = user.role;
-                editUserStatus.value = user.status;
-                userEditModal.style.display = 'flex';
-            }
-
-            window.closeEditModal = function() { userEditModal.style.display = 'none'; }
-            
-            window.saveUserChanges = async function() {
-                showLoader();
-                try {
-                    const idToken = await auth.currentUser.getIdToken(true);
-                    await fetch(`${BACKEND_URL}/admin/update-user-status`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-                        body: JSON.stringify({
-                            uid: editUserId.value,
-                            hospital: editUserHospital.value,
-                            role: editUserRole.value,
-                            status: editUserStatus.value,
-                            admin_uid: currentAdminUid
-                        })
-                    });
-                    closeEditModal();
-                    await loadAllUsers();
-                } catch (error) {
-                    console.error("Error saving changes:", error);
-                    alert("Failed to save changes.");
-                } finally {
-                    hideLoader();
-                }
-            }
-
-            window.deleteUser = async function(uid, name) {
-                if (!confirm(`WARNING: Are you sure you want to permanently delete user ${name}? This cannot be undone.`)) return;
-                showLoader();
-                try {
-                    const idToken = await auth.currentUser.getIdToken(true);
-                    await fetch(`${BACKEND_URL}/admin/delete-user`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-                        body: JSON.stringify({ uid, admin_uid: currentAdminUid })
-                    });
-                    await loadAllUsers();
-                } catch (error) {
-                    console.error("Error deleting user:", error);
-                    alert("Failed to delete user.");
-                } finally {
-                    hideLoader();
-                }
-            }
-            
-            auth.onAuthStateChanged(async (user) => {
-                if (user) {
-                    currentAdminUid = user.uid;
-                    const userRole = localStorage.getItem("userRole");
-                    if (userRole !== "Admin") {
-                        alert("Access Denied.");
-                        logout();
-                    } else {
-                        await showAdminSection('manage-users-section');
-                    }
-                } else {
-                    window.location.href = "login.html";
+        }
+        
+        function populateCommonFilters() {
+            const hospitals = [...new Set(allUsersData.map(u => u.hospital).filter(Boolean))].sort();
+            const hospitalFilters = [filterHospital, document.getElementById('adminHospitalSelect'), document.getElementById('auditLogHospitalFilter')];
+            hospitalFilters.forEach(select => {
+                if(select) {
+                    select.innerHTML = `<option value="">All Hospitals</option>`;
+                    hospitals.forEach(h => select.innerHTML += `<option value="${h}">${h}</option>`);
                 }
             });
+        }
+
+        window.filterUsers = function() {
+            const searchTerm = searchUserInput.value.toLowerCase();
+            const status = filterStatus.value;
+            const filtered = allUsersData.filter(user => 
+                (user.name?.toLowerCase().includes(searchTerm) || user.email?.toLowerCase().includes(searchTerm)) &&
+                (status === "" || user.status === status)
+            );
+            renderUsers(filtered);
+        }
+
+        function renderUsers(usersToRender) {
+            usersTableBody.innerHTML = '';
+            if (usersToRender.length === 0) {
+                usersTableBody.innerHTML = '<tr><td colspan="6" class="no-users-message">No users found.</td></tr>';
+                return;
+            }
+            usersToRender.forEach(user => {
+                const row = usersTableBody.insertRow();
+                row.innerHTML = `
+                    <td>${user.name || 'N/A'}</td>
+                    <td>${user.email || 'N/A'}</td>
+                    <td>${user.hospital || 'N/A'}</td>
+                    <td>${user.role || 'N/A'}</td>
+                    <td><span style="font-weight:bold; color:${user.status === 'active' ? 'green' : 'orange'}">${user.status?.toUpperCase() || 'N/A'}</span></td>
+                    <td><div style="display:flex; gap:5px;">
+                        <button class="approve-btn" onclick="updateUserStatus('${user.uid}', 'active')">Approve</button>
+                        <button class="edit-btn" onclick="alert('Edit functionality not implemented yet.')">Edit</button>
+                        <button class="delete-btn" onclick="deleteUser('${user.uid}', '${user.name}')">Delete</button>
+                    </div></td>
+                `;
+            });
+        }
+        
+        function populateHospitalDataFilters() {
+            const yearSelect = document.getElementById('adminYearSelect');
+            const monthSelect = document.getElementById('adminMonthSelect');
+            if(yearSelect.options.length > 0) return; // Already populated
+            const currentYear = new Date().getFullYear();
+            for (let i = currentYear; i >= currentYear - 5; i--) yearSelect.innerHTML += `<option value="${i}">${i}</option>`;
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            months.forEach((m, i) => monthSelect.innerHTML += `<option value="${String(i+1).padStart(2,'0')}">${m}</option>`);
+            monthSelect.value = String(new Date().getMonth() + 1).padStart(2, '0');
+        }
+
+        function populateAuditLogFilters() {
+            const dateFilter = document.getElementById('auditLogDateFilter');
+            if(dateFilter.value) return; // Already set
+            dateFilter.value = new Date().toISOString().split('T')[0];
+        }
+
+        window.loadHospitalQaData = async function() {
+            const hospitalId = document.getElementById('adminHospitalSelect').value;
+            const year = document.getElementById('adminYearSelect').value;
+            const month = document.getElementById('adminMonthSelect').value;
+            if (!hospitalId || !year || !month) return;
+            showLoader();
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const response = await fetch(`${BACKEND_URL}/admin/hospital-data?hospitalId=${hospitalId}&month=${year}-${month}`, {
+                    headers: { 'Authorization': `Bearer ${idToken}` }
+                });
+                if (!response.ok) throw new Error('Failed to fetch data');
+                const result = await response.json();
+                lastFetchedHospitalData = result.data;
+                renderHospitalQaDataTable();
+            } catch (error) {
+                console.error("Error loading hospital data:", error);
+                document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`;
+            } finally {
+                hideLoader();
+            }
+        }
+        
+        window.renderHospitalQaDataTable = function() {
+            const dataType = document.getElementById('adminDataTypeSelect').value;
+            const data = lastFetchedHospitalData[dataType];
+            if (!data) {
+                document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message">No data available for this selection.</p>`;
+                return;
+            }
+            const year = document.getElementById('adminYearSelect').value;
+            const month = document.getElementById('adminMonthSelect').value;
+            const numDays = new Date(year, month, 0).getDate();
+            let tableHTML = '<table class="user-table hospital-qa-table"><thead><tr><th>Energy</th>';
+            for (let i = 1; i <= numDays; i++) tableHTML += `<th>${i}</th>`;
+            tableHTML += '</tr></thead><tbody>';
+            const toleranceConfigs = { output: { w: 1.8, t: 2.0 }, flatness: { w: 0.9, t: 1.0 }, inline: { w: 0.9, t: 1.0 }, crossline: { w: 0.9, t: 1.0 } };
+            const config = toleranceConfigs[dataType];
+            data.forEach(row => {
+                tableHTML += `<tr><td>${row[0]}</td>`;
+                row.slice(1).forEach(cell => {
+                    const val = parseFloat(cell);
+                    let className = '';
+                    if (!isNaN(val)) {
+                        if (Math.abs(val) < config.w) className = 'within';
+                        else if (Math.abs(val) <= config.t) className = 'warning';
+                        else className = 'out';
+                    }
+                    tableHTML += `<td class="${className}">${cell}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+            tableHTML += '</tbody></table>';
+            document.getElementById('hospitalQaTableContainer').innerHTML = tableHTML;
+        }
+
+        window.loadAuditLogs = async function() {
+            showLoader();
+            const date = document.getElementById('auditLogDateFilter').value;
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const response = await fetch(`${BACKEND_URL}/admin/audit-logs?date=${date}`, { headers: { 'Authorization': `Bearer ${idToken}` } });
+                if (!response.ok) throw new Error('Failed to fetch logs');
+                const result = await response.json();
+                const logsTableBody = document.getElementById('auditLogsTableBody');
+                logsTableBody.innerHTML = '';
+                if(result.logs.length === 0) {
+                    logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No logs found for this date.</td></tr>`;
+                    return;
+                }
+                result.logs.forEach(log => {
+                    const row = logsTableBody.insertRow();
+                    row.innerHTML = `<td>${log.timestamp}</td><td>${log.action}</td><td>${log.user_display}</td><td><pre>${JSON.stringify(log.changes || log.deletedUserData || {}, null, 2)}</pre></td>`;
+                });
+            } catch (error) {
+                console.error("Error loading audit logs:", error);
+            } finally {
+                hideLoader();
+            }
+        }
+        
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentAdminUid = user.uid;
+                const userRole = localStorage.getItem("userRole");
+                if (userRole !== "Admin") {
+                    alert("Access Denied.");
+                    logout();
+                } else {
+                    await showAdminSection('manage-users-section');
+                }
+            } else {
+                window.location.href = "login.html";
+            }
         });
+    });
     </script>
 </body>
 </html>
