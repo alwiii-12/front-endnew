@@ -33,7 +33,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color: 0.3s ease;
         }
         .topbar button:hover {
             background-color: #c82333;
@@ -131,88 +131,83 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
     
     <script>
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const notificationContainer = document.getElementById('notification-container');
-        const BACKEND_URL = "https://back-end-wrxi.onrender.com";
-
-        function showNotification(message, type = 'info', duration = 3000) {
-            const notification = document.createElement('div');
-            notification.classList.add('notification-message', type);
-            notification.textContent = message;
-            notificationContainer.appendChild(notification);
-            void notification.offsetWidth;
-            notification.classList.add('show');
-            setTimeout(() => {
-                notification.classList.remove('show');
-                notification.addEventListener('transitionend', () => notification.remove(), { once: true });
-            }, duration);
-        }
-
-        async function logout() {
-            const user = auth.currentUser;
-            try {
-                await fetch(`${BACKEND_URL}/log_event`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        action: "user_logout",
-                        userUid: user ? user.uid : "unknown_uid",
-                        userEmail: localStorage.getItem("userEmail") || "unknown_email",
-                        hospital: localStorage.getItem("hospitalName") || "unknown_hospital",
-                        role: localStorage.getItem("userRole") || "unknown_role"
-                    })
-                });
-            } catch (logError) {
-                console.error("Error sending logout log event:", logError);
-            }
-
-            auth.signOut().then(() => {
-                localStorage.clear();
-                window.location.href = "login.html";
-            }).catch((error) => {
-                console.error("Logout error:", error);
-                showNotification("Logout failed: " + error.message, 'error');
-            });
-        }
-
-        async function loadProfile(uid) {
-            const profileDetailsDiv = document.getElementById('profileDetails');
-            if (!profileDetailsDiv) {
-                console.error("Fatal Error: profileDetails element not found in DOM.");
-                return;
-            }
-            profileDetailsDiv.innerHTML = '<p class="loading-message">Loading profile data...</p>';
-
-            try {
-                const userDocRef = db.collection("users").doc(uid);
-                const userDocSnap = await userDocRef.get();
-
-                if (userDocSnap.exists()) {
-                    const userData = userDocSnap.data();
-                    profileDetailsDiv.innerHTML = `
-                        <div class="profile-item"><strong>Name</strong><span>:</span><span>${userData.name || 'N/A'}</span></div>
-                        <div class="profile-item"><strong>Email</strong><span>:</span><span>${userData.email || 'N/A'}</span></div>
-                        <div class="profile-item"><strong>Hospital</strong><span>:</span><span>${userData.hospital || 'N/A'}</span></div>
-                        <div class="profile-item"><strong>Role</strong><span>:</span><span>${userData.role || 'N/A'}</span></div>
-                        <div class="profile-item"><strong>Account Status</strong><span>:</span><span style="color: ${userData.status === 'active' ? 'green' : 'orange'}; font-weight: bold;">${(userData.status || 'N/A').toUpperCase()}</span></div>
-                    `;
-                    localStorage.setItem("userStatus", userData.status);
-                } else {
-                    profileDetailsDiv.innerHTML = '<p class="loading-message" style="color: red;">Error: User profile not found in database. Please contact support.</p>';
-                    console.error("Profile Error: User document not found for UID:", uid);
-                }
-            } catch (error) {
-                console.error("Error loading profile:", error);
-                profileDetailsDiv.innerHTML = `<p class="loading-message" style="color: red;">Error: Could not load profile data. This might be a network issue or a problem with database permissions.</p>`;
-            }
-        }
-        
         document.addEventListener('DOMContentLoaded', () => {
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+            const notificationContainer = document.getElementById('notification-container');
+            const BACKEND_URL = "https://back-end-wrxi.onrender.com";
+
+            function showNotification(message, type = 'info', duration = 3000) {
+                const notification = document.createElement('div');
+                notification.classList.add('notification-message', type);
+                notification.textContent = message;
+                notificationContainer.appendChild(notification);
+                void notification.offsetWidth;
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    notification.addEventListener('transitionend', () => notification.remove(), { once: true });
+                }, duration);
+            }
+
+            window.logout = async function() {
+                const user = auth.currentUser;
+                try {
+                    await fetch(`${BACKEND_URL}/log_event`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            action: "user_logout",
+                            userUid: user ? user.uid : "unknown_uid",
+                            userEmail: localStorage.getItem("userEmail") || "unknown_email",
+                            hospital: localStorage.getItem("hospitalName") || "unknown_hospital",
+                            role: localStorage.getItem("userRole") || "unknown_role"
+                        })
+                    });
+                } catch (logError) {
+                    console.error("Error sending logout log event:", logError);
+                }
+
+                auth.signOut().then(() => {
+                    localStorage.clear();
+                    window.location.href = "login.html";
+                }).catch((error) => {
+                    console.error("Logout error:", error);
+                    showNotification("Logout failed: " + error.message, 'error');
+                });
+            }
+
+            async function loadProfile(uid) {
+                const profileDetailsDiv = document.getElementById('profileDetails');
+                if (!profileDetailsDiv) return;
+                profileDetailsDiv.innerHTML = '<p class="loading-message">Loading profile data...</p>';
+
+                try {
+                    const userDocRef = db.collection("users").doc(uid);
+                    const userDocSnap = await userDocRef.get();
+                    if (userDocSnap.exists()) {
+                        const userData = userDocSnap.data();
+                        profileDetailsDiv.innerHTML = `
+                            <div class="profile-item"><strong>Name</strong><span>:</span><span>${userData.name || 'N/A'}</span></div>
+                            <div class="profile-item"><strong>Email</strong><span>:</span><span>${userData.email || 'N/A'}</span></div>
+                            <div class="profile-item"><strong>Hospital</strong><span>:</span><span>${userData.hospital || 'N/A'}</span></div>
+                            <div class="profile-item"><strong>Role</strong><span>:</span><span>${userData.role || 'N/A'}</span></div>
+                            <div class="profile-item"><strong>Account Status</strong><span>:</span><span style="color: ${userData.status === 'active' ? 'green' : 'orange'}; font-weight: bold;">${(userData.status || 'N/A').toUpperCase()}</span></div>
+                        `;
+                        localStorage.setItem("userStatus", userData.status);
+                    } else {
+                        profileDetailsDiv.innerHTML = '<p class="loading-message" style="color: red;">Error: User profile not found in database.</p>';
+                    }
+                } catch (error) {
+                    console.error("Error loading profile:", error);
+                    profileDetailsDiv.innerHTML = `<p class="loading-message" style="color: red;">Error: Could not load profile data.</p>`;
+                }
+            }
+            
             auth.onAuthStateChanged(user => {
                 if (user) {
                     const userStatus = localStorage.getItem("userStatus");
-                    if (userStatus === 'pending' || userStatus === 'rejected' || userStatus === 'unknown') {
+                    if (userStatus === 'pending' || userStatus === 'rejected') {
                         showNotification("Your account is not active. Please await admin approval.", 'warning', 5000);
                         logout();
                         return;
