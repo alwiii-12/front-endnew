@@ -307,7 +307,7 @@
       flex-wrap: nowrap; /* Prevents items from wrapping and pushes overflow to the next container */
       flex: 1; /* Allow this section to grow */
       min-width: 0; /* Crucial: Allows flex item to shrink below its content size */
-      overflow: hidden; /* Prevent this container from overflowing its parent */
+      /* No overflow-x: auto here, let handsontable-container manage its own scrolling */
     }
 
     .handsontable-container {
@@ -351,6 +351,8 @@
       background: #ffffff;
       border: 1px solid rgba(0,0,0,0.05);
       flex-shrink: 0; /* Prevent summary box from shrinking */
+      /* TEMPORARY DEBUG BORDER - ADD THIS WHEN DEBUGGING */
+      border: 2px dashed blue !important; /* Visual cue for the summary box */
     }
     .summary-box h3 {
         margin-top: 0;
@@ -1812,8 +1814,6 @@
                     requestAnimationFrame(() => {
                         if (hots[AppState.activeCategory]) {
                             console.log(`Handsontable Debug: RESIZE_RAF - Container clientWidth: ${container.clientWidth}px`);
-                            // It's crucial here to *not* set a specific width in updateSettings from resize,
-                            // but rather let Handsontable's refreshDimensions re-evaluate.
                             hots[AppState.activeCategory].render();
                             hots[AppState.activeCategory].refreshDimensions(); 
                         }
