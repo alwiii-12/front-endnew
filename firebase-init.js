@@ -1,4 +1,5 @@
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// This is the full content for firebase-init.js
+
 const firebaseConfig = {
   apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
   authDomain: "linac-qa-project.firebaseapp.com",
@@ -8,3 +9,9 @@ const firebaseConfig = {
   appId: "1:850988733382:web:ef75d64e30deb7e37c18c7",
   measurementId: "G-HFJ2CGS664"
 };
+
+// This line initializes the app.
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+    console.log("Firebase Initialized Successfully!"); 
+}
