@@ -307,7 +307,6 @@
       flex-wrap: nowrap; /* Prevents items from wrapping and pushes overflow to the next container */
       flex: 1; /* Allow this section to grow */
       min-width: 0; /* Crucial: Allows flex item to shrink below its content size */
-      /* No overflow-x: auto here, let handsontable-container manage its own scrolling */
     }
 
     .handsontable-container {
@@ -331,7 +330,8 @@
     .handsontable-container .ht_master, .handsontable-container .handsontable {
         background-color: #ffffff !important;
         color: #333 !important;
-        /* Removed width: 100% !important; from here. Handsontable will size itself within its container. */
+        /* No explicit width here. Handsontable will size itself within its container. */
+        /* Removed width: auto !important; - this was a mistake, Handsontable needs to be able to dictate its own content width for scrollWidth */
     }
     .handsontable-container .handsontable td, .handsontable-container .handsontable th {
         border-color: #aaa;
@@ -351,8 +351,12 @@
       background: #ffffff;
       border: 1px solid rgba(0,0,0,0.05);
       flex-shrink: 0; /* Prevent summary box from shrinking */
-      /* TEMPORARY DEBUG BORDER - ADD THIS WHEN DEBUGGING */
+      /* TEMPORARY DEBUG BORDER - KEEP THIS WHILE DEBUGGING */
       border: 2px dashed blue !important; /* Visual cue for the summary box */
+      
+      /* Crucial: Override any display: none or conflicting display styles */
+      /* This is the primary target for the pie chart visibility fix */
+      display: block !important; /* Force it to be visible */
     }
     .summary-box h3 {
         margin-top: 0;
@@ -1205,30 +1209,32 @@
         }
 
         // Initialize Handsontable for the current category
-        // Get actual computed width of the container. Fallback if it's zero.
-        const computedContainerWidth = container.clientWidth > 0 ? container.clientWidth : (window.innerWidth * 0.7); // Estimate 70% of window width if 0
-        const computedContainerHeight = container.clientHeight > 0 ? container.clientHeight : 500; // Fallback height to fixed value
-        
-        console.log(`Handsontable Debug: Initializing Handsontable for ${category}. Container clientWidth: ${container.clientWidth}px, using initial width: ${computedContainerWidth}px`);
-
+        // No initial width set here. Handsontable should rely on its container.
         hots[category] = new Handsontable(container, {
           data,
           rowHeaders: false,
-          // Set an explicit width during initialization based on available container width
-          width: computedContainerWidth, // Use the dynamically computed width here
+          // Removed explicit width from here.
           stretchH: 'none', // Explicitly set to 'none' for better scroll control
           autoColumnSize: true, // Let Handsontable automatically determine column sizes
           autoRowSize: true, 
-          height: computedContainerHeight, /* Fixed pixel height for stability */
+          height: 500, /* Fixed pixel height for stability */
           licenseKey: 'non-commercial-and-evaluation',
           colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
           columns: Array(dateCols.length + 1).fill({ type: 'text' }),
+          // Allow more columns to be rendered outside the viewport to prevent auto-size issues
+          viewportColumnRenderingOffset: 30, // Increased offset
           afterChange: (changes, source) => {
             if (!changes || source === 'loadData') return;
             // Ensure summary and chart update is specific to the changed category
             updateSummaryAndChart(hots[category].getData(), category);
             // Trigger a re-render of cell styles after changes
-            hots[category].render(); // This will re-evaluate the 'cells' function for affected cells
+            // Use requestAnimationFrame for next visual update after a change
+            requestAnimationFrame(() => {
+                if (hots[category]) {
+                    hots[category].render(); 
+                    hots[category].refreshDimensions(); 
+                }
+            });
           },
           cells: function (r, c) {
             var props = {};
@@ -1269,13 +1275,13 @@
             // Give it another chance after the initial paint
             setTimeout(() => {
                 if (hots[category] && container.offsetWidth > 0) {
-                    console.log(`Handsontable Debug: RENDER_TIMEOUT (after RAF) - Container width: ${container.offsetWidth}px`);
+                    console.log(`Handsontable Debug: FINAL RENDER (after RAF & timeout) - Container width: ${container.offsetWidth}px`);
                     // Ensure Handsontable refreshes its dimensions after the container has settled.
                     // This is crucial for it to correctly draw its content within the allocated space.
                     hots[category].render(); // Force a redraw
                     hots[category].refreshDimensions(); // Recalculate based on parent
                 } else {
-                    console.warn(`Handsontable Debug: RENDER_TIMEOUT (after RAF) - Instance or container not ready, or zero width. Container width: ${container.offsetWidth}px`);
+                    console.warn(`Handsontable Debug: FINAL RENDER (after RAF & timeout) - Instance or container not ready, or zero width. Container width: ${container.offsetWidth}px`);
                 }
             }, 500); // Small delay after RAF
         });
@@ -1811,6 +1817,7 @@
             if (hots[AppState.activeCategory]) {
                 const container = $(`handsontable-container-${AppState.activeCategory}`);
                 if (container) {
+                    // Use requestAnimationFrame for resize events as well for smoother updates
                     requestAnimationFrame(() => {
                         if (hots[AppState.activeCategory]) {
                             console.log(`Handsontable Debug: RESIZE_RAF - Container clientWidth: ${container.clientWidth}px`);
