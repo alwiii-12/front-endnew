@@ -1780,11 +1780,13 @@
                     const dateCols = getMonthDates(AppState.currentDate);
                     const fixedDateColWidth = 80; 
                     const numberOfDateCols = dateCols.length;
+                    // Calculate total width needed by Handsontable content
                     const totalCalculatedContentWidth = energyColWidth + (numberOfDateCols * fixedDateColWidth);
 
                     // Update Handsontable's width setting and force a render
+                    // Set the width to be at least the container's scrollWidth, or the calculated content width
                     hots[AppState.activeCategory].updateSettings({
-                        width: totalCalculatedContentWidth,
+                        width: Math.max(container.scrollWidth, totalCalculatedContentWidth),
                         stretchH: 'none' // Keep 'none' as we are explicitly setting width
                     });
                     hots[AppState.activeCategory].render();
