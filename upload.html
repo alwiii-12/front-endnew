@@ -304,27 +304,34 @@
       display: flex; /* Make children (handsontable and summary) sit side-by-side */
       gap: 20px;
       align-items: flex-start; /* Align content to the top */
-      flex-wrap: wrap; /* Allow wrapping on smaller screens */
+      flex-wrap: nowrap; /* Prevents items from wrapping and pushes overflow to the next container */
       flex: 1; /* Allow this section to grow */
+      min-width: 0; /* Crucial: Allows flex item to shrink below its content size */
     }
 
     .handsontable-container {
-        flex-grow: 1; /* Allow it to take available width */
+        /* Adjusted flex property: flex-grow, flex-shrink, flex-basis */
+        flex: 1 1 0px; /* IMPORTANT: flex-basis: 0px combined with flex-grow: 1 makes it take all available space */
         height: 500px; /* Fixed pixel height for Handsontable */
+        background-color: var(--background-white-card); /* Ensure white background */
         
         border-radius: 16px;
         box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
-        background: #ffffff;
         border: 1px solid rgba(0,0,0,0.05);
         /* CRUCIAL: Enable horizontal scrolling for the container */
         overflow-x: auto; 
         overflow-y: hidden; /* Handsontable manages its own vertical scrollbar */
+        min-width: 300px; /* Ensure handsontable container doesn't shrink too much below a readable size */
+        /* TEMPORARY DEBUG BORDER - Keep this until resolved, it helps diagnose width */
+        border: 2px dashed red !important; /* Visual cue for the container */
     }
 
     /* Handsontable specific overrides for cell background and text */
     .handsontable-container .ht_master, .handsontable-container .handsontable {
-        background-color: #ffffff;
-        color: #333;
+        background-color: #ffffff !important;
+        color: #333 !important;
+        /* No explicit width here. Handsontable will size itself within its container. */
+        /* Removed width: auto !important; - this was a mistake, Handsontable needs to be able to dictate its own content width for scrollWidth */
     }
     .handsontable-container .handsontable td, .handsontable-container .handsontable th {
         border-color: #aaa;
@@ -343,6 +350,12 @@
       box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12);
       background: #ffffff;
       border: 1px solid rgba(0,0,0,0.05);
+      flex-shrink: 0; /* Prevent summary box from shrinking */
+      /* TEMPORARY DEBUG BORDER - Keep this until resolved */
+      border: 2px dashed blue !important; /* Visual cue for the summary box */
+      
+      /* Crucial: Override any display: none or conflicting display styles */
+      display: block !important; /* Force it to be visible */
     }
     .summary-box h3 {
         margin-top: 0;
@@ -1082,6 +1095,7 @@
         if (notificationContainer) { // Null check for notification container
             notificationContainer.appendChild(notification);
 
+            // Force reflow before adding 'show' to ensure transition applies
             void notification.offsetWidth; 
             notification.classList.add('show');
 
@@ -1091,8 +1105,6 @@
                     notification.remove();
                 }, { once: true });
             }, duration);
-        } else {
-            console.warn("Notification container not found.", message);
         }
     }
 
@@ -1153,6 +1165,7 @@
       const summaryBox = $(`summary-box-${category}`);
       const trendChartSection = $(`trend-chart-section-${category}`);
 
+      // Apply transition classes before loading to ensure smooth entry/exit
       if (handsontableContainer) handsontableContainer.classList.add('loading-transition');
       if (summaryBox) summaryBox.classList.add('loading-transition');
       if (trendChartSection) trendChartSection.classList.add('loading-transition');
@@ -1320,6 +1333,15 @@
           data: {
             labels: ['Within Tolerance','Warning','Out of Tolerance'],
             datasets: [{ data: [within,warning,out], backgroundColor: ['#66cc66','#ffcc00','#ff6666'] }]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false, // Allows chart to take available space
+              plugins: {
+                  legend: {
+                      position: 'bottom', // Move legend to bottom to save horizontal space
+                  },
+              }
           }
         });
       }
@@ -1774,19 +1796,13 @@
             if (hots[AppState.activeCategory]) {
                 const container = $(`handsontable-container-${AppState.activeCategory}`);
                 if (container) {
-                    // Recalculate based on current container size
-                    const energyColWidth = 80;
-                    const dateCols = getMonthDates(AppState.currentDate);
-                    const fixedDateColWidth = 80; 
-                    const numberOfDateCols = dateCols.length;
-                    const totalCalculatedContentWidth = energyColWidth + (numberOfDateCols * fixedDateColWidth);
-
-                    // Update Handsontable's width setting and force a render
-                    hots[AppState.activeCategory].updateSettings({
-                        width: totalCalculatedContentWidth,
-                        stretchH: 'none' // Keep 'none' as we are explicitly setting width
+                    requestAnimationFrame(() => {
+                        if (hots[AppState.activeCategory]) {
+                            console.log(`Handsontable Debug: RESIZE_RAF - Container clientWidth: ${container.clientWidth}px`);
+                            hots[AppState.activeCategory].render();
+                            hots[AppState.activeCategory].refreshDimensions(); 
+                        }
                     });
-                    hots[AppState.activeCategory].render();
                 }
             }
         });
