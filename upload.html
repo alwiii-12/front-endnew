@@ -304,15 +304,12 @@
       display: flex; /* Make children (handsontable and summary) sit side-by-side */
       gap: 20px;
       align-items: flex-start; /* Align content to the top */
-      flex-wrap: wrap; /* Allow wrapping on smaller screens */
+      flex-wrap: nowrap; /* CRITICAL FIX: Prevents items from wrapping and pushes overflow to the next container */
       flex: 1; /* Allow this section to grow */
     }
 
     .handsontable-container {
-        flex-grow: 1; /* Allows it to take available width */
-        flex-shrink: 1; /* Allows it to shrink if needed */
-        flex-basis: auto; /* Base size is determined by content */
-        min-width: 300px; /* Ensures it doesn't get too small before wrapping */
+        flex: 1 1 70%; /* CRITICAL FIX: Give it a flex basis to constrain its width */
         height: 500px; /* Fixed pixel height for Handsontable */
         
         border-radius: 16px;
