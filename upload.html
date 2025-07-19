@@ -71,21 +71,6 @@
     .sidebar label { display: flex; align-items: center; margin-top: 15px; font-size: 0.95em; }
     .sidebar input[type="checkbox"] { margin-right: 8px; transform: scale(1.2); }
     .sidebar p { font-size: 0.8em; margin-top: auto; color: #777; }
-    .year-controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .year-controls button {
-      width: auto;
-      padding: 8px 12px;
-    }
-    .year-controls #year {
-      font-weight: 600;
-      font-size: 1.1em;
-      padding: 0 10px;
-    }
     .main { flex-grow: 1; padding: 20px; overflow: auto; display: flex; flex-direction: column; gap: 20px; }
     .month-header-box { background: #007bff; color: #fff; padding: 15px 20px; text-align: center; font-size: 1.6em; font-weight: 600; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
     .tab-nav { display: flex; border-bottom: 2px solid #ccc; margin-bottom: 20px; }
@@ -138,11 +123,7 @@
   <div class="content">
     <div class="sidebar">
       <h2>LINAC QA</h2>
-      <div class="year-controls">
-        <button id="prevYearBtn">←</button>
-        <span id="year"></span>
-        <button id="nextYearBtn">→</button>
-      </div>
+      <div><button id="prevYearBtn">←</button><span id="year"></span><button id="nextYearBtn">→</button></div>
       <div id="months"></div>
       <label><input type="checkbox" id="darkToggle"> Dark Mode</label>
       <p>© 2025 QA Dashboard</p>
@@ -173,55 +154,14 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="firebase-init.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
-    // --- FIX: Restructured the entire script to prevent authentication race conditions ---
-    document.addEventListener('DOMContentLoaded', async () => {
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config)
-            : {
-                apiKey: "YOUR_API_KEY", // Fallback for local testing
-                authDomain: "YOUR_AUTH_DOMAIN",
-                projectId: "YOUR_PROJECT_ID",
-                storageBucket: "YOUR_STORAGE_BUCKET",
-                messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-                appId: "YOUR_APP_ID"
-            };
-        
-        firebase.initializeApp(firebaseConfig);
+    document.addEventListener('DOMContentLoaded', () => {
         const auth = firebase.auth();
         const db = firebase.firestore();
-
-        // This listener will handle redirects if the user logs out later
-        auth.onAuthStateChanged(user => {
-            if (!user) {
-                window.location.replace("login.html");
-            }
-        });
-
-        // 1. Attempt to sign in first.
-        try {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await auth.signInWithCustomToken(__initial_auth_token);
-            } else {
-                await auth.signInAnonymously(); // Fallback for local testing
-            }
-        } catch (error) {
-            console.error("Authentication failed, redirecting to login.", error);
-            window.location.replace("login.html");
-            return; // Stop script execution if auth fails
-        }
-        
-        // 2. Now that we are signed in, set up the application.
-        const user = auth.currentUser;
-        if (!user) {
-            // This is a safety net in case something unexpected happened.
-            window.location.replace("login.html");
-            return;
-        }
-
         const BACKEND_URL = "https://back-end-wrxi.onrender.com";
         let currentUID, currentHospital;
         let currentDate = new Date();
@@ -254,6 +194,8 @@
 
         function generateTabContentHTML(dataType) {
             const config = dataTypesConfig[dataType];
+            // *** FIX: Added a wrapper div around the canvas with a defined height ***
+            // This prevents the chart from rendering with an infinite height.
             return `
                 <div class="container">
                     <div id="table-${dataType}" class="table-container"></div>
@@ -610,26 +552,31 @@
 
         window.addEventListener('pageshow', function(event) { if (event.persisted) window.location.reload(); });
 
-        // --- Start UI setup now that user is logged in. ---
-        currentUID = user.uid;
-        currentHospital = localStorage.getItem("hospitalName");
-        document.getElementById("hospitalName").textContent = `Hospital: ${currentHospital || 'N/A'}`;
-        yearLabel.textContent = currentDate.getFullYear();
-        header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
-        buildMonthButtons();
-        document.getElementById('prevYearBtn').onclick = () => changeYear(-1);
-        document.getElementById('nextYearBtn').onclick = () => changeYear(1);
-        document.getElementById('logoutBtn').onclick = logout;
-        document.getElementById('myProfileBtn').onclick = () => window.location.href = 'my_profile.html';
-        const darkToggle = document.getElementById('darkToggle');
-        darkToggle.checked = localStorage.getItem('darkMode') === 'true';
-        toggleDarkMode(true);
-        darkToggle.addEventListener('change', () => toggleDarkMode(false));
-        document.getElementById('chat-bubble').onclick = () => document.getElementById('chat-window').classList.toggle('open');
-        document.getElementById('close-chat-btn').onclick = () => document.getElementById('chat-window').classList.remove('open');
-        document.getElementById('chat-input').onkeypress = e => { if (e.key === 'Enter') sendChatMessage(); };
-        document.getElementById('send-chat-btn').onclick = sendChatMessage;
-        switchTab('output');
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUID = user.uid;
+                currentHospital = localStorage.getItem("hospitalName");
+                document.getElementById("hospitalName").textContent = `Hospital: ${currentHospital}`;
+                yearLabel.textContent = currentDate.getFullYear();
+                header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
+                buildMonthButtons();
+                document.getElementById('prevYearBtn').onclick = () => changeYear(-1);
+                document.getElementById('nextYearBtn').onclick = () => changeYear(1);
+                document.getElementById('logoutBtn').onclick = logout;
+                document.getElementById('myProfileBtn').onclick = () => window.location.href='my_profile.html';
+                const darkToggle = document.getElementById('darkToggle');
+                darkToggle.checked = localStorage.getItem('darkMode') === 'true';
+                toggleDarkMode(true);
+                darkToggle.addEventListener('change', () => toggleDarkMode(false));
+                document.getElementById('chat-bubble').onclick = () => document.getElementById('chat-window').classList.toggle('open');
+                document.getElementById('close-chat-btn').onclick = () => document.getElementById('chat-window').classList.remove('open');
+                document.getElementById('chat-input').onkeypress = e => { if (e.key === 'Enter') sendChatMessage(); };
+                document.getElementById('send-chat-btn').onclick = sendChatMessage;
+                switchTab('output');
+            } else {
+                window.location.replace("login.html");
+            }
+        });
     });
   </script>
 </body>
