@@ -179,7 +179,8 @@
         const monthsDiv = document.getElementById('months');
         const header = document.getElementById('header');
 
-        //Chart.register(ChartAnnotation);//
+        // The ChartAnnotation plugin registers itself, so manual registration is not needed and was causing an error.
+        // Chart.register(ChartAnnotation); // FIX 1: This line is removed.
 
         function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
         function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
@@ -300,7 +301,7 @@
         }
 
         window.manualSave = async function(dataType) {
-            const saveButton = document.getElementById(`saveBtn-${dataType}`);
+            const saveButton = document.querySelector(`.actions-section button.save-btn[onclick="manualSave('${dataType}')"]`);
             const config = dataTypesConfig[dataType];
             saveButton.disabled = true;
             saveButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Saving...`;
@@ -399,7 +400,13 @@
             if (!selectElement) return;
             const selectedEnergy = selectElement.value;
             const energyRow = data.find(row => row[0] === selectedEnergy);
-            const dataPoints = energyRow ? energyRow.slice(1).map(v => v === '' ? null : parseFloat(v)) : [];
+
+            // FIX 2: Robustly parse values to handle non-numeric entries and prevent chart scaling issues.
+            const dataPoints = energyRow ? energyRow.slice(1).map(val => {
+                const num = parseFloat(val);
+                return isFinite(num) ? num : null;
+            }) : [];
+
             const labels = getMonthDates(currentDate);
             const shortLabels = labels.map(d => d.split('-')[2]);
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
@@ -498,8 +505,8 @@
             });
         }
         function getMonthDates(date) {
-          var y = date.getFullYear(), m = date.getMonth();
-          return Array.from({length: new Date(y, m + 1, 0).getDate()}, (_, i) => `${y}-${String(m + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`);
+         var y = date.getFullYear(), m = date.getMonth();
+         return Array.from({length: new Date(y, m + 1, 0).getDate()}, (_, i) => `${y}-${String(m + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`);
         }
         function toggleDarkMode(isInitialLoad = false) {
             const isDark = document.getElementById('darkToggle').checked;
