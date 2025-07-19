@@ -171,7 +171,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
-    // **MODIFIED**: Wrapped the entire script in a DOMContentLoaded listener
     document.addEventListener('DOMContentLoaded', () => {
       const auth = firebase.auth();
       const db = firebase.firestore();
@@ -183,8 +182,6 @@
       
       const BACKEND_URL = "https://back-end-wrxi.onrender.com";
 
-      // The 'sendPasswordReset' function needs to be attached to the window object
-      // to be accessible from the 'onclick' attribute in the HTML.
       window.sendPasswordReset = async () => {
           const email = emailInput.value;
           if (!email) {
@@ -236,15 +233,40 @@
             localStorage.setItem("userEmail", email);
             const userDocRef = db.collection("users").doc(user.uid);
             const userDocSnap = await userDocRef.get();
+
             if (userDocSnap.exists) {
                 const userData = userDocSnap.data();
-                localStorage.setItem("hospitalName", userData.hospital.toUpperCase());
-                localStorage.setItem("userRole", userData.role);
-                localStorage.setItem("userStatus", userData.status);
-                if (userData.role === "Admin") {
+                const hospitalName = userData.hospital || "UNKNOWN";
+                const userRole = userData.role || "unknown";
+                const userStatus = userData.status || "unknown";
+
+                localStorage.setItem("hospitalName", hospitalName.toUpperCase());
+                localStorage.setItem("userRole", userRole);
+                localStorage.setItem("userStatus", userStatus);
+
+                // CORRECTED: Added the missing call to the /log_event endpoint
+                try {
+                    await fetch(`${BACKEND_URL}/log_event`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            action: "user_login",
+                            userUid: user.uid,
+                            userEmail: email,
+                            hospital: hospitalName,
+                            role: userRole
+                        })
+                    });
+                } catch (logError) {
+                    console.error("Error sending login log event:", logError);
+                }
+
+                if (userRole === "Admin") {
                     window.location.href = "admin_dashboard.html";
-                } else {
+                } else if (userStatus === "active") {
                     window.location.href = "upload.html";
+                } else {
+                    window.location.href = "awaiting_approval.html";
                 }
             } else {
                 errorMsg.textContent = "User profile not found in database.";
@@ -252,7 +274,7 @@
           })
           .catch((error) => {
             console.error("Login error:", error);
-            errorMsg.textContent = "Error: " + error.message;
+            errorMsg.textContent = "Error: Invalid email or password.";
           });
       });
     });
