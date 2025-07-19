@@ -9,14 +9,15 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="firebase-init.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
+  <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js" defer></script>
+  <script src="firebase-init.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js" defer></script>
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -63,20 +64,17 @@
     button:hover, a.button:hover, select:hover { transform: translateY(-1px); box-shadow: 0 4px 12px var(--shadow-light); }
     button:active, a.button:active, select:active { transform: translateY(0); box-shadow: 0 1px 4px var(--shadow-light) inset; }
     button:disabled { cursor: not-allowed; background-color: #6c757d !important; opacity: 0.65; }
-    .card-panel { border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12); background: #ffffff; border: 1px solid rgba(0,0,0,0.05); padding: 20px; box-sizing: border-box; }
+    .card-panel { border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); background: #ffffff; border: 1px solid rgba(0,0,0,0.05); padding: 20px; box-sizing: border-box; }
     .topbar { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 10px 20px; border-bottom: 1px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.08); min-height: 50px; }
     .hospital-info-box { background-color: #e0f7fa; color: #0056b3; padding: 8px 15px; border-radius: 8px; font-weight: 600; font-size: 0.95em; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
     .topbar button { padding: 8px 15px; font-size: 14px; margin-left: 10px; color: #fff; border-radius: 6px; }
     #myProfileBtn { background-color: #007bff; }
-    #myProfileBtn:hover { background-color: #0056b3; }
     #logoutBtn { background-color: #dc3545; width: 40px; height: 40px; padding: 0; display: flex; justify-content: center; align-items: center; border-radius: 50%; font-size: 1.3em; }
-    #logoutBtn:hover { background-color: #bb2d3b; }
     .content { display: flex; flex: 1; overflow: hidden; }
     .sidebar { width: 200px; background: #ffffff; padding: 20px; box-shadow: 2px 0 5px rgba(0,0,0,0.08); display: flex; flex-direction: column; flex-shrink: 0; }
     .sidebar h2 { margin: 0 0 20px; color: #007bff; font-weight: 600; font-size: 1.5em; }
     .sidebar button { width: 100%; margin-bottom: 8px; padding: 10px 8px; background: #eee; color: #333; font-weight: 500; text-align: center; }
-    .sidebar button.active { background: #007bff; color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
-    .sidebar button:hover:not(.active) { background: #e0e0e0; }
+    .sidebar button.active { background: #007bff; color: #fff; }
     .sidebar label { display: flex; align-items: center; margin-top: 15px; font-size: 0.95em; }
     .sidebar input[type="checkbox"] { margin-right: 8px; transform: scale(1.2); }
     .sidebar p { font-size: 0.8em; margin-top: auto; color: #777; }
@@ -84,25 +82,19 @@
     .month-header-box { background: #007bff; color: #fff; padding: 15px 20px; text-align: center; font-size: 1.6em; font-weight: 600; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
     .tab-nav { display: flex; border-bottom: 2px solid #ccc; margin-bottom: 20px; }
     .tab-nav-button { padding: 10px 20px; background-color: transparent; font-size: 1.1em; font-weight: 600; color: #555; border-bottom: 3px solid transparent; }
-    .tab-nav-button:hover { color: #007bff; }
     .tab-nav-button.active { color: #007bff; border-bottom-color: #007bff; }
     .tab-content { display: none; flex-direction: column; gap: 20px; }
     .tab-content.active { display: flex; }
     .container { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
-    .table-container { flex-grow: 1; height: 500px; min-width: 400px; border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12); background: #ffffff; border: 1px solid rgba(0,0,0,0.05); overflow: hidden; }
+    .table-container { flex-grow: 1; height: 500px; min-width: 400px; border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); background: #ffffff; border: 1px solid rgba(0,0,0,0.05); overflow: hidden; }
     .handsontable .htCore td:first-child, .handsontable .htCore th:first-child { background-color: #f0f0f0 !important; font-weight: bold; color: #333 !important; }
-    .summary-box { width: 300px; min-width: 280px; padding: 20px; border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12); background: #ffffff; border: 1px solid rgba(0,0,0,0.05); }
+    .summary-box { width: 300px; min-width: 280px; padding: 20px; border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); background: #ffffff; border: 1px solid rgba(0,0,0,0.05); }
     .summary-box h3 { margin-top: 0; color: #007bff; font-weight: 600; font-size: 1.4em; margin-bottom: 15px; text-align: center; }
-    .summary-box p { font-size: 1em; margin-bottom: 8px; }
-    .summary-box span { font-weight: 500; }
-    canvas { margin-bottom: 15px; }
-    .actions-section { margin-top: 0px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 20px; }
-    .actions-section button { padding: 10px 20px; font-size: 1em; font-weight: bold; color: #fff; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .actions-section { text-align: center; display: flex; justify-content: center; align-items: center; gap: 20px; }
+    .actions-section button { padding: 10px 20px; font-size: 1em; font-weight: bold; color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
     .actions-section .save-btn { background-color: #007bff; }
-    .actions-section .save-btn:hover { background-color: #0056b3; }
     .actions-section .export-btn { background-color: #28a745; }
-    .actions-section .export-btn:hover { background-color: #218838; }
-    .trend-chart-section { padding: 20px; border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.12); background: #ffffff; border: 1px solid rgba(0,0,0,0.05); }
+    .trend-chart-section { padding: 20px; border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); background: #ffffff; border: 1px solid rgba(0,0,0,0.05); }
     .trend-chart-section h3 { margin-top: 0; color: #007bff; font-weight: 600; font-size: 1.4em; margin-bottom: 15px; text-align: center; }
     .trend-chart-section label { color: #333; font-weight: 500; }
     .trend-chart-section select { padding: 10px; border: 1px #ccc solid; background-color: #ffffff; color: #333; font-size: 0.95em; border-radius: 6px; }
@@ -120,25 +112,17 @@
     #chat-header button { background: none; color: white; font-size: 1.2em; }
     #chat-body { flex-grow: 1; padding: 15px; overflow-y: auto; background-color: #f8f8f8; display: flex; flex-direction: column; gap: 10px; }
     .chat-message { max-width: 80%; padding: 10px 12px; border-radius: 18px; line-height: 1.4; font-size: 0.95em; word-wrap: break-word; }
-    .chat-message.user { align-self: flex-end; background-color: #e6e6e6; color: var(--text-dark); border-bottom-right-radius: 2px; }
-    .chat-message.bot { align-self: flex-start; background-color: var(--primary-blue-light); color: #0036B3; border-bottom-left-radius: 2px; }
+    .chat-message.user { align-self: flex-end; background-color: #e6e6e6; }
+    .chat-message.bot { align-self: flex-start; background-color: var(--primary-blue-light); }
     #chat-input-area { padding: 10px 15px; border-top: 1px solid var(--border-light); display: flex; align-items: center; gap: 10px; }
-    #chat-input-area input { flex-grow: 1; padding: 10px; border: 1px solid var(--border-light); border-radius: 20px; font-size: 0.95em; }
+    #chat-input-area input { flex-grow: 1; padding: 10px; border: 1px solid var(--border-light); border-radius: 20px; }
     #chat-input-area button { background-color: var(--primary-blue); color: white; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2em; display: flex; justify-content: center; align-items: center; }
-    #notification-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-    .notification-message { background-color: #333; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); opacity: 0; transition: all 0.3s ease-in-out; transform: translateY(-20px); min-width: 250px; text-align: center; pointer-events: auto; }
-    .notification-message.show { opacity: 1; transform: translateY(0); }
-    .notification-message.success { background-color: #28a745; }
-    .notification-message.error { background-color: #dc3545; }
-    .notification-message.warning { background-color: #ffc107; color: #333; }
-    .notification-message.info { background-color: #007bff; }
+    #notification-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; }
   </style>
 </head>
 <body>
   <div class="topbar">
-    <div id="hospitalInfoBox" class="hospital-info-box">
-      <span id="hospitalName">Hospital: </span>
-    </div>
+    <div id="hospitalInfoBox" class="hospital-info-box"><span id="hospitalName"></span></div>
     <span style="flex-grow: 1;"></span>
     <button id="myProfileBtn">My Profile</button>
     <button id="logoutBtn" title="Logout" aria-label="Logout"><i class="fas fa-sign-out-alt"></i></button>
@@ -146,14 +130,10 @@
   <div class="content">
     <div class="sidebar">
       <h2>LINAC QA</h2>
-      <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
-        <button id="prevYearBtn">←</button>
-        <span id="year" style="margin: 0 10px;">2025</span>
-        <button id="nextYearBtn">→</button>
-      </div>
+      <div><button id="prevYearBtn">←</button><span id="year"></span><button id="nextYearBtn">→</button></div>
       <div id="months"></div>
       <label><input type="checkbox" id="darkToggle"> Dark Mode</label>
-      <p style="font-size:12px;margin-top:auto;">© 2025 QA Dashboard</p>
+      <p>© 2025 QA Dashboard</p>
     </div>
     <div class="main">
       <div class="month-header-box" id="header"></div>
@@ -173,18 +153,12 @@
   <div id="chat-bubble"><i class="fas fa-comment-dots"></i></div>
   <div id="chat-window">
     <div id="chat-header"><span>QA Copilot</span><button id="close-chat-btn"><i class="fas fa-times"></i></button></div>
-    <div id="chat-body">
-      <div class="chat-message bot">Hello! Ask me about Output, Flatness, or Symmetry data for the current month.</div>
-    </div>
-    <div id="chat-input-area">
-      <input type="text" id="chat-input" placeholder="Type your question..."><button id="send-chat-btn"><i class="fas fa-paper-plane"></i></button>
-    </div>
+    <div id="chat-body"><div class="chat-message bot">Hello! Ask me about your data.</div></div>
+    <div id="chat-input-area"><input type="text" id="chat-input" placeholder="Type..."><button id="send-chat-btn"><i class="fas fa-paper-plane"></i></button></div>
   </div>
-  <div id="notification-container"></div>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      Chart.register(ChartAnnotation);
         const auth = firebase.auth();
         const db = firebase.firestore();
         const BACKEND_URL = "https://back-end-wrxi.onrender.com";
@@ -192,47 +166,19 @@
         let currentDate = new Date();
         currentDate.setDate(1);
         const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
-        
         const dataTypesConfig = {
-          output: { 
-            label: 'Output', 
-            tolerance: 2.0, 
-            warning: 1.8,
-            initialized: false,
-            yAxisMin: -3,
-            yAxisMax: 3
-          },
-          flatness: { 
-            label: 'Flatness', 
-            tolerance: 1.0, 
-            warning: 0.9,
-            initialized: false,
-            yAxisMin: -2,
-            yAxisMax: 2
-          },
-          inline: { 
-            label: 'Inline Symmetry', 
-            tolerance: 1.0, 
-            warning: 0.9,
-            initialized: false,
-            yAxisMin: -2,
-            yAxisMax: 2
-          },
-          crossline: { 
-            label: 'Crossline Symmetry', 
-            tolerance: 1.0, 
-            warning: 0.9,
-            initialized: false,
-            yAxisMin: -2,
-            yAxisMax: 2
-          }
+          output: { label: 'Output', tolerance: 2.0, warning: 1.8, initialized: false, yAxisMin: -3, yAxisMax: 3 },
+          flatness: { label: 'Flatness', tolerance: 1.0, warning: 0.9, initialized: false, yAxisMin: -2, yAxisMax: 2 },
+          inline: { label: 'Inline Symmetry', tolerance: 1.0, warning: 0.9, initialized: false, yAxisMin: -2, yAxisMax: 2 },
+          crossline: { label: 'Crossline Symmetry', tolerance: 1.0, warning: 0.9, initialized: false, yAxisMin: -2, yAxisMax: 2 }
         };
-        
         let instances = { output: {}, flatness: {}, inline: {}, crossline: {} };
         let activeTab = 'output';
         const yearLabel = document.getElementById('year');
         const monthsDiv = document.getElementById('months');
         const header = document.getElementById('header');
+
+        Chart.register(ChartAnnotation);
 
         function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
         function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
@@ -253,30 +199,23 @@
                 <div class="container">
                     <div id="table-${dataType}" class="table-container"></div>
                     <div class="summary-box">
-                        <canvas id="summaryChart-${dataType}" width="280" height="280"></canvas>
+                        <canvas id="summaryChart-${dataType}"></canvas>
                         <h3>${config.label} Summary</h3>
                         <p><strong>Total Entries:</strong> <span id="total-${dataType}">0</span></p>
-                        <p style="color:var(--success-green);">✓ <strong>Within Tolerance:</strong> <span id="within-${dataType}">0</span></p>
-                        <p style="color:var(--warning-orange);">⚠ <strong>Warning:</strong> <span id="warning-${dataType}">0</span></p>
-                        <p style="color:var(--error-red);">✗ <strong>Out of Tolerance:</strong> <span id="out-${dataType}">0</span></p>
+                        <p style="color:var(--success-green);">✓ Within Tolerance: <span id="within-${dataType}">0</span></p>
+                        <p style="color:var(--warning-orange);">⚠ Warning: <span id="warning-${dataType}">0</span></p>
+                        <p style="color:var(--error-red);">✗ Out of Tolerance: <span id="out-${dataType}">0</span></p>
                     </div>
                 </div>
                 <div class="actions-section">
-                    <button id="saveBtn-${dataType}" class="save-btn" onclick="manualSave('${dataType}')">
-                        <i class="fas fa-save"></i> Save ${config.label}
-                    </button>
-                    <button id="exportBtn-${dataType}" class="export-btn" onclick="exportToExcel('${dataType}')">
-                        <i class="fas fa-file-excel"></i> Export ${config.label}
-                    </button>
-                    <span id="lastSaved-${dataType}" style="font-size:14px; color:gray;"></span>
+                    <button class="save-btn" onclick="manualSave('${dataType}')"><i class="fas fa-save"></i> Save ${config.label}</button>
+                    <button class="export-btn" onclick="exportToExcel('${dataType}')"><i class="fas fa-file-excel"></i> Export ${config.label}</button>
+                    <span id="lastSaved-${dataType}"></span>
                 </div>
                 <div class="trend-chart-section">
                     <h3>${config.label} Trend Analysis</h3>
-                    <div>
-                        <label for="trendEnergySelect-${dataType}">Select Energy:</label>
-                        <select id="trendEnergySelect-${dataType}" onchange="updateTrendChart('${dataType}')"></select>
-                    </div>
-                    <canvas id="trendChart-${dataType}" style="max-height: 350px; width: 100%;"></canvas>
+                    <div><label>Select Energy:</label><select id="trendEnergySelect-${dataType}" onchange="updateTrendChart('${dataType}')"></select></div>
+                    <canvas id="trendChart-${dataType}"></canvas>
                 </div>
             `;
         }
@@ -284,7 +223,7 @@
         window.switchTab = async function(dataType) {
             activeTab = dataType;
             document.querySelectorAll('.tab-nav-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`.tab-nav-button[onclick="switchTab('${dataType}')"]`).classList.add('active');
+            document.querySelector(`[onclick="switchTab('${dataType}')"]`).classList.add('active');
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             document.getElementById(`tab-content-${dataType}`).classList.add('active');
             if (!dataTypesConfig[dataType].initialized) {
@@ -452,91 +391,83 @@
         }
 
         window.updateTrendChart = async function(dataType) {
-    const hotInstance = instances[dataType].hot;
-    if (!hotInstance) return;
-
-    const data = hotInstance.getData();
-    const selectElement = document.getElementById(`trendEnergySelect-${dataType}`);
-    if (!selectElement) return;
-    
-    const selectedEnergy = selectElement.value;
-    const energyRow = data.find(row => row[0] === selectedEnergy);
-    const dataPoints = energyRow ? energyRow.slice(1).map(v => v === '' ? null : parseFloat(v)) : [];
-    const labels = getMonthDates(currentDate);
-    const shortLabels = labels.map(d => d.split('-')[2]);
-    const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-    
-    let annotations = {};
-    try {
-        const res = await fetch(`${BACKEND_URL}/annotations?month=${monthKey}&dataType=${dataType}&uid=${currentUID}`);
-        if(res.ok) annotations = await res.json();
-    } catch (e) { console.error("Could not fetch annotations", e); }
-
-    const canvasElement = document.getElementById(`trendChart-${dataType}`);
-    if (!canvasElement) return;
-    
-    const config = dataTypesConfig[dataType];
-    const ctx = canvasElement.getContext('2d');
-    if (instances[dataType].trendChart) instances[dataType].trendChart.destroy();
-    
-    instances[dataType].trendChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: shortLabels,
-            datasets: [{ label: `${selectedEnergy} Trend`, data: dataPoints, borderColor: '#007bff', tension: 0.1, spanGaps: true }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { min: config.yAxisMin, max: config.yAxisMax, title: { display: true, text: 'Value (%)' } } },
-            onClick: async (event, elements) => {
-                if (elements.length > 0) {
-                    const pointIndex = elements[0].index;
-                    const fullDate = labels[pointIndex];
-                    const annotationKey = `${selectedEnergy}-${fullDate}`;
-                    const existingAnnotation = annotations[annotationKey]?.text || "";
-                    const note = prompt(`Enter annotation for ${selectedEnergy} on ${fullDate}:`, existingAnnotation);
-
-                    if (note !== null) {
-                        showLoader();
-                        try {
-                            await fetch(`${BACKEND_URL}/save-annotation`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    uid: currentUID, month: monthKey, key: annotationKey,
-                                    data: { text: note, dataType: dataType, energy: selectedEnergy }
-                                })
-                            });
-                            updateTrendChart(dataType); 
-                        } catch (e) { console.error("Failed to save annotation", e); } 
-                        finally { hideLoader(); }
+            const hotInstance = instances[dataType].hot;
+            if (!hotInstance) return;
+            const data = hotInstance.getData();
+            const selectElement = document.getElementById(`trendEnergySelect-${dataType}`);
+            if (!selectElement) return;
+            const selectedEnergy = selectElement.value;
+            const energyRow = data.find(row => row[0] === selectedEnergy);
+            const dataPoints = energyRow ? energyRow.slice(1).map(v => v === '' ? null : parseFloat(v)) : [];
+            const labels = getMonthDates(currentDate);
+            const shortLabels = labels.map(d => d.split('-')[2]);
+            const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            let annotations = {};
+            try {
+                const res = await fetch(`${BACKEND_URL}/annotations?month=${monthKey}&dataType=${dataType}&uid=${currentUID}`);
+                if(res.ok) annotations = await res.json();
+            } catch (e) { console.error("Could not fetch annotations", e); }
+            const canvasElement = document.getElementById(`trendChart-${dataType}`);
+            const config = dataTypesConfig[dataType];
+            const ctx = canvasElement.getContext('2d');
+            if (instances[dataType].trendChart) instances[dataType].trendChart.destroy();
+            instances[dataType].trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: shortLabels,
+                    datasets: [{ label: `${selectedEnergy} Trend`, data: dataPoints, borderColor: '#007bff', tension: 0.1, spanGaps: true }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { min: config.yAxisMin, max: config.yAxisMax, title: { display: true, text: 'Value (%)' } } },
+                    onClick: async (event, elements) => {
+                        if (elements.length > 0) {
+                            const pointIndex = elements[0].index;
+                            const fullDate = labels[pointIndex];
+                            const annotationKey = `${selectedEnergy}-${fullDate}`;
+                            const existingAnnotation = annotations[annotationKey]?.text || "";
+                            const note = prompt(`Enter annotation for ${selectedEnergy} on ${fullDate}:`, existingAnnotation);
+                            if (note !== null) {
+                                showLoader();
+                                try {
+                                    await fetch(`${BACKEND_URL}/save-annotation`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            uid: currentUID, month: monthKey, key: annotationKey,
+                                            data: { text: note, dataType: dataType, energy: selectedEnergy }
+                                        })
+                                    });
+                                    updateTrendChart(dataType); 
+                                } catch (e) { console.error("Failed to save annotation", e); } 
+                                finally { hideLoader(); }
+                            }
+                        }
+                    },
+                    plugins: {
+                        annotation: {
+                            annotations: Object.entries(annotations)
+                                .filter(([, value]) => value.energy === selectedEnergy)
+                                .map(([key, value]) => ({
+                                    type: 'line', scaleID: 'x', value: key.split('-')[3] - 1,
+                                    borderColor: 'red', borderWidth: 1, borderDash: [6, 6],
+                                    label: { display: true, content: value.text, position: 'start', backgroundColor: 'rgba(255,0,0,0.7)', font: { size: 10 } }
+                                }))
+                        },
+                        tooltip: {
+                             callbacks: {
+                                 afterBody: (context) => {
+                                     const annotationKey = `${selectedEnergy}-${labels[context[0].dataIndex]}`;
+                                     return annotations[annotationKey] ? "Note: " + annotations[annotationKey].text : "";
+                                 }
+                             }
+                        }
                     }
                 }
-            },
-            plugins: {
-                annotation: {
-                    annotations: Object.entries(annotations)
-                        .filter(([, value]) => value.energy === selectedEnergy)
-                        .map(([key, value]) => ({
-                            type: 'line', scaleID: 'x', value: key.split('-')[3] - 1,
-                            borderColor: 'red', borderWidth: 1, borderDash: [6, 6],
-                            label: { display: true, content: value.text, position: 'start', backgroundColor: 'rgba(255,0,0,0.7)', font: { size: 10 } }
-                        }))
-                },
-                tooltip: {
-                     callbacks: {
-                         afterBody: (context) => {
-                             const annotationKey = `${selectedEnergy}-${labels[context[0].dataIndex]}`;
-                             return annotations[annotationKey] ? "Note: " + annotations[annotationKey].text : "";
-                         }
-                     }
-                }
-            }
+            });
         }
-    });
-}
-
+        
         function changeMonth(monthIndex) {
             currentDate.setMonth(monthIndex);
             header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
@@ -544,14 +475,12 @@
             Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
             switchTab(activeTab);
         }
-
         function changeYear(offset) {
             currentDate.setFullYear(currentDate.getFullYear() + offset);
             yearLabel.textContent = currentDate.getFullYear();
             Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
             switchTab(activeTab);
         }
-
         function buildMonthButtons() {
             monthsDiv.innerHTML = '';
             ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].forEach((m, i) => {
@@ -562,18 +491,15 @@
             });
             highlightActiveMonth();
         }
-
         function highlightActiveMonth() {
             [...monthsDiv.querySelectorAll('button')].forEach((btn, i) => {
                 btn.classList.toggle('active', i === currentDate.getMonth());
             });
         }
-
         function getMonthDates(date) {
           var y = date.getFullYear(), m = date.getMonth();
           return Array.from({length: new Date(y, m + 1, 0).getDate()}, (_, i) => `${y}-${String(m + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`);
         }
-
         function toggleDarkMode(isInitialLoad = false) {
             const isDark = document.getElementById('darkToggle').checked;
             document.body.classList.toggle('dark', isDark);
@@ -581,7 +507,6 @@
                 localStorage.setItem('darkMode', isDark);
             }
         }
-
         function addChatMessage(message, sender) {
             const chatBody = document.getElementById('chat-body');
             const messageElement = document.createElement('div');
@@ -590,7 +515,6 @@
             chatBody.appendChild(messageElement);
             chatBody.scrollTop = chatBody.scrollHeight;
         }
-
         async function sendChatMessage() {
             const chatInput = document.getElementById('chat-input');
             const queryText = chatInput.value.trim();
@@ -618,12 +542,12 @@
             }
         }
 
-        window.addEventListener('pageshow', function(event) { if (event.persisted) { window.location.reload(); } });
+        window.addEventListener('pageshow', function(event) { if (event.persisted) window.location.reload(); });
 
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUID = user.uid;
-                currentHospital = localStorage.getItem("hospitalName") || 'QA Portal';
+                currentHospital = localStorage.getItem("hospitalName");
                 document.getElementById("hospitalName").textContent = `Hospital: ${currentHospital}`;
                 yearLabel.textContent = currentDate.getFullYear();
                 header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
@@ -636,13 +560,10 @@
                 darkToggle.checked = localStorage.getItem('darkMode') === 'true';
                 toggleDarkMode(true);
                 darkToggle.addEventListener('change', () => toggleDarkMode(false));
-                
-                document.getElementById('chat-bubble').addEventListener('click', () => document.getElementById('chat-window').classList.toggle('open'));
-                document.getElementById('close-chat-btn').addEventListener('click', () => document.getElementById('chat-window').classList.remove('open'));
-                document.getElementById('chat-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendChatMessage(); });
-                document.getElementById('send-chat-btn').addEventListener('click', sendChatMessage);
-                document.getElementById('send-chat-btn').addEventListener('click', sendChatMessage);
-                
+                document.getElementById('chat-bubble').onclick = () => document.getElementById('chat-window').classList.toggle('open');
+                document.getElementById('close-chat-btn').onclick = () => document.getElementById('chat-window').classList.remove('open');
+                document.getElementById('chat-input').onkeypress = e => { if (e.key === 'Enter') sendChatMessage(); };
+                document.getElementById('send-chat-btn').onclick = sendChatMessage;
                 switchTab('output');
             } else {
                 window.location.replace("login.html");
