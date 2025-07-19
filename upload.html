@@ -179,9 +179,6 @@
         const monthsDiv = document.getElementById('months');
         const header = document.getElementById('header');
 
-        // The ChartAnnotation plugin registers itself, so manual registration is not needed and was causing an error.
-        // Chart.register(ChartAnnotation); // FIX 1: This line is removed.
-
         function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
         function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
         
@@ -197,6 +194,8 @@
 
         function generateTabContentHTML(dataType) {
             const config = dataTypesConfig[dataType];
+            // *** FIX: Added a wrapper div around the canvas with a defined height ***
+            // This prevents the chart from rendering with an infinite height.
             return `
                 <div class="container">
                     <div id="table-${dataType}" class="table-container"></div>
@@ -217,7 +216,9 @@
                 <div class="trend-chart-section">
                     <h3>${config.label} Trend Analysis</h3>
                     <div><label>Select Energy:</label><select id="trendEnergySelect-${dataType}" onchange="updateTrendChart('${dataType}')"></select></div>
-                    <canvas id="trendChart-${dataType}"></canvas>
+                    <div class="chart-wrapper" style="position: relative; height: 40vh; width: 100%;">
+                        <canvas id="trendChart-${dataType}"></canvas>
+                    </div>
                 </div>
             `;
         }
@@ -401,7 +402,6 @@
             const selectedEnergy = selectElement.value;
             const energyRow = data.find(row => row[0] === selectedEnergy);
 
-            // FIX 2: Robustly parse values to handle non-numeric entries and prevent chart scaling issues.
             const dataPoints = energyRow ? energyRow.slice(1).map(val => {
                 const num = parseFloat(val);
                 return isFinite(num) ? num : null;
