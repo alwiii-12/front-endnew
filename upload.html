@@ -10,7 +10,7 @@
   <meta http-equiv="Expires" content="0" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="firebase-init.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -184,6 +184,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      Chart.register(ChartAnnotation);
         const auth = firebase.auth();
         const db = firebase.firestore();
         const BACKEND_URL = "https://back-end-wrxi.onrender.com";
@@ -450,46 +451,91 @@
             if (energyTypes.length > 0) select.value = energyTypes[0];
         }
 
-        window.updateTrendChart = function(dataType) {
-            const hotInstance = instances[dataType].hot;
-            if (!hotInstance) return;
-            const data = hotInstance.getData();
-            const selectElement = document.getElementById(`trendEnergySelect-${dataType}`);
-            if (!selectElement) return;
-            const selectedEnergy = selectElement.value;
-            const energyRow = data.find(row => row[0] === selectedEnergy);
-            const dataPoints = energyRow ? energyRow.slice(1).map(v => v === '' ? null : parseFloat(v)) : [];
-            const labels = getMonthDates(currentDate).map(d => d.split('-')[2]);
-            const canvasElement = document.getElementById(`trendChart-${dataType}`);
-            if (!canvasElement) return;
-            const config = dataTypesConfig[dataType];
-            const ctx = canvasElement.getContext('2d');
-            if (instances[dataType].trendChart) instances[dataType].trendChart.destroy();
-            instances[dataType].trendChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: `${selectedEnergy} Trend`,
-                        data: dataPoints,
-                        borderColor: '#007bff',
-                        tension: 0.1,
-                        spanGaps: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            min: config.yAxisMin,
-                            max: config.yAxisMax,
-                            title: { display: true, text: 'Value (%)' }
-                        }
+        window.updateTrendChart = async function(dataType) {
+    const hotInstance = instances[dataType].hot;
+    if (!hotInstance) return;
+
+    const data = hotInstance.getData();
+    const selectElement = document.getElementById(`trendEnergySelect-${dataType}`);
+    if (!selectElement) return;
+    
+    const selectedEnergy = selectElement.value;
+    const energyRow = data.find(row => row[0] === selectedEnergy);
+    const dataPoints = energyRow ? energyRow.slice(1).map(v => v === '' ? null : parseFloat(v)) : [];
+    const labels = getMonthDates(currentDate);
+    const shortLabels = labels.map(d => d.split('-')[2]);
+    const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+    
+    let annotations = {};
+    try {
+        const res = await fetch(`${BACKEND_URL}/annotations?month=${monthKey}&dataType=${dataType}&uid=${currentUID}`);
+        if(res.ok) annotations = await res.json();
+    } catch (e) { console.error("Could not fetch annotations", e); }
+
+    const canvasElement = document.getElementById(`trendChart-${dataType}`);
+    if (!canvasElement) return;
+    
+    const config = dataTypesConfig[dataType];
+    const ctx = canvasElement.getContext('2d');
+    if (instances[dataType].trendChart) instances[dataType].trendChart.destroy();
+    
+    instances[dataType].trendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: shortLabels,
+            datasets: [{ label: `${selectedEnergy} Trend`, data: dataPoints, borderColor: '#007bff', tension: 0.1, spanGaps: true }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { min: config.yAxisMin, max: config.yAxisMax, title: { display: true, text: 'Value (%)' } } },
+            onClick: async (event, elements) => {
+                if (elements.length > 0) {
+                    const pointIndex = elements[0].index;
+                    const fullDate = labels[pointIndex];
+                    const annotationKey = `${selectedEnergy}-${fullDate}`;
+                    const existingAnnotation = annotations[annotationKey]?.text || "";
+                    const note = prompt(`Enter annotation for ${selectedEnergy} on ${fullDate}:`, existingAnnotation);
+
+                    if (note !== null) {
+                        showLoader();
+                        try {
+                            await fetch(`${BACKEND_URL}/save-annotation`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    uid: currentUID, month: monthKey, key: annotationKey,
+                                    data: { text: note, dataType: dataType, energy: selectedEnergy }
+                                })
+                            });
+                            updateTrendChart(dataType); 
+                        } catch (e) { console.error("Failed to save annotation", e); } 
+                        finally { hideLoader(); }
                     }
                 }
-            });
+            },
+            plugins: {
+                annotation: {
+                    annotations: Object.entries(annotations)
+                        .filter(([, value]) => value.energy === selectedEnergy)
+                        .map(([key, value]) => ({
+                            type: 'line', scaleID: 'x', value: key.split('-')[3] - 1,
+                            borderColor: 'red', borderWidth: 1, borderDash: [6, 6],
+                            label: { display: true, content: value.text, position: 'start', backgroundColor: 'rgba(255,0,0,0.7)', font: { size: 10 } }
+                        }))
+                },
+                tooltip: {
+                     callbacks: {
+                         afterBody: (context) => {
+                             const annotationKey = `${selectedEnergy}-${labels[context[0].dataIndex]}`;
+                             return annotations[annotationKey] ? "Note: " + annotations[annotationKey].text : "";
+                         }
+                     }
+                }
+            }
         }
+    });
+}
 
         function changeMonth(monthIndex) {
             currentDate.setMonth(monthIndex);
@@ -594,6 +640,7 @@
                 document.getElementById('chat-bubble').addEventListener('click', () => document.getElementById('chat-window').classList.toggle('open'));
                 document.getElementById('close-chat-btn').addEventListener('click', () => document.getElementById('chat-window').classList.remove('open'));
                 document.getElementById('chat-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendChatMessage(); });
+                document.getElementById('send-chat-btn').addEventListener('click', sendChatMessage);
                 document.getElementById('send-chat-btn').addEventListener('click', sendChatMessage);
                 
                 switchTab('output');
