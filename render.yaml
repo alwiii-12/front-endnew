@@ -1,17 +1,11 @@
-# render.yaml for your FRONTEND static site
+# Place this file in your FRONTEND project directory
 
 services:
   - type: web
-    name: front-end-qa # You can name this whatever you like
+    name: front-end-qa
     env: static
-    staticPublishPath: ./ # Assumes your html files are in the root
+    staticPublishPath: ./
     headers:
-      - path: "/*.html" # Apply to all HTML pages
+      - path: "/*.html"
         name: "Cache-Control"
         value: "no-store, no-cache, must-revalidate, private"
-      - path: "/*.html"
-        name: "Pragma"
-        value: "no-cache"
-      - path: "/*.html"
-        name: "Expires"
-        value: "0"
