@@ -140,7 +140,34 @@
         function showLoader() { loadingOverlay.style.display = 'flex'; }
         function hideLoader() { loadingOverlay.style.display = 'none'; }
         
-        window.logout = function() { auth.signOut().then(() => { localStorage.clear(); window.location.href = "login.html"; }); }
+        // CORRECTED: The full logout function with the call to /log_event
+        window.logout = async function() {
+            showLoader();
+            const user = auth.currentUser;
+            try {
+                await fetch(`${BACKEND_URL}/log_event`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "user_logout",
+                        userUid: user ? user.uid : "unknown_uid",
+                        userEmail: localStorage.getItem("userEmail") || "unknown_email",
+                        hospital: localStorage.getItem("hospitalName") || "unknown_hospital",
+                        role: localStorage.getItem("userRole") || "unknown_role"
+                    })
+                });
+            } catch (logError) {
+                console.error("Error sending logout log event:", logError);
+            }
+            
+            auth.signOut().then(() => {
+                localStorage.clear();
+                window.location.href = "login.html";
+            }).catch(err => {
+                console.error("Logout failed:", err);
+                hideLoader();
+            });
+        }
 
         window.showAdminSection = async function(sectionId) {
             document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -307,7 +334,6 @@
             const logsTableBody = document.getElementById('auditLogsTableBody');
             logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">Loading logs...</td></tr>`;
             
-            // MODIFIED: Added a cache-busting parameter
             const cacheBuster = new Date().getTime();
             let url = `${BACKEND_URL}/admin/audit-logs?cache=${cacheBuster}&`;
             if(date) url += `date=${date}&`;
@@ -350,7 +376,10 @@
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentAdminUid = user.uid;
-                const userRole = localStorage.getItem("userRole");
+                localStorage.setItem("userEmail", user.email);
+                const idTokenResult = await user.getIdTokenResult();
+                const userRole = idTokenResult.claims.role || (await db.collection('users').doc(user.uid).get()).data().role;
+                localStorage.setItem("userRole", userRole);
                 if (userRole !== "Admin") {
                     alert("Access Denied.");
                     window.logout();
