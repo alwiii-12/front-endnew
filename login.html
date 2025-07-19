@@ -146,11 +146,11 @@
 <body>
   <div class="login-container">
     <h2>Login - LINAC QA</h2>
-    <form id="loginForm">
+    <form id="loginForm" autocomplete="off">
       <div class="error" id="errorMsg"></div>
-      <input type="email" id="email" name="email" placeholder="Email" required autocomplete="username" />
+      <input type="email" id="email" name="email" placeholder="Email" required autocomplete="off" />
       <div class="password-input-container">
-        <input type="password" id="password" name="password" placeholder="Password" required autocomplete="current-password" />
+        <input type="password" id="password" name="password" placeholder="Password" required autocomplete="new-password" />
         <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span>
       </div>
       <div class="remember-me-container">
@@ -181,6 +181,16 @@
       const rememberMeCheckbox = document.getElementById('rememberMe');
       
       const BACKEND_URL = "https://back-end-wrxi.onrender.com";
+
+      // NEW: Add event listener to clear form on back navigation
+      window.addEventListener('pageshow', function(event) {
+          // The event.persisted property is true if the page is from the back-forward cache
+          if (event.persisted) {
+              emailInput.value = '';
+              passwordInput.value = '';
+              errorMsg.textContent = '';
+          }
+      });
 
       window.sendPasswordReset = async () => {
           const email = emailInput.value;
@@ -244,7 +254,6 @@
                 localStorage.setItem("userRole", userRole);
                 localStorage.setItem("userStatus", userStatus);
 
-                // CORRECTED: Added the missing call to the /log_event endpoint
                 try {
                     await fetch(`${BACKEND_URL}/log_event`, {
                         method: "POST",
