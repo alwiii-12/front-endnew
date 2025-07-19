@@ -177,11 +177,12 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    // --- FIX: Restructured the entire script to prevent authentication race conditions ---
+    document.addEventListener('DOMContentLoaded', async () => {
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config)
             : {
-                apiKey: "YOUR_API_KEY",
+                apiKey: "YOUR_API_KEY", // Fallback for local testing
                 authDomain: "YOUR_AUTH_DOMAIN",
                 projectId: "YOUR_PROJECT_ID",
                 storageBucket: "YOUR_STORAGE_BUCKET",
@@ -190,25 +191,36 @@
             };
         
         firebase.initializeApp(firebaseConfig);
-
         const auth = firebase.auth();
         const db = firebase.firestore();
-        
-        // --- FIX: Added the initial sign-in logic ---
-        // This function is called immediately to trigger authentication.
-        (async () => {
-          try {
-            // Use the token provided by the environment, or sign in anonymously as a fallback.
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-              await auth.signInWithCustomToken(__initial_auth_token);
-            } else {
-              await auth.signInAnonymously();
+
+        // This listener will handle redirects if the user logs out later
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.replace("login.html");
             }
-          } catch (error) {
-            console.error("Authentication failed:", error);
-            // Optionally, display an error message to the user on the page
-          }
-        })();
+        });
+
+        // 1. Attempt to sign in first.
+        try {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await auth.signInWithCustomToken(__initial_auth_token);
+            } else {
+                await auth.signInAnonymously(); // Fallback for local testing
+            }
+        } catch (error) {
+            console.error("Authentication failed, redirecting to login.", error);
+            window.location.replace("login.html");
+            return; // Stop script execution if auth fails
+        }
+        
+        // 2. Now that we are signed in, set up the application.
+        const user = auth.currentUser;
+        if (!user) {
+            // This is a safety net in case something unexpected happened.
+            window.location.replace("login.html");
+            return;
+        }
 
         const BACKEND_URL = "https://back-end-wrxi.onrender.com";
         let currentUID, currentHospital;
@@ -598,32 +610,26 @@
 
         window.addEventListener('pageshow', function(event) { if (event.persisted) window.location.reload(); });
 
-        // This listener will now run correctly after the sign-in process completes.
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                currentUID = user.uid;
-                currentHospital = localStorage.getItem("hospitalName");
-                document.getElementById("hospitalName").textContent = `Hospital: ${currentHospital}`;
-                yearLabel.textContent = currentDate.getFullYear();
-                header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
-                buildMonthButtons();
-                document.getElementById('prevYearBtn').onclick = () => changeYear(-1);
-                document.getElementById('nextYearBtn').onclick = () => changeYear(1);
-                document.getElementById('logoutBtn').onclick = logout;
-                document.getElementById('myProfileBtn').onclick = () => window.location.href='my_profile.html';
-                const darkToggle = document.getElementById('darkToggle');
-                darkToggle.checked = localStorage.getItem('darkMode') === 'true';
-                toggleDarkMode(true);
-                darkToggle.addEventListener('change', () => toggleDarkMode(false));
-                document.getElementById('chat-bubble').onclick = () => document.getElementById('chat-window').classList.toggle('open');
-                document.getElementById('close-chat-btn').onclick = () => document.getElementById('chat-window').classList.remove('open');
-                document.getElementById('chat-input').onkeypress = e => { if (e.key === 'Enter') sendChatMessage(); };
-                document.getElementById('send-chat-btn').onclick = sendChatMessage;
-                switchTab('output');
-            } else {
-                window.location.replace("login.html");
-            }
-        });
+        // --- Start UI setup now that user is logged in. ---
+        currentUID = user.uid;
+        currentHospital = localStorage.getItem("hospitalName");
+        document.getElementById("hospitalName").textContent = `Hospital: ${currentHospital || 'N/A'}`;
+        yearLabel.textContent = currentDate.getFullYear();
+        header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
+        buildMonthButtons();
+        document.getElementById('prevYearBtn').onclick = () => changeYear(-1);
+        document.getElementById('nextYearBtn').onclick = () => changeYear(1);
+        document.getElementById('logoutBtn').onclick = logout;
+        document.getElementById('myProfileBtn').onclick = () => window.location.href = 'my_profile.html';
+        const darkToggle = document.getElementById('darkToggle');
+        darkToggle.checked = localStorage.getItem('darkMode') === 'true';
+        toggleDarkMode(true);
+        darkToggle.addEventListener('change', () => toggleDarkMode(false));
+        document.getElementById('chat-bubble').onclick = () => document.getElementById('chat-window').classList.toggle('open');
+        document.getElementById('close-chat-btn').onclick = () => document.getElementById('chat-window').classList.remove('open');
+        document.getElementById('chat-input').onkeypress = e => { if (e.key === 'Enter') sendChatMessage(); };
+        document.getElementById('send-chat-btn').onclick = sendChatMessage;
+        switchTab('output');
     });
   </script>
 </body>
