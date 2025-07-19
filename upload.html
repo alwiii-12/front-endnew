@@ -178,12 +178,9 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- FIX: Using environment variables for Firebase config ---
-        // This removes the need to manually paste credentials and fixes the login issue.
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config)
             : {
-                // This is a fallback for local testing, but the app will rely on the injected config.
                 apiKey: "YOUR_API_KEY",
                 authDomain: "YOUR_AUTH_DOMAIN",
                 projectId: "YOUR_PROJECT_ID",
@@ -196,6 +193,23 @@
 
         const auth = firebase.auth();
         const db = firebase.firestore();
+        
+        // --- FIX: Added the initial sign-in logic ---
+        // This function is called immediately to trigger authentication.
+        (async () => {
+          try {
+            // Use the token provided by the environment, or sign in anonymously as a fallback.
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+              await auth.signInWithCustomToken(__initial_auth_token);
+            } else {
+              await auth.signInAnonymously();
+            }
+          } catch (error) {
+            console.error("Authentication failed:", error);
+            // Optionally, display an error message to the user on the page
+          }
+        })();
+
         const BACKEND_URL = "https://back-end-wrxi.onrender.com";
         let currentUID, currentHospital;
         let currentDate = new Date();
@@ -584,6 +598,7 @@
 
         window.addEventListener('pageshow', function(event) { if (event.persisted) window.location.reload(); });
 
+        // This listener will now run correctly after the sign-in process completes.
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUID = user.uid;
