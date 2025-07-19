@@ -63,7 +63,7 @@
             max-width: 500px;
             text-align: left;
         }
-        .profile-card h1, .profile-card h2 {
+        .profile-card h1 {
             color: #007bff;
             text-align: center;
             margin-bottom: 30px;
@@ -103,6 +103,34 @@
         .loading-message {
             text-align: center;
             color: #666;
+        }
+        .change-password-header {
+            color: #007bff;
+            font-size: 1.4em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+        .change-password-header i {
+            margin-left: 10px;
+            transition: transform 0.3s ease-in-out;
+        }
+        .change-password-header.active i {
+            transform: rotate(180deg);
+        }
+        .change-password-form {
+            display: none;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            margin-top: 15px;
+        }
+        .change-password-form.open {
+            display: block;
         }
         .form-group {
             margin-bottom: 15px;
@@ -154,26 +182,29 @@
             <div id="profileDetails">
                 <p class="loading-message">Loading profile data...</p>
             </div>
-            
-            <hr style="margin: 40px 0;">
 
             <div class="change-password-section">
-                <h2>Change Password</h2>
-                <div class="form-group">
-                    <label for="currentPassword">Current Password</label>
-                    <input type="password" id="currentPassword" autocomplete="current-password">
+                <div class="change-password-header" onclick="togglePasswordForm()">
+                    <span>Change Password</span>
+                    <i class="fas fa-chevron-down"></i>
                 </div>
-                <div class="form-group">
-                    <label for="newPassword">New Password</label>
-                    <input type="password" id="newPassword" autocomplete="new-password">
-                    <div id="passwordStrength" class="password-strength"></div>
-                </div>
-                <div class="form-group">
-                    <label for="confirmPassword">Confirm New Password</label>
-                    <input type="password" id="confirmPassword" autocomplete="new-password">
-                </div>
-                <div class="profile-actions">
-                    <button id="changePasswordBtn" onclick="changePassword()">Update Password</button>
+                <div id="changePasswordForm" class="change-password-form">
+                    <div class="form-group">
+                        <label for="currentPassword">Current Password</label>
+                        <input type="password" id="currentPassword" autocomplete="current-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword" autocomplete="new-password">
+                        <div id="passwordStrength" class="password-strength"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm New Password</label>
+                        <input type="password" id="confirmPassword" autocomplete="new-password">
+                    </div>
+                    <div class="profile-actions" style="margin-top: 0;">
+                        <button id="changePasswordBtn" onclick="changePassword()">Update Password</button>
+                    </div>
                 </div>
             </div>
 
@@ -188,18 +219,18 @@
     <div id="notification-container"></div>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="firebase-init.js"></script> 
+    <script src="firebase-init.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-    
+
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const auth = firebase.auth();
         const db = firebase.firestore();
         const notificationContainer = document.getElementById('notification-container');
         const BACKEND_URL = "https://back-end-wrxi.onrender.com";
-
-        // NEW: Elements for password change
+        const changePasswordHeader = document.querySelector('.change-password-header');
+        const changePasswordForm = document.getElementById('changePasswordForm');
         const newPasswordInput = document.getElementById('newPassword');
         const passwordStrengthDiv = document.getElementById('passwordStrength');
         const changePasswordBtn = document.getElementById('changePasswordBtn');
@@ -215,7 +246,22 @@
         }
 
         window.logout = async function() {
-            // ... (logout logic is unchanged)
+            const user = auth.currentUser;
+            try {
+                await fetch(`${BACKEND_URL}/log_event`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "user_logout",
+                        userUid: user ? user.uid : "unknown_uid",
+                        userEmail: localStorage.getItem("userEmail") || "unknown_email",
+                    })
+                });
+            } catch (logError) { console.error("Error sending logout log event:", logError); }
+            auth.signOut().then(() => {
+                localStorage.clear();
+                window.location.href = "login.html";
+            });
         };
 
         async function loadProfile(uid) {
@@ -239,8 +285,12 @@
                 profileDetailsDiv.innerHTML = `<p class="loading-message" style="color: red;">Error: Could not load profile data.</p>`;
             }
         }
-        
-        // NEW: Function to check password strength (reused from signup)
+
+        window.togglePasswordForm = function() {
+            changePasswordForm.classList.toggle('open');
+            changePasswordHeader.classList.toggle('active');
+        };
+
         function checkPasswordStrength() {
             const password = newPasswordInput.value;
             let strength = 0;
@@ -260,7 +310,6 @@
         }
         newPasswordInput.addEventListener('input', checkPasswordStrength);
 
-        // NEW: Function to handle the password change
         window.changePassword = async function() {
             const currentPassword = document.getElementById('currentPassword').value;
             const newPassword = document.getElementById('newPassword').value;
@@ -289,22 +338,15 @@
             changePasswordBtn.textContent = 'Updating...';
 
             try {
-                // Step 1: Create a credential to re-authenticate the user
                 const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
-                
-                // Step 2: Re-authenticate
                 await user.reauthenticateWithCredential(credential);
-                
-                // Step 3: If re-authentication is successful, update the password
                 await user.updatePassword(newPassword);
-                
                 showNotification("Password updated successfully!", 'success');
-                // Clear the form fields
                 document.getElementById('currentPassword').value = '';
                 document.getElementById('newPassword').value = '';
                 document.getElementById('confirmPassword').value = '';
                 passwordStrengthDiv.textContent = '';
-                
+                togglePasswordForm(); // Close the form on success
             } catch (error) {
                 console.error("Password change error:", error);
                 if (error.code === 'auth/wrong-password') {
