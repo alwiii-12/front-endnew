@@ -232,7 +232,7 @@
             const hospitalFilterSelects = [
                 document.getElementById('filterHospital'),
                 document.getElementById('adminHospitalSelect'),
-                document.getElementById('auditLogHospitalFilter') // This will now find the element
+                document.getElementById('auditLogHospitalFilter')
             ];
 
             hospitalFilterSelects.forEach(select => {
@@ -365,14 +365,26 @@
             }
         }
 
+        // **MODIFIED**: This function is now more performant
         function populateHospitalDataFilters() {
             const yearSelect = document.getElementById('adminYearSelect');
             const monthSelect = document.getElementById('adminMonthSelect');
-            if (yearSelect.options.length > 1) return;
+            if (yearSelect.options.length > 1) return; // Still runs only once
+
             const currentYear = new Date().getFullYear();
-            for (let i = currentYear; i >= currentYear - 5; i++) yearSelect.innerHTML += `<option value="${i}">${i}</option>`;
+            let yearOptionsHTML = '';
+            for (let i = currentYear; i >= currentYear - 5; i--) {
+                yearOptionsHTML += `<option value="${i}">${i}</option>`;
+            }
+            yearSelect.innerHTML = yearOptionsHTML;
+
             const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            months.forEach((m, i) => monthSelect.innerHTML += `<option value="${String(i + 1).padStart(2, '0')}">${m}</option>`);
+            let monthOptionsHTML = '';
+            months.forEach((m, i) => {
+                monthOptionsHTML += `<option value="${String(i + 1).padStart(2, '0')}">${m}</option>`;
+            });
+            monthSelect.innerHTML = monthOptionsHTML;
+            
             monthSelect.value = String(new Date().getMonth() + 1).padStart(2, '0');
         }
 
