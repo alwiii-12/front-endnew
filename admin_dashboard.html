@@ -181,7 +181,6 @@
             });
         }
 
-        // **MODIFIED**: This function no longer auto-loads audit logs
         window.showAdminSection = async function(sectionId) {
             document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector(`button[onclick="showAdminSection('${sectionId}')"]`).classList.add('active');
@@ -193,7 +192,6 @@
             }
             if (sectionId === 'audit-logs-section') {
                 populateAuditLogFilters();
-                // THE AWAITED CALL THAT CAUSED THE HANG HAS BEEN REMOVED FROM HERE
             }
         }
 
@@ -214,15 +212,32 @@
             }
         }
         
+        // **MODIFIED**: This function is now more memory-efficient to prevent browser freezing
         function populateCommonFilters() {
-            const hospitals = [...new Set(allUsersData.map(u => u.hospital).filter(Boolean))].sort();
-            const hospitalFilters = [filterHospital, document.getElementById('adminHospitalSelect'), document.getElementById('auditLogHospitalFilter')];
-            hospitalFilters.forEach(select => {
-                if(select) {
-                    const currentVal = select.value;
-                    select.innerHTML = `<option value="">All Hospitals</option>`;
-                    hospitals.forEach(h => select.innerHTML += `<option value="${h}">${h}</option>`);
-                    select.value = currentVal;
+            // Use a Set directly to find unique hospitals efficiently
+            const hospitalSet = new Set();
+            for (const user of allUsersData) {
+                if (user.hospital) {
+                    hospitalSet.add(user.hospital);
+                }
+            }
+            const sortedHospitals = [...hospitalSet].sort();
+
+            const hospitalFilterSelects = [
+                document.getElementById('filterHospital'),
+                document.getElementById('adminHospitalSelect'),
+                document.getElementById('auditLogHospitalFilter')
+            ];
+
+            hospitalFilterSelects.forEach(select => {
+                if (select) {
+                    const currentValue = select.value;
+                    let optionsHTML = '<option value="">All Hospitals</option>';
+                    sortedHospitals.forEach(h => {
+                        optionsHTML += `<option value="${h}">${h}</option>`;
+                    });
+                    select.innerHTML = optionsHTML;
+                    select.value = currentValue;
                 }
             });
         }
@@ -307,10 +322,12 @@
             editUserId.value = user.uid;
             editUserName.value = user.name;
             editUserEmail.value = user.email;
-            const hospitals = [...new Set(allUsersData.map(u => u.hospital).filter(Boolean))].sort();
-            editUserHospital.innerHTML = '';
-            hospitals.forEach(h => editUserHospital.innerHTML += `<option value="${h}">${h}</option>`);
+            
+            // Re-use the already calculated sorted list of hospitals if available
+            const hospitalSelect = document.getElementById('filterHospital');
+            editUserHospital.innerHTML = hospitalSelect.innerHTML;
             editUserHospital.value = user.hospital;
+
             editUserRole.value = user.role;
             editUserStatus.value = user.status;
             userEditModal.style.display = 'flex';
