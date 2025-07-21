@@ -68,20 +68,20 @@
     .sidebar h2 { margin: 0 0 20px; color: #007bff; font-weight: 600; font-size: 1.5em; }
     .sidebar button { width: 100%; margin-bottom: 8px; padding: 10px 8px; background: #eee; color: #333; font-weight: 500; text-align: center; }
     .year-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-.year-nav button {
-  width: 30px; /* Give the buttons a small, fixed width */
-  flex-shrink: 0; /* Prevent buttons from shrinking */
-  padding: 5px;
-}
-.year-nav span {
-  font-weight: bold;
-  font-size: 1.1em;
-}
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .year-nav button {
+      width: 30px;
+      flex-shrink: 0;
+      padding: 5px;
+    }
+    .year-nav span {
+      font-weight: bold;
+      font-size: 1.1em;
+    }
     .sidebar button.active { background: #007bff; color: #fff; }
     .sidebar label { display: flex; align-items: center; margin-top: 15px; font-size: 0.95em; }
     .sidebar input[type="checkbox"] { margin-right: 8px; transform: scale(1.2); }
@@ -173,6 +173,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-check-compat.js"></script>
   <script src="firebase-init.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
@@ -213,8 +214,6 @@
 
         function generateTabContentHTML(dataType) {
             const config = dataTypesConfig[dataType];
-            // *** FIX: Added a wrapper div around the canvas with a defined height ***
-            // This prevents the chart from rendering with an infinite height.
             return `
                 <div class="container">
                     <div id="table-${dataType}" class="table-container"></div>
