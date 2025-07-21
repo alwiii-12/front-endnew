@@ -181,7 +181,7 @@
             });
         }
 
-        // **MODIFIED**: SIMPLIFIED FUNCTION
+        // **MODIFIED**: This function no longer auto-loads audit logs
         window.showAdminSection = async function(sectionId) {
             document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector(`button[onclick="showAdminSection('${sectionId}')"]`).classList.add('active');
@@ -193,7 +193,7 @@
             }
             if (sectionId === 'audit-logs-section') {
                 populateAuditLogFilters();
-                await loadAuditLogs();
+                // THE AWAITED CALL THAT CAUSED THE HANG HAS BEEN REMOVED FROM HERE
             }
         }
 
@@ -380,11 +380,10 @@
             }
         }
         
-        // **MODIFIED**: REPLACED FUNCTION TO HANDLE DATA OBJECT
         function renderHospitalQaDataTable(allData, year, month) {
             const container = document.getElementById('hospitalQaTableContainer');
             const selectedDataType = document.getElementById('adminDataTypeSelect').value;
-            const dataForTable = allData[selectedDataType]; // Get the correct data array
+            const dataForTable = allData[selectedDataType]; 
 
             container.innerHTML = '';
             if (!dataForTable || dataForTable.length === 0) {
@@ -402,7 +401,6 @@
 
             dataForTable.forEach(row => {
                 tableHTML += `<tr><td>${row[0]}</td>`;
-                // Ensure row has enough columns to match the number of days
                 const values = row.slice(1);
                 for (let i = 0; i < numDays; i++) {
                     tableHTML += `<td>${values[i] || ''}</td>`;
@@ -450,7 +448,6 @@
             }
         }
 
-        // **MODIFIED**: REFACTORED INITIALIZATION LOGIC
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentAdminUid = user.uid;
@@ -461,9 +458,7 @@
                 } else {
                     showLoader();
                     try {
-                        // First, load all user data which also populates filters
                         await loadAllUsers(); 
-                        // Then, show the default section
                         showAdminSection('manage-users-section');
                     } catch (error) {
                         console.error("Failed to initialize admin dashboard:", error);
