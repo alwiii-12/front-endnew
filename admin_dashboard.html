@@ -364,12 +364,11 @@
                 hideLoader();
             }
         }
-
-        // **MODIFIED**: This function is now more performant
+        
         function populateHospitalDataFilters() {
             const yearSelect = document.getElementById('adminYearSelect');
             const monthSelect = document.getElementById('adminMonthSelect');
-            if (yearSelect.options.length > 1) return; // Still runs only once
+            if (yearSelect.options.length > 1) return;
 
             const currentYear = new Date().getFullYear();
             let yearOptionsHTML = '';
@@ -482,29 +481,24 @@
             }
         }
 
+        // **MODIFIED**: This section is commented out for debugging
         auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                currentAdminUid = user.uid;
-                const userRole = localStorage.getItem("userRole");
-                if (userRole !== "Admin") {
-                    alert("Access Denied.");
-                    logout();
-                } else {
-                    showLoader();
-                    try {
-                        await loadAllUsers(); 
-                        showAdminSection('manage-users-section');
-                    } catch (error) {
-                        console.error("Failed to initialize admin dashboard:", error);
-                        usersTableBody.innerHTML = `<tr><td colspan="6" class="no-users-message" style="color:red;">Could not load initial admin data. Please refresh.</td></tr>`;
-                    } finally {
-                        hideLoader();
-                    }
-                }
-            } else {
-                window.location.href = "login.html";
-            }
+             if (user) {
+                 const userRole = localStorage.getItem("userRole");
+                 if (userRole !== "Admin") {
+                     alert("Access Denied.");
+                     logout();
+                 } else {
+                     // The code that automatically loads data has been removed.
+                     // You can now manually call functions like loadAllUsers() from the console to test them.
+                     console.log("Page loaded without autorun. Call functions manually to debug.");
+                     // To test, you could open the console and type `loadAllUsers()` and press Enter.
+                 }
+             } else {
+                 window.location.href = "login.html";
+             }
         });
+
     });
     </script>
 </body>
