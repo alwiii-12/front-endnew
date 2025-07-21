@@ -483,21 +483,29 @@
 
         // **MODIFIED**: This section is commented out for debugging
         auth.onAuthStateChanged(async (user) => {
-             if (user) {
-                 const userRole = localStorage.getItem("userRole");
-                 if (userRole !== "Admin") {
-                     alert("Access Denied.");
-                     logout();
-                 } else {
-                     // The code that automatically loads data has been removed.
-                     // You can now manually call functions like loadAllUsers() from the console to test them.
-                     console.log("Page loaded without autorun. Call functions manually to debug.");
-                     // To test, you could open the console and type `loadAllUsers()` and press Enter.
-                 }
-             } else {
-                 window.location.href = "login.html";
-             }
-        });
+    if (user) {
+        currentAdminUid = user.uid;
+        const userRole = localStorage.getItem("userRole");
+        if (userRole !== "Admin") {
+            alert("Access Denied.");
+            logout();
+        } else {
+            showLoader();
+            try {
+                // Re-enabling the automatic loading
+                await loadAllUsers(); 
+                showAdminSection('manage-users-section');
+            } catch (error) {
+                console.error("Failed to initialize admin dashboard:", error);
+                usersTableBody.innerHTML = `<tr><td colspan="6" class="no-users-message" style="color:red;">Could not load initial admin data. Please refresh.</td></tr>`;
+            } finally {
+                hideLoader();
+            }
+        }
+    } else {
+        window.location.href = "login.html";
+    }
+});
 
     });
     </script>
