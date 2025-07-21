@@ -84,6 +84,12 @@
                     <select id="adminHospitalSelect" onchange="loadHospitalQaData()"><option value="">Select Hospital</option></select>
                     <select id="adminYearSelect" onchange="loadHospitalQaData()"></select>
                     <select id="adminMonthSelect" onchange="loadHospitalQaData()"></select>
+                    <select id="adminDataTypeSelect" onchange="loadHospitalQaData()">
+                        <option value="output">Output</option>
+                        <option value="flatness">Flatness</option>
+                        <option value="inline">Inline Symmetry</option>
+                        <option value="crossline">Crossline Symmetry</option>
+                    </select>
                 </div>
                 <div class="user-table-container" id="hospitalQaTableContainer">
                      <p class="no-users-message">Select a hospital, year, and month to view data.</p>
@@ -175,14 +181,16 @@
             });
         }
 
+        // **MODIFIED**: SIMPLIFIED FUNCTION
         window.showAdminSection = async function(sectionId) {
             document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector(`button[onclick="showAdminSection('${sectionId}')"]`).classList.add('active');
             document.querySelectorAll('.content-display-area .card-section').forEach(section => section.classList.remove('active-section'));
             document.getElementById(sectionId).classList.add('active-section');
 
-            if (allUsersData.length === 0) await loadAllUsers();
-            if (sectionId === 'hospital-data-access-section') populateHospitalDataFilters();
+            if (sectionId === 'hospital-data-access-section') {
+                populateHospitalDataFilters();
+            }
             if (sectionId === 'audit-logs-section') {
                 populateAuditLogFilters();
                 await loadAuditLogs();
@@ -372,22 +380,36 @@
             }
         }
         
-        function renderHospitalQaDataTable(data, year, month) {
+        // **MODIFIED**: REPLACED FUNCTION TO HANDLE DATA OBJECT
+        function renderHospitalQaDataTable(allData, year, month) {
             const container = document.getElementById('hospitalQaTableContainer');
+            const selectedDataType = document.getElementById('adminDataTypeSelect').value;
+            const dataForTable = allData[selectedDataType]; // Get the correct data array
+
             container.innerHTML = '';
-            if (!data) {
-                container.innerHTML = `<p class="no-users-message">No data available.</p>`;
+            if (!dataForTable || dataForTable.length === 0) {
+                container.innerHTML = `<p class="no-users-message">No '${selectedDataType}' data available for the selected period.</p>`;
                 return;
             }
+
             const numDays = new Date(year, month, 0).getDate();
-            let tableHTML = '<table class="user-table hospital-qa-table"><thead><tr><th>Energy</th>';
-            for (let i = 1; i <= numDays; i++) tableHTML += `<th>${i}</th>`;
+            let tableHTML = `<h3 style="text-align:center; margin-top:0;">${selectedDataType.charAt(0).toUpperCase() + selectedDataType.slice(1)} Data</h3>`;
+            tableHTML += '<table class="user-table hospital-qa-table"><thead><tr><th>Energy</th>';
+            for (let i = 1; i <= numDays; i++) {
+                tableHTML += `<th>${i}</th>`;
+            }
             tableHTML += '</tr></thead><tbody>';
-            data.forEach(row => {
+
+            dataForTable.forEach(row => {
                 tableHTML += `<tr><td>${row[0]}</td>`;
-                row.slice(1).forEach(cell => tableHTML += `<td>${cell}</td>`);
+                // Ensure row has enough columns to match the number of days
+                const values = row.slice(1);
+                for (let i = 0; i < numDays; i++) {
+                    tableHTML += `<td>${values[i] || ''}</td>`;
+                }
                 tableHTML += '</tr>';
             });
+
             tableHTML += '</tbody></table>';
             container.innerHTML = tableHTML;
         }
@@ -428,6 +450,7 @@
             }
         }
 
+        // **MODIFIED**: REFACTORED INITIALIZATION LOGIC
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentAdminUid = user.uid;
@@ -436,7 +459,18 @@
                     alert("Access Denied.");
                     logout();
                 } else {
-                    await showAdminSection('manage-users-section');
+                    showLoader();
+                    try {
+                        // First, load all user data which also populates filters
+                        await loadAllUsers(); 
+                        // Then, show the default section
+                        showAdminSection('manage-users-section');
+                    } catch (error) {
+                        console.error("Failed to initialize admin dashboard:", error);
+                        usersTableBody.innerHTML = `<tr><td colspan="6" class="no-users-message" style="color:red;">Could not load initial admin data. Please refresh.</td></tr>`;
+                    } finally {
+                        hideLoader();
+                    }
                 }
             } else {
                 window.location.href = "login.html";
