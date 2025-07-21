@@ -112,7 +112,7 @@
       color: red;
       font-size: 14px;
       margin-bottom: 10px;
-      min-height: 1.2em; /* Prevents layout shift when message appears */
+      min-height: 1.2em;
     }
     .home-link {
         display: block;
@@ -167,6 +167,8 @@
   <div id="notification-container"></div>
 
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <!-- **MODIFIED**: ADDED APP CHECK SCRIPT -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-check-compat.js"></script>
   <script src="firebase-init.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
@@ -242,11 +244,9 @@
             }
 
             try {
-                // Step 1: Authenticate with Firebase Auth
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
-                // Step 2: Call our backend /login endpoint to check status and get role
                 const response = await fetch(`${BACKEND_URL}/login`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -256,11 +256,9 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    // This will catch 403, 404, 500 errors and display the specific message
                     throw new Error(data.message || 'An unknown error occurred.');
                 }
 
-                // Step 3: Login is successful and user is active, save info and redirect
                 localStorage.setItem("userEmail", email);
                 localStorage.setItem("hospitalName", data.hospital.toUpperCase());
                 localStorage.setItem("userRole", data.role);
@@ -273,9 +271,7 @@
                 }
 
             } catch (error) {
-                // This single catch block now handles all errors gracefully
                 console.error("Login process failed:", error);
-                // Handle Firebase Auth specific errors for better feedback
                 if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
                     errorMsg.textContent = "Error: Invalid email or password.";
                 } else {
