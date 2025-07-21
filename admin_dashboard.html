@@ -11,14 +11,19 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; background: linear-gradient(to bottom right, #dbeafe, #f0f9ff); color: #333; }
         .admin-header { background-color: #007bff; color: white; padding: 20px; font-size: 2em; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); text-align: center; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .admin-header h1 { margin: 0; font-size: 1.2em; flex-grow: 1; text-align: center; }
-        .logout-button { width: 38px; height: 38px; display: flex; justify-content: center; align-items: center; padding: 0; font-size: 1.2em; background-color: #dc3545; color: white; border: none; border-radius: 50%; cursor: pointer; transition: background-color 0.3s ease; }
+        .header-buttons { display: flex; align-items: center; gap: 15px; }
+        .header-btn { width: 38px; height: 38px; display: flex; justify-content: center; align-items: center; padding: 0; font-size: 1.2em; background-color: #0069d9; color: white; border: none; border-radius: 50%; cursor: pointer; transition: background-color 0.3s ease; }
+        .logout-button { background-color: #dc3545; }
+        .header-btn:hover { background-color: #0056b3; }
         .logout-button:hover { background-color: #c82333; }
-        .main-admin-layout { display: flex; flex-grow: 1; width: 100%; }
-        .sidebar-nav { width: 200px; background-color: #ffffff; box-shadow: 2px 0 5px rgba(0,0,0,0.08); padding: 20px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
-        .sidebar-nav .nav-btn { width: 100%; padding: 15px 10px; border: none; background-color: #eee; color: #333; font-size: 1em; font-weight: 600; text-align: left; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
-        .sidebar-nav .nav-btn:hover:not(.active) { background-color: #e0e0e0; }
-        .sidebar-nav .nav-btn.active { background-color: #007bff; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .main-admin-layout { display: flex; flex-grow: 1; width: 100%; transition: all 0.3s ease-in-out; }
+        .sidebar-nav { width: 200px; background-color: #ffffff; box-shadow: 2px 0 5px rgba(0,0,0,0.08); padding: 20px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; transition: all 0.3s ease-in-out; }
         .content-display-area { flex-grow: 1; padding: 20px; display: flex; flex-direction: column; gap: 30px; overflow-y: auto; }
+        
+        /* **MODIFIED**: Styles for full-width mode */
+        .main-admin-layout.full-width-mode .sidebar-nav { width: 0; padding: 20px 0; overflow: hidden; }
+        .main-admin-layout.full-width-mode .content-display-area { padding: 20px 40px; }
+
         .card-section { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: none; }
         .card-section.active-section { display: block; }
         .card-section h2 { margin-top: 0; margin-bottom: 20px; position: relative; }
@@ -28,7 +33,10 @@
         .filter-search-container button:hover { background-color: #0056b3; }
         .user-table-container { max-height: 500px; overflow-y: auto; overflow-x: auto; border: 1px solid #eee; border-radius: 8px; background-color: #f9f9f9; }
         .user-table { width: 100%; border-collapse: collapse; }
-        .user-table th, .user-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
+
+        /* **MODIFIED**: Added full border for a grid layout */
+        .user-table th, .user-table td { padding: 12px 15px; text-align: left; border: 1px solid #ddd; }
+        
         .user-table th { background-color: #e0f7fa; color: #007bff; font-weight: 600; position: sticky; top: 0; z-index: 1; }
         .user-actions-cell button { padding: 5px 8px; font-size: 0.8em; border-radius: 8px; margin: 0 2px; cursor: pointer; border: none; color: white; }
         .approve-btn { background-color: #28a745; }
@@ -54,7 +62,10 @@
 <body>
     <div class="admin-header">
         <h1>LINAC QA Admin Portal</h1>
-        <button onclick="logout()" class="logout-button" title="Logout" aria-label="Logout"><i class="fas fa-sign-out-alt"></i></button>
+        <div class="header-buttons">
+            <button onclick="toggleFullWidth()" class="header-btn" title="Toggle Full Width" id="fullWidthBtn"><i class="fas fa-expand"></i></button>
+            <button onclick="logout()" class="header-btn logout-button" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
     </div>
     <div class="main-admin-layout">
         <div class="sidebar-nav">
@@ -187,6 +198,20 @@
                 console.error("Logout failed:", err);
                 hideLoader();
             });
+        }
+
+        // **MODIFIED**: New function to toggle full-width mode
+        window.toggleFullWidth = function() {
+            const layout = document.querySelector('.main-admin-layout');
+            const icon = document.querySelector('#fullWidthBtn i');
+            layout.classList.toggle('full-width-mode');
+            if (layout.classList.contains('full-width-mode')) {
+                icon.classList.remove('fa-expand');
+                icon.classList.add('fa-compress');
+            } else {
+                icon.classList.remove('fa-compress');
+                icon.classList.add('fa-expand');
+            }
         }
 
         window.showAdminSection = async function(sectionId) {
@@ -481,32 +506,29 @@
             }
         }
 
-        // **MODIFIED**: This section is commented out for debugging
         auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        currentAdminUid = user.uid;
-        const userRole = localStorage.getItem("userRole");
-        if (userRole !== "Admin") {
-            alert("Access Denied.");
-            logout();
-        } else {
-            showLoader();
-            try {
-                // Re-enabling the automatic loading
-                await loadAllUsers(); 
-                showAdminSection('manage-users-section');
-            } catch (error) {
-                console.error("Failed to initialize admin dashboard:", error);
-                usersTableBody.innerHTML = `<tr><td colspan="6" class="no-users-message" style="color:red;">Could not load initial admin data. Please refresh.</td></tr>`;
-            } finally {
-                hideLoader();
+            if (user) {
+                currentAdminUid = user.uid;
+                const userRole = localStorage.getItem("userRole");
+                if (userRole !== "Admin") {
+                    alert("Access Denied.");
+                    logout();
+                } else {
+                    showLoader();
+                    try {
+                        await loadAllUsers(); 
+                        showAdminSection('manage-users-section');
+                    } catch (error) {
+                        console.error("Failed to initialize admin dashboard:", error);
+                        usersTableBody.innerHTML = `<tr><td colspan="6" class="no-users-message" style="color:red;">Could not load initial admin data. Please refresh.</td></tr>`;
+                    } finally {
+                        hideLoader();
+                    }
+                }
+            } else {
+                window.location.href = "login.html";
             }
-        }
-    } else {
-        window.location.href = "login.html";
-    }
-});
-
+        });
     });
     </script>
 </body>
