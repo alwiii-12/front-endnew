@@ -98,8 +98,16 @@
             <div class="card-section" id="audit-logs-section">
                 <h2>View Audit Logs</h2>
                 <div class="filter-search-container">
-                     <input type="date" id="auditLogDateFilter" onchange="loadAuditLogs()">
-                     <button onclick="loadAuditLogs()">Refresh Logs</button>
+                    <input type="date" id="auditLogDateFilter" onchange="loadAuditLogs()">
+                    <select id="auditLogHospitalFilter" onchange="loadAuditLogs()"><option value="">All Hospitals</option></select>
+                    <select id="auditLogActionFilter" onchange="loadAuditLogs()">
+                        <option value="">All Actions</option>
+                        <option value="user_login">User Login</option>
+                        <option value="user_logout">User Logout</option>
+                        <option value="user_update">User Update</option>
+                        <option value="user_deletion">User Deletion</option>
+                    </select>
+                    <button onclick="loadAuditLogs()">Refresh Logs</button>
                 </div>
                 <div class="user-table-container">
                     <table class="user-table">
@@ -212,9 +220,7 @@
             }
         }
         
-        // **MODIFIED**: This function is now more memory-efficient to prevent browser freezing
         function populateCommonFilters() {
-            // Use a Set directly to find unique hospitals efficiently
             const hospitalSet = new Set();
             for (const user of allUsersData) {
                 if (user.hospital) {
@@ -226,7 +232,7 @@
             const hospitalFilterSelects = [
                 document.getElementById('filterHospital'),
                 document.getElementById('adminHospitalSelect'),
-                document.getElementById('auditLogHospitalFilter')
+                document.getElementById('auditLogHospitalFilter') // This will now find the element
             ];
 
             hospitalFilterSelects.forEach(select => {
@@ -323,7 +329,6 @@
             editUserName.value = user.name;
             editUserEmail.value = user.email;
             
-            // Re-use the already calculated sorted list of hospitals if available
             const hospitalSelect = document.getElementById('filterHospital');
             editUserHospital.innerHTML = hospitalSelect.innerHTML;
             editUserHospital.value = user.hospital;
