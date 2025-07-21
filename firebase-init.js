@@ -19,7 +19,7 @@ if (typeof firebase !== 'undefined' && !firebase.apps.length) {
     const appCheck = firebase.appCheck(app);
     
     appCheck.activate(
-      '6Ld514krAAAAABYR6Wq7v0UZUQu12dRgbj7bGXKY', // Your new Site Key
+      'PASTE_YOUR_RECAPTCHA_V3_SITE_KEY_HERE', // <-- IMPORTANT: PASTE YOUR KEY HERE
       true);
     
     console.log("Firebase App Check Initialized!");
