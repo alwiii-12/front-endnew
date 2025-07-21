@@ -12,6 +12,19 @@ const firebaseConfig = {
 
 // This line initializes the app.
 if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-    console.log("Firebase Initialized Successfully!"); 
+    const app = firebase.initializeApp(firebaseConfig);
+    console.log("Firebase Initialized Successfully!");
+
+    // --- NEW: Initialize App Check ---
+    const appCheck = firebase.appCheck(app);
+    
+    // Pass your reCAPTCHA v3 site key (public key) to activate().
+    appCheck.activate(
+      '6LfYI4orAAAAAD07xNe4LguLbq812SnWDwG5zknw', // Your Site Key is now included here.
+
+      // Optional argument. If true, the SDK automatically refreshes App Check
+      // tokens as needed.
+      true);
+    
+    console.log("Firebase App Check Initialized!");
 }
