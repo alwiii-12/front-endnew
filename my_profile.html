@@ -219,6 +219,7 @@
     <div id="notification-container"></div>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-check-compat.js"></script>
     <script src="firebase-init.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
@@ -346,7 +347,7 @@
                 document.getElementById('newPassword').value = '';
                 document.getElementById('confirmPassword').value = '';
                 passwordStrengthDiv.textContent = '';
-                togglePasswordForm(); // Close the form on success
+                togglePasswordForm();
             } catch (error) {
                 console.error("Password change error:", error);
                 if (error.code === 'auth/wrong-password') {
