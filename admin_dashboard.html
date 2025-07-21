@@ -17,22 +17,15 @@
         .main-admin-layout { display: flex; flex-grow: 1; width: 100%; transition: all 0.3s ease-in-out; }
         .sidebar-nav { width: 200px; background-color: #ffffff; box-shadow: 2px 0 5px rgba(0,0,0,0.08); padding: 20px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; transition: all 0.3s ease-in-out; }
         .content-display-area { flex-grow: 1; padding: 20px; display: flex; flex-direction: column; gap: 30px; overflow-y: auto; }
-        
-        /* Styles for full-width mode */
         .main-admin-layout.full-width-mode .sidebar-nav { width: 0; padding: 20px 0; overflow: hidden; }
         .main-admin-layout.full-width-mode .content-display-area { padding: 20px 40px; }
-
         .sidebar-nav .nav-btn { width: 100%; padding: 15px 10px; border: none; background-color: #eee; color: #333; font-size: 1em; font-weight: 600; text-align: left; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
         .sidebar-nav .nav-btn:hover:not(.active) { background-color: #dcdcdc; }
         .sidebar-nav .nav-btn.active { background-color: #007bff; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-        
         .card-section { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: none; }
         .card-section.active-section { display: block; }
         .card-section h2 { margin-top: 0; margin-bottom: 20px; position: relative; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* New button style for the full-width toggle */
         .card-section h2 .section-action-btn { width: 32px; height: 32px; font-size: 1em; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; }
-        
         .filter-search-container { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; align-items: center; }
         .filter-search-container input, .filter-search-container select { padding: 10px 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.95em; flex: 1; min-width: 150px; }
         .filter-search-container button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s ease; font-size: 0.95em; }
@@ -152,10 +145,11 @@
         </div>
     </div>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="firebase-init.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-    <script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-check-compat.js"></script>
+<script src="firebase-init.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+<script>
     document.addEventListener('DOMContentLoaded', () => {
         const auth = firebase.auth();
         const db = firebase.firestore();
@@ -175,7 +169,6 @@
         const editUserRole = document.getElementById('editUserRole');
         const editUserStatus = document.getElementById('editUserStatus');
 
-        // **MODIFIED**: Event listener for sidebar navigation
         const sidebar = document.querySelector('.sidebar-nav');
         sidebar.addEventListener('click', (event) => {
             const button = event.target.closest('.nav-btn');
