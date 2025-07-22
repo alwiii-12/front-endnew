@@ -175,6 +175,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
         const auth = firebase.auth();
+        const appCheck = firebase.appCheck(); // Get App Check instance
         const errorMsg = document.getElementById("errorMsg");
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
@@ -246,9 +247,16 @@
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
+                // *** NEW: Manually get the App Check token ***
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                const appCheckToken = appCheckTokenResponse.token;
+
                 const response = await fetch(`${BACKEND_URL}/login`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "X-Firebase-AppCheck": appCheckToken // <-- Manually add the token here
+                    },
                     body: JSON.stringify({ uid: user.uid })
                 });
 
