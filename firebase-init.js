@@ -19,7 +19,7 @@ if (typeof firebase !== 'undefined' && !firebase.apps.length) {
     const appCheck = firebase.appCheck(app);
     
     appCheck.activate(
-      'PASTE_YOUR_RECAPTCHA_V3_SITE_KEY_HERE', // <-- IMPORTANT: PASTE YOUR KEY HERE
+      '6Ld8EYsrAAAAADcMM6k3d6lQVxjRUVpaowwdk2Lv', // Your reCAPTCHA v3 Site Key
       true);
     
     console.log("Firebase App Check Initialized!");
