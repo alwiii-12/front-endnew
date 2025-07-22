@@ -153,6 +153,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const appCheck = firebase.appCheck(); // Get App Check instance
         const BACKEND_URL = "https://back-end-wrxi.onrender.com";
         let allUsersData = [];
         let currentAdminUid = null;
@@ -187,9 +188,13 @@
             showLoader();
             const user = auth.currentUser;
             try {
+                const appCheckTokenResponse = await appCheck.getToken(false);
                 await fetch(`${BACKEND_URL}/log_event`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "X-Firebase-AppCheck": appCheckTokenResponse.token
+                    },
                     body: JSON.stringify({
                         action: "user_logout",
                         userUid: user ? user.uid : "unknown_uid",
@@ -237,6 +242,7 @@
             }
             if (sectionId === 'audit-logs-section') {
                 populateAuditLogFilters();
+                loadAuditLogs(); // Load logs when switching to the tab
             }
         }
 
@@ -244,7 +250,13 @@
             showLoader();
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
-                const response = await fetch(`${BACKEND_URL}/admin/users`, { headers: { 'Authorization': `Bearer ${idToken}` } });
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                const response = await fetch(`${BACKEND_URL}/admin/users`, { 
+                    headers: { 
+                        'Authorization': `Bearer ${idToken}`,
+                        'X-Firebase-AppCheck': appCheckTokenResponse.token
+                    } 
+                });
                 if (!response.ok) throw new Error('Failed to fetch users');
                 allUsersData = await response.json();
                 populateCommonFilters();
@@ -326,9 +338,14 @@
             showLoader();
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckTokenResponse = await appCheck.getToken(false);
                 await fetch(`${BACKEND_URL}/admin/update-user-status`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Authorization': `Bearer ${idToken}`,
+                        'X-Firebase-AppCheck': appCheckTokenResponse.token
+                    },
                     body: JSON.stringify({ uid, status: newStatus, admin_uid: currentAdminUid })
                 });
                 await loadAllUsers();
@@ -345,9 +362,14 @@
             showLoader();
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckTokenResponse = await appCheck.getToken(false);
                 await fetch(`${BACKEND_URL}/admin/delete-user`, {
                     method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Authorization': `Bearer ${idToken}`,
+                        'X-Firebase-AppCheck': appCheckTokenResponse.token
+                    },
                     body: JSON.stringify({ uid, admin_uid: currentAdminUid })
                 });
                 await loadAllUsers();
@@ -381,9 +403,14 @@
             showLoader();
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckTokenResponse = await appCheck.getToken(false);
                 await fetch(`${BACKEND_URL}/admin/update-user-status`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Authorization': `Bearer ${idToken}`,
+                        'X-Firebase-AppCheck': appCheckTokenResponse.token
+                    },
                     body: JSON.stringify({
                         uid: editUserId.value,
                         hospital: editUserHospital.value,
@@ -438,7 +465,13 @@
             showLoader();
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
-                const response = await fetch(`${BACKEND_URL}/admin/hospital-data?hospitalId=${hospitalId}&month=${year}-${month}`, { headers: { 'Authorization': `Bearer ${idToken}` } });
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                const response = await fetch(`${BACKEND_URL}/admin/hospital-data?hospitalId=${hospitalId}&month=${year}-${month}`, { 
+                    headers: { 
+                        'Authorization': `Bearer ${idToken}`,
+                        'X-Firebase-AppCheck': appCheckTokenResponse.token
+                    } 
+                });
                 if (!response.ok) throw new Error('Failed to fetch data');
                 const result = await response.json();
                 renderHospitalQaDataTable(result.data, year, month);
@@ -459,6 +492,7 @@
             if (!dataForTable || dataForTable.length === 0) {
                 container.innerHTML = `<p class="no-users-message">No '${selectedDataType}' data available for the selected period.</p>`;
                 return;
+.
             }
 
             const numDays = new Date(year, month, 0).getDate();
@@ -498,7 +532,13 @@
 
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
-                const response = await fetch(url, { headers: { 'Authorization': `Bearer ${idToken}` } });
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                const response = await fetch(url, { 
+                    headers: { 
+                        'Authorization': `Bearer ${idToken}`,
+                        'X-Firebase-AppCheck': appCheckTokenResponse.token
+                    } 
+                });
                 if (!response.ok) throw new Error('Failed to fetch logs');
                 const result = await response.json();
                 logsTableBody.innerHTML = '';
