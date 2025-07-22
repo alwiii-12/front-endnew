@@ -53,7 +53,6 @@
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 9999; }
         .spinner { width: 60px; height: 60px; border: 8px solid #ffffff; border-top-color: #007bff; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        /* *** NEW: Added styles for coloring cells *** */
         .within { background-color: #d4edda !important; color: #155724 !important; }
         .warning { background-color: #fff3cd !important; color: #856404 !important; }
         .out { background-color: #f8d7da !important; color: #721c24 !important; }
@@ -121,6 +120,8 @@
                         <option value="user_deletion">User Deletion</option>
                     </select>
                     <button onclick="loadAuditLogs()">Refresh Logs</button>
+                    <!-- *** NEW DEBUG BUTTON *** -->
+                    <button onclick="loadAuditLogs(true)" style="background-color: #ffc107; color: #333;">Show All</button>
                 </div>
                 <div class="user-table-container">
                     <table class="user-table">
@@ -174,7 +175,6 @@
         const editUserRole = document.getElementById('editUserRole');
         const editUserStatus = document.getElementById('editUserStatus');
 
-        // *** NEW: Added data type configuration for coloring cells ***
         const dataTypesConfig = {
           output: { tolerance: 2.0, warning: 1.8 },
           flatness: { tolerance: 1.0, warning: 0.9 },
@@ -499,7 +499,7 @@
             const container = document.getElementById('hospitalQaTableContainer');
             const selectedDataType = document.getElementById('adminDataTypeSelect').value;
             const dataForTable = allData[selectedDataType]; 
-            const config = dataTypesConfig[selectedDataType]; // Get config for current data type
+            const config = dataTypesConfig[selectedDataType];
 
             container.innerHTML = '';
             if (!dataForTable || dataForTable.length === 0) {
@@ -540,14 +540,22 @@
             container.innerHTML = tableHTML;
         }
 
-        window.loadAuditLogs = async function() {
+        // *** MODIFIED FUNCTION TO ACCEPT A DEBUG FLAG ***
+        window.loadAuditLogs = async function(fetchAll = false) {
             showLoader();
-            const hospitalId = document.getElementById('auditLogHospitalFilter').value;
-            const action = document.getElementById('auditLogActionFilter').value;
-            const date = document.getElementById('auditLogDateFilter').value;
+            let hospitalId = document.getElementById('auditLogHospitalFilter').value;
+            let action = document.getElementById('auditLogActionFilter').value;
+            let date = document.getElementById('auditLogDateFilter').value;
             const logsTableBody = document.getElementById('auditLogsTableBody');
             logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">Loading logs...</td></tr>`;
             
+            // If the debug flag is true, ignore the filters
+            if (fetchAll) {
+                hospitalId = '';
+                action = '';
+                date = '';
+            }
+
             const cacheBuster = new Date().getTime();
             let url = `${BACKEND_URL}/admin/audit-logs?cache=${cacheBuster}&`;
             if(date) url += `date=${date}&`;
@@ -572,7 +580,7 @@
                 }
                 result.logs.forEach(log => {
                     const row = logsTableBody.insertRow();
-                    row.innerHTML = `<td>${log.timestamp}</td><td>${log.action}</td><td>${log.user_display}</td><td><pre>${JSON.stringify(log.changes || log.deletedUserData || {}, null, 2)}</pre></td>`;
+                    row.innerHTML = `<td>${log.timestamp}</td><td>${log.action}</td><td>${log.user_display}</td><td><pre>${JSON.stringify(log.changes || log.deletedUserData || log, null, 2)}</pre></td>`;
                 });
             } catch (error) {
                 console.error("Error loading audit logs:", error);
