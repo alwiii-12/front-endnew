@@ -188,7 +188,6 @@
   <div id="notification-container"></div>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <!-- **MODIFIED**: ADDED APP CHECK SCRIPT -->
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-check-compat.js"></script>
   <script src="firebase-init.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -253,7 +252,8 @@
         }
 
         passwordInput.addEventListener('input', checkPasswordStrength);
-
+        
+        // *** MODIFIED SECTION ***
         window.signup = async function() {
           signupButton.disabled = true;
           signupButton.textContent = 'Signing Up...';
@@ -280,21 +280,30 @@
           try {
             const userCredential = await auth.createUserWithEmailAndPassword(email, password);
             const uid = userCredential.user.uid;
+
+            // Get the App Check token to send to the backend
+            const appCheck = firebase.appCheck();
+            const appCheckTokenResponse = await appCheck.getToken(false);
+            const token = appCheckTokenResponse.token;
+            
             const BACKEND_URL = "https://back-end-wrxi.onrender.com";
             const response = await fetch(`${BACKEND_URL}/signup`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "X-Firebase-AppCheck": token // Send the App Check token
+                },
                 body: JSON.stringify({ uid, name, email, hospital, role, status: "pending" })
             });
             const data = await response.json();
-            if (data.status === "success") {
+            if (response.ok && data.status === "success") {
                 localStorage.setItem("hospitalName", hospital.toUpperCase());
                 showNotification("Signup successful! Your account is awaiting approval.", 'success', 5000);
                 setTimeout(() => {
                     window.location.href = "awaiting_approval.html";
                 }, 3000);
             } else {
-                showNotification("Signup failed: " + data.message, 'error');
+                showNotification("Signup failed: " + (data.message || 'Unknown backend error'), 'error');
             }
           } catch (error) {
             console.error(error);
@@ -311,6 +320,7 @@
             signupButton.textContent = 'Sign Up';
           }
         }
+        // *** END MODIFIED SECTION ***
     });
   </script>
 </body>
