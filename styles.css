@@ -1,1 +1,275 @@
+/* --- Google Fonts Import --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@600;700&display=swap');
 
+/* --- NEW MODERN COLOR PALETTE --- */
+:root {
+  --primary-color: #007ACC; /* A slightly more vibrant blue */
+  --primary-dark: #005D99;  /* Darker shade for hover/active */
+  --primary-light: #EBF7FF; /* Very light blue for backgrounds/accents */
+
+  --secondary-color: #2ECC71; /* A fresh green for success/accents */
+  --secondary-dark: #27AE60;
+
+  --text-main: #34495E;    /* Dark, professional text */
+  --text-secondary: #7F8C8D; /* Lighter text for descriptions/hints */
+  --text-white: #FFFFFF;
+
+  --bg-body: #F4F7F6;     /* Light, subtle background for the entire page */
+  --bg-card: #FFFFFF;     /* White background for main content cards */
+  --bg-dark-mode: #2C3E50; /* Dark mode background */
+  --bg-dark-card: #34495E; /* Dark mode card background */
+
+  --border-color: #DDE6E9; /* Light border color */
+  --shadow-light: rgba(0, 0, 0, 0.06); /* Lighter, softer shadow */
+  --shadow-medium: rgba(0, 0, 0, 0.12); /* Slightly stronger shadow for elevation */
+
+  --status-success: #28A745; /* Standard green for success */
+  --status-warning: #FFC107; /* Standard orange for warning */
+  --status-error: #DC3545;  /* Standard red for error */
+
+  /* Handsontable specific colors (will be fully populated later) */
+  --ht-within: #E6F5ED;
+  --ht-warning: #FFF3CD;
+  --ht-out: #F8D7DA;
+  --ht-text-within: #155724;
+  --ht-text-warning: #856404;
+  --ht-text-out: #721C24;
+}
+
+/* --- General Body and Font Styles --- */
+body {
+  font-family: 'Inter', sans-serif; /* Use Inter for most text */
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(to bottom right, var(--primary-light), var(--bg-body)); /* Using new variables */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  color: var(--text-main); /* Default text color */
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Montserrat', sans-serif; /* Use Montserrat for headings */
+  color: var(--primary-dark); /* Darker primary for headings */
+  margin-top: 0;
+  margin-bottom: 0.8em;
+  line-height: 1.2;
+}
+
+h2 { font-size: 2em; } /* Adjusted size for main titles */
+
+
+/* --- Login Container (Card) Styles --- */
+.login-container {
+  background: var(--bg-card); /* White card background */
+  padding: 40px; /* Increased padding */
+  border-radius: 16px; /* Larger border radius */
+  box-shadow: 0 10px 30px var(--shadow-medium); /* Softer, more spread out shadow */
+  width: 100%;
+  max-width: 400px; /* Slightly wider */
+  text-align: center;
+  border: 1px solid var(--border-color); /* Subtle border */
+}
+
+/* --- Input Field Styles --- */
+input {
+  width: 100%;
+  padding: 12px; /* Increased padding for inputs */
+  border: 1px solid var(--border-color); /* Softer border color */
+  border-radius: 8px; /* Consistent border radius */
+  font-size: 1em;
+  box-sizing: border-box;
+  background-color: var(--bg-card); /* Consistent with card background */
+  color: var(--text-main);
+  margin-bottom: 20px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease; /* Smooth transition */
+}
+
+input::placeholder {
+  color: var(--text-secondary); /* Softer placeholder color */
+  opacity: 1;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--primary-color); /* Highlight border on focus */
+  box-shadow: 0 0 0 3px var(--primary-light); /* Subtle glow */
+}
+
+.password-input-container {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.password-input-container input {
+  padding-right: 40px;
+  margin-bottom: 0;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 15px; /* Adjusted position */
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--text-secondary); /* Softer toggle color */
+  z-index: 2;
+  font-size: 1.1em;
+}
+
+.remember-me-container {
+  display: flex;
+  align-items: center;
+  margin-top: -10px;
+  margin-bottom: 15px;
+  justify-content: flex-start;
+  color: var(--text-main);
+}
+
+.remember-me-container input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+  height: 16px;
+  width: 16px;
+  flex-shrink: 0;
+  cursor: pointer;
+  margin-bottom: 0;
+  border-radius: 4px; /* Slightly rounded checkbox */
+  border-color: var(--border-color); /* Consistent border */
+}
+
+.remember-me-container label {
+  margin-bottom: 0;
+  font-weight: normal;
+  color: var(--text-main); /* Consistent label color */
+  cursor: pointer;
+}
+
+/* --- Button Styles --- */
+button {
+  width: 100%;
+  padding: 12px; /* Increased padding */
+  background-color: var(--primary-color); /* Using new variable */
+  color: var(--text-white); /* White text */
+  border: none;
+  border-radius: 8px; /* Consistent border radius */
+  font-size: 1.05em; /* Slightly larger font */
+  font-weight: 600; /* Bolder text */
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover {
+  background-color: var(--primary-dark); /* Darker on hover */
+  transform: translateY(-2px); /* Lift slightly */
+  box-shadow: 0 8px 16px var(--shadow-light); /* Subtle shadow on hover */
+}
+
+button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px var(--shadow-light) inset; /* Inset shadow on click */
+}
+
+/* --- Footer and Link Styles --- */
+.footer {
+  margin-top: 25px; /* Increased margin */
+  font-size: 0.85em; /* Slightly smaller font */
+  color: var(--text-secondary); /* Lighter text for footer */
+}
+
+.error {
+  color: var(--status-error); /* Red error color */
+  font-size: 0.9em;
+  margin-bottom: 15px; /* Increased margin */
+  min-height: 1.2em;
+}
+
+.home-link {
+  display: inline-block; /* Changed to inline-block for better control */
+  max-width: 150px; /* Increased width */
+  margin: 30px auto 0 auto; /* More margin around it */
+  font-size: 1em; /* Adjusted font size */
+  font-weight: 600; /* Bolder */
+  text-decoration: none;
+  color: var(--primary-color); /* Text color */
+  background-color: var(--primary-light); /* Light background */
+  padding: 12px 25px; /* More padding */
+  border-radius: 8px; /* Consistent border radius */
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-link:hover {
+  background-color: var(--primary-color); /* Primary color on hover */
+  color: var(--text-white); /* White text on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px var(--shadow-light);
+}
+
+.forgot-password-link {
+  display: block;
+  text-align: right;
+  font-size: 0.9em;
+  margin-top: -15px;
+  margin-bottom: 20px; /* Increased margin */
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.forgot-password-link:hover {
+  color: var(--primary-dark);
+}
+
+/* --- Notification Container (from upload.html but common) --- */
+#notification-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+}
+.notification-message {
+    background-color: var(--text-main); /* Dark background for info */
+    color: var(--text-white);
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    opacity: 0; /* Hidden by default */
+    transform: translateY(-20px); /* Start slightly above */
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out; /* Smooth animation */
+}
+.notification-message.show {
+    opacity: 1;
+    transform: translateY(0); /* Slide into view */
+}
+.notification-message.success { background-color: var(--status-success); }
+.notification-message.error { background-color: var(--status-error); }
+.notification-message.warning { background-color: var(--status-warning); color: var(--text-main); }
+
+
+/* --- Loading Overlay (from upload.html but common) --- */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: none; /* Controlled by JS */
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 8px solid var(--text-white);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
