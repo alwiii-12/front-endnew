@@ -27,7 +27,7 @@
   --status-warning: #FFC107; /* Standard orange for warning */
   --status-error: #DC3545;  /* Standard red for error */
 
-  /* Handsontable specific colors (will be fully populated later) */
+  /* Handsontable specific colors (Placeholder for now, will be populated fully later from upload.html and admin_dashboard.html) */
   --ht-within: #E6F5ED;
   --ht-warning: #FFF3CD;
   --ht-out: #F8D7DA;
@@ -37,192 +37,164 @@
 }
 
 /* --- General Body and Font Styles --- */
+html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Allow scrolling for main content if needed */
+}
+
 body {
-  font-family: 'Inter', sans-serif; /* Use Inter for most text */
+  font-family: 'Inter', sans-serif;
   margin: 0;
   padding: 0;
-  background: linear-gradient(to bottom right, var(--primary-light), var(--bg-body)); /* Using new variables */
+  background: linear-gradient(to bottom right, var(--primary-light), var(--bg-body));
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
-  color: var(--text-main); /* Default text color */
+  color: var(--text-main);
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Montserrat', sans-serif; /* Use Montserrat for headings */
-  color: var(--primary-dark); /* Darker primary for headings */
+  font-family: 'Montserrat', sans-serif;
+  color: var(--primary-dark);
   margin-top: 0;
   margin-bottom: 0.8em;
   line-height: 1.2;
 }
 
-h2 { font-size: 2em; } /* Adjusted size for main titles */
+h1 { font-size: 2.2em; }
+h2 { font-size: 1.8em; }
+h3 { font-size: 1.5em; }
 
 
-/* --- Login Container (Card) Styles --- */
-.login-container {
-  background: var(--bg-card); /* White card background */
-  padding: 40px; /* Increased padding */
-  border-radius: 16px; /* Larger border radius */
+/* --- General Card/Container Styles (Applied across multiple pages) --- */
+.card-panel,
+.login-container,
+.signup-container,
+.profile-card,
+.card-section,
+.message-container,
+.card {
+  background: var(--bg-card);
+  border-radius: 16px; /* Consistent larger radius for main containers */
   box-shadow: 0 10px 30px var(--shadow-medium); /* Softer, more spread out shadow */
-  width: 100%;
-  max-width: 400px; /* Slightly wider */
-  text-align: center;
-  border: 1px solid var(--border-color); /* Subtle border */
+  border: 1px solid var(--border-color); /* Subtle border for definition */
+  box-sizing: border-box; /* Ensure padding/border is included in width */
+  padding: 30px; /* Default padding for cards */
 }
 
-/* --- Input Field Styles --- */
-input {
-  width: 100%;
-  padding: 12px; /* Increased padding for inputs */
-  border: 1px solid var(--border-color); /* Softer border color */
-  border-radius: 8px; /* Consistent border radius */
-  font-size: 1em;
-  box-sizing: border-box;
-  background-color: var(--bg-card); /* Consistent with card background */
-  color: var(--text-main);
-  margin-bottom: 20px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease; /* Smooth transition */
-}
 
-input::placeholder {
-  color: var(--text-secondary); /* Softer placeholder color */
-  opacity: 1;
-}
-
-input:focus {
-  outline: none;
-  border-color: var(--primary-color); /* Highlight border on focus */
-  box-shadow: 0 0 0 3px var(--primary-light); /* Subtle glow */
-}
-
-.password-input-container {
-  position: relative;
-  margin-bottom: 20px;
-}
-
-.password-input-container input {
-  padding-right: 40px;
-  margin-bottom: 0;
-}
-
-.toggle-password {
-  position: absolute;
-  right: 15px; /* Adjusted position */
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: var(--text-secondary); /* Softer toggle color */
-  z-index: 2;
-  font-size: 1.1em;
-}
-
-.remember-me-container {
-  display: flex;
-  align-items: center;
-  margin-top: -10px;
-  margin-bottom: 15px;
-  justify-content: flex-start;
-  color: var(--text-main);
-}
-
-.remember-me-container input[type="checkbox"] {
-  width: auto;
-  margin-right: 8px;
-  height: 16px;
-  width: 16px;
-  flex-shrink: 0;
-  cursor: pointer;
-  margin-bottom: 0;
-  border-radius: 4px; /* Slightly rounded checkbox */
-  border-color: var(--border-color); /* Consistent border */
-}
-
-.remember-me-container label {
-  margin-bottom: 0;
-  font-weight: normal;
-  color: var(--text-main); /* Consistent label color */
-  cursor: pointer;
-}
-
-/* --- Button Styles --- */
-button {
-  width: 100%;
-  padding: 12px; /* Increased padding */
-  background-color: var(--primary-color); /* Using new variable */
-  color: var(--text-white); /* White text */
+/* --- Button Styles (General) --- */
+button,
+a.button,
+.nav-btn,
+.header-btn,
+.home-link {
   border: none;
-  border-radius: 8px; /* Consistent border radius */
-  font-size: 1.05em; /* Slightly larger font */
-  font-weight: 600; /* Bolder text */
+  border-radius: 8px; /* Consistent border radius for buttons */
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  font-weight: 600; /* Bolder text for buttons */
 }
 
-button:hover {
-  background-color: var(--primary-dark); /* Darker on hover */
-  transform: translateY(-2px); /* Lift slightly */
-  box-shadow: 0 8px 16px var(--shadow-light); /* Subtle shadow on hover */
+button:hover,
+a.button:hover,
+.nav-btn:hover:not(.active),
+.header-btn:hover,
+.home-link:hover {
+  transform: translateY(-2px); /* Lift slightly on hover */
+  box-shadow: 0 8px 16px var(--shadow-light); /* More prominent shadow on hover */
 }
 
-button:active {
+button:active,
+a.button:active,
+.nav-btn:active,
+.header-btn:active,
+.home-link:active {
   transform: translateY(0);
   box-shadow: 0 2px 8px var(--shadow-light) inset; /* Inset shadow on click */
 }
 
-/* --- Footer and Link Styles --- */
-.footer {
-  margin-top: 25px; /* Increased margin */
-  font-size: 0.85em; /* Slightly smaller font */
-  color: var(--text-secondary); /* Lighter text for footer */
+button:disabled {
+  cursor: not-allowed;
+  background-color: var(--text-secondary) !important; /* Muted color for disabled */
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
 }
 
-.error {
-  color: var(--status-error); /* Red error color */
-  font-size: 0.9em;
-  margin-bottom: 15px; /* Increased margin */
-  min-height: 1.2em;
+
+/* --- Input Field Styles (General) --- */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1em;
+  box-sizing: border-box;
+  background-color: var(--bg-card); /* Consistent with card background */
+  color: var(--text-main);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.home-link {
-  display: inline-block; /* Changed to inline-block for better control */
-  max-width: 150px; /* Increased width */
-  margin: 30px auto 0 auto; /* More margin around it */
-  font-size: 1em; /* Adjusted font size */
-  font-weight: 600; /* Bolder */
-  text-decoration: none;
-  color: var(--primary-color); /* Text color */
-  background-color: var(--primary-light); /* Light background */
-  padding: 12px 25px; /* More padding */
-  border-radius: 8px; /* Consistent border radius */
-  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder {
+  color: var(--text-secondary);
+  opacity: 1;
 }
 
-.home-link:hover {
-  background-color: var(--primary-color); /* Primary color on hover */
-  color: var(--text-white); /* White text on hover */
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px var(--shadow-light);
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
-.forgot-password-link {
-  display: block;
-  text-align: right;
-  font-size: 0.9em;
-  margin-top: -15px;
-  margin-bottom: 20px; /* Increased margin */
-  color: var(--primary-color);
-  text-decoration: none;
-  transition: color 0.2s ease;
+/* Specific for password toggle */
+.password-input-container {
+  position: relative;
+}
+.password-input-container input {
+  padding-right: 40px;
+}
+.toggle-password {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--text-secondary);
+  z-index: 2;
+  font-size: 1.1em;
 }
 
-.forgot-password-link:hover {
-  color: var(--primary-dark);
+/* Checkbox specific styles */
+input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+  height: 18px; /* Slightly larger checkbox */
+  width: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+  border-radius: 4px; /* Slightly rounded checkbox */
+  border: 1px solid var(--border-color); /* Consistent border */
+  background-color: var(--bg-card);
+}
+input[type="checkbox"]:checked {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
 }
 
-/* --- Notification Container (Common) --- */
+
+/* --- Notification Container (Common across pages) --- */
 #notification-container {
     position: fixed;
     top: 20px;
@@ -231,25 +203,25 @@ button:active {
     z-index: 10000;
 }
 .notification-message {
-    background-color: var(--text-main); /* Dark background for info */
+    background-color: var(--text-main); /* Default for info/general messages */
     color: var(--text-white);
     padding: 12px 20px;
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    opacity: 0; /* Hidden by default */
-    transform: translateY(-20px); /* Start slightly above */
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out; /* Smooth animation */
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }
 .notification-message.show {
     opacity: 1;
-    transform: translateY(0); /* Slide into view */
+    transform: translateY(0);
 }
 .notification-message.success { background-color: var(--status-success); }
 .notification-message.error { background-color: var(--status-error); }
 .notification-message.warning { background-color: var(--status-warning); color: var(--text-main); }
 
 
-/* --- Loading Overlay (Common) --- */
+/* --- Loading Overlay (Common across pages) --- */
 #loading-overlay {
     position: fixed;
     top: 0;
@@ -274,14 +246,1113 @@ button:active {
     to { transform: rotate(360deg); }
 }
 
-/* --- Handsontable specific colors (Placeholder for now, will be populated fully later) --- */
+/* --- Specific Page Styles --- */
+
+/* Login Page styles (from login.html) */
+.login-container {
+  /* Inherits general .card styles */
+  padding: 40px; /* Override default card padding for specific layout */
+  max-width: 400px;
+  text-align: center;
+}
+.login-container h2 {
+  margin-bottom: 24px;
+}
+.login-container .footer {
+  margin-top: 25px;
+  font-size: 0.85em;
+  color: var(--text-secondary);
+}
+.login-container .error {
+  color: var(--status-error);
+  font-size: 0.9em;
+  margin-bottom: 15px;
+  min-height: 1.2em;
+}
+.login-container .home-link {
+    display: block;
+    max-width: 180px; /* Slightly wider */
+    margin: 30px auto 0 auto;
+    font-size: 1em;
+    padding: 12px 25px;
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+.login-container .home-link:hover {
+    background-color: var(--primary-color);
+    color: var(--text-white);
+}
+.login-container .forgot-password-link {
+    display: block;
+    text-align: right;
+    font-size: 0.9em;
+    margin-top: -15px;
+    margin-bottom: 20px;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.login-container .forgot-password-link:hover {
+    color: var(--primary-dark);
+}
+
+
+/* Signup Page styles (from signup.html) */
+.signup-container {
+    /* Inherits general .card styles */
+    padding: 30px; /* Override default card padding */
+    max-width: 450px; /* Slightly wider for form elements */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: auto; /* Center the container */
+}
+.signup-container h2 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    text-align: center;
+}
+.signup-container .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 5px; /* Adjust spacing between form groups */
+}
+.signup-container .form-group label {
+    text-align: left;
+    font-weight: bold;
+}
+.signup-container .password-input-container {
+    margin-bottom: 0; /* Remove extra margin */
+}
+.signup-container .password-input-container input {
+    height: 40px; /* Ensure input height consistency */
+    line-height: 20px;
+}
+.signup-container button {
+    margin-top: 15px; /* Increased margin above button */
+    padding: 12px;
+}
+.signup-container p {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 0.9em;
+}
+.signup-container p a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.signup-container p a:hover {
+    color: var(--primary-dark);
+}
+.signup-container .message {
+    color: var(--status-error);
+    text-align: center;
+    margin-bottom: 15px;
+}
+.signup-container .required {
+    color: var(--status-error);
+    margin-left: 4px;
+}
+.signup-container .password-strength {
+    font-size: 0.85em;
+    margin-top: 5px;
+    margin-bottom: 0;
+    text-align: left;
+    font-weight: 500;
+    min-height: 1.2em;
+}
+.signup-container .password-strength.weak { color: var(--status-error); }
+.signup-container .password-strength.intermediate { color: var(--status-warning); }
+.signup-container .password-strength.strong { color: var(--status-success); }
+
+
+/* Index Page (Landing Page) styles (from index.html) */
+.wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 20px;
+  background: url('wave-bg.png') no-repeat right center; /* Original background image */
+  background-size: cover;
+}
+.card {
+  /* Inherits general .card styles */
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  max-width: 1000px;
+  width: 100%;
+  padding: 0; /* Override default card padding as it has panels inside */
+}
+.left-panel {
+  flex: 1;
+  padding: 40px; /* Generous padding */
+}
+.left-panel h1 {
+  font-size: 2.2em; /* Consistent with new h1 size */
+  color: var(--primary-dark);
+  margin-bottom: 15px;
+}
+.left-panel p {
+  font-size: 1.05em; /* Slightly larger for readability */
+  margin-bottom: 30px;
+  color: var(--text-main);
+  line-height: 1.6;
+}
+.left-panel a.button {
+  display: inline-block;
+  margin-right: 15px; /* Slightly more space */
+  margin-top: 15px;
+  padding: 12px 28px; /* More padding */
+  background-color: var(--primary-color);
+  color: var(--text-white);
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: 8px;
+}
+.left-panel a.button:hover {
+  background-color: var(--primary-dark);
+}
+.right-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.right-panel img {
+  max-width: 90%;
+  height: auto;
+}
+@media (max-width: 768px) {
+  .wrapper {
+    flex-direction: column;
+    padding: 10px;
+  }
+  .card {
+    flex-direction: column;
+  }
+  .right-panel {
+    padding: 0;
+  }
+  .left-panel {
+      padding: 30px; /* Reduce padding on smaller screens */
+  }
+  .left-panel h1 {
+      font-size: 1.8em; /* Adjust font size on smaller screens */
+  }
+}
+
+/* My Profile Page styles (from my_profile.html) */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-card); /* White topbar for modern look */
+    color: var(--text-main); /* Dark text on white */
+    padding: 15px 30px; /* More padding */
+    font-size: 1.2em;
+    font-weight: 600;
+    box-shadow: 0 2px 8px var(--shadow-light); /* Subtle shadow */
+    border-bottom: 1px solid var(--border-color); /* Separator */
+}
+.topbar span {
+    color: var(--primary-dark); /* Highlight title */
+}
+.topbar button {
+    padding: 10px 18px; /* Consistent button padding */
+    background-color: var(--status-error); /* Red for logout */
+    color: var(--text-white);
+    border: none;
+    border-radius: 8px; /* Consistent radius */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.topbar button:hover {
+    background-color: #c82333; /* Darker red */
+}
+.profile-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.profile-card {
+    /* Inherits general .card styles */
+    padding: 40px; /* Generous padding */
+    max-width: 550px; /* Slightly wider */
+    width: 100%;
+    text-align: left;
+}
+.profile-card h1 {
+    color: var(--primary-dark);
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2em; /* Consistent heading size */
+}
+.profile-item {
+    margin-bottom: 18px; /* More spacing */
+    font-size: 1.1em;
+    line-height: 1.6;
+    display: flex;
+    align-items: baseline;
+    color: var(--text-main);
+}
+.profile-item strong {
+    display: inline-block;
+    width: 160px; /* Slightly wider label */
+    min-width: 140px;
+    flex-shrink: 0;
+    color: var(--primary-dark); /* Highlight labels */
+    text-align: right;
+    padding-right: 15px; /* More spacing */
+}
+.profile-item span:last-child {
+    flex-grow: 1;
+    word-break: break-word;
+}
+.profile-actions {
+    text-align: center;
+    margin-top: 30px;
+}
+.profile-actions button {
+    padding: 12px 25px; /* Consistent button padding */
+    background-color: var(--secondary-color); /* Green for action */
+    color: var(--text-white);
+    border: none;
+    border-radius: 8px; /* Consistent radius */
+    cursor: pointer;
+}
+.profile-actions button:hover {
+    background-color: var(--secondary-dark);
+}
+.loading-message {
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+.change-password-header {
+    color: var(--primary-dark);
+    font-size: 1.4em;
+    margin-top: 40px; /* More margin */
+    margin-bottom: 15px;
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    font-weight: 600;
+}
+.change-password-header i {
+    margin-left: 10px;
+    transition: transform 0.3s ease-in-out;
+}
+.change-password-header.active i {
+    transform: rotate(180deg);
+}
+.change-password-form {
+    display: none;
+    padding-top: 25px; /* More padding */
+    border-top: 1px solid var(--border-color); /* Consistent border */
+    margin-top: 20px; /* More margin */
+}
+.change-password-form.open {
+    display: block;
+}
+.form-group {
+    margin-bottom: 18px; /* More spacing */
+}
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: var(--text-main);
+}
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    box-sizing: border-box;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-card);
+    color: var(--text-main);
+}
+.password-strength {
+    font-size: 0.85em;
+    margin-top: 5px;
+    color: var(--text-secondary); /* Default color */
+}
+.password-strength.weak { color: var(--status-error); }
+.password-strength.intermediate { color: var(--status-warning); }
+.password-strength.strong { color: var(--status-success); }
+
+
+/* Awaiting Approval Page styles (from awaiting_approval.html) */
+.message-container {
+    /* Inherits general .card styles */
+    padding: 50px; /* More generous padding for this central message */
+    max-width: 650px; /* Wider for more content */
+    width: 100%;
+    text-align: center;
+}
+.message-container h1 {
+    color: var(--primary-dark);
+    margin-bottom: 25px; /* More spacing */
+    font-size: 2.2em; /* Consistent h1 size */
+}
+.message-container p {
+    font-size: 1.15em; /* Larger for impact */
+    color: var(--text-main);
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+.message-container .contact-info {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    margin-top: 30px;
+}
+.message-container .home-link {
+    display: inline-block;
+    margin-top: 30px;
+    padding: 12px 28px; /* Consistent button padding */
+    background-color: var(--primary-color);
+    color: var(--text-white);
+    text-decoration: none;
+    border-radius: 8px; /* Consistent button radius */
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.message-container .home-link:hover {
+    background-color: var(--primary-dark);
+}
+
+
+/* Admin Dashboard styles (from admin_dashboard.html) */
+.admin-header {
+    background-color: var(--primary-color);
+    color: var(--text-white);
+    padding: 20px 30px; /* More padding */
+    font-size: 2em;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+.admin-header h1 {
+    margin: 0;
+    font-size: 1.5em; /* Adjusted for header */
+    flex-grow: 1;
+    text-align: center;
+    color: var(--text-white); /* White on primary background */
+    font-family: 'Montserrat', sans-serif; /* Consistent with headings */
+}
+.header-buttons {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.header-btn {
+    width: 44px; /* Slightly larger */
+    height: 44px; /* Slightly larger */
+    padding: 0;
+    font-size: 1.3em; /* Larger icon */
+    background-color: var(--status-error);
+    color: var(--text-white);
+    border: none;
+    border-radius: 50%; /* Circular button */
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.header-btn:hover {
+    background-color: #c82333; /* Darker red */
+}
+.main-admin-layout {
+    display: flex;
+    flex-grow: 1;
+    width: 100%;
+    transition: all 0.3s ease-in-out;
+    background-color: var(--bg-body); /* Body background */
+}
+.sidebar-nav {
+    width: 240px; /* Slightly wider sidebar */
+    background-color: var(--bg-card);
+    box-shadow: 2px 0 8px var(--shadow-light); /* Softer shadow */
+    padding: 25px 20px; /* More vertical padding */
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* More space between buttons */
+    flex-shrink: 0;
+    transition: all 0.3s ease-in-out;
+}
+.main-admin-layout.full-width-mode .sidebar-nav {
+    width: 0;
+    padding: 20px 0;
+    overflow: hidden;
+}
+.main-admin-layout.full-width-mode .content-display-area {
+    padding: 25px 50px; /* More padding when sidebar is hidden */
+}
+.sidebar-nav .nav-btn {
+    width: 100%;
+    padding: 15px 15px; /* More padding */
+    border: none;
+    background-color: var(--primary-light); /* Light primary background */
+    color: var(--primary-dark); /* Dark primary text */
+    font-size: 1.05em;
+    font-weight: 600;
+    text-align: left;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.sidebar-nav .nav-btn:hover:not(.active) {
+    background-color: #DDEBFD; /* Slightly darker light primary on hover */
+}
+.sidebar-nav .nav-btn.active {
+    background-color: var(--primary-color);
+    color: var(--text-white);
+    box-shadow: 0 2px 8px var(--shadow-light);
+}
+.content-display-area {
+    flex-grow: 1;
+    padding: 25px 30px; /* More padding */
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    overflow-y: auto;
+}
+.card-section {
+    /* Inherits general .card styles */
+    padding: 30px; /* Override general card padding for section content */
+    display: none;
+}
+.card-section.active-section {
+    display: block;
+}
+.card-section h2 {
+    margin-top: 0;
+    margin-bottom: 25px; /* More margin */
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--primary-dark);
+    font-size: 1.8em;
+}
+.card-section h2 .section-action-btn {
+    width: 40px; /* Larger button */
+    height: 40px;
+    font-size: 1.1em;
+    background-color: var(--primary-color);
+    color: var(--text-white);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 6px var(--shadow-light);
+}
+.card-section h2 .section-action-btn:hover {
+    background-color: var(--primary-dark);
+}
+.filter-search-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px; /* More spacing */
+    margin-bottom: 25px;
+    align-items: center;
+}
+.filter-search-container input,
+.filter-search-container select {
+    padding: 12px 15px; /* Consistent input padding */
+    border: 1px solid var(--border-color);
+    border-radius: 8px; /* Consistent input radius */
+    font-size: 1em;
+    flex: 1;
+    min-width: 180px; /* Wider min-width for filters */
+    background-color: var(--bg-card);
+    color: var(--text-main);
+}
+.filter-search-container button {
+    padding: 12px 25px; /* Consistent button padding */
+    background-color: var(--primary-color);
+    color: var(--text-white);
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 600;
+}
+.filter-search-container button:hover {
+    background-color: var(--primary-dark);
+}
+.user-table-container {
+    max-height: 550px; /* Slightly taller table container */
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-card);
+    box-shadow: 0 2px 8px var(--shadow-light); /* Soft shadow for table */
+}
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.user-table th, .user-table td {
+    padding: 15px 18px; /* More padding in table cells */
+    text-align: left;
+    border-bottom: 1px solid var(--border-color); /* Only bottom border for cleaner look */
+    border-right: none; /* Remove right border */
+    border-left: none; /* Remove left border */
+}
+.user-table th {
+    background-color: var(--primary-light); /* Light primary background for headers */
+    color: var(--primary-dark); /* Dark primary text for headers */
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.user-table tr:last-child td {
+    border-bottom: none; /* Remove bottom border for last row */
+}
+.user-table tbody tr:hover {
+    background-color: #F7FBFF; /* Light hover effect for rows */
+}
+.user-actions-cell button {
+    padding: 8px 12px; /* Adjusted button padding */
+    font-size: 0.85em;
+    border-radius: 6px; /* Slightly smaller radius for action buttons */
+    margin: 0 4px; /* More spacing between buttons */
+    color: var(--text-white);
+    font-weight: 500;
+}
+.approve-btn { background-color: var(--status-success); }
+.reject-btn { background-color: var(--status-warning); color: var(--text-main); }
+.edit-btn { background-color: #17A2B8; /* Info blue */ }
+.delete-btn { background-color: var(--status-error); }
+.no-users-message {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+/* Modal styles (from admin_dashboard.html) */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5); /* Darker overlay */
+    align-items: center;
+    justify-content: center;
+}
+.modal-content {
+    background-color: var(--bg-card);
+    margin: auto;
+    padding: 35px; /* More padding */
+    border: 1px solid var(--border-color);
+    border-radius: 12px; /* Consistent radius */
+    width: 90%;
+    max-width: 550px; /* Wider modal */
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3); /* More prominent shadow */
+    position: relative;
+    color: var(--text-main);
+}
+.close-button {
+    color: var(--text-secondary);
+    position: absolute;
+    top: 15px; /* Adjusted position */
+    right: 20px; /* Adjusted position */
+    font-size: 32px; /* Larger close button */
+    font-weight: bold;
+    cursor: pointer;
+}
+.close-button:hover {
+    color: var(--text-main);
+}
+.modal h3 {
+    color: var(--primary-dark);
+    margin-top: 0;
+    margin-bottom: 25px; /* More margin */
+    text-align: center;
+    font-size: 1.6em;
+}
+.modal label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: var(--text-main);
+}
+.modal input, .modal select {
+    width: calc(100% - 24px); /* Account for padding */
+    padding: 12px;
+    margin-bottom: 18px; /* More margin */
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-card);
+    color: var(--text-main);
+}
+.modal-buttons {
+    text-align: center;
+    margin-top: 25px;
+}
+.modal-buttons button {
+    padding: 12px 25px; /* Consistent button padding */
+    margin: 0 12px; /* More spacing */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+.modal-buttons .save-btn { background-color: var(--status-success); color: var(--text-white); }
+.modal-buttons .cancel-btn { background-color: #6c757d; color: var(--text-white); } /* Muted gray */
+
+
+/* Upload Page Styles (from upload.html) */
+body.dark {
+    background-color: var(--bg-dark-mode);
+    color: var(--text-light);
+}
+body.dark .card-panel,
+body.dark .topbar,
+body.dark .sidebar {
+    background: var(--bg-dark-card);
+    color: var(--text-light);
+    border-color: #444;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+}
+body.dark .topbar { border-bottom: 1px solid #444; }
+body.dark .sidebar { box-shadow: 2px 0 5px rgba(0,0,0,0.5); }
+body.dark h2, body.dark h3 { color: var(--primary-light); }
+body.dark .sidebar button { background: #444; color: #eee; }
+body.dark .sidebar button.active { background: var(--primary-color); }
+body.dark .tab-nav { border-color: #555; }
+body.dark .tab-nav-button { color: #aaa; }
+body.dark .tab-nav-button:hover { color: var(--primary-light); }
+body.dark .tab-nav-button.active { color: var(--primary-light); border-bottom-color: var(--primary-light); }
+body.dark .handsontable .htCore td:first-child,
+body.dark .handsontable .htCore th:first-child {
+    background-color: #3a3a3a !important;
+    color: #ddd !important;
+}
+body.dark .handsontable th,
+body.dark .handsontable td {
+    background-color: var(--bg-dark-card);
+    color: var(--text-light);
+    border-color: #555;
+}
+/* Ensure dark mode for general inputs */
+body.dark input[type="text"],
+body.dark input[type="email"],
+body.dark input[type="password"],
+body.dark select {
+    background-color: #3a3a3a;
+    color: #eee;
+    border-color: #555;
+}
+body.dark input[type="text"]::placeholder,
+body.dark input[type="email"]::placeholder,
+body.dark input[type="password"]::placeholder {
+    color: #bbb;
+}
+body.dark input[type="text"]:focus,
+body.dark input[type="email"]:focus,
+body.dark input[type="password"]:focus,
+body.dark select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.4); /* Custom light glow for dark mode */
+}
+
+
+.content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+.sidebar {
+    width: 240px; /* Consistent sidebar width */
+    background: var(--bg-card);
+    padding: 25px; /* Consistent padding */
+    box-shadow: 2px 0 8px var(--shadow-light);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+.sidebar h2 {
+    margin: 0 0 20px;
+    color: var(--primary-dark);
+    font-weight: 600;
+    font-size: 1.6em; /* Adjusted size */
+}
+.year-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px; /* More spacing */
+}
+.year-nav button {
+  width: 35px; /* Larger buttons */
+  height: 35px;
+  flex-shrink: 0;
+  padding: 5px;
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+  border-radius: 50%; /* Circular buttons */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.year-nav span {
+  font-weight: 700; /* Bolder */
+  font-size: 1.2em; /* Larger */
+  color: var(--text-main);
+}
+.sidebar button {
+    width: 100%;
+    margin-bottom: 10px; /* More spacing */
+    padding: 12px 8px; /* More padding */
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    font-weight: 500;
+    text-align: center;
+    border-radius: 8px;
+    font-size: 1em;
+}
+.sidebar button.active {
+    background: var(--primary-color);
+    color: var(--text-white);
+}
+.sidebar label {
+    display: flex;
+    align-items: center;
+    margin-top: 20px; /* More margin */
+    font-size: 1em; /* Slightly larger */
+    color: var(--text-main);
+}
+.sidebar input[type="checkbox"] {
+    margin-right: 10px;
+    transform: scale(1.3); /* Larger checkbox */
+}
+.sidebar p {
+    font-size: 0.85em;
+    margin-top: auto;
+    color: var(--text-secondary);
+}
+.main {
+    flex-grow: 1;
+    padding: 25px 30px; /* Consistent padding */
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 25px; /* Consistent gap between sections */
+}
+.month-header-box {
+    background: var(--primary-color);
+    color: var(--text-white);
+    padding: 18px 25px; /* More padding */
+    text-align: center;
+    font-size: 1.8em; /* Larger font */
+    font-weight: 700; /* Bolder */
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+.tab-nav {
+    display: flex;
+    border-bottom: 2px solid var(--border-color); /* Lighter border */
+    margin-bottom: 25px; /* More margin */
+}
+.tab-nav-button {
+    padding: 12px 25px; /* More padding */
+    background-color: transparent;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-secondary); /* Muted color for inactive tabs */
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s ease, border-bottom-color 0.2s ease;
+}
+.tab-nav-button:hover:not(.active) {
+    color: var(--primary-dark);
+}
+.tab-nav-button.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+.tab-content {
+    display: none;
+    flex-direction: column;
+    gap: 25px; /* Consistent gap */
+}
+.tab-content.active {
+    display: flex;
+}
+.container {
+    display: flex;
+    gap: 25px; /* Consistent gap */
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+.table-container {
+    flex-grow: 1;
+    height: 550px; /* Slightly taller */
+    min-width: 450px; /* Wider min-width */
+    border-radius: 16px;
+    box-shadow: 0 8px 20px var(--shadow-light); /* Softer shadow */
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
 .handsontable .htCore td:first-child,
 .handsontable .htCore th:first-child {
-  background-color: #f0f0f0 !important; /* Placeholder */
-  font-weight: bold;
-  color: #333 !important; /* Placeholder */
+    background-color: var(--primary-light) !important;
+    font-weight: bold;
+    color: var(--text-main) !important;
 }
-.within { background-color: #d4edda !important; color: #155724 !important; } /* Placeholder */
-.warning { background-color: #fff3cd !important; color: #856404 !important; } /* Placeholder */
-.out { background-color: #f8d7da !important; color: #721c24 !important; } /* Placeholder */
-.future-cell-readonly { background-color: #f0f0f0 !important; color: #999 !important; cursor: not-allowed !important; } /* Placeholder */
+/* The following colors are for table cells based on value status */
+.within { background-color: var(--ht-within) !important; color: var(--ht-text-within) !important; }
+.warning { background-color: var(--ht-warning) !important; color: var(--ht-text-warning) !important; }
+.out { background-color: var(--ht-out) !important; color: var(--ht-text-out) !important; }
+.future-cell-readonly { background-color: var(--border-color) !important; color: var(--text-secondary) !important; cursor: not-allowed !important; }
+
+.summary-box {
+    width: 320px; /* Slightly wider */
+    min-width: 300px;
+    padding: 25px; /* Consistent padding */
+    border-radius: 16px;
+    box-shadow: 0 8px 20px var(--shadow-light);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    text-align: center; /* Center content in summary box */
+}
+.summary-box h3 {
+    margin-top: 0;
+    color: var(--primary-dark);
+    font-weight: 600;
+    font-size: 1.5em;
+    margin-bottom: 20px; /* More margin */
+}
+.summary-box p {
+    font-size: 1.05em;
+    margin-bottom: 10px;
+    color: var(--text-main);
+}
+.summary-box p strong {
+    color: var(--primary-dark); /* Highlight strong text */
+}
+.actions-section {
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 25px; /* Consistent gap */
+}
+.actions-section button {
+    padding: 12px 25px; /* Consistent button padding */
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--text-white);
+    box-shadow: 0 2px 8px var(--shadow-light);
+}
+.actions-section .save-btn { background-color: var(--primary-color); }
+.actions-section .export-btn { background-color: var(--secondary-color); } /* Green for export */
+
+.trend-chart-section {
+    padding: 25px; /* Consistent padding */
+    border-radius: 16px;
+    box-shadow: 0 8px 20px var(--shadow-light);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+}
+.trend-chart-section h3 {
+    margin-top: 0;
+    color: var(--primary-dark);
+    font-weight: 600;
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    text-align: center;
+}
+.trend-chart-section label {
+    color: var(--text-main);
+    font-weight: 500;
+    margin-right: 10px;
+}
+.trend-chart-section select {
+    padding: 10px;
+    border: 1px var(--border-color) solid;
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    font-size: 0.95em;
+    border-radius: 8px;
+}
+.chart-wrapper {
+    position: relative;
+    height: 40vh;
+    width: 100%;
+    margin-top: 20px;
+}
+
+/* Chatbot styles */
+#chat-bubble {
+    position: fixed;
+    bottom: 25px; /* Slightly higher */
+    right: 25px; /* Slightly more inwards */
+    background-color: var(--primary-color);
+    color: var(--text-white);
+    border-radius: 50%;
+    width: 65px; /* Slightly larger */
+    height: 65px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2em; /* Larger icon */
+    cursor: pointer;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.25); /* More prominent shadow */
+    z-index: 1000;
+    transition: all 0.2s ease-in-out;
+}
+#chat-bubble:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+#chat-window {
+    position: fixed;
+    bottom: 100px; /* Adjusted to be above the bubble */
+    right: 25px;
+    width: 380px; /* Slightly wider */
+    height: 500px; /* Slightly taller */
+    background-color: var(--bg-card);
+    border-radius: 16px; /* Consistent radius */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35); /* Stronger shadow */
+    display: flex;
+    flex-direction: column;
+    z-index: 999;
+    transform: scale(0.85); /* Slightly larger initial scale */
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease-out;
+    border: 1px solid var(--border-color); /* Subtle border */
+}
+#chat-window.open {
+    transform: scale(1);
+    opacity: 1;
+    visibility: visible;
+}
+#chat-header {
+    background-color: var(--primary-color);
+    color: var(--text-white);
+    padding: 15px 20px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top-left-radius: 15px; /* Match window border-radius minus 1px */
+    border-top-right-radius: 15px;
+}
+#chat-header span {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.1em;
+}
+#chat-header button {
+    background: none;
+    color: var(--text-white);
+    font-size: 1.3em;
+    padding: 5px;
+    border-radius: 50%; /* Make button circular */
+    transition: background-color 0.2s ease;
+}
+#chat-header button:hover {
+    background-color: var(--primary-dark);
+}
+#chat-body {
+    flex-grow: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background-color: var(--bg-body); /* Lighter background for body */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 0.95em;
+    line-height: 1.4;
+}
+.chat-message {
+    max-width: 85%; /* Wider messages */
+    padding: 12px 16px; /* More padding */
+    border-radius: 22px; /* More rounded */
+    word-wrap: break-word;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.chat-message.user {
+    align-self: flex-end;
+    background-color: #E0E0E0; /* Lighter gray for user message */
+    color: var(--text-main);
+    border-bottom-right-radius: 8px; /* Flat bottom-right corner for user bubble */
+}
+.chat-message.bot {
+    align-self: flex-start;
+    background-color: var(--primary-light); /* Light primary for bot message */
+    color: var(--text-main);
+    border-bottom-left-radius: 8px; /* Flat bottom-left corner for bot bubble */
+}
+#chat-input-area {
+    padding: 15px; /* More padding */
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: var(--bg-card); /* White background for input area */
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
+#chat-input-area input {
+    flex-grow: 1;
+    padding: 12px; /* Consistent input padding */
+    border: 1px solid var(--border-color);
+    border-radius: 25px; /* More rounded */
+    background-color: var(--bg-body); /* Slightly off-white for input field */
+    color: var(--text-main);
+}
+#chat-input-area button {
+    background-color: var(--primary-color);
+    color: var(--text-white);
+    width: 45px; /* Larger send button */
+    height: 45px;
+    border-radius: 50%;
+    font-size: 1.3em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+#chat-input-area button:hover {
+    background-color: var(--primary-dark);
+}
+
+/* Hospital Info Box */
+.hospital-info-box {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95em;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+
+/* Results Page (If used, basic styling) */
+/* results.html has no custom styles, so it will inherit from body and h2/h3 */
+/* If you add content to results.html, you'd add specific styles here. */
