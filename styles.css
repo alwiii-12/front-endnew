@@ -254,7 +254,7 @@ input[type="checkbox"]:checked {
 .login-container {
   /* Inherits general .card styles */
   padding: 40px; /* Override default card padding for specific layout */
-  max-width: 550px; /* UPDATED: Increased width for login form */
+  max-width: 450px; /* UPDATED: Adjusted width back to a smaller size */
   text-align: center; /* Center content within the container */
 }
 .login-container h2 {
