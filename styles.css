@@ -302,7 +302,7 @@ input[type="checkbox"]:checked {
 .signup-container {
     /* Inherits general .card styles */
     padding: 30px; /* Override default card padding */
-    max-width: 550px; /* UPDATED: Increased width for signup form */
+    max-width: 700px; /* UPDATED: Increased width for signup form */
     display: flex;
     flex-direction: column;
     gap: 15px;
