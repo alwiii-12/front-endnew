@@ -299,12 +299,12 @@ input[type="checkbox"]:checked {
 
 
 /* Signup Page styles (from signup.html) */
-/* *** EXTREMELY HIGH SPECIFICITY FOR DIAGNOSIS *** */
+/* *** Specific styles for Signup form, overriding general .card if needed *** */
 html body .signup-container.signup-container { /* Duplicating class name for extreme specificity */
     background: var(--bg-card);
     padding: 30px;
     max-width: 700px; /* Target width */
-    width: 95%; /* Add a responsive width to make it flex more */
+    width: 95%; /* Responsive width */
     margin: auto;
     display: flex;
     flex-direction: column;
@@ -313,13 +313,16 @@ html body .signup-container.signup-container { /* Duplicating class name for ext
     box-shadow: 0 10px 30px var(--shadow-medium);
     border: 1px solid var(--border-color);
     box-sizing: border-box;
+    text-align: center; /* ADDED: Center text content within the container */
 }
-/* Ensure basic heading and paragraph styles within this container are as intended */
+/* Ensure specific heading and paragraph styles within this container are as intended */
 html body .signup-container h2 {
     color: var(--primary-dark);
+    text-align: center; /* Ensure this is present and effective */
 }
 html body .signup-container p {
     color: var(--text-main);
+    text-align: center; /* Ensure this is present and effective */
 }
 html body .signup-container p a {
     color: var(--primary-color);
@@ -330,6 +333,11 @@ html body .signup-container p a:hover {
 html body .signup-container button {
     background-color: var(--primary-color);
     color: var(--text-white);
+    padding: 15px 30px; /* UPDATED: Larger padding for the button */
+    font-size: 1.1em;   /* UPDATED: Slightly larger font size */
+    display: block; /* Ensure it takes full width for centering */
+    width: calc(100% - 24px); /* Account for horizontal padding in inputs to align */
+    margin: 15px auto 0 auto; /* Center the button and provide top margin */
 }
 html body .signup-container button:hover {
     background-color: var(--primary-dark);
