@@ -222,7 +222,7 @@ button:active {
   color: var(--primary-dark);
 }
 
-/* --- Notification Container (from upload.html but common) --- */
+/* --- Notification Container (Common) --- */
 #notification-container {
     position: fixed;
     top: 20px;
@@ -249,7 +249,7 @@ button:active {
 .notification-message.warning { background-color: var(--status-warning); color: var(--text-main); }
 
 
-/* --- Loading Overlay (from upload.html but common) --- */
+/* --- Loading Overlay (Common) --- */
 #loading-overlay {
     position: fixed;
     top: 0;
@@ -273,3 +273,15 @@ button:active {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* --- Handsontable specific colors (Placeholder for now, will be populated fully later) --- */
+.handsontable .htCore td:first-child,
+.handsontable .htCore th:first-child {
+  background-color: #f0f0f0 !important; /* Placeholder */
+  font-weight: bold;
+  color: #333 !important; /* Placeholder */
+}
+.within { background-color: #d4edda !important; color: #155724 !important; } /* Placeholder */
+.warning { background-color: #fff3cd !important; color: #856404 !important; } /* Placeholder */
+.out { background-color: #f8d7da !important; color: #721c24 !important; } /* Placeholder */
+.future-cell-readonly { background-color: #f0f0f0 !important; color: #999 !important; cursor: not-allowed !important; } /* Placeholder */
