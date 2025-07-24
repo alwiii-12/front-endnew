@@ -8,12 +8,11 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles.css?v=1721817002"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="styles.css?v=202507241"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
   <div class="login-container">
-    <h2>Login - LINAC QA</h2>
-    <form id="loginForm" autocomplete="off">
+    <h2>Login - LINAC QA (Updated)</h2> <form id="loginForm" autocomplete="off">
       <div class="error" id="errorMsg"></div>
       <input type="email" id="email" name="email" placeholder="Email" required autocomplete="off" />
       <div class="password-input-container">
@@ -128,7 +127,7 @@
         document.getElementById("loginForm").addEventListener("submit", async function (e) {
             e.preventDefault();
             const email = emailInput.value;
-            const password = document.getElementById("password").value; // Get password correctly
+            const password = document.getElementById("password").value;
 
             showLoader();
             loginButton.disabled = true;
