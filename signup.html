@@ -3,47 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signup Test Page</title>
+    <title>Signup | LINAC QA</title>
     <link rel="icon" href="/favicon.png" type="image/png">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <link rel="stylesheet" href="styles.css">
-    <style>
-        /* Temporary inline style to ensure background is visible and differentiate */
-        body {
-            background: lightblue !important; /* Force a very obvious background */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-        .test-container {
-            background-color: white;
-            padding: 50px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            max-width: 800px; /* Test a very wide size */
-            width: 90%; /* To ensure responsiveness */
-            text-align: center;
-            border: 2px solid green; /* Obvious border */
-            font-family: 'Montserrat', sans-serif; /* Test if custom fonts are loading */
-            color: #333;
-        }
-        .test-container h1 {
-            color: purple; /* Test a very obvious heading color */
-            font-size: 3em;
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <div class="test-container">
-        <h1>Test Signup Layout</h1>
-        <p>If you see this text and this box is wide and green, and the background is lightblue, then CSS is working!</p>
-        <p>Current time: <span id="time"></span></p>
+  <div class="signup-container">
+    <h2>LINAC QA Sign Up</h2> <div class="message" id="message"></div>
+    <div class="form-group">
+      <label for="name">Full Name:<span class="required">*</span></label>
+      <input type="text" id="name" placeholder="Enter your full name" required/>
     </div>
-    <script>
-        // Simple JS to confirm script execution
-        document.getElementById('time').innerText = new Date().toLocaleTimeString();
-        console.log('JavaScript is running on signup.html test page.');
-    </script>
+    <div class="form-group">
+      <label for="email">Email:<span class="required">*</span></label>
+      <input type="email" id="email" placeholder="Enter your email" required/>
+    </div>
+    <div class="form-group">
+      <label for="password">Password:<span class="required">*</span></label>
+      <div class="password-input-container">
+        <input type="password" id="password" placeholder="Choose a password" required autocomplete="new-password" spellcheck="false"/>
+        <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span>
+      </div>
+      <div id="passwordStrength" class="password-strength"></div>
+    </div>
+    <div class="form-group">
+      <label for="hospital">Select Hospital:<span class="required">*</span></label>
+      <select id="hospital" required>
+        <option value="">-- Select Hospital --</option>
+        <option value="aoi_gurugram">AOI GURUGRAM</option>
+        <option value="medanta_gurugram">Medanta Gurugram</option>
+        <option value="fortis_delhi">Fortis Hospital Delhi</option>
+        <option value="apollo_chennai">Apollo Hospitals Chennai</option>
+        <option value="max_delhi">Max Healthcare Delhi</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="role">Select Role:<span class="required">*</span></label>
+      <select id="role" required>
+        <option value="">Select Role</option>
+        <option value="Medical physicist">Medical physicist</option>
+        <option value="RSO">RSO</option>
+      </select>
+    </div>
+    <button onclick="signup()" id="signupButton">Sign Up</button>
+    <p>Already have an account? <a href="login.html">Log in</a></p>
+  </div>
+
+  <div id="notification-container"></div>
+  <div id="loading-overlay"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-check-compat.js"></script>
+  <script src="firebase-init.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // --- UTILITY FUNCTIONS (TEMPORARILY HERE - WILL BE MOVED LATER) ---
+    function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
+    function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
+
+    function showNotification(message, type = 'info', duration = 3000) {
+        const notificationContainer = document.getElementById('notification-container');
+        if (!notificationContainer) {
+            console.warn("Notification container not found. Cannot display notification.");
+            alert(message); // Fallback for visibility
+            return;
+        }
+        const notification = document.createElement('div');
+        notification.classList.add('notification-message', type);
+        notification.textContent = message;
+        notificationContainer.appendChild(notification);
+        void notification.offsetWidth; // Force reflow to enable transition
+        notification.classList.add('show');
+        setTimeout(() => {
+            notification.classList.remove('show');
+            notification.addEventListener('transitionend', () => {
+                notification.remove();
+            }, { once: true });
+        }, duration);
+    }
+    // --- END UTILITY FUNCTIONS ---
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        const passwordInput = document.getElementById('password');
+        const passwordStrengthDiv = document.getElementById('passwordStrength');
+        const signupButton = document.getElementById('signupButton');
+
+        document.querySelectorAll('.toggle-password').forEach(function(toggle) {
+            toggle.addEventListener('click', function() {
+                const passwordInput = document.querySelector(this.getAttribute('toggle'));
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    this.classList.remove('fa-eye');
+                    this.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    this.classList.remove('fa-eye-slash');
+                    this.classList.add('fa-eye');
+                }
+            });
+        });
+
+        function checkPasswordStrength() {
+            const password = passwordInput.value;
+            let strength = 0;
+            let message = '';
+            let type = '';
+            if (password.length > 0) {
+                if (password.length >= 8) strength++;
+                if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+                if (password.match(/\d/)) strength++;
+                if (password.match(/[^a-zA-Z0-9]/)) strength++;
+                if (strength < 2) { message = 'Weak'; type = 'weak'; }
+                else if (strength < 4) { message = 'Intermediate'; type = 'intermediate'; }
+                else { message = 'Strong'; type = 'strong'; }
+            }
+            passwordStrengthDiv.textContent = message;
+            passwordStrengthDiv.className = 'password-strength ' + type;
+        }
+
+        passwordInput.addEventListener('input', checkPasswordStrength);
+
+        window.signup = async function() {
+          showLoader(); // Show loader
+          signupButton.disabled = true;
+          signupButton.textContent = 'Signing Up...';
+          const name = document.getElementById("name").value.trim();
+          const email = document.getElementById("email").value.trim();
+          const password = document.getElementById("password").value.trim();
+          const hospital = document.getElementById("hospital").value.trim();
+          const role = document.getElementById("role").value.trim();
+
+          if (!name || !email || !password || !hospital || hospital === "" || !role || role === "") {
+            hideLoader(); // Hide loader
+            showNotification("Please fill in all fields.", 'warning');
+            signupButton.disabled = false;
+            signupButton.textContent = 'Sign Up';
+            return;
+          }
+
+          if (passwordStrengthDiv.className.includes('weak')) {
+              hideLoader(); // Hide loader
+              showNotification("Please choose a stronger password.", 'warning');
+              signupButton.disabled = false;
+              signupButton.textContent = 'Sign Up';
+              return;
+          }
+
+          try {
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            const uid = userCredential.user.uid;
+
+            const appCheck = firebase.appCheck(); // Ensure appCheck is accessible
+            const appCheckTokenResponse = await appCheck.getToken(false);
+            const token = appCheckTokenResponse.token;
+
+            const BACKEND_URL = "https://back-end-wrxi.onrender.com";
+            const response = await fetch(`${BACKEND_URL}/signup`, {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "X-Firebase-AppCheck": token // Send the App Check token
+                },
+                body: JSON.stringify({ uid, name, email, hospital, role, status: "pending" })
+            });
+            const data = await response.json();
+            if (response.ok && data.status === "success") {
+                localStorage.setItem("hospitalName", hospital.toUpperCase());
+                showNotification("Signup successful! Your account is awaiting approval.", 'success', 5000);
+                setTimeout(() => {
+                    window.location.href = "awaiting_approval.html";
+                }, 3000);
+            } else {
+                showNotification("Signup failed: " + (data.message || 'Unknown backend error'), 'error');
+            }
+          } catch (error) {
+            console.error(error);
+            let errorMessage = "An unknown error occurred.";
+            switch (error.code) {
+              case 'auth/email-already-in-use': errorMessage = "The email address is already registered."; break;
+              case 'auth/invalid-email': errorMessage = "The email address format is invalid."; break;
+              case 'auth/weak-password': errorMessage = "The password is too weak."; break;
+              default: errorMessage = "Firebase signup error: " + error.message;
+            }
+            showNotification(errorMessage, 'error');
+          } finally {
+            hideLoader(); // Hide loader
+            signupButton.disabled = false;
+            signupButton.textContent = 'Sign Up';
+          }
+        }
+    });
+  </script>
 </body>
 </html>
