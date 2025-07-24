@@ -8,22 +8,27 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles.css?v=202507241"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="styles.css?v=202507241">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
   <div class="login-container">
-    <h2>Login - LINAC QA (Updated)</h2> <form id="loginForm" autocomplete="off">
+    <h2>Login - LINAC QA (Updated)</h2>
+    <form id="loginForm" autocomplete="off">
       <div class="error" id="errorMsg"></div>
       <input type="email" id="email" name="email" placeholder="Email" required autocomplete="off" />
       <div class="password-input-container">
         <input type="password" id="password" name="password" placeholder="Password" required autocomplete="new-password" />
         <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span>
       </div>
-      <div class="remember-me-container">
-        <input type="checkbox" id="rememberMe">
-        <label for="rememberMe">Remember me</label>
+
+      <div class="form-options">
+        <div class="remember-me-group">
+          <input type="checkbox" id="rememberMe">
+          <label for="rememberMe">Remember me</label>
+        </div>
+        <a href="#" class="forgot-password-link" onclick="sendPasswordReset()">Forgot Password?</a>
       </div>
-      <a href="#" class="forgot-password-link" onclick="sendPasswordReset()">Forgot Password?</a>
       <button type="submit">Login</button>
     </form>
     <div class="footer">© 2025 LINAC QA System</div>
