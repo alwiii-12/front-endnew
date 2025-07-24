@@ -46,32 +46,24 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
-    // --- UTILITY FUNCTIONS (TEMPORARILY HERE - WILL BE MOVED LATER) ---
+    // --- UTILITY FUNCTIONS ---
     function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
     function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
 
     function showNotification(message, type = 'info', duration = 3000) {
         const notificationContainer = document.getElementById('notification-container');
-        if (!notificationContainer) {
-            console.warn("Notification container not found. Cannot display notification.");
-            alert(message); // Fallback for visibility
-            return;
-        }
         const notification = document.createElement('div');
         notification.classList.add('notification-message', type);
         notification.textContent = message;
         notificationContainer.appendChild(notification);
-        void notification.offsetWidth; // Force reflow to enable transition
+        void notification.offsetWidth;
         notification.classList.add('show');
         setTimeout(() => {
             notification.classList.remove('show');
-            notification.addEventListener('transitionend', () => {
-                notification.remove();
-            }, { once: true });
+            notification.addEventListener('transitionend', () => notification.remove(), { once: true });
         }, duration);
     }
-    // --- END UTILITY FUNCTIONS ---
-
+    
     document.addEventListener('DOMContentLoaded', () => {
         const auth = firebase.auth();
         const appCheck = firebase.appCheck();
@@ -104,7 +96,6 @@
                 showNotification("Password reset email sent. Please check your inbox.", "success");
             } catch (error) {
                 hideLoader();
-                console.error("Password reset error:", error);
                 showNotification("Error sending password reset email: " + error.message, "error");
             }
         };
@@ -149,7 +140,6 @@
             try {
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
-
                 const appCheckTokenResponse = await appCheck.getToken(false);
                 const appCheckToken = appCheckTokenResponse.token;
 
