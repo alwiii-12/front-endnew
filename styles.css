@@ -71,8 +71,8 @@ h3 { font-size: 1.5em; }
 
 /* --- General Card/Container Styles (Applied across multiple pages) --- */
 .card-panel,
-.login-container,
-.signup-container, /* This will be overridden by the more specific rule below */
+.login-container, /* This will be specifically configured below */
+.signup-container, /* This will be specifically configured below */
 .profile-card,
 .card-section,
 .message-container,
@@ -254,8 +254,8 @@ input[type="checkbox"]:checked {
 .login-container {
   /* Inherits general .card styles */
   padding: 40px; /* Override default card padding for specific layout */
-  max-width: 400px;
-  text-align: center;
+  max-width: 550px; /* UPDATED: Increased width for login form */
+  text-align: center; /* Center content within the container */
 }
 .login-container h2 {
   margin-bottom: 24px;
@@ -272,9 +272,9 @@ input[type="checkbox"]:checked {
   min-height: 1.2em;
 }
 .login-container .home-link {
-    display: block;
+    display: block; /* Ensures it takes full width for centering via margin auto */
     max-width: 180px;
-    margin: 30px auto 0 auto;
+    margin: 30px auto 0 auto; /* Center link below form */
     font-size: 1em;
     padding: 12px 25px;
     background-color: var(--primary-light);
@@ -299,8 +299,11 @@ input[type="checkbox"]:checked {
 
 
 /* Signup Page styles (from signup.html) */
-/* *** Specific styles for Signup form, overriding general .card if needed *** */
-html body .signup-container.signup-container { /* Duplicating class name for extreme specificity */
+/* *** EXTREMELY HIGH SPECIFICITY FOR DIAGNOSIS *** */
+/* This rule is highly specific to override any lingering issues.
+   Ideally, it would be a simpler '.signup-container' rule like other cards
+   once all caching issues are resolved consistently. */
+html body .signup-container.signup-container {
     background: var(--bg-card);
     padding: 30px;
     max-width: 700px; /* Target width */
@@ -313,16 +316,16 @@ html body .signup-container.signup-container { /* Duplicating class name for ext
     box-shadow: 0 10px 30px var(--shadow-medium);
     border: 1px solid var(--border-color);
     box-sizing: border-box;
-    text-align: center; /* ADDED: Center text content within the container */
+    /* Removed text-align: center from here to allow form labels to be left-aligned */
 }
-/* Ensure specific heading and paragraph styles within this container are as intended */
+/* Ensure specific heading and paragraph styles within this container are centered */
 html body .signup-container h2 {
     color: var(--primary-dark);
-    text-align: center; /* Ensure this is present and effective */
+    text-align: center; /* Explicitly centered */
 }
 html body .signup-container p {
     color: var(--text-main);
-    text-align: center; /* Ensure this is present and effective */
+    text-align: center; /* Explicitly centered */
 }
 html body .signup-container p a {
     color: var(--primary-color);
@@ -333,8 +336,8 @@ html body .signup-container p a:hover {
 html body .signup-container button {
     background-color: var(--primary-color);
     color: var(--text-white);
-    padding: 15px 30px; /* UPDATED: Larger padding for the button */
-    font-size: 1.1em;   /* UPDATED: Slightly larger font size */
+    padding: 15px 30px; /* Larger padding for the button */
+    font-size: 1.1em;   /* Slightly larger font size */
     display: block; /* Ensure it takes full width for centering */
     width: calc(100% - 24px); /* Account for horizontal padding in inputs to align */
     margin: 15px auto 0 auto; /* Center the button and provide top margin */
