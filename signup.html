@@ -8,140 +8,10 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
+    <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        :root {
-          --primary-blue: #007bff;
-          --primary-blue-dark: #0056b3;
-          --primary-blue-light: #e0f7fa;
-          --text-dark: #333;
-          --text-light: #fff;
-          --background-light: #f5f5f5;
-          --background-white-card: #ffffff;
-          --border-light: #ccc;
-          --success-green: #28a745;
-          --warning-orange: #ffc107;
-          --error-red: #dc3545;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--primary-blue-light);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .signup-container {
-            background-color: var(--background-white-card);
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            box-sizing: border-box;
-            margin: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .signup-container h2 {
-            margin-top: 0;
-            margin-bottom: 5px;
-            text-align: center;
-            color: var(--primary-blue);
-        }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .form-group label {
-            text-align: left;
-            font-weight: bold;
-            color: var(--text-dark);
-        }
-        .form-group input[type="text"],
-        .form-group input[type="email"],
-        .form-group input[type="password"],
-        .form-group select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid var(--border-light);
-            box-sizing: border-box;
-        }
-        .password-input-container {
-            position: relative;
-            margin: 0;
-        }
-        .password-input-container input {
-            padding-right: 40px;
-            margin: 0;
-            height: 40px;
-            line-height: 20px;
-        }
-        .toggle-password {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #6c757d;
-        }
-        .signup-container button {
-            width: 100%;
-            padding: 10px;
-            background-color: var(--primary-blue);
-            color: var(--text-light);
-            font-weight: bold;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        .signup-container p {
-            margin-top: 10px;
-            text-align: center;
-            font-size: 0.9em;
-        }
-        .signup-container p a {
-            color: var(--primary-blue);
-            text-decoration: none;
-        }
-        .message {
-            color: var(--error-red);
-            text-align: center;
-            margin-bottom: 10px;
-        }
-        .required {
-            color: var(--error-red);
-            margin-left: 4px;
-        }
-        .password-strength {
-            font-size: 0.85em;
-            margin-top: 5px;
-            margin-bottom: 0;
-            text-align: left;
-            font-weight: 500;
-            min-height: 1.2em;
-        }
-        .password-strength.weak { color: var(--error-red); }
-        .password-strength.intermediate { color: var(--warning-orange); }
-        .password-strength.strong { color: var(--success-green); }
-        #notification-container {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10000;
-        }
-    </style>
 </head>
 <body>
   <div class="signup-container">
@@ -186,6 +56,7 @@
   </div>
 
   <div id="notification-container"></div>
+  <div id="loading-overlay"></div>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-check-compat.js"></script>
@@ -194,11 +65,37 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
+    // --- UTILITY FUNCTIONS (TEMPORARILY HERE - WILL BE MOVED LATER) ---
+    function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
+    function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
+
+    function showNotification(message, type = 'info', duration = 3000) {
+        const notificationContainer = document.getElementById('notification-container');
+        if (!notificationContainer) {
+            console.warn("Notification container not found. Cannot display notification.");
+            alert(message); // Fallback for visibility
+            return;
+        }
+        const notification = document.createElement('div');
+        notification.classList.add('notification-message', type);
+        notification.textContent = message;
+        notificationContainer.appendChild(notification);
+        void notification.offsetWidth; // Force reflow to enable transition
+        notification.classList.add('show');
+        setTimeout(() => {
+            notification.classList.remove('show');
+            notification.addEventListener('transitionend', () => {
+                notification.remove();
+            }, { once: true });
+        }, duration);
+    }
+    // --- END UTILITY FUNCTIONS ---
+
     document.addEventListener('DOMContentLoaded', () => {
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        const notificationContainer = document.getElementById('notification-container');
+        const notificationContainer = document.getElementById('notification-container'); // This is now in styles.css
         const passwordInput = document.getElementById('password');
         const passwordStrengthDiv = document.getElementById('passwordStrength');
         const signupButton = document.getElementById('signupButton');
@@ -217,21 +114,6 @@
                 }
             });
         });
-
-        function showNotification(message, type = 'info', duration = 3000) {
-            const notification = document.createElement('div');
-            notification.classList.add('notification-message', type);
-            notification.textContent = message;
-            notificationContainer.appendChild(notification);
-            void notification.offsetWidth;
-            notification.classList.add('show');
-            setTimeout(() => {
-                notification.classList.remove('show');
-                notification.addEventListener('transitionend', () => {
-                    notification.remove();
-                }, { once: true });
-            }, duration);
-        }
 
         function checkPasswordStrength() {
             const password = passwordInput.value;
@@ -253,8 +135,8 @@
 
         passwordInput.addEventListener('input', checkPasswordStrength);
         
-        // *** MODIFIED SECTION ***
         window.signup = async function() {
+          showLoader(); // Show loader
           signupButton.disabled = true;
           signupButton.textContent = 'Signing Up...';
           const name = document.getElementById("name").value.trim();
@@ -264,6 +146,7 @@
           const role = document.getElementById("role").value.trim();
 
           if (!name || !email || !password || !hospital || hospital === "" || !role || role === "") {
+            hideLoader(); // Hide loader
             showNotification("Please fill in all fields.", 'warning');
             signupButton.disabled = false;
             signupButton.textContent = 'Sign Up';
@@ -271,6 +154,7 @@
           }
 
           if (passwordStrengthDiv.className.includes('weak')) {
+              hideLoader(); // Hide loader
               showNotification("Please choose a stronger password.", 'warning');
               signupButton.disabled = false;
               signupButton.textContent = 'Sign Up';
@@ -281,8 +165,7 @@
             const userCredential = await auth.createUserWithEmailAndPassword(email, password);
             const uid = userCredential.user.uid;
 
-            // Get the App Check token to send to the backend
-            const appCheck = firebase.appCheck();
+            const appCheck = firebase.appCheck(); // Ensure appCheck is accessible
             const appCheckTokenResponse = await appCheck.getToken(false);
             const token = appCheckTokenResponse.token;
             
@@ -316,11 +199,11 @@
             }
             showNotification(errorMessage, 'error');
           } finally {
+            hideLoader(); // Hide loader
             signupButton.disabled = false;
             signupButton.textContent = 'Sign Up';
           }
         }
-        // *** END MODIFIED SECTION ***
     });
   </script>
 </body>
