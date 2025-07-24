@@ -27,7 +27,7 @@
   --status-warning: #FFC107; /* Standard orange for warning */
   --status-error: #DC3545;  /* Standard red for error */
 
-  /* Handsontable specific colors (Placeholder for now, will be populated fully later from upload.html and admin_dashboard.html) */
+  /* Handsontable specific colors (Populated from upload.html and admin_dashboard.html) */
   --ht-within: #E6F5ED;
   --ht-warning: #FFF3CD;
   --ht-out: #F8D7DA;
@@ -113,8 +113,10 @@ a.button:active,
 .nav-btn:active,
 .header-btn:active,
 .home-link:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px var(--shadow-light) inset; /* Inset shadow on click */
+  transform: translateY(1px) scale(0.99); /* Push down and slightly scale */
+  box-shadow: 0 1px 6px rgba(0,0,0,0.2) inset; /* Darker, more noticeable inset shadow */
+  background-color: var(--primary-dark) !important; /* Ensure it darkens on click for primary buttons */
+  border-color: var(--primary-dark) !important; /* Ensure border darkens too if it has one */
 }
 
 button:disabled {
@@ -137,7 +139,7 @@ select {
   border-radius: 8px;
   font-size: 1em;
   box-sizing: border-box;
-  background-color: var(--bg-card); /* Consistent with card background */
+  background-color: var(--bg-card);
   color: var(--text-main);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -185,7 +187,7 @@ input[type="checkbox"] {
   flex-shrink: 0;
   cursor: pointer;
   border-radius: 4px; /* Slightly rounded checkbox */
-  border: 1px solid var(--border-color); /* Consistent border */
+  border: 1px solid var(--border-color);
   background-color: var(--bg-card);
 }
 input[type="checkbox"]:checked {
@@ -271,7 +273,7 @@ input[type="checkbox"]:checked {
 }
 .login-container .home-link {
     display: block;
-    max-width: 180px; /* Slightly wider */
+    max-width: 180px;
     margin: 30px auto 0 auto;
     font-size: 1em;
     padding: 12px 25px;
@@ -300,7 +302,7 @@ input[type="checkbox"]:checked {
 .signup-container {
     /* Inherits general .card styles */
     padding: 30px; /* Override default card padding */
-    max-width: 450px; /* Slightly wider for form elements */
+    max-width: 550px; /* UPDATED: Increased width for signup form */
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -315,21 +317,21 @@ input[type="checkbox"]:checked {
     display: flex;
     flex-direction: column;
     gap: 5px;
-    margin-bottom: 5px; /* Adjust spacing between form groups */
+    margin-bottom: 5px;
 }
 .signup-container .form-group label {
     text-align: left;
     font-weight: bold;
 }
 .signup-container .password-input-container {
-    margin-bottom: 0; /* Remove extra margin */
+    margin-bottom: 0;
 }
 .signup-container .password-input-container input {
-    height: 40px; /* Ensure input height consistency */
+    height: 40px;
     line-height: 20px;
 }
 .signup-container button {
-    margin-top: 15px; /* Increased margin above button */
+    margin-top: 15px;
     padding: 12px;
 }
 .signup-container p {
@@ -391,21 +393,21 @@ input[type="checkbox"]:checked {
   padding: 40px; /* Generous padding */
 }
 .left-panel h1 {
-  font-size: 2.2em; /* Consistent with new h1 size */
+  font-size: 2.2em;
   color: var(--primary-dark);
   margin-bottom: 15px;
 }
 .left-panel p {
-  font-size: 1.05em; /* Slightly larger for readability */
+  font-size: 1.05em;
   margin-bottom: 30px;
   color: var(--text-main);
   line-height: 1.6;
 }
 .left-panel a.button {
   display: inline-block;
-  margin-right: 15px; /* Slightly more space */
+  margin-right: 15px;
   margin-top: 15px;
-  padding: 12px 28px; /* More padding */
+  padding: 12px 28px;
   background-color: var(--primary-color);
   color: var(--text-white);
   text-decoration: none;
@@ -438,10 +440,10 @@ input[type="checkbox"]:checked {
     padding: 0;
   }
   .left-panel {
-      padding: 30px; /* Reduce padding on smaller screens */
+      padding: 30px;
   }
   .left-panel h1 {
-      font-size: 1.8em; /* Adjust font size on smaller screens */
+      font-size: 1.8em;
   }
 }
 
@@ -450,28 +452,28 @@ input[type="checkbox"]:checked {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--bg-card); /* White topbar for modern look */
-    color: var(--text-main); /* Dark text on white */
-    padding: 15px 30px; /* More padding */
+    background: var(--bg-card);
+    color: var(--text-main);
+    padding: 15px 30px;
     font-size: 1.2em;
     font-weight: 600;
-    box-shadow: 0 2px 8px var(--shadow-light); /* Subtle shadow */
-    border-bottom: 1px solid var(--border-color); /* Separator */
+    box-shadow: 0 2px 8px var(--shadow-light);
+    border-bottom: 1px solid var(--border-color);
 }
 .topbar span {
-    color: var(--primary-dark); /* Highlight title */
+    color: var(--primary-dark);
 }
 .topbar button {
-    padding: 10px 18px; /* Consistent button padding */
-    background-color: var(--status-error); /* Red for logout */
+    padding: 10px 18px;
+    background-color: var(--status-error);
     color: var(--text-white);
     border: none;
-    border-radius: 8px; /* Consistent radius */
+    border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 .topbar button:hover {
-    background-color: #c82333; /* Darker red */
+    background-color: #c82333;
 }
 .profile-container {
     flex-grow: 1;
@@ -483,8 +485,8 @@ input[type="checkbox"]:checked {
 }
 .profile-card {
     /* Inherits general .card styles */
-    padding: 40px; /* Generous padding */
-    max-width: 550px; /* Slightly wider */
+    padding: 40px;
+    max-width: 550px;
     width: 100%;
     text-align: left;
 }
@@ -492,10 +494,10 @@ input[type="checkbox"]:checked {
     color: var(--primary-dark);
     text-align: center;
     margin-bottom: 30px;
-    font-size: 2em; /* Consistent heading size */
+    font-size: 2em;
 }
 .profile-item {
-    margin-bottom: 18px; /* More spacing */
+    margin-bottom: 18px;
     font-size: 1.1em;
     line-height: 1.6;
     display: flex;
@@ -504,12 +506,12 @@ input[type="checkbox"]:checked {
 }
 .profile-item strong {
     display: inline-block;
-    width: 160px; /* Slightly wider label */
+    width: 160px;
     min-width: 140px;
     flex-shrink: 0;
-    color: var(--primary-dark); /* Highlight labels */
+    color: var(--primary-dark);
     text-align: right;
-    padding-right: 15px; /* More spacing */
+    padding-right: 15px;
 }
 .profile-item span:last-child {
     flex-grow: 1;
@@ -520,11 +522,11 @@ input[type="checkbox"]:checked {
     margin-top: 30px;
 }
 .profile-actions button {
-    padding: 12px 25px; /* Consistent button padding */
-    background-color: var(--secondary-color); /* Green for action */
+    padding: 12px 25px;
+    background-color: var(--secondary-color);
     color: var(--text-white);
     border: none;
-    border-radius: 8px; /* Consistent radius */
+    border-radius: 8px;
     cursor: pointer;
 }
 .profile-actions button:hover {
@@ -538,7 +540,7 @@ input[type="checkbox"]:checked {
 .change-password-header {
     color: var(--primary-dark);
     font-size: 1.4em;
-    margin-top: 40px; /* More margin */
+    margin-top: 40px;
     margin-bottom: 15px;
     text-align: center;
     cursor: pointer;
@@ -557,15 +559,15 @@ input[type="checkbox"]:checked {
 }
 .change-password-form {
     display: none;
-    padding-top: 25px; /* More padding */
-    border-top: 1px solid var(--border-color); /* Consistent border */
-    margin-top: 20px; /* More margin */
+    padding-top: 25px;
+    border-top: 1px solid var(--border-color);
+    margin-top: 20px;
 }
 .change-password-form.open {
     display: block;
 }
 .form-group {
-    margin-bottom: 18px; /* More spacing */
+    margin-bottom: 18px;
 }
 .form-group label {
     display: block;
@@ -585,7 +587,7 @@ input[type="checkbox"]:checked {
 .password-strength {
     font-size: 0.85em;
     margin-top: 5px;
-    color: var(--text-secondary); /* Default color */
+    color: var(--text-secondary);
 }
 .password-strength.weak { color: var(--status-error); }
 .password-strength.intermediate { color: var(--status-warning); }
@@ -595,18 +597,18 @@ input[type="checkbox"]:checked {
 /* Awaiting Approval Page styles (from awaiting_approval.html) */
 .message-container {
     /* Inherits general .card styles */
-    padding: 50px; /* More generous padding for this central message */
-    max-width: 650px; /* Wider for more content */
+    padding: 50px;
+    max-width: 650px;
     width: 100%;
     text-align: center;
 }
 .message-container h1 {
     color: var(--primary-dark);
-    margin-bottom: 25px; /* More spacing */
-    font-size: 2.2em; /* Consistent h1 size */
+    margin-bottom: 25px;
+    font-size: 2.2em;
 }
 .message-container p {
-    font-size: 1.15em; /* Larger for impact */
+    font-size: 1.15em;
     color: var(--text-main);
     margin-bottom: 25px;
     line-height: 1.6;
@@ -619,11 +621,11 @@ input[type="checkbox"]:checked {
 .message-container .home-link {
     display: inline-block;
     margin-top: 30px;
-    padding: 12px 28px; /* Consistent button padding */
+    padding: 12px 28px;
     background-color: var(--primary-color);
     color: var(--text-white);
     text-decoration: none;
-    border-radius: 8px; /* Consistent button radius */
+    border-radius: 8px;
     font-weight: 600;
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -636,7 +638,7 @@ input[type="checkbox"]:checked {
 .admin-header {
     background-color: var(--primary-color);
     color: var(--text-white);
-    padding: 20px 30px; /* More padding */
+    padding: 20px 30px;
     font-size: 2em;
     font-weight: bold;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
@@ -648,11 +650,11 @@ input[type="checkbox"]:checked {
 }
 .admin-header h1 {
     margin: 0;
-    font-size: 1.5em; /* Adjusted for header */
+    font-size: 1.5em;
     flex-grow: 1;
     text-align: center;
-    color: var(--text-white); /* White on primary background */
-    font-family: 'Montserrat', sans-serif; /* Consistent with headings */
+    color: var(--text-white);
+    font-family: 'Montserrat', sans-serif;
 }
 .header-buttons {
     display: flex;
@@ -660,14 +662,14 @@ input[type="checkbox"]:checked {
     gap: 15px;
 }
 .header-btn {
-    width: 44px; /* Slightly larger */
-    height: 44px; /* Slightly larger */
+    width: 44px;
+    height: 44px;
     padding: 0;
-    font-size: 1.3em; /* Larger icon */
+    font-size: 1.3em;
     background-color: var(--status-error);
     color: var(--text-white);
     border: none;
-    border-radius: 50%; /* Circular button */
+    border-radius: 50%;
     cursor: pointer;
     display: flex;
     justify-content: center;
@@ -675,23 +677,23 @@ input[type="checkbox"]:checked {
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 .header-btn:hover {
-    background-color: #c82333; /* Darker red */
+    background-color: #c82333;
 }
 .main-admin-layout {
     display: flex;
     flex-grow: 1;
     width: 100%;
     transition: all 0.3s ease-in-out;
-    background-color: var(--bg-body); /* Body background */
+    background-color: var(--bg-body);
 }
 .sidebar-nav {
-    width: 240px; /* Slightly wider sidebar */
+    width: 240px;
     background-color: var(--bg-card);
-    box-shadow: 2px 0 8px var(--shadow-light); /* Softer shadow */
-    padding: 25px 20px; /* More vertical padding */
+    box-shadow: 2px 0 8px var(--shadow-light);
+    padding: 25px 20px;
     display: flex;
     flex-direction: column;
-    gap: 12px; /* More space between buttons */
+    gap: 12px;
     flex-shrink: 0;
     transition: all 0.3s ease-in-out;
 }
@@ -701,14 +703,14 @@ input[type="checkbox"]:checked {
     overflow: hidden;
 }
 .main-admin-layout.full-width-mode .content-display-area {
-    padding: 25px 50px; /* More padding when sidebar is hidden */
+    padding: 25px 50px;
 }
 .sidebar-nav .nav-btn {
     width: 100%;
-    padding: 15px 15px; /* More padding */
+    padding: 15px 15px;
     border: none;
-    background-color: var(--primary-light); /* Light primary background */
-    color: var(--primary-dark); /* Dark primary text */
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
     font-size: 1.05em;
     font-weight: 600;
     text-align: left;
@@ -717,7 +719,7 @@ input[type="checkbox"]:checked {
     transition: all 0.2s ease;
 }
 .sidebar-nav .nav-btn:hover:not(.active) {
-    background-color: #DDEBFD; /* Slightly darker light primary on hover */
+    background-color: #DDEBFD;
 }
 .sidebar-nav .nav-btn.active {
     background-color: var(--primary-color);
@@ -726,7 +728,7 @@ input[type="checkbox"]:checked {
 }
 .content-display-area {
     flex-grow: 1;
-    padding: 25px 30px; /* More padding */
+    padding: 25px 30px;
     display: flex;
     flex-direction: column;
     gap: 30px;
@@ -734,7 +736,7 @@ input[type="checkbox"]:checked {
 }
 .card-section {
     /* Inherits general .card styles */
-    padding: 30px; /* Override general card padding for section content */
+    padding: 30px;
     display: none;
 }
 .card-section.active-section {
@@ -742,7 +744,7 @@ input[type="checkbox"]:checked {
 }
 .card-section h2 {
     margin-top: 0;
-    margin-bottom: 25px; /* More margin */
+    margin-bottom: 25px;
     position: relative;
     display: flex;
     justify-content: space-between;
@@ -751,7 +753,7 @@ input[type="checkbox"]:checked {
     font-size: 1.8em;
 }
 .card-section h2 .section-action-btn {
-    width: 40px; /* Larger button */
+    width: 40px;
     height: 40px;
     font-size: 1.1em;
     background-color: var(--primary-color);
@@ -768,23 +770,23 @@ input[type="checkbox"]:checked {
 .filter-search-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px; /* More spacing */
+    gap: 15px;
     margin-bottom: 25px;
     align-items: center;
 }
 .filter-search-container input,
 .filter-search-container select {
-    padding: 12px 15px; /* Consistent input padding */
+    padding: 12px 15px;
     border: 1px solid var(--border-color);
-    border-radius: 8px; /* Consistent input radius */
+    border-radius: 8px;
     font-size: 1em;
     flex: 1;
-    min-width: 180px; /* Wider min-width for filters */
+    min-width: 180px;
     background-color: var(--bg-card);
     color: var(--text-main);
 }
 .filter-search-container button {
-    padding: 12px 25px; /* Consistent button padding */
+    padding: 12px 25px;
     background-color: var(--primary-color);
     color: var(--text-white);
     border-radius: 8px;
@@ -795,50 +797,50 @@ input[type="checkbox"]:checked {
     background-color: var(--primary-dark);
 }
 .user-table-container {
-    max-height: 550px; /* Slightly taller table container */
+    max-height: 550px;
     overflow-y: auto;
     overflow-x: auto;
     border: 1px solid var(--border-color);
     border-radius: 8px;
     background-color: var(--bg-card);
-    box-shadow: 0 2px 8px var(--shadow-light); /* Soft shadow for table */
+    box-shadow: 0 2px 8px var(--shadow-light);
 }
 .user-table {
     width: 100%;
     border-collapse: collapse;
 }
 .user-table th, .user-table td {
-    padding: 15px 18px; /* More padding in table cells */
+    padding: 15px 18px;
     text-align: left;
-    border-bottom: 1px solid var(--border-color); /* Only bottom border for cleaner look */
-    border-right: none; /* Remove right border */
-    border-left: none; /* Remove left border */
+    border-bottom: 1px solid var(--border-color);
+    border-right: none;
+    border-left: none;
 }
 .user-table th {
-    background-color: var(--primary-light); /* Light primary background for headers */
-    color: var(--primary-dark); /* Dark primary text for headers */
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
     font-weight: 600;
     position: sticky;
     top: 0;
     z-index: 1;
 }
 .user-table tr:last-child td {
-    border-bottom: none; /* Remove bottom border for last row */
+    border-bottom: none;
 }
 .user-table tbody tr:hover {
-    background-color: #F7FBFF; /* Light hover effect for rows */
+    background-color: #F7FBFF;
 }
 .user-actions-cell button {
-    padding: 8px 12px; /* Adjusted button padding */
+    padding: 8px 12px;
     font-size: 0.85em;
-    border-radius: 6px; /* Slightly smaller radius for action buttons */
-    margin: 0 4px; /* More spacing between buttons */
+    border-radius: 6px;
+    margin: 0 4px;
     color: var(--text-white);
     font-weight: 500;
 }
 .approve-btn { background-color: var(--status-success); }
 .reject-btn { background-color: var(--status-warning); color: var(--text-main); }
-.edit-btn { background-color: #17A2B8; /* Info blue */ }
+.edit-btn { background-color: #17A2B8; }
 .delete-btn { background-color: var(--status-error); }
 .no-users-message {
     text-align: center;
@@ -856,28 +858,28 @@ input[type="checkbox"]:checked {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.5); /* Darker overlay */
+    background-color: rgba(0,0,0,0.5);
     align-items: center;
     justify-content: center;
 }
 .modal-content {
     background-color: var(--bg-card);
     margin: auto;
-    padding: 35px; /* More padding */
+    padding: 35px;
     border: 1px solid var(--border-color);
-    border-radius: 12px; /* Consistent radius */
+    border-radius: 12px;
     width: 90%;
-    max-width: 550px; /* Wider modal */
-    box-shadow: 0 8px 25px rgba(0,0,0,0.3); /* More prominent shadow */
+    max-width: 550px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
     position: relative;
     color: var(--text-main);
 }
 .close-button {
     color: var(--text-secondary);
     position: absolute;
-    top: 15px; /* Adjusted position */
-    right: 20px; /* Adjusted position */
-    font-size: 32px; /* Larger close button */
+    top: 15px;
+    right: 20px;
+    font-size: 32px;
     font-weight: bold;
     cursor: pointer;
 }
@@ -887,7 +889,7 @@ input[type="checkbox"]:checked {
 .modal h3 {
     color: var(--primary-dark);
     margin-top: 0;
-    margin-bottom: 25px; /* More margin */
+    margin-bottom: 25px;
     text-align: center;
     font-size: 1.6em;
 }
@@ -898,9 +900,9 @@ input[type="checkbox"]:checked {
     color: var(--text-main);
 }
 .modal input, .modal select {
-    width: calc(100% - 24px); /* Account for padding */
+    width: calc(100% - 24px);
     padding: 12px;
-    margin-bottom: 18px; /* More margin */
+    margin-bottom: 18px;
     border: 1px solid var(--border-color);
     border-radius: 8px;
     background-color: var(--bg-card);
@@ -911,15 +913,15 @@ input[type="checkbox"]:checked {
     margin-top: 25px;
 }
 .modal-buttons button {
-    padding: 12px 25px; /* Consistent button padding */
-    margin: 0 12px; /* More spacing */
+    padding: 12px 25px;
+    margin: 0 12px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
 }
 .modal-buttons .save-btn { background-color: var(--status-success); color: var(--text-white); }
-.modal-buttons .cancel-btn { background-color: #6c757d; color: var(--text-white); } /* Muted gray */
+.modal-buttons .cancel-btn { background-color: #6c757d; color: var(--text-white); }
 
 
 /* Upload Page Styles (from upload.html) */
@@ -974,7 +976,7 @@ body.dark input[type="email"]:focus,
 body.dark input[type="password"]:focus,
 body.dark select:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.4); /* Custom light glow for dark mode */
+    box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.4);
 }
 
 
@@ -984,9 +986,9 @@ body.dark select:focus {
     overflow: hidden;
 }
 .sidebar {
-    width: 240px; /* Consistent sidebar width */
+    width: 240px;
     background: var(--bg-card);
-    padding: 25px; /* Consistent padding */
+    padding: 25px;
     box-shadow: 2px 0 8px var(--shadow-light);
     display: flex;
     flex-direction: column;
@@ -996,35 +998,35 @@ body.dark select:focus {
     margin: 0 0 20px;
     color: var(--primary-dark);
     font-weight: 600;
-    font-size: 1.6em; /* Adjusted size */
+    font-size: 1.6em;
 }
 .year-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px; /* More spacing */
+  margin-bottom: 15px;
 }
 .year-nav button {
-  width: 35px; /* Larger buttons */
+  width: 35px;
   height: 35px;
   flex-shrink: 0;
   padding: 5px;
   background-color: var(--primary-light);
   color: var(--primary-dark);
-  border-radius: 50%; /* Circular buttons */
+  border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 .year-nav span {
-  font-weight: 700; /* Bolder */
-  font-size: 1.2em; /* Larger */
+  font-weight: 700;
+  font-size: 1.2em;
   color: var(--text-main);
 }
 .sidebar button {
     width: 100%;
-    margin-bottom: 10px; /* More spacing */
-    padding: 12px 8px; /* More padding */
+    margin-bottom: 10px;
+    padding: 12px 8px;
     background: var(--primary-light);
     color: var(--primary-dark);
     font-weight: 500;
@@ -1039,13 +1041,13 @@ body.dark select:focus {
 .sidebar label {
     display: flex;
     align-items: center;
-    margin-top: 20px; /* More margin */
-    font-size: 1em; /* Slightly larger */
+    margin-top: 20px;
+    font-size: 1em;
     color: var(--text-main);
 }
 .sidebar input[type="checkbox"] {
     margin-right: 10px;
-    transform: scale(1.3); /* Larger checkbox */
+    transform: scale(1.3);
 }
 .sidebar p {
     font-size: 0.85em;
@@ -1054,33 +1056,33 @@ body.dark select:focus {
 }
 .main {
     flex-grow: 1;
-    padding: 25px 30px; /* Consistent padding */
+    padding: 25px 30px;
     overflow: auto;
     display: flex;
     flex-direction: column;
-    gap: 25px; /* Consistent gap between sections */
+    gap: 25px;
 }
 .month-header-box {
     background: var(--primary-color);
     color: var(--text-white);
-    padding: 18px 25px; /* More padding */
+    padding: 18px 25px;
     text-align: center;
-    font-size: 1.8em; /* Larger font */
-    font-weight: 700; /* Bolder */
+    font-size: 1.8em;
+    font-weight: 700;
     border-radius: 16px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 .tab-nav {
     display: flex;
-    border-bottom: 2px solid var(--border-color); /* Lighter border */
-    margin-bottom: 25px; /* More margin */
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 25px;
 }
 .tab-nav-button {
-    padding: 12px 25px; /* More padding */
+    padding: 12px 25px;
     background-color: transparent;
     font-size: 1.1em;
     font-weight: 600;
-    color: var(--text-secondary); /* Muted color for inactive tabs */
+    color: var(--text-secondary);
     border-bottom: 3px solid transparent;
     transition: color 0.2s ease, border-bottom-color 0.2s ease;
 }
@@ -1094,23 +1096,23 @@ body.dark select:focus {
 .tab-content {
     display: none;
     flex-direction: column;
-    gap: 25px; /* Consistent gap */
+    gap: 25px;
 }
 .tab-content.active {
     display: flex;
 }
 .container {
     display: flex;
-    gap: 25px; /* Consistent gap */
+    gap: 25px;
     align-items: flex-start;
     flex-wrap: wrap;
 }
 .table-container {
     flex-grow: 1;
-    height: 550px; /* Slightly taller */
-    min-width: 450px; /* Wider min-width */
+    height: 550px;
+    min-width: 450px;
     border-radius: 16px;
-    box-shadow: 0 8px 20px var(--shadow-light); /* Softer shadow */
+    box-shadow: 0 8px 20px var(--shadow-light);
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     overflow: hidden;
@@ -1128,21 +1130,21 @@ body.dark select:focus {
 .future-cell-readonly { background-color: var(--border-color) !important; color: var(--text-secondary) !important; cursor: not-allowed !important; }
 
 .summary-box {
-    width: 320px; /* Slightly wider */
+    width: 320px;
     min-width: 300px;
-    padding: 25px; /* Consistent padding */
+    padding: 25px;
     border-radius: 16px;
     box-shadow: 0 8px 20px var(--shadow-light);
     background: var(--bg-card);
     border: 1px solid var(--border-color);
-    text-align: center; /* Center content in summary box */
+    text-align: center;
 }
 .summary-box h3 {
     margin-top: 0;
     color: var(--primary-dark);
     font-weight: 600;
     font-size: 1.5em;
-    margin-bottom: 20px; /* More margin */
+    margin-bottom: 20px;
 }
 .summary-box p {
     font-size: 1.05em;
@@ -1150,27 +1152,27 @@ body.dark select:focus {
     color: var(--text-main);
 }
 .summary-box p strong {
-    color: var(--primary-dark); /* Highlight strong text */
+    color: var(--primary-dark);
 }
 .actions-section {
     text-align: center;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 25px; /* Consistent gap */
+    gap: 25px;
 }
 .actions-section button {
-    padding: 12px 25px; /* Consistent button padding */
+    padding: 12px 25px;
     font-size: 1em;
     font-weight: 600;
     color: var(--text-white);
     box-shadow: 0 2px 8px var(--shadow-light);
 }
 .actions-section .save-btn { background-color: var(--primary-color); }
-.actions-section .export-btn { background-color: var(--secondary-color); } /* Green for export */
+.actions-section .export-btn { background-color: var(--secondary-color); }
 
 .trend-chart-section {
-    padding: 25px; /* Consistent padding */
+    padding: 25px;
     border-radius: 16px;
     box-shadow: 0 8px 20px var(--shadow-light);
     background: var(--bg-card);
@@ -1207,19 +1209,19 @@ body.dark select:focus {
 /* Chatbot styles */
 #chat-bubble {
     position: fixed;
-    bottom: 25px; /* Slightly higher */
-    right: 25px; /* Slightly more inwards */
+    bottom: 25px;
+    right: 25px;
     background-color: var(--primary-color);
     color: var(--text-white);
     border-radius: 50%;
-    width: 65px; /* Slightly larger */
+    width: 65px;
     height: 65px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 2em; /* Larger icon */
+    font-size: 2em;
     cursor: pointer;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.25); /* More prominent shadow */
+    box-shadow: 0 6px 15px rgba(0,0,0,0.25);
     z-index: 1000;
     transition: all 0.2s ease-in-out;
 }
@@ -1230,21 +1232,21 @@ body.dark select:focus {
 
 #chat-window {
     position: fixed;
-    bottom: 100px; /* Adjusted to be above the bubble */
+    bottom: 100px;
     right: 25px;
-    width: 380px; /* Slightly wider */
-    height: 500px; /* Slightly taller */
+    width: 380px;
+    height: 500px;
     background-color: var(--bg-card);
-    border-radius: 16px; /* Consistent radius */
-    box-shadow: 0 10px 30px rgba(0,0,0,0.35); /* Stronger shadow */
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     display: flex;
     flex-direction: column;
     z-index: 999;
-    transform: scale(0.85); /* Slightly larger initial scale */
+    transform: scale(0.85);
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease-out;
-    border: 1px solid var(--border-color); /* Subtle border */
+    border: 1px solid var(--border-color);
 }
 #chat-window.open {
     transform: scale(1);
@@ -1259,7 +1261,7 @@ body.dark select:focus {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top-left-radius: 15px; /* Match window border-radius minus 1px */
+    border-top-left-radius: 15px;
     border-top-right-radius: 15px;
 }
 #chat-header span {
@@ -1271,7 +1273,7 @@ body.dark select:focus {
     color: var(--text-white);
     font-size: 1.3em;
     padding: 5px;
-    border-radius: 50%; /* Make button circular */
+    border-radius: 50%;
     transition: background-color 0.2s ease;
 }
 #chat-header button:hover {
@@ -1281,7 +1283,7 @@ body.dark select:focus {
     flex-grow: 1;
     padding: 15px;
     overflow-y: auto;
-    background-color: var(--bg-body); /* Lighter background for body */
+    background-color: var(--bg-body);
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -1289,46 +1291,46 @@ body.dark select:focus {
     line-height: 1.4;
 }
 .chat-message {
-    max-width: 85%; /* Wider messages */
-    padding: 12px 16px; /* More padding */
-    border-radius: 22px; /* More rounded */
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: 22px;
     word-wrap: break-word;
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 .chat-message.user {
     align-self: flex-end;
-    background-color: #E0E0E0; /* Lighter gray for user message */
+    background-color: #E0E0E0;
     color: var(--text-main);
-    border-bottom-right-radius: 8px; /* Flat bottom-right corner for user bubble */
+    border-bottom-right-radius: 8px;
 }
 .chat-message.bot {
     align-self: flex-start;
-    background-color: var(--primary-light); /* Light primary for bot message */
+    background-color: var(--primary-light);
     color: var(--text-main);
-    border-bottom-left-radius: 8px; /* Flat bottom-left corner for bot bubble */
+    border-bottom-left-radius: 8px;
 }
 #chat-input-area {
-    padding: 15px; /* More padding */
+    padding: 15px;
     border-top: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     gap: 10px;
-    background-color: var(--bg-card); /* White background for input area */
+    background-color: var(--bg-card);
     border-bottom-left-radius: 15px;
     border-bottom-right-radius: 15px;
 }
 #chat-input-area input {
     flex-grow: 1;
-    padding: 12px; /* Consistent input padding */
+    padding: 12px;
     border: 1px solid var(--border-color);
-    border-radius: 25px; /* More rounded */
-    background-color: var(--bg-body); /* Slightly off-white for input field */
+    border-radius: 25px;
+    background-color: var(--bg-body);
     color: var(--text-main);
 }
 #chat-input-area button {
     background-color: var(--primary-color);
     color: var(--text-white);
-    width: 45px; /* Larger send button */
+    width: 45px;
     height: 45px;
     border-radius: 50%;
     font-size: 1.3em;
@@ -1351,7 +1353,6 @@ body.dark select:focus {
     font-size: 0.95em;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
-
 
 /* Results Page (If used, basic styling) */
 /* results.html has no custom styles, so it will inherit from body and h2/h3 */
