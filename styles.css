@@ -254,8 +254,8 @@ input[type="checkbox"]:checked {
 
 /* Login Page styles (from login.html) */
 .login-container {
-  padding: 50px; /* Increased padding for more height/internal space */
-  max-width: 550px; /* Increased width */
+  padding: 60px; /* Increased padding for more height/internal space */
+  max-width: 550px; 
   text-align: center;
 }
 .login-container h2 {
@@ -1093,3 +1093,51 @@ body.dark select:focus {
 /* The following colors are for table cells based on value status */
 .within { background-color: var(--ht-within) !important; color: var(--ht-text-within) !important; }
 .warning { background-color: var(--ht-warning) !important; color: var(--ht-text-warning) !importa
+
+/* --- Login Form Enhancements --- */
+
+/* Make the form a flex container for easy spacing */
+#loginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* This creates consistent space between all form elements */
+}
+
+/* Style the new 'options' row */
+.form-options {
+  display: flex;
+  justify-content: space-between; /* Pushes items to opposite ends */
+  align-items: center;
+  font-size: 0.9em;
+}
+
+/* Group for the checkbox and its label */
+.remember-me-group {
+  display: flex;
+  align-items: center;
+  gap: 5px; /* Space between checkbox and text */
+}
+
+/* Clean up the 'Forgot Password' link */
+.login-container .forgot-password-link {
+  display: inline; /* Overrides the old 'block' style */
+  text-align: left; /* Removes the old 'right' align */
+  margin: 0;
+  text-decoration: none;
+}
+.login-container .forgot-password-link:hover {
+  text-decoration: underline;
+}
+
+/* Make the login button look better */
+#loginForm button[type="submit"] {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.1em;
+  background-color: var(--primary-color);
+  color: var(--text-white);
+}
+
+#loginForm button[type="submit"]:hover {
+  background-color: var(--primary-dark);
+}
