@@ -254,12 +254,13 @@ input[type="checkbox"]:checked {
 
 /* Login Page styles (from login.html) */
 .login-container {
-  padding: 60px; /* Increased padding for more height/internal space */
-  max-width: 550px; 
+  padding: 70px; /* Increased padding */
+  max-width: 700px; /* Increased width */
   text-align: center;
 }
 .login-container h2 {
-  margin-bottom: 24px;
+  font-size: 2.2em; /* Increased font size for title */
+  margin-bottom: 30px;
 }
 .login-container .footer {
   margin-top: 25px;
@@ -273,9 +274,9 @@ input[type="checkbox"]:checked {
   min-height: 1.2em;
 }
 .login-container .home-link {
-    display: block; /* Ensures it takes full width for centering via margin auto */
+    display: block; 
     max-width: 180px;
-    margin: 30px auto 0 auto; /* Center link below form */
+    margin: 25px auto 0 auto; /* Reduced top margin */
     font-size: 1em;
     padding: 12px 25px;
     background-color: var(--primary-light);
