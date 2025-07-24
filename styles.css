@@ -254,13 +254,13 @@ input[type="checkbox"]:checked {
 
 /* Login Page styles (from login.html) */
 .login-container {
-  padding: 70px; /* Increased padding */
-  max-width: 700px; /* Increased width */
+  padding: 70px;
+  max-width: 700px;
   text-align: center;
 }
 .login-container h2 {
-  font-size: 2.2em; /* Increased font size for title */
-  margin-bottom: 30px;
+  font-size: 2.2em;
+  margin-bottom: 35px; /* Increased space below title */
 }
 .login-container .footer {
   margin-top: 25px;
@@ -276,7 +276,7 @@ input[type="checkbox"]:checked {
 .login-container .home-link {
     display: block; 
     max-width: 180px;
-    margin: 25px auto 0 auto; /* Reduced top margin */
+    margin: 25px auto 0 auto;
     font-size: 1em;
     padding: 12px 25px;
     background-color: var(--primary-light);
@@ -288,15 +288,11 @@ input[type="checkbox"]:checked {
 }
 
 /* Signup Page styles (from signup.html) */
-/* *** EXTREMELY HIGH SPECIFICITY FOR DIAGNOSIS *** */
-/* This rule is highly specific to override any lingering issues.
-   Ideally, it would be a simpler '.signup-container' rule like other cards
-   once all caching issues are resolved consistently. */
 html body .signup-container.signup-container {
     background: var(--bg-card);
     padding: 30px;
-    max-width: 700px; /* Target width */
-    width: 95%; /* Responsive width */
+    max-width: 700px;
+    width: 95%;
     margin: auto;
     display: flex;
     flex-direction: column;
@@ -305,16 +301,14 @@ html body .signup-container.signup-container {
     box-shadow: 0 10px 30px var(--shadow-medium);
     border: 1px solid var(--border-color);
     box-sizing: border-box;
-    /* Removed text-align: center from here to allow form labels to be left-aligned */
 }
-/* Ensure specific heading and paragraph styles within this container are centered */
 html body .signup-container h2 {
     color: var(--primary-dark);
-    text-align: center; /* Explicitly centered */
+    text-align: center;
 }
 html body .signup-container p {
     color: var(--text-main);
-    text-align: center; /* Explicitly centered */
+    text-align: center;
 }
 html body .signup-container p a {
     color: var(--primary-color);
@@ -325,11 +319,11 @@ html body .signup-container p a:hover {
 html body .signup-container button {
     background-color: var(--primary-color);
     color: var(--text-white);
-    padding: 15px 30px; /* Larger padding for the button */
-    font-size: 1.1em;   /* Slightly larger font size */
-    display: block; /* Ensure it takes full width for centering */
-    width: calc(100% - 24px); /* Account for horizontal padding in inputs to align */
-    margin: 15px auto 0 auto; /* Center the button and provide top margin */
+    padding: 15px 30px;
+    font-size: 1.1em;
+    display: block;
+    width: calc(100% - 24px);
+    margin: 15px auto 0 auto;
 }
 html body .signup-container button:hover {
     background-color: var(--primary-dark);
@@ -344,21 +338,20 @@ html body .signup-container button:hover {
   justify-content: center;
   height: 100vh;
   padding: 20px;
-  background: url('wave-bg.png') no-repeat right center; /* Original background image */
+  background: url('wave-bg.png') no-repeat right center;
   background-size: cover;
 }
 .card {
-  /* Inherits general .card styles */
   display: flex;
   flex-direction: row;
   overflow: hidden;
   max-width: 1000px;
   width: 100%;
-  padding: 0; /* Override default card padding as it has panels inside */
+  padding: 0;
 }
 .left-panel {
   flex: 1;
-  padding: 40px; /* Generous padding */
+  padding: 40px;
 }
 .left-panel h1 {
   font-size: 2.2em;
@@ -452,7 +445,6 @@ html body .signup-container button:hover {
     padding: 20px;
 }
 .profile-card {
-    /* Inherits general .card styles */
     padding: 40px;
     max-width: 550px;
     width: 100%;
@@ -564,7 +556,6 @@ html body .signup-container button:hover {
 
 /* Awaiting Approval Page styles (from awaiting_approval.html) */
 .message-container {
-    /* Inherits general .card styles */
     padding: 50px;
     max-width: 650px;
     width: 100%;
@@ -703,7 +694,6 @@ html body .signup-container button:hover {
     overflow-y: auto;
 }
 .card-section {
-    /* Inherits general .card styles */
     padding: 30px;
     display: none;
 }
@@ -925,7 +915,6 @@ body.dark .handsontable td {
     color: var(--text-light);
     border-color: #555;
 }
-/* Ensure dark mode for general inputs */
 body.dark input[type="text"],
 body.dark input[type="email"],
 body.dark input[type="password"],
@@ -1101,13 +1090,13 @@ body.dark select:focus {
 #loginForm {
   display: flex;
   flex-direction: column;
-  gap: 20px; /* This creates consistent space between all form elements */
+  gap: 25px; /* Increased gap for more vertical spacing */
 }
 
 /* Style the new 'options' row */
 .form-options {
   display: flex;
-  justify-content: space-between; /* Pushes items to opposite ends */
+  justify-content: space-between;
   align-items: center;
   font-size: 0.9em;
 }
@@ -1116,13 +1105,13 @@ body.dark select:focus {
 .remember-me-group {
   display: flex;
   align-items: center;
-  gap: 5px; /* Space between checkbox and text */
+  gap: 5px;
 }
 
 /* Clean up the 'Forgot Password' link */
 .login-container .forgot-password-link {
-  display: inline; /* Overrides the old 'block' style */
-  text-align: left; /* Removes the old 'right' align */
+  display: inline;
+  text-align: left;
   margin: 0;
   text-decoration: none;
 }
@@ -1130,11 +1119,18 @@ body.dark select:focus {
   text-decoration: underline;
 }
 
+/* --- NEW: Larger input fields for the bigger form --- */
+#loginForm input[type="email"],
+#loginForm input[type="password"] {
+    padding: 16px;
+    font-size: 1.1rem;
+}
+
 /* Make the login button look better */
 #loginForm button[type="submit"] {
   width: 100%;
-  padding: 14px;
-  font-size: 1.1em;
+  padding: 16px; /* Increased padding */
+  font-size: 1.2em; /* Increased font size */
   background-color: var(--primary-color);
   color: var(--text-white);
 }
