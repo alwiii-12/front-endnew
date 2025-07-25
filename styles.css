@@ -857,7 +857,7 @@ body.dark input:focus, body.dark select:focus {
     box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.4);
 }
 
-/* --- NEW: Styles for Index/Welcome Page --- */
+/* --- Styles for Index/Welcome Page --- */
 body.index-page {
     background: url('wave-bg.png') no-repeat center center;
     background-size: cover;
@@ -875,6 +875,7 @@ body.index-page {
     max-width: 900px;
     width: 100%;
     padding: 0;
+    /* THIS IS THE FIX: Explicitly set the background color */
     background-color: var(--bg-card);
     border-radius: 16px;
     box-shadow: 0 10px 30px var(--shadow-medium);
