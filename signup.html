@@ -8,32 +8,35 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <link rel="stylesheet" href="styles.css?v=2">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body>
+<body class="centered-content">
   <div class="signup-container">
-    <h2>LINAC QA Sign Up</h2> <div class="message" id="message"></div>
+    <h2>LINAC QA Sign Up</h2>
+    <div class="message" id="message"></div>
+    
     <div class="form-group">
-      <label for="name">Full Name:<span class="required">*</span></label>
+      <label for="name">Full Name<span class="required">*</span></label>
       <input type="text" id="name" placeholder="Enter your full name" required/>
     </div>
+    
     <div class="form-group">
-      <label for="email">Email:<span class="required">*</span></label>
+      <label for="email">Email<span class="required">*</span></label>
       <input type="email" id="email" placeholder="Enter your email" required/>
     </div>
+    
     <div class="form-group">
-      <label for="password">Password:<span class="required">*</span></label>
+      <label for="password">Password<span class="required">*</span></label>
       <div class="password-input-container">
         <input type="password" id="password" placeholder="Choose a password" required autocomplete="new-password" spellcheck="false"/>
         <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span>
       </div>
       <div id="passwordStrength" class="password-strength"></div>
     </div>
+    
     <div class="form-group">
-      <label for="hospital">Select Hospital:<span class="required">*</span></label>
+      <label for="hospital">Select Hospital<span class="required">*</span></label>
       <select id="hospital" required>
         <option value="">-- Select Hospital --</option>
         <option value="aoi_gurugram">AOI GURUGRAM</option>
@@ -43,14 +46,16 @@
         <option value="max_delhi">Max Healthcare Delhi</option>
       </select>
     </div>
+    
     <div class="form-group">
-      <label for="role">Select Role:<span class="required">*</span></label>
+      <label for="role">Select Role<span class="required">*</span></label>
       <select id="role" required>
-        <option value="">Select Role</option>
+        <option value="">-- Select Role --</option>
         <option value="Medical physicist">Medical physicist</option>
         <option value="RSO">RSO</option>
       </select>
     </div>
+    
     <button onclick="signup()" id="signupButton">Sign Up</button>
     <p>Already have an account? <a href="login.html">Log in</a></p>
   </div>
@@ -65,7 +70,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // --- UTILITY FUNCTIONS (TEMPORARILY HERE - WILL BE MOVED LATER) ---
     function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
     function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
 
@@ -73,14 +77,14 @@
         const notificationContainer = document.getElementById('notification-container');
         if (!notificationContainer) {
             console.warn("Notification container not found. Cannot display notification.");
-            alert(message); // Fallback for visibility
+            alert(message);
             return;
         }
         const notification = document.createElement('div');
         notification.classList.add('notification-message', type);
         notification.textContent = message;
         notificationContainer.appendChild(notification);
-        void notification.offsetWidth; // Force reflow to enable transition
+        void notification.offsetWidth;
         notification.classList.add('show');
         setTimeout(() => {
             notification.classList.remove('show');
@@ -89,7 +93,6 @@
             }, { once: true });
         }, duration);
     }
-    // --- END UTILITY FUNCTIONS ---
 
     document.addEventListener('DOMContentLoaded', () => {
         const auth = firebase.auth();
@@ -135,7 +138,7 @@
         passwordInput.addEventListener('input', checkPasswordStrength);
 
         window.signup = async function() {
-          showLoader(); // Show loader
+          showLoader();
           signupButton.disabled = true;
           signupButton.textContent = 'Signing Up...';
           const name = document.getElementById("name").value.trim();
@@ -145,7 +148,7 @@
           const role = document.getElementById("role").value.trim();
 
           if (!name || !email || !password || !hospital || hospital === "" || !role || role === "") {
-            hideLoader(); // Hide loader
+            hideLoader();
             showNotification("Please fill in all fields.", 'warning');
             signupButton.disabled = false;
             signupButton.textContent = 'Sign Up';
@@ -153,7 +156,7 @@
           }
 
           if (passwordStrengthDiv.className.includes('weak')) {
-              hideLoader(); // Hide loader
+              hideLoader();
               showNotification("Please choose a stronger password.", 'warning');
               signupButton.disabled = false;
               signupButton.textContent = 'Sign Up';
@@ -164,7 +167,7 @@
             const userCredential = await auth.createUserWithEmailAndPassword(email, password);
             const uid = userCredential.user.uid;
 
-            const appCheck = firebase.appCheck(); // Ensure appCheck is accessible
+            const appCheck = firebase.appCheck();
             const appCheckTokenResponse = await appCheck.getToken(false);
             const token = appCheckTokenResponse.token;
 
@@ -173,7 +176,7 @@
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",
-                    "X-Firebase-AppCheck": token // Send the App Check token
+                    "X-Firebase-AppCheck": token
                 },
                 body: JSON.stringify({ uid, name, email, hospital, role, status: "pending" })
             });
@@ -198,7 +201,7 @@
             }
             showNotification(errorMessage, 'error');
           } finally {
-            hideLoader(); // Hide loader
+            hideLoader();
             signupButton.disabled = false;
             signupButton.textContent = 'Sign Up';
           }
