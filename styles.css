@@ -1,39 +1,39 @@
 /* --- Google Fonts Import --- */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@600;700&display=swap');
 
-/* --- NEW MODERN COLOR PALETTE --- */
+/* --- MODERN COLOR PALETTE & VARIABLES --- */
 :root {
-  --primary-color: #007ACC; /* A slightly more vibrant blue */
-  --primary-dark: #005D99;  /* Darker shade for hover/active */
-  --primary-light: #EBF7FF; /* Very light blue for backgrounds/accents */
+  --primary-color: #007ACC;
+  --primary-dark: #005D99;
+  --primary-light: #EBF7FF;
 
-  --secondary-color: #2ECC71; /* A fresh green for success/accents */
+  --secondary-color: #2ECC71;
   --secondary-dark: #27AE60;
 
-  --text-main: #34495E;    /* Dark, professional text */
-  --text-secondary: #7F8C8D; /* Lighter text for descriptions/hints */
+  --text-main: #34495E;
+  --text-secondary: #7F8C8D;
   --text-white: #FFFFFF;
 
-  --bg-body: #F4F7F6;     /* Light, subtle background for the entire page */
-  --bg-card: #FFFFFF;     /* White background for main content cards */
-  --bg-dark-mode: #2C3E50; /* Dark mode background */
-  --bg-dark-card: #34495E; /* Dark mode card background */
+  --bg-body: #F4F7F6;
+  --bg-card: #FFFFFF;
+  --bg-dark-mode: #2C3E50;
+  --bg-dark-card: #34495E;
 
-  --border-color: #DDE6E9; /* Light border color */
-  --shadow-light: rgba(0, 0, 0, 0.06); /* Lighter, softer shadow */
-  --shadow-medium: rgba(0, 0, 0, 0.12); /* Slightly stronger shadow for elevation */
+  --border-color: #DDE6E9;
+  --shadow-light: rgba(0, 0, 0, 0.06);
+  --shadow-medium: rgba(0, 0, 0, 0.12);
 
-  --status-success: #28A745; /* Standard green for success */
-  --status-warning: #FFC107; /* Standard orange for warning */
-  --status-error: #DC3545;  /* Standard red for error */
+  --status-success: #28a745;
+  --status-warning: #ffc107;
+  --status-error: #dc3545;
 
-  /* Handsontable specific colors (Populated from upload.html and admin_dashboard.html) */
-  --ht-within: #E6F5ED;
-  --ht-warning: #FFF3CD;
-  --ht-out: #F8D7DA;
+  /* Handsontable specific colors */
+  --ht-within: #e6f5ed;
+  --ht-warning: #fff3cd;
+  --ht-out: #f8d7da;
   --ht-text-within: #155724;
   --ht-text-warning: #856404;
-  --ht-text-out: #721C24;
+  --ht-text-out: #721c24;
 }
 
 /* --- General Body and Font Styles --- */
@@ -42,7 +42,7 @@ html {
     padding: 0;
     width: 100%;
     height: 100%;
-    overflow: auto; /* Allow scrolling for main content if needed */
+    overflow: hidden; /* Prevent body scroll when flex layout is used */
 }
 
 body {
@@ -54,8 +54,13 @@ body {
   flex-direction: column;
   min-height: 100vh;
   color: var(--text-main);
-  justify-content: center; /* This centers vertically */
-  align-items: center;    /* This centers horizontally */
+}
+
+/* Add this class to the <body> tag on login, signup, and awaiting_approval pages */
+body.centered-content {
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -70,71 +75,50 @@ h1 { font-size: 2.2em; }
 h2 { font-size: 1.8em; }
 h3 { font-size: 1.5em; }
 
-
-/* --- General Card/Container Styles (Applied across multiple pages) --- */
-.card-panel,
-.login-container, /* This will be specifically configured below */
-.signup-container, /* This will be specifically configured below */
-.profile-card,
-.card-section,
-.message-container,
-.card {
+/* --- General Card/Container Styles --- */
+.card-panel, .login-container, .signup-container, .profile-card, .message-container, .card, .card-section {
   background: var(--bg-card);
-  border-radius: 16px; /* Consistent larger radius for main containers */
-  box-shadow: 0 10px 30px var(--shadow-medium); /* Softer, more spread out shadow */
-  border: 1px solid var(--border-color); /* Subtle border for definition */
-  box-sizing: border-box; /* Ensure padding/border is included in width */
-  padding: 30px; /* Default padding for cards */
+  border-radius: 16px;
+  box-shadow: 0 10px 30px var(--shadow-medium);
+  border: 1px solid var(--border-color);
+  box-sizing: border-box;
+  padding: 30px;
 }
 
-
-/* --- Button Styles (General) --- */
-button,
-a.button,
-.nav-btn,
-.header-btn,
-.home-link {
+/* --- General Button Styles --- */
+button, a.button, .nav-btn, .header-btn, .home-link {
   border: none;
-  border-radius: 8px; /* Consistent border radius for buttons */
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
-  font-weight: 600; /* Bolder text for buttons */
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-button:hover,
-a.button:hover,
-.nav-btn:hover:not(.active),
-.header-btn:hover,
-.home-link:hover {
-  transform: translateY(-2px); /* Lift slightly on hover */
-  box-shadow: 0 8px 16px var(--shadow-light); /* More prominent shadow on hover */
+button:hover, a.button:hover, .nav-btn:hover:not(.active), .header-btn:hover, .home-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px var(--shadow-light);
 }
 
-button:active,
-a.button:active,
-.nav-btn:active,
-.header-btn:active,
-.home-link:active {
-  transform: translateY(1px) scale(0.99); /* Push down and slightly scale */
-  box-shadow: 0 1px 6px rgba(0,0,0,0.2) inset; /* Darker, more noticeable inset shadow */
-  background-color: var(--primary-dark) !important; /* Ensure it darkens on click for primary buttons */
-  border-color: var(--primary-dark) !important; /* Ensure border darkens too if it has one */
+button:active, a.button:active, .nav-btn:active, .header-btn:active, .home-link:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.2) inset;
 }
 
 button:disabled {
   cursor: not-allowed;
-  background-color: var(--text-secondary) !important; /* Muted color for disabled */
+  background-color: var(--text-secondary) !important;
   opacity: 0.7;
   transform: none;
   box-shadow: none;
 }
 
-
-/* --- Input Field Styles (General) --- */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-select {
+/* --- General Input Field Styles --- */
+input[type="text"], input[type="email"], input[type="password"], input[type="date"], select {
   width: 100%;
   padding: 12px;
   border: 1px solid var(--border-color);
@@ -146,29 +130,25 @@ select {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-input[type="text"]::placeholder,
-input[type="email"]::placeholder,
-input[type="password"]::placeholder {
+input[type="text"]::placeholder, input[type="email"]::placeholder, input[type="password"]::placeholder {
   color: var(--text-secondary);
   opacity: 1;
 }
 
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus,
-select:focus {
+input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, input[type="date"]:focus, select:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px var(--primary-light);
 }
 
-/* Specific for password toggle */
 .password-input-container {
   position: relative;
 }
+
 .password-input-container input {
   padding-right: 40px;
 }
+
 .toggle-password {
   position: absolute;
   right: 15px;
@@ -180,335 +160,436 @@ select:focus {
   font-size: 1.1em;
 }
 
-/* Checkbox specific styles */
-input[type="checkbox"] {
-  width: auto;
-  margin-right: 8px;
-  height: 18px; /* Slightly larger checkbox */
-  width: 18px;
-  flex-shrink: 0;
-  cursor: pointer;
-  border-radius: 4px; /* Slightly rounded checkbox */
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-card);
-}
-input[type="checkbox"]:checked {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
-}
-
-
-/* --- Notification Container (Common across pages) --- */
+/* --- Reusable Components (Notifications, Loaders) --- */
 #notification-container {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10000;
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
 }
+
 .notification-message {
-    background-color: var(--text-main); /* Default for info/general messages */
-    color: var(--text-white);
-    padding: 12px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    opacity: 0;
-    transform: translateY(-20px);
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  background-color: var(--text-main);
+  color: var(--text-white);
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }
+
 .notification-message.show {
-    opacity: 1;
-    transform: translateY(0);
+  opacity: 1;
+  transform: translateY(0);
 }
+
 .notification-message.success { background-color: var(--status-success); }
 .notification-message.error { background-color: var(--status-error); }
 .notification-message.warning { background-color: var(--status-warning); color: var(--text-main); }
 
-
-/* --- Loading Overlay (Common across pages) --- */
 #loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    display: none; /* Controlled by JS */
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
 }
+
 .spinner {
-    width: 60px;
-    height: 60px;
-    border: 8px solid var(--text-white);
-    border-top-color: var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-@keyframes spin {
-    to { transform: rotate(360deg); }
+  width: 60px;
+  height: 60px;
+  border: 8px solid var(--text-white);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-/* --- Specific Page Styles --- */
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* Login Page styles (from login.html) */
-.login-container {
-  padding: 70px;
-  max-width: 700px;
+/* --- Login & Signup Pages --- */
+.login-container, .signup-container {
+  padding: 40px;
+  max-width: 480px;
+  width: 90%;
   text-align: center;
 }
-.login-container h2 {
-  font-size: 2.2em;
-  margin-bottom: 35px; /* Increased space below title */
+
+.login-container h2, .signup-container h2 {
+  font-size: 2em;
+  margin-bottom: 30px;
 }
+
+#loginForm, .signup-container .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  text-align: left;
+}
+
+#loginForm {
+    gap: 20px;
+}
+
+#loginForm input, .signup-container input, .signup-container select {
+    padding: 16px;
+    font-size: 1.1rem;
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9em;
+}
+
+.remember-me-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.forgot-password-link {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.forgot-password-link:hover {
+  text-decoration: underline;
+}
+
 .login-container .footer {
   margin-top: 25px;
   font-size: 0.85em;
   color: var(--text-secondary);
 }
-.login-container .error {
+
+.error, .message {
   color: var(--status-error);
   font-size: 0.9em;
   margin-bottom: 15px;
   min-height: 1.2em;
+  text-align: center;
 }
-.login-container .home-link {
-    display: block; 
+
+.home-link {
+    display: block;
     max-width: 180px;
     margin: 25px auto 0 auto;
-    font-size: 1em;
     padding: 12px 25px;
     background-color: var(--primary-light);
     color: var(--primary-dark);
 }
-.login-container .home-link:hover {
+
+.home-link:hover {
     background-color: var(--primary-color);
     color: var(--text-white);
 }
 
-/* Signup Page styles (from signup.html) */
-html body .signup-container.signup-container {
-    background: var(--bg-card);
-    padding: 30px;
-    max-width: 700px;
-    width: 95%;
-    margin: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    border-radius: 16px;
-    box-shadow: 0 10px 30px var(--shadow-medium);
-    border: 1px solid var(--border-color);
-    box-sizing: border-box;
-}
-html body .signup-container h2 {
-    color: var(--primary-dark);
+/* --- Awaiting Approval & Message Pages --- */
+.message-container {
+    padding: 50px;
+    max-width: 650px;
+    width: 100%;
     text-align: center;
 }
-html body .signup-container p {
-    color: var(--text-main);
-    text-align: center;
-}
-html body .signup-container p a {
-    color: var(--primary-color);
-}
-html body .signup-container p a:hover {
-    color: var(--primary-dark);
-}
-html body .signup-container button {
-    background-color: var(--primary-color);
-    color: var(--text-white);
-    padding: 15px 30px;
-    font-size: 1.1em;
-    display: block;
-    width: calc(100% - 24px);
-    margin: 15px auto 0 auto;
-}
-html body .signup-container button:hover {
-    background-color: var(--primary-dark);
+
+.message-container h1 {
+    font-size: 2.2em;
+    margin-bottom: 25px;
 }
 
-
-/* Index Page (Landing Page) styles (from index.html) */
-.wrapper {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  padding: 20px;
-  background: url('wave-bg.png') no-repeat right center;
-  background-size: cover;
-}
-.card {
-  display: flex;
-  flex-direction: row;
-  overflow: hidden;
-  max-width: 1000px;
-  width: 100%;
-  padding: 0;
-}
-.left-panel {
-  flex: 1;
-  padding: 40px;
-}
-.left-panel h1 {
-  font-size: 2.2em;
-  color: var(--primary-dark);
-  margin-bottom: 15px;
-}
-.left-panel p {
-  font-size: 1.05em;
-  margin-bottom: 30px;
-  color: var(--text-main);
-  line-height: 1.6;
-}
-.left-panel a.button {
-  display: inline-block;
-  margin-right: 15px;
-  margin-top: 15px;
-  padding: 12px 28px;
-  background-color: var(--primary-color);
-  color: var(--text-white);
-  text-decoration: none;
-  font-weight: 600;
-  border-radius: 8px;
-}
-.left-panel a.button:hover {
-  background-color: var(--primary-dark);
-}
-.right-panel {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.right-panel img {
-  max-width: 90%;
-  height: auto;
-}
-@media (max-width: 768px) {
-  .wrapper {
-    flex-direction: column;
-    padding: 10px;
-  }
-  .card {
-    flex-direction: column;
-  }
-  .right-panel {
-    padding: 0;
-  }
-  .left-panel {
-      padding: 30px;
-  }
-  .left-panel h1 {
-      font-size: 1.8em;
-  }
+.message-container p {
+    font-size: 1.15em;
+    margin-bottom: 25px;
+    line-height: 1.6;
 }
 
-/* My Profile Page styles (from my_profile.html) */
+.message-container .contact-info {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    margin-top: 30px;
+}
+
+/* --- Main Application Layout (Topbar, Sidebar, Content) --- */
 .topbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: var(--bg-card);
-    color: var(--text-main);
-    padding: 15px 30px;
-    font-size: 1.2em;
-    font-weight: 600;
-    box-shadow: 0 2px 8px var(--shadow-light);
+    padding: 10px 20px;
     border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px var(--shadow-light);
+    min-height: 50px;
+    flex-shrink: 0;
 }
-.topbar span {
+
+.hospital-info-box {
+    background-color: var(--primary-light);
     color: var(--primary-dark);
-}
-.topbar button {
-    padding: 10px 18px;
-    background-color: var(--status-error);
-    color: var(--text-white);
-    border: none;
+    padding: 8px 15px;
     border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    font-weight: 600;
+    font-size: 0.95em;
 }
-.topbar button:hover {
-    background-color: #c82333;
+
+.topbar .header-buttons {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
-.profile-container {
-    flex-grow: 1;
+
+.topbar .header-buttons button {
+    padding: 8px 15px;
+    font-size: 14px;
+}
+
+.content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 220px;
+    background: var(--bg-card);
+    padding: 20px;
+    box-shadow: 2px 0 5px var(--shadow-light);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
+    flex-shrink: 0;
+    gap: 10px;
 }
-.profile-card {
-    padding: 40px;
-    max-width: 550px;
+
+.sidebar h2 {
+    margin: 0 0 15px;
+    font-weight: 600;
+    font-size: 1.5em;
+    text-align: center;
+}
+
+.year-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.year-nav button {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  padding: 5px;
+  background-color: #eee;
+}
+
+.year-nav span {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.sidebar .nav-btn {
     width: 100%;
+    padding: 12px 8px;
+    background: #eee;
+    color: var(--text-main);
+    font-weight: 500;
     text-align: left;
 }
-.profile-card h1 {
-    color: var(--primary-dark);
-    text-align: center;
-    margin-bottom: 30px;
-    font-size: 2em;
+
+.sidebar .nav-btn.active {
+    background: var(--primary-color);
+    color: var(--text-white);
 }
+
+.main {
+    flex-grow: 1;
+    padding: 25px;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* --- Admin Dashboard Specifics --- */
+.admin-header {
+    background-color: var(--primary-color);
+    color: var(--text-white);
+    padding: 20px 30px;
+    text-align: center;
+}
+.admin-header h1 {
+    color: var(--text-white);
+}
+
+.main-admin-layout {
+    display: flex;
+    flex-grow: 1;
+    width: 100%;
+}
+
+.main-admin-layout.full-width-mode .sidebar-nav {
+    width: 0;
+    padding: 20px 0;
+    overflow: hidden;
+}
+
+.content-display-area {
+    flex-grow: 1;
+    padding: 25px;
+    overflow-y: auto;
+}
+
+.card-section.active-section {
+    display: block;
+}
+
+.filter-search-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 25px;
+    align-items: center;
+}
+
+.filter-search-container input, .filter-search-container select {
+    flex: 1;
+    min-width: 180px;
+}
+
+.user-table-container {
+    max-height: 550px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.user-table th, .user-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.user-table th {
+    background-color: var(--primary-light);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.user-table tr:hover {
+    background-color: #F7FBFF;
+}
+
+.user-actions-cell button {
+    padding: 8px 12px;
+    font-size: 0.85em;
+    border-radius: 6px;
+    margin: 0 4px;
+    color: var(--text-white);
+}
+
+.approve-btn { background-color: var(--status-success); }
+.reject-btn { background-color: var(--status-warning); color: var(--text-main); }
+.edit-btn { background-color: #17A2B8; }
+.delete-btn { background-color: var(--status-error); }
+
+.no-users-message {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* --- Modal Styles --- */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: var(--bg-card);
+    padding: 35px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 550px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    position: relative;
+}
+
+.close-button {
+    color: var(--text-secondary);
+    position: absolute;
+    top: 15px; right: 20px;
+    font-size: 32px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.close-button:hover {
+    color: var(--text-main);
+}
+
+.modal-buttons {
+    text-align: center;
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.modal-buttons .save-btn { background-color: var(--status-success); color: var(--text-white); }
+.modal-buttons .cancel-btn { background-color: #6c757d; color: var(--text-white); }
+
+
+/* --- My Profile Page --- */
+.profile-card h1 {
+    text-align: center;
+}
+
 .profile-item {
     margin-bottom: 18px;
     font-size: 1.1em;
-    line-height: 1.6;
     display: flex;
     align-items: baseline;
-    color: var(--text-main);
 }
+
 .profile-item strong {
-    display: inline-block;
     width: 160px;
-    min-width: 140px;
     flex-shrink: 0;
-    color: var(--primary-dark);
     text-align: right;
     padding-right: 15px;
 }
-.profile-item span:last-child {
-    flex-grow: 1;
-    word-break: break-word;
-}
+
 .profile-actions {
     text-align: center;
     margin-top: 30px;
 }
-.profile-actions button {
-    padding: 12px 25px;
-    background-color: var(--secondary-color);
-    color: var(--text-white);
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-}
-.profile-actions button:hover {
-    background-color: var(--secondary-dark);
-}
-.loading-message {
-    text-align: center;
-    color: var(--text-secondary);
-    font-style: italic;
-}
+
 .change-password-header {
-    color: var(--primary-dark);
     font-size: 1.4em;
-    margin-top: 40px;
-    margin-bottom: 15px;
+    margin-top: 30px;
     text-align: center;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     user-select: none;
-    font-weight: 600;
 }
 .change-password-header i {
     margin-left: 10px;
@@ -519,622 +600,229 @@ html body .signup-container button:hover {
 }
 .change-password-form {
     display: none;
-    padding-top: 25px;
+    padding-top: 20px;
     border-top: 1px solid var(--border-color);
-    margin-top: 20px;
+    margin-top: 15px;
 }
-.change-password-form.open {
-    display: block;
-}
+.change-password-form.open { display: block; }
+
 .form-group {
-    margin-bottom: 18px;
+    margin-bottom: 15px;
 }
 .form-group label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 5px;
     font-weight: bold;
-    color: var(--text-main);
 }
-.form-group input {
-    width: 100%;
-    padding: 12px;
-    box-sizing: border-box;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background-color: var(--bg-card);
-    color: var(--text-main);
-}
+
 .password-strength {
     font-size: 0.85em;
     margin-top: 5px;
-    color: var(--text-secondary);
 }
 .password-strength.weak { color: var(--status-error); }
 .password-strength.intermediate { color: var(--status-warning); }
 .password-strength.strong { color: var(--status-success); }
 
 
-/* Awaiting Approval Page styles (from awaiting_approval.html) */
-.message-container {
-    padding: 50px;
-    max-width: 650px;
-    width: 100%;
-    text-align: center;
-}
-.message-container h1 {
-    color: var(--primary-dark);
-    margin-bottom: 25px;
-    font-size: 2.2em;
-}
-.message-container p {
-    font-size: 1.15em;
-    color: var(--text-main);
-    margin-bottom: 25px;
-    line-height: 1.6;
-}
-.message-container .contact-info {
-    font-size: 0.9em;
-    color: var(--text-secondary);
-    margin-top: 30px;
-}
-.message-container .home-link {
-    display: inline-block;
-    margin-top: 30px;
-    padding: 12px 28px;
-    background-color: var(--primary-color);
-    color: var(--text-white);
-    text-decoration: none;
-    border-radius: 8px;
-    font-weight: 600;
-    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
-}
-.message-container .home-link:hover {
-    background-color: var(--primary-dark);
-}
-
-
-/* Admin Dashboard styles (from admin_dashboard.html) */
-.admin-header {
-    background-color: var(--primary-color);
-    color: var(--text-white);
-    padding: 20px 30px;
-    font-size: 2em;
-    font-weight: bold;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    text-align: center;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-}
-.admin-header h1 {
-    margin: 0;
-    font-size: 1.5em;
-    flex-grow: 1;
-    text-align: center;
-    color: var(--text-white);
-    font-family: 'Montserrat', sans-serif;
-}
-.header-buttons {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-.header-btn {
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    font-size: 1.3em;
-    background-color: var(--status-error);
-    color: var(--text-white);
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
-}
-.header-btn:hover {
-    background-color: #c82333;
-}
-.main-admin-layout {
-    display: flex;
-    flex-grow: 1;
-    width: 100%;
-    transition: all 0.3s ease-in-out;
-    background-color: var(--bg-body);
-}
-.sidebar-nav {
-    width: 240px;
-    background-color: var(--bg-card);
-    box-shadow: 2px 0 8px var(--shadow-light);
-    padding: 25px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    flex-shrink: 0;
-    transition: all 0.3s ease-in-out;
-}
-.main-admin-layout.full-width-mode .sidebar-nav {
-    width: 0;
-    padding: 20px 0;
-    overflow: hidden;
-}
-.main-admin-layout.full-width-mode .content-display-area {
-    padding: 25px 50px;
-}
-.sidebar-nav .nav-btn {
-    width: 100%;
-    padding: 15px 15px;
-    border: none;
-    background-color: var(--primary-light);
-    color: var(--primary-dark);
-    font-size: 1.05em;
-    font-weight: 600;
-    text-align: left;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-.sidebar-nav .nav-btn:hover:not(.active) {
-    background-color: #DDEBFD;
-}
-.sidebar-nav .nav-btn.active {
-    background-color: var(--primary-color);
-    color: var(--text-white);
-    box-shadow: 0 2px 8px var(--shadow-light);
-}
-.content-display-area {
-    flex-grow: 1;
-    padding: 25px 30px;
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-    overflow-y: auto;
-}
-.card-section {
-    padding: 30px;
-    display: none;
-}
-.card-section.active-section {
-    display: block;
-}
-.card-section h2 {
-    margin-top: 0;
-    margin-bottom: 25px;
-    position: relative;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: var(--primary-dark);
-    font-size: 1.8em;
-}
-.card-section h2 .section-action-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 1.1em;
-    background-color: var(--primary-color);
-    color: var(--text-white);
-    border-radius: 8px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 2px 6px var(--shadow-light);
-}
-.card-section h2 .section-action-btn:hover {
-    background-color: var(--primary-dark);
-}
-.filter-search-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-bottom: 25px;
-    align-items: center;
-}
-.filter-search-container input,
-.filter-search-container select {
-    padding: 12px 15px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 1em;
-    flex: 1;
-    min-width: 180px;
-    background-color: var(--bg-card);
-    color: var(--text-main);
-}
-.filter-search-container button {
-    padding: 12px 25px;
-    background-color: var(--primary-color);
-    color: var(--text-white);
-    border-radius: 8px;
-    font-size: 1em;
-    font-weight: 600;
-}
-.filter-search-container button:hover {
-    background-color: var(--primary-dark);
-}
-.user-table-container {
-    max-height: 550px;
-    overflow-y: auto;
-    overflow-x: auto;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background-color: var(--bg-card);
-    box-shadow: 0 2px 8px var(--shadow-light);
-}
-.user-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-.user-table th, .user-table td {
-    padding: 15px 18px;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
-    border-right: none;
-    border-left: none;
-}
-.user-table th {
-    background-color: var(--primary-light);
-    color: var(--primary-dark);
-    font-weight: 600;
-    position: sticky;
-    top: 0;
-    z-index: 1;
-}
-.user-table tr:last-child td {
-    border-bottom: none;
-}
-.user-table tbody tr:hover {
-    background-color: #F7FBFF;
-}
-.user-actions-cell button {
-    padding: 8px 12px;
-    font-size: 0.85em;
-    border-radius: 6px;
-    margin: 0 4px;
-    color: var(--text-white);
-    font-weight: 500;
-}
-.approve-btn { background-color: var(--status-success); }
-.reject-btn { background-color: var(--status-warning); color: var(--text-main); }
-.edit-btn { background-color: #17A2B8; }
-.delete-btn { background-color: var(--status-error); }
-.no-users-message {
-    text-align: center;
-    padding: 20px;
-    color: var(--text-secondary);
-    font-style: italic;
-}
-/* Modal styles (from admin_dashboard.html) */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 10000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.5);
-    align-items: center;
-    justify-content: center;
-}
-.modal-content {
-    background-color: var(--bg-card);
-    margin: auto;
-    padding: 35px;
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    width: 90%;
-    max-width: 550px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-    position: relative;
-    color: var(--text-main);
-}
-.close-button {
-    color: var(--text-secondary);
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 32px;
-    font-weight: bold;
-    cursor: pointer;
-}
-.close-button:hover {
-    color: var(--text-main);
-}
-.modal h3 {
-    color: var(--primary-dark);
-    margin-top: 0;
-    margin-bottom: 25px;
-    text-align: center;
-    font-size: 1.6em;
-}
-.modal label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-    color: var(--text-main);
-}
-.modal input, .modal select {
-    width: calc(100% - 24px);
-    padding: 12px;
-    margin-bottom: 18px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background-color: var(--bg-card);
-    color: var(--text-main);
-}
-.modal-buttons {
-    text-align: center;
-    margin-top: 25px;
-}
-.modal-buttons button {
-    padding: 12px 25px;
-    margin: 0 12px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-}
-.modal-buttons .save-btn { background-color: var(--status-success); color: var(--text-white); }
-.modal-buttons .cancel-btn { background-color: #6c757d; color: var(--text-white); }
-
-
-/* Upload Page Styles (from upload.html) */
-body.dark {
-    background-color: var(--bg-dark-mode);
-    color: var(--text-light);
-}
-body.dark .card-panel,
-body.dark .topbar,
-body.dark .sidebar {
-    background: var(--bg-dark-card);
-    color: var(--text-light);
-    border-color: #444;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
-}
-body.dark .topbar { border-bottom: 1px solid #444; }
-body.dark .sidebar { box-shadow: 2px 0 5px rgba(0,0,0,0.5); }
-body.dark h2, body.dark h3 { color: var(--primary-light); }
-body.dark .sidebar button { background: #444; color: #eee; }
-body.dark .sidebar button.active { background: var(--primary-color); }
-body.dark .tab-nav { border-color: #555; }
-body.dark .tab-nav-button { color: #aaa; }
-body.dark .tab-nav-button:hover { color: var(--primary-light); }
-.body.dark .tab-nav-button.active { color: var(--primary-light); border-bottom-color: var(--primary-light); }
-body.dark .handsontable .htCore td:first-child,
-body.dark .handsontable .htCore th:first-child {
-    background-color: #3a3a3a !important;
-    color: #ddd !important;
-}
-body.dark .handsontable th,
-body.dark .handsontable td {
-    background-color: var(--bg-dark-card);
-    color: var(--text-light);
-    border-color: #555;
-}
-body.dark input[type="text"],
-body.dark input[type="email"],
-body.dark input[type="password"],
-body.dark select {
-    background-color: #3a3a3a;
-    color: #eee;
-    border-color: #555;
-}
-body.dark input[type="text"]::placeholder,
-body.dark input[type="email"]::placeholder,
-body.dark input[type="password"]::placeholder {
-    color: #bbb;
-}
-body.dark input[type="text"]:focus,
-body.dark input[type="email"]:focus,
-body.dark input[type="password"]:focus,
-body.dark select:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.4);
-}
-
-
-.content {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-}
-.sidebar {
-    width: 240px;
-    background: var(--bg-card);
-    padding: 25px;
-    box-shadow: 2px 0 8px var(--shadow-light);
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-}
-.sidebar h2 {
-    margin: 0 0 20px;
-    color: var(--primary-dark);
-    font-weight: 600;
-    font-size: 1.6em;
-}
-.year-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-.year-nav button {
-  width: 35px;
-  height: 35px;
-  flex-shrink: 0;
-  padding: 5px;
-  background-color: var(--primary-light);
-  color: var(--primary-dark);
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.year-nav span {
-  font-weight: 700;
-  font-size: 1.2em;
-  color: var(--text-main);
-}
-.sidebar button {
-    width: 100%;
-    margin-bottom: 10px;
-    padding: 12px 8px;
-    background: var(--primary-light);
-    color: var(--primary-dark);
-    font-weight: 500;
-    text-align: center;
-    border-radius: 8px;
-    font-size: 1em;
-}
-.sidebar button.active {
-    background: var(--primary-color);
-    color: var(--text-white);
-}
-.sidebar label {
-    display: flex;
-    align-items: center;
-    margin-top: 20px;
-    font-size: 1em;
-    color: var(--text-main);
-}
-.sidebar input[type="checkbox"] {
-    margin-right: 10px;
-    transform: scale(1.3);
-}
-.sidebar p {
-    font-size: 0.85em;
-    margin-top: auto;
-    color: var(--text-secondary);
-}
-.main {
-    flex-grow: 1;
-    padding: 25px 30px;
-    overflow: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 25px;
-}
+/* --- Data Upload Page (Handsontable, Tabs, Charts) --- */
 .month-header-box {
     background: var(--primary-color);
     color: var(--text-white);
-    padding: 18px 25px;
+    padding: 15px 20px;
     text-align: center;
-    font-size: 1.8em;
-    font-weight: 700;
+    font-size: 1.6em;
+    font-weight: 600;
     border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
+
 .tab-nav {
     display: flex;
     border-bottom: 2px solid var(--border-color);
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
+
 .tab-nav-button {
-    padding: 12px 25px;
+    padding: 10px 20px;
     background-color: transparent;
     font-size: 1.1em;
     font-weight: 600;
     color: var(--text-secondary);
     border-bottom: 3px solid transparent;
-    transition: color 0.2s ease, border-bottom-color 0.2s ease;
 }
-.tab-nav-button:hover:not(.active) {
-    color: var(--primary-dark);
-}
+
 .tab-nav-button.active {
     color: var(--primary-color);
     border-bottom-color: var(--primary-color);
 }
-.tab-content {
-    display: none;
-    flex-direction: column;
-    gap: 25px;
-}
-.tab-content.active {
-    display: flex;
-}
-.container {
-    display: flex;
-    gap: 25px;
-    align-items: flex-start;
-    flex-wrap: wrap;
-}
+
+.tab-content { display: none; flex-direction: column; gap: 20px; }
+.tab-content.active { display: flex; }
+
 .table-container {
     flex-grow: 1;
-    height: 550px;
-    min-width: 450px;
+    height: 500px;
+    min-width: 400px;
     border-radius: 16px;
-    box-shadow: 0 8px 20px var(--shadow-light);
-    background: var(--bg-card);
     border: 1px solid var(--border-color);
     overflow: hidden;
 }
+
 .handsontable .htCore td:first-child,
 .handsontable .htCore th:first-child {
-    background-color: var(--primary-light) !important;
+    background-color: #f0f0f0 !important;
     font-weight: bold;
-    color: var(--text-main) !important;
 }
-/* The following colors are for table cells based on value status */
+
+.summary-box {
+    width: 300px;
+    min-width: 280px;
+    padding: 20px;
+}
+
+/* Handsontable status colors */
 .within { background-color: var(--ht-within) !important; color: var(--ht-text-within) !important; }
-.warning { background-color: var(--ht-warning) !important; color: var(--ht-text-warning) !importa
+.warning { background-color: var(--ht-warning) !important; color: var(--ht-text-warning) !important; }
+.out { background-color: var(--ht-out) !important; color: var(--ht-text-out) !important; }
+.future-cell-readonly { background-color: #f0f0f0 !important; color: #999 !important; cursor: not-allowed !important; }
 
-/* --- Login Form Enhancements --- */
 
-/* Make the form a flex container for easy spacing */
-#loginForm {
-  display: flex;
-  flex-direction: column;
-  gap: 25px; /* Increased gap for more vertical spacing */
+/* --- Chatbot Styles --- */
+#chat-bubble {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    width: 60px; height: 60px;
+    font-size: 1.8em;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    z-index: 1000;
 }
 
-/* Style the new 'options' row */
-.form-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.9em;
+#chat-window {
+    position: fixed;
+    bottom: 90px; right: 20px;
+    width: 350px; height: 450px;
+    background-color: var(--bg-card);
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    z-index: 999;
+    transform: scale(0.8);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease-out;
 }
 
-/* Group for the checkbox and its label */
-.remember-me-group {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+#chat-window.open {
+    transform: scale(1);
+    opacity: 1;
+    visibility: visible;
 }
 
-/* Clean up the 'Forgot Password' link */
-.login-container .forgot-password-link {
-  display: inline;
-  text-align: left;
-  margin: 0;
-  text-decoration: none;
-}
-.login-container .forgot-password-link:hover {
-  text-decoration: underline;
-}
-
-/* --- NEW: Larger input fields for the bigger form --- */
-#loginForm input[type="email"],
-#loginForm input[type="password"] {
-    padding: 16px;
-    font-size: 1.1rem;
+#chat-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-/* Make the login button look better */
-#loginForm button[type="submit"] {
-  width: 100%;
-  padding: 16px; /* Increased padding */
-  font-size: 1.2em; /* Increased font size */
-  background-color: var(--primary-color);
-  color: var(--text-white);
+#chat-body {
+    flex-grow: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background-color: #f8f8f8;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-#loginForm button[type="submit"]:hover {
-  background-color: var(--primary-dark);
+.chat-message {
+    max-width: 80%;
+    padding: 10px 12px;
+    border-radius: 18px;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+.chat-message.user { align-self: flex-end; background-color: #e6e6e6; }
+.chat-message.bot { align-self: flex-start; background-color: var(--primary-light); }
+
+#chat-input-area {
+    padding: 10px 15px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+#chat-input-area input {
+    flex-grow: 1;
+    padding: 10px;
+    border-radius: 20px;
+}
+#chat-input-area button {
+    background-color: var(--primary-color);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.2em;
+}
+
+/* --- Dark Mode --- */
+body.dark {
+    background: var(--bg-dark-mode);
+    color: #eee;
+}
+body.dark .card-panel, body.dark .topbar, body.dark .sidebar, body.dark .card-section, body.dark .modal-content, body.dark .profile-card, body.dark .message-container, body.dark .login-container, body.dark .signup-container {
+    background: var(--bg-dark-card);
+    color: #eee;
+    border-color: #444;
+}
+body.dark h1, body.dark h2, body.dark h3 {
+    color: var(--primary-light);
+}
+body.dark .sidebar .nav-btn {
+    background: #444;
+    color: #eee;
+}
+body.dark .sidebar .nav-btn.active {
+    background: var(--primary-color);
+}
+body.dark .tab-nav {
+    border-color: #555;
+}
+body.dark .tab-nav-button {
+    color: #aaa;
+}
+body.dark .tab-nav-button:hover {
+    color: var(--primary-light);
+}
+body.dark .tab-nav-button.active {
+    color: var(--primary-light);
+    border-bottom-color: var(--primary-light);
+}
+body.dark .handsontable .htCore td:first-child, body.dark .handsontable .htCore th:first-child {
+    background-color: #3a3a3a !important;
+    color: #ddd !important;
+}
+body.dark .handsontable th, body.dark .handsontable td {
+    background-color: var(--bg-dark-card);
+    color: #eee;
+    border-color: #555;
+}
+body.dark input, body.dark select {
+    background-color: #3a3a3a;
+    color: #eee;
+    border-color: #555;
+}
+body.dark input::placeholder {
+    color: #bbb;
+}
+body.dark input:focus, body.dark select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.4);
 }
