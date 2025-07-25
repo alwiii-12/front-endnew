@@ -56,6 +56,7 @@ body {
   color: var(--text-main);
 }
 
+/* Add this class to the <body> tag on login, signup, and awaiting_approval pages */
 body.centered-content {
   justify-content: center;
   align-items: center;
@@ -117,7 +118,7 @@ button:disabled {
 }
 
 /* --- General Input Field Styles --- */
-input[type="text"], input[type="email"], input[type="password"], input[type="date"], select, textarea {
+input[type="text"], input[type="email"], input[type="password"], input[type="date"], select {
   width: 100%;
   padding: 12px;
   border: 1px solid var(--border-color);
@@ -127,15 +128,14 @@ input[type="text"], input[type="email"], input[type="password"], input[type="dat
   background-color: var(--bg-card);
   color: var(--text-main);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  font-family: 'Inter', sans-serif;
 }
 
-input[type="text"]::placeholder, input[type="email"]::placeholder, input[type="password"]::placeholder, textarea::placeholder {
+input[type="text"]::placeholder, input[type="email"]::placeholder, input[type="password"]::placeholder {
   color: var(--text-secondary);
   opacity: 1;
 }
 
-input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, input[type="date"]:focus, select:focus, textarea:focus {
+input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, input[type="date"]:focus, select:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px var(--primary-light);
@@ -162,49 +162,55 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 
 /* --- Reusable Components (Notifications, Loaders) --- */
 #notification-container {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10000;
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
 }
+
 .notification-message {
-    background-color: var(--text-main);
-    color: var(--text-white);
-    padding: 12px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    opacity: 0;
-    transform: translateY(-20px);
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  background-color: var(--text-main);
+  color: var(--text-white);
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }
+
 .notification-message.show {
-    opacity: 1;
-    transform: translateY(0);
+  opacity: 1;
+  transform: translateY(0);
 }
+
 .notification-message.success { background-color: var(--status-success); }
 .notification-message.error { background-color: var(--status-error); }
 .notification-message.warning { background-color: var(--status-warning); color: var(--text-main); }
+
 #loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
 }
+
 .spinner {
-    width: 60px;
-    height: 60px;
-    border: 8px solid var(--text-white);
-    border-top-color: var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+  width: 60px;
+  height: 60px;
+  border: 8px solid var(--text-white);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
+
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* --- Login & Signup Pages --- */
@@ -214,42 +220,65 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
   width: 90%;
   text-align: center;
 }
+
 .login-container h2, .signup-container h2 {
   font-size: 2em;
   margin-bottom: 30px;
 }
+
 #loginForm {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
+
 .signup-container {
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
+
 #loginForm input, .signup-container input, .signup-container select {
     padding: 16px;
     font-size: 1.1rem;
 }
+
 .form-options {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 0.9em;
 }
+
 .remember-me-group {
   display: flex;
   align-items: center;
   gap: 5px;
 }
+
 .forgot-password-link {
   color: var(--primary-color);
   text-decoration: none;
 }
+
 .forgot-password-link:hover {
   text-decoration: underline;
 }
+
+.login-container .footer {
+  margin-top: 25px;
+  font-size: 0.85em;
+  color: var(--text-secondary);
+}
+
+.error, .message {
+  color: var(--status-error);
+  font-size: 0.9em;
+  margin-bottom: 15px;
+  min-height: 1.2em;
+  text-align: center;
+}
+
 .home-link {
     display: block;
     max-width: 180px;
@@ -258,6 +287,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     background-color: var(--primary-light);
     color: var(--primary-dark);
 }
+
 .home-link:hover {
     background-color: var(--primary-color);
     color: var(--text-white);
@@ -271,11 +301,44 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     font-size: 1.2em;
     background-color: var(--primary-color);
     color: var(--text-white);
-    margin-top: 10px;
+    margin-top: 10px; /* Add some space above the button */
 }
+
 #loginForm button[type="submit"]:hover,
 .signup-container button#signupButton:hover {
     background-color: var(--primary-dark);
+}
+
+#loginForm button[type="submit"]:active,
+.signup-container button#signupButton:active {
+    background-color: var(--primary-dark) !important;
+    transform: translateY(1px) scale(0.99);
+}
+
+
+/* --- Awaiting Approval & Message Pages --- */
+.message-container {
+    padding: 50px;
+    max-width: 650px;
+    width: 100%;
+    text-align: center;
+}
+
+.message-container h1 {
+    font-size: 2.2em;
+    margin-bottom: 25px;
+}
+
+.message-container p {
+    font-size: 1.15em;
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+
+.message-container .contact-info {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    margin-top: 30px;
 }
 
 /* --- Main Application Layout (Topbar, Sidebar, Content) --- */
@@ -284,14 +347,31 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     justify-content: space-between;
     align-items: center;
     background: var(--bg-card);
-    padding: 10px 25px;
+    padding: 10px 20px;
     border-bottom: 1px solid var(--border-color);
     box-shadow: 0 2px 4px var(--shadow-light);
+    min-height: 50px;
     flex-shrink: 0;
 }
+
+.hospital-info-box {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
 .topbar .header-buttons {
     display: flex;
+    align-items: center;
     gap: 15px;
+}
+
+.topbar .header-buttons button {
+    padding: 8px 15px;
+    font-size: 14px;
 }
 
 .content {
@@ -301,37 +381,52 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 }
 
 .sidebar {
-    width: 240px;
+    width: 220px;
     background: var(--bg-card);
     padding: 20px;
-    box-shadow: 2px 0 8px var(--shadow-light);
+    box-shadow: 2px 0 5px var(--shadow-light);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    gap: 10px;
 }
+
 .sidebar h2 {
+    margin: 0 0 15px;
+    font-weight: 600;
+    font-size: 1.5em;
     text-align: center;
-    margin-bottom: 20px;
 }
+
 .year-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
 }
-#months {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+
+.year-nav button {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  padding: 5px;
+  background-color: #eee;
 }
-.sidebar button.month-btn {
+
+.year-nav span {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.sidebar .nav-btn {
     width: 100%;
     padding: 12px 8px;
-    background: var(--primary-light);
-    color: var(--primary-dark);
+    background: #eee;
+    color: var(--text-main);
     font-weight: 500;
+    text-align: left;
 }
-.sidebar button.month-btn.active {
+
+.sidebar .nav-btn.active {
     background: var(--primary-color);
     color: var(--text-white);
 }
@@ -347,98 +442,97 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 
 /* --- Admin Dashboard Specifics --- */
 .admin-header {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     background-color: var(--primary-color);
     color: var(--text-white);
     padding: 20px 30px;
+    text-align: center;
 }
 .admin-header h1 {
     color: var(--text-white);
 }
-.admin-header .header-buttons {
-    position: absolute;
-    right: 25px;
-}
-.admin-header .header-btn {
-    width: 44px;
-    height: 44px;
-    font-size: 1.2em;
-    background-color: var(--status-error);
-}
-.admin-header .header-btn:hover {
-    background-color: #c82333;
-}
+
 .main-admin-layout {
     display: flex;
     flex-grow: 1;
+    width: 100%;
 }
-.sidebar-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    padding: 20px;
-    justify-content: flex-start;
-    background-color: var(--bg-card);
-    box-shadow: 2px 0 8px var(--shadow-light);
-    width: 240px;
-    flex-shrink: 0;
+
+.main-admin-layout.full-width-mode .sidebar-nav {
+    width: 0;
+    padding: 20px 0;
+    overflow: hidden;
 }
-.sidebar-nav .nav-btn {
-    padding: 15px;
-    font-size: 1.05em;
-    background-color: var(--primary-light);
-    color: var(--primary-dark);
-}
-.sidebar-nav .nav-btn:hover:not(.active) {
-    background-color: #ddebfd;
-}
-.sidebar-nav .nav-btn.active {
-    background-color: var(--primary-color);
-    color: var(--text-white);
-}
+
 .content-display-area {
     flex-grow: 1;
     padding: 25px;
     overflow-y: auto;
 }
+
 .card-section.active-section {
     display: block;
 }
-.user-table-container, .user-table {
+
+.filter-search-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 25px;
+    align-items: center;
+}
+
+.filter-search-container input, .filter-search-container select {
+    flex: 1;
+    min-width: 180px;
+}
+
+.user-table-container {
+    max-height: 550px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.user-table {
     width: 100%;
     border-collapse: collapse;
 }
+
 .user-table th, .user-table td {
     padding: 15px;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
 }
+
 .user-table th {
     background-color: var(--primary-light);
     position: sticky;
     top: 0;
-    z-index: 3;
+    z-index: 1;
 }
-.hospital-qa-table th, .hospital-qa-table td {
-    border: 1px solid var(--border-color);
+
+.user-table tr:hover {
+    background-color: #F7FBFF;
 }
-#hospital-data-access-section {
-    position: relative;
+
+.user-actions-cell button {
+    padding: 8px 12px;
+    font-size: 0.85em;
+    border-radius: 6px;
+    margin: 0 4px;
+    color: var(--text-white);
 }
-.fullscreen-btn {
-    position: absolute;
-    top: 25px;
-    right: 25px;
-    width: 40px;
-    height: 40px;
-}
-#manage-users-section .filter-search-container button,
-#audit-logs-section .filter-search-container button {
-    padding: 12px 22px;
-    font-size: 1em;
+
+.approve-btn { background-color: var(--status-success); }
+.reject-btn { background-color: var(--status-warning); color: var(--text-main); }
+.edit-btn { background-color: #17A2B8; }
+.delete-btn { background-color: var(--status-error); }
+
+.no-users-message {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+    font-style: italic;
 }
 
 /* --- Modal Styles --- */
@@ -452,6 +546,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     align-items: center;
     justify-content: center;
 }
+
 .modal-content {
     background-color: var(--bg-card);
     padding: 35px;
@@ -461,6 +556,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     box-shadow: 0 8px 25px rgba(0,0,0,0.3);
     position: relative;
 }
+
 .close-button {
     color: var(--text-secondary);
     position: absolute;
@@ -473,7 +569,92 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     color: var(--text-main);
 }
 
-/* --- Data Upload Page (upload.html) --- */
+.modal-buttons {
+    text-align: center;
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.modal-buttons .save-btn { background-color: var(--status-success); color: var(--text-white); }
+.modal-buttons .cancel-btn { background-color: #6c757d; color: var(--text-white); }
+
+
+/* --- My Profile Page --- */
+.profile-card h1 {
+    text-align: center;
+}
+
+.profile-item {
+    margin-bottom: 18px;
+    font-size: 1.1em;
+    display: flex;
+    align-items: baseline;
+}
+
+.profile-item strong {
+    width: 160px;
+    flex-shrink: 0;
+    text-align: right;
+    padding-right: 15px;
+}
+
+.profile-actions {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.change-password-header {
+    font-size: 1.4em;
+    margin-top: 30px;
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+}
+.change-password-header i {
+    margin-left: 10px;
+    transition: transform 0.3s ease-in-out;
+}
+.change-password-header.active i {
+    transform: rotate(180deg);
+}
+.change-password-form {
+    display: none;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+    margin-top: 15px;
+}
+.change-password-form.open { display: block; }
+
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.form-group .required {
+    color: var(--status-error);
+    margin-left: 4px;
+}
+
+.password-strength {
+    font-size: 0.85em;
+    margin-top: 5px;
+    text-align: left;
+}
+.password-strength.weak { color: var(--status-error); }
+.password-strength.intermediate { color: var(--status-warning); }
+.password-strength.strong { color: var(--status-success); }
+
+
+/* --- Data Upload Page (Handsontable, Tabs, Charts) --- */
 .month-header-box {
     background: var(--primary-color);
     color: var(--text-white);
@@ -483,11 +664,13 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     font-weight: 600;
     border-radius: 16px;
 }
+
 .tab-nav {
     display: flex;
     border-bottom: 2px solid var(--border-color);
     margin-bottom: 20px;
 }
+
 .tab-nav-button {
     padding: 10px 20px;
     background-color: transparent;
@@ -496,18 +679,15 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     color: var(--text-secondary);
     border-bottom: 3px solid transparent;
 }
+
 .tab-nav-button.active {
     color: var(--primary-color);
     border-bottom-color: var(--primary-color);
 }
+
 .tab-content { display: none; flex-direction: column; gap: 20px; }
 .tab-content.active { display: flex; }
-.container {
-    display: flex;
-    gap: 25px;
-    align-items: flex-start;
-    flex-wrap: wrap;
-}
+
 .table-container {
     flex-grow: 1;
     height: 500px;
@@ -516,22 +696,168 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     border: 1px solid var(--border-color);
     overflow: hidden;
 }
+
+.handsontable .htCore td:first-child,
+.handsontable .htCore th:first-child {
+    background-color: #f0f0f0 !important;
+    font-weight: bold;
+}
+
 .summary-box {
     width: 300px;
     min-width: 280px;
-}
-.actions-section {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-}
-#annotationModal textarea {
-    min-height: 100px;
-    resize: vertical;
+    padding: 20px;
 }
 
-/* --- Index/Welcome Page --- */
+/* Handsontable status colors */
+.within { background-color: var(--ht-within) !important; color: var(--ht-text-within) !important; }
+.warning { background-color: var(--ht-warning) !important; color: var(--ht-text-warning) !important; }
+.out { background-color: var(--ht-out) !important; color: var(--ht-text-out) !important; }
+.future-cell-readonly { background-color: #f0f0f0 !important; color: #999 !important; cursor: not-allowed !important; }
+
+
+/* --- Chatbot Styles --- */
+#chat-bubble {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    width: 60px; height: 60px;
+    font-size: 1.8em;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+
+#chat-window {
+    position: fixed;
+    bottom: 90px; right: 20px;
+    width: 350px; height: 450px;
+    background-color: var(--bg-card);
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    z-index: 999;
+    transform: scale(0.8);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease-out;
+}
+
+#chat-window.open {
+    transform: scale(1);
+    opacity: 1;
+    visibility: visible;
+}
+
+#chat-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#chat-body {
+    flex-grow: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background-color: #f8f8f8;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chat-message {
+    max-width: 80%;
+    padding: 10px 12px;
+    border-radius: 18px;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+.chat-message.user { align-self: flex-end; background-color: #e6e6e6; }
+.chat-message.bot { align-self: flex-start; background-color: var(--primary-light); }
+
+#chat-input-area {
+    padding: 10px 15px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+#chat-input-area input {
+    flex-grow: 1;
+    padding: 10px;
+    border-radius: 20px;
+}
+#chat-input-area button {
+    background-color: var(--primary-color);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.2em;
+}
+
+/* --- Dark Mode --- */
+body.dark {
+    background: var(--bg-dark-mode);
+    color: #eee;
+}
+body.dark .card-panel, body.dark .topbar, body.dark .sidebar, body.dark .card-section, body.dark .modal-content, body.dark .profile-card, body.dark .message-container, body.dark .login-container, body.dark .signup-container {
+    background: var(--bg-dark-card);
+    color: #eee;
+    border-color: #444;
+}
+body.dark h1, body.dark h2, body.dark h3 {
+    color: var(--primary-light);
+}
+body.dark .sidebar .nav-btn {
+    background: #444;
+    color: #eee;
+}
+body.dark .sidebar .nav-btn.active {
+    background: var(--primary-color);
+}
+body.dark .tab-nav {
+    border-color: #555;
+}
+body.dark .tab-nav-button {
+    color: #aaa;
+}
+body.dark .tab-nav-button:hover {
+    color: var(--primary-light);
+}
+body.dark .tab-nav-button.active {
+    color: var(--primary-light);
+    border-bottom-color: var(--primary-light);
+}
+body.dark .handsontable .htCore td:first-child, body.dark .handsontable .htCore th:first-child {
+    background-color: #3a3a3a !important;
+    color: #ddd !important;
+}
+body.dark .handsontable th, body.dark .handsontable td {
+    background-color: var(--bg-dark-card);
+    color: #eee;
+    border-color: #555;
+}
+body.dark input, body.dark select {
+    background-color: #3a3a3a;
+    color: #eee;
+    border-color: #555;
+}
+body.dark input::placeholder {
+    color: #bbb;
+}
+body.dark input:focus, body.dark select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.4);
+}
+
+/* --- NEW: Styles for Index/Welcome Page --- */
 body.index-page {
     background: url('wave-bg.png') no-repeat center center;
     background-size: cover;
@@ -541,6 +867,7 @@ body.index-page {
     min-height: 100vh;
     padding: 20px;
 }
+
 .welcome-card {
     display: flex;
     flex-direction: row;
@@ -548,7 +875,12 @@ body.index-page {
     max-width: 900px;
     width: 100%;
     padding: 0;
+    background-color: var(--bg-card);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px var(--shadow-medium);
+    border: 1px solid var(--border-color);
 }
+
 .left-panel {
     flex: 1;
     padding: 50px 40px;
@@ -556,23 +888,28 @@ body.index-page {
     flex-direction: column;
     justify-content: center;
 }
+
 .left-panel h1 {
     font-size: 2.2em;
 }
+
 .left-panel p {
     font-size: 1.05em;
     margin-bottom: 30px;
     line-height: 1.6;
 }
+
 .button-group {
     display: flex;
     gap: 15px;
 }
+
 .left-panel .button {
     padding: 14px 28px;
     font-size: 1.1em;
     flex-grow: 1;
 }
+
 .signup-btn {
     background-color: var(--primary-color);
     color: var(--text-white);
@@ -580,6 +917,7 @@ body.index-page {
 .signup-btn:hover {
     background-color: var(--primary-dark);
 }
+
 .login-btn {
     background-color: var(--primary-light);
     color: var(--primary-dark);
@@ -587,6 +925,7 @@ body.index-page {
 .login-btn:hover {
     background-color: #d4e8f7;
 }
+
 .right-panel {
     flex: 1;
     display: flex;
@@ -595,14 +934,26 @@ body.index-page {
     background-color: #f8f9fa;
     padding: 20px;
 }
+
 .right-panel img {
     max-width: 100%;
     height: auto;
     object-fit: contain;
 }
+
 @media (max-width: 768px) {
-    .welcome-card { flex-direction: column; }
-    .right-panel { order: -1; padding: 30px 20px; }
-    .left-panel { padding: 30px; text-align: center; }
-    .button-group { flex-direction: column; }
+    .welcome-card {
+        flex-direction: column;
+    }
+    .right-panel {
+        order: -1;
+        padding: 30px 20px;
+    }
+    .left-panel {
+        padding: 30px;
+        text-align: center;
+    }
+    .button-group {
+        flex-direction: column;
+    }
 }
