@@ -72,6 +72,17 @@
         border-bottom: 2px solid #ccc;
         margin-bottom: 20px;
     }
+    .tab-nav-button {
+        padding: 10px 20px;
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 1em;
+    }
+    .tab-nav-button.active {
+        border-bottom: 3px solid #007bff;
+        font-weight: bold;
+    }
     .tab-content {
         display: none;
     }
@@ -94,6 +105,16 @@
         border: 1px solid #ccc;
         border-radius: 8px;
     }
+    .actions-section button {
+        padding: 10px 15px;
+        margin-right: 10px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        color: white;
+    }
+    .save-btn { background-color: #007bff; }
+    .export-btn { background-color: #28a745; }
   </style>
 </head>
 <body>
@@ -283,21 +304,214 @@
             } catch (e) { console.error(`Error loading data for ${dataType}:`, e); } finally { hideLoader(); }
         }
 
-        // --- All other JavaScript functions (manualSave, exportToExcel, updateTrendChart, etc.) remain here... ---
-        // (Full script from the last known good version is included below)
+        window.manualSave = async function(dataType) {
+            const saveButton = document.querySelector(`.actions-section button.save-btn[onclick="manualSave('${dataType}')"]`);
+            const config = dataTypesConfig[dataType];
+            saveButton.disabled = true;
+            saveButton.textContent = 'Saving...';
+            const changedData = instances[dataType].hot.getData();
+            const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            try {
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                const token = appCheckTokenResponse.token;
+                const saveResponse = await fetch(`${BACKEND_URL}/save`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": token },
+                    body: JSON.stringify({ data: changedData, month, uid: currentUID, dataType: dataType })
+                });
+                if (!saveResponse.ok) { throw new Error(`Save failed: ${await saveResponse.text()}`); }
+                document.getElementById(`lastSaved-${dataType}`).textContent = "Saved: " + new Date().toLocaleTimeString();
+            } catch (err) {
+                console.error(`Save process failed for ${dataType}:`, err);
+                document.getElementById(`lastSaved-${dataType}`).textContent = "Save Failed!";
+            } finally {
+                saveButton.disabled = false;
+                saveButton.textContent = `Save ${config.label}`;
+            }
+        }
 
-        window.manualSave = async function(dataType) { /* ... full function ... */ };
-        window.exportToExcel = async function(dataType) { /* ... full function ... */ };
-        function updateSummaryAndChart(dataType, data) { /* ... full function ... */ };
-        function populateTrendEnergySelect(dataType) { /* ... full function ... */ };
-        window.updateTrendChart = async function(dataType) { /* ... full function ... */ };
-        function changeMonth(monthIndex) { /* ... full function ... */ };
-        function changeYear(offset) { /* ... full function ... */ };
-        function buildMonthButtons() { /* ... full function ... */ };
-        function highlightActiveMonth() { /* ... full function ... */ };
-        function getMonthDates(date) { /* ... full function ... */ };
-        function toggleDarkMode(isInitialLoad = false) { /* ... full function ... */ };
-        async function sendChatMessage() { /* ... full function ... */ };
+        window.exportToExcel = async function(dataType) {
+            showLoader();
+            const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            try {
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                const response = await fetch(`${BACKEND_URL}/export-excel`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": appCheckTokenResponse.token },
+                    body: JSON.stringify({ month, uid: currentUID, dataType })
+                });
+                if (!response.ok) throw new Error('Failed to generate file.');
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `LINAC_QA_${dataType.toUpperCase()}_${month}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error(`Export failed for ${dataType}:`, error);
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function updateSummaryAndChart(dataType, data) {
+            const config = dataTypesConfig[dataType];
+            let total = 0, within = 0, warning = 0, out = 0;
+            data.forEach(row => {
+                row.slice(1).forEach(value => {
+                    const n = parseFloat(value);
+                    if (!isNaN(n)) {
+                        total++;
+                        if (Math.abs(n) < config.warning) within++;
+                        else if (Math.abs(n) <= config.tolerance) warning++;
+                        else out++;
+                    }
+                });
+            });
+            document.getElementById(`total-${dataType}`).textContent = total;
+            document.getElementById(`within-${dataType}`).textContent = within;
+            document.getElementById(`warning-${dataType}`).textContent = warning;
+            document.getElementById(`out-${dataType}`).textContent = out;
+            const ctx = document.getElementById(`summaryChart-${dataType}`).getContext('2d');
+            if (instances[dataType].summaryChart) instances[dataType].summaryChart.destroy();
+            instances[dataType].summaryChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Within', 'Warning', 'Out of Tolerance'],
+                    datasets: [{ data: [within, warning, out], backgroundColor: ['#66cc66', '#ffcc00', '#ff6666'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: true }
+            });
+        }
+        
+        function populateTrendEnergySelect(dataType) {
+            const select = document.getElementById(`trendEnergySelect-${dataType}`);
+            if(!select) return;
+            select.innerHTML = '';
+            energyTypes.forEach(energy => {
+                const option = document.createElement('option');
+                option.value = energy;
+                option.textContent = energy;
+                select.appendChild(option);
+            });
+            if (energyTypes.length > 0) select.value = energyTypes[0];
+        }
+
+        window.updateTrendChart = async function(dataType) {
+            const hotInstance = instances[dataType].hot;
+            if (!hotInstance) return;
+            const data = hotInstance.getData();
+            const selectElement = document.getElementById(`trendEnergySelect-${dataType}`);
+            if (!selectElement) return;
+            const selectedEnergy = selectElement.value;
+            const energyRow = data.find(row => row[0] === selectedEnergy);
+            const dataPoints = energyRow ? energyRow.slice(1).map(val => { const num = parseFloat(val); return isFinite(num) ? num : null; }) : [];
+            const labels = getMonthDates(currentDate);
+            const shortLabels = labels.map(d => d.split('-')[2]);
+            const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            let annotations = {};
+            try {
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                const res = await fetch(`${BACKEND_URL}/annotations?month=${monthKey}&dataType=${dataType}&uid=${currentUID}`, { headers: { "X-Firebase-AppCheck": appCheckTokenResponse.token } });
+                if(res.ok) annotations = await res.json();
+            } catch (e) { console.error("Could not fetch annotations", e); }
+            const canvasElement = document.getElementById(`trendChart-${dataType}`);
+            const config = dataTypesConfig[dataType];
+            const ctx = canvasElement.getContext('2d');
+            if (instances[dataType].trendChart) instances[dataType].trendChart.destroy();
+            instances[dataType].trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: shortLabels,
+                    datasets: [{ label: `${selectedEnergy} Trend`, data: dataPoints, borderColor: '#007bff', tension: 0.1, spanGaps: true }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { min: config.yAxisMin, max: config.yAxisMax, title: { display: true, text: 'Value (%)' } } },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const pointIndex = elements[0].index;
+                            const fullDate = labels[pointIndex];
+                            const annotationKey = `${selectedEnergy}-${fullDate}`;
+                            const existingAnnotation = annotations[annotationKey]?.text || "";
+                            const note = prompt(`Enter annotation for ${selectedEnergy} on ${fullDate}:`, existingAnnotation);
+                            if (note !== null) {
+                                showLoader();
+                                fetch(`${BACKEND_URL}/save-annotation`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": appCheck.getToken(false).token },
+                                    body: JSON.stringify({ uid: currentUID, month: monthKey, key: annotationKey, data: { text: note, dataType: dataType, energy: selectedEnergy }})
+                                }).then(() => updateTrendChart(dataType)).catch(e => console.error("Failed to save annotation", e)).finally(() => hideLoader());
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                             callbacks: {
+                                 afterBody: (context) => {
+                                     const annotationKey = `${selectedEnergy}-${labels[context[0].dataIndex]}`;
+                                     return annotations[annotationKey] ? "Note: " + annotations[annotationKey].text : "";
+                                 }
+                             }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function changeMonth(monthIndex) {
+            currentDate.setMonth(monthIndex);
+            header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
+            highlightActiveMonth();
+            Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
+            switchTab(activeTab);
+        }
+
+        function changeYear(offset) {
+            currentDate.setFullYear(currentDate.getFullYear() + offset);
+            yearLabel.textContent = currentDate.getFullYear();
+            Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
+            switchTab(activeTab);
+        }
+
+        function buildMonthButtons() {
+            monthsDiv.innerHTML = '';
+            ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].forEach((m, i) => {
+                const btn = document.createElement('button');
+                btn.textContent = m;
+                btn.onclick = () => changeMonth(i);
+                monthsDiv.appendChild(btn);
+            });
+            highlightActiveMonth();
+        }
+
+        function highlightActiveMonth() {
+            [...monthsDiv.querySelectorAll('button')].forEach((btn, i) => {
+                btn.classList.toggle('active', i === currentDate.getMonth());
+            });
+        }
+
+        function getMonthDates(date) {
+         var y = date.getFullYear(), m = date.getMonth();
+         return Array.from({length: new Date(y, m + 1, 0).getDate()}, (_, i) => `${y}-${String(m + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`);
+        }
+
+        function toggleDarkMode(isInitialLoad = false) {
+            const isDark = document.getElementById('darkToggle').checked;
+            document.body.classList.toggle('dark', isDark);
+            if(!isInitialLoad) {
+                localStorage.setItem('darkMode', isDark);
+            }
+        }
+
+        async function sendChatMessage() {
+            const chatInput = document.getElementById('chat-input');
+            const queryText = chatInput.value.trim();
+            if (queryText === "") return;
+            // ... (rest of chat logic)
+        }
         
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -310,7 +524,14 @@
                 document.getElementById('prevYearBtn').onclick = () => changeYear(-1);
                 document.getElementById('nextYearBtn').onclick = () => changeYear(1);
                 document.getElementById('logoutBtn').onclick = logout;
-                // ... rest of auth listener
+                const darkToggle = document.getElementById('darkToggle');
+                darkToggle.checked = localStorage.getItem('darkMode') === 'true';
+                toggleDarkMode(true);
+                darkToggle.addEventListener('change', () => toggleDarkMode(false));
+                document.getElementById('chat-bubble').onclick = () => document.getElementById('chat-window').classList.toggle('open');
+                document.getElementById('close-chat-btn').onclick = () => document.getElementById('chat-window').classList.remove('open');
+                document.getElementById('chat-input').onkeypress = e => { if (e.key === 'Enter') sendChatMessage(); };
+                document.getElementById('send-chat-btn').onclick = sendChatMessage;
                 switchTab('output');
             } else {
                 window.location.replace("login.html");
