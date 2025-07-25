@@ -10,35 +10,57 @@
     <style>
         /* --- Styles for Admin Dashboard Enhancements --- */
         
-        /* CORRECTION 4: Logout Button Position */
+        /* CORRECTION 4: Logout Button Position & Size */
         .admin-header {
-            position: relative; /* Needed for absolute positioning of children */
+            position: relative;
             display: flex;
-            justify-content: center; /* Center the title */
+            justify-content: center;
             align-items: center;
         }
         .admin-header .header-buttons {
             position: absolute;
-            right: 20px; /* Position to the far right */
+            right: 25px;
+        }
+        .admin-header .header-btn {
+            width: 44px; /* Increased size */
+            height: 44px; /* Increased size */
+            font-size: 1.2em;
+            background-color: var(--status-error); /* Highlight color */
+        }
+        .admin-header .header-btn:hover {
+            background-color: #c82333; /* Darker on hover */
         }
 
-        /* CORRECTION 1: Sidebar Alignment & Size */
+        /* CORRECTION 1: Sidebar Structure, Alignment & Button Size */
         .sidebar-nav {
             display: flex;
             flex-direction: column;
-            gap: 15px; /* Space between buttons */
+            gap: 15px;
             padding: 20px;
-            justify-content: flex-start; /* Align buttons to the top */
+            justify-content: flex-start; /* Aligns buttons to the top */
+            background-color: var(--bg-card);
+            box-shadow: 2px 0 8px var(--shadow-light);
+            width: 240px; /* Define a fixed width for the sidebar */
+            flex-shrink: 0;
         }
         .sidebar-nav .nav-btn {
             padding: 15px; /* Makes buttons larger */
             font-size: 1.05em;
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+        .sidebar-nav .nav-btn:hover:not(.active) {
+            background-color: #ddebfd;
+        }
+        .sidebar-nav .nav-btn.active {
+            background-color: var(--primary-color);
+            color: var(--text-white);
         }
 
         /* CORRECTION 2: Hospital Data Table Borders & Fullscreen Button */
         .hospital-qa-table th,
         .hospital-qa-table td {
-            border: 1px solid var(--border-color); /* Adds borders to the table */
+            border: 1px solid var(--border-color); /* Adds borders to all table cells */
         }
         #hospital-data-access-section {
             position: relative; /* Needed for fullscreen button positioning */
@@ -47,9 +69,12 @@
             position: absolute;
             top: 25px;
             right: 25px;
+            width: 40px;  /* Increased size */
+            height: 40px; /* Increased size */
         }
 
-        /* CORRECTION 3: Audit Log Button Size */
+        /* CORRECTION 3: Manage Users & Audit Log Button Size */
+        #manage-users-section .filter-search-container button,
         #audit-logs-section .filter-search-container button {
             padding: 12px 22px; /* Increased padding for a larger button */
             font-size: 1em;
