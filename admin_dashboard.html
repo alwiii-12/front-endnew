@@ -187,17 +187,38 @@
         let allUsersData = [];
         let currentAdminUid = null;
 
+        // --- Element Selectors ---
         const loadingOverlay = document.getElementById('loading-overlay');
         const usersTableBody = document.getElementById('usersTableBody');
+        const searchUserInput = document.getElementById('searchUserInput');
+        const filterStatus = document.getElementById('filterStatus');
+        const filterHospital = document.getElementById('filterHospital');
+        
         const userEditModal = document.getElementById('userEditModal');
+        const editUserId = document.getElementById('editUserId');
+        const editUserName = document.getElementById('editUserName');
+        const editUserEmail = document.getElementById('editUserEmail');
+        const editUserHospital = document.getElementById('editUserHospital');
+        const editUserRole = document.getElementById('editUserRole');
+        const editUserStatus = document.getElementById('editUserStatus');
+
         const confirmationModal = document.getElementById('confirmationModal');
         const confirmBtn = document.getElementById('confirmBtn');
         const deleteConfirmInput = document.getElementById('deleteConfirmInput');
         let onConfirmCallback = null;
 
+        const dataTypesConfig = {
+          output: { tolerance: 2.0, warning: 1.8 },
+          flatness: { tolerance: 1.0, warning: 0.9 },
+          inline: { tolerance: 1.0, warning: 0.9 },
+          crossline: { tolerance: 1.0, warning: 0.9 }
+        };
+
+        // --- Utility Functions ---
         function showLoader() { loadingOverlay.style.display = 'flex'; }
         function hideLoader() { loadingOverlay.style.display = 'none'; }
 
+        // --- Custom Confirmation Modal Logic ---
         function showConfirmationModal(title, message, onConfirm, isDelete = false, userName = '') {
             document.getElementById('confirmationTitle').textContent = title;
             document.getElementById('confirmationMessage').textContent = message;
@@ -231,8 +252,51 @@
         deleteConfirmInput.addEventListener('input', () => {
             confirmBtn.disabled = deleteConfirmInput.value !== deleteConfirmInput.dataset.expectedName;
         });
-        
-        window.logout = async () => { /* ... existing logic ... */ };
+
+        // --- Main Functions ---
+        window.logout = async function() {
+            showLoader();
+            const user = auth.currentUser;
+            try {
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                await fetch(`${BACKEND_URL}/log_event`, {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "X-Firebase-AppCheck": appCheckTokenResponse.token
+                    },
+                    body: JSON.stringify({
+                        action: "user_logout",
+                        userUid: user ? user.uid : "unknown_uid",
+                        userEmail: localStorage.getItem("userEmail") || "unknown_email",
+                        hospital: localStorage.getItem("hospitalName") || "unknown_hospital",
+                        role: localStorage.getItem("userRole") || "unknown_role"
+                    })
+                });
+            } catch (logError) {
+                console.error("Error sending logout log event:", logError);
+            }
+            auth.signOut().then(() => {
+                localStorage.clear();
+                window.location.replace("login.html");
+            }).catch(err => {
+                console.error("Logout failed:", err);
+                hideLoader();
+            });
+        }
+
+        window.toggleFullWidth = function() {
+            const layout = document.querySelector('.main-admin-layout');
+            const icon = document.querySelector('.section-action-btn i');
+            layout.classList.toggle('full-width-mode');
+            if (layout.classList.contains('full-width-mode')) {
+                icon.classList.remove('fa-expand');
+                icon.classList.add('fa-compress');
+            } else {
+                icon.classList.remove('fa-compress');
+                icon.classList.add('fa-expand');
+            }
+        }
 
         document.querySelector('.sidebar.nav-btn').addEventListener('click', (event) => {
             const button = event.target.closest('.nav-btn');
@@ -259,7 +323,85 @@
             }
             if (sectionId === 'audit-logs-section' && !document.getElementById('auditLogDateFilter').value) {
                 populateAuditLogFilters();
+                loadAuditLogs();
             }
+        }
+
+        window.loadAllUsers = async function() {
+            showLoader();
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                const response = await fetch(`${BACKEND_URL}/admin/users`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
+                if (!response.ok) throw new Error('Failed to fetch users');
+                allUsersData = await response.json();
+                populateCommonFilters();
+                renderUsers(allUsersData);
+            } catch (error) {
+                console.error("Error loading users:", error);
+                usersTableBody.innerHTML = `<tr><td colspan="6" class="no-users-message">Error loading users.</td></tr>`;
+            } finally {
+                hideLoader();
+            }
+        }
+        
+        function populateCommonFilters() {
+            const hospitalSet = new Set(allUsersData.map(user => user.hospital).filter(Boolean));
+            const sortedHospitals = [...hospitalSet].sort();
+
+            const hospitalFilterSelects = [
+                document.getElementById('filterHospital'),
+                document.getElementById('adminHospitalSelect'),
+                document.getElementById('auditLogHospitalFilter')
+            ];
+
+            hospitalFilterSelects.forEach(select => {
+                if (select) {
+                    const currentValue = select.value;
+                    let optionsHTML = select.querySelector('option').outerHTML; // Keep the first option
+                    sortedHospitals.forEach(h => {
+                        optionsHTML += `<option value="${h}">${h}</option>`;
+                    });
+                    select.innerHTML = optionsHTML;
+                    select.value = currentValue;
+                }
+            });
+        }
+
+        window.filterUsers = function() {
+            const searchTerm = searchUserInput.value.toLowerCase();
+            const status = filterStatus.value;
+            const hospital = filterHospital.value;
+            const filtered = allUsersData.filter(user => 
+                (user.name?.toLowerCase().includes(searchTerm) || user.email?.toLowerCase().includes(searchTerm)) &&
+                (status === "" || user.status === status) &&
+                (hospital === "" || user.hospital === hospital)
+            );
+            renderUsers(filtered);
+        }
+
+        function renderUsers(usersToRender) {
+             usersTableBody.innerHTML = '';
+             if (!usersToRender || usersToRender.length === 0) {
+                 usersTableBody.innerHTML = '<tr><td colspan="6" class="no-users-message">No users found.</td></tr>';
+                 return;
+             }
+             usersToRender.forEach(user => {
+                 const row = usersTableBody.insertRow();
+                 row.innerHTML = `
+                     <td>${user.name || 'N/A'}</td>
+                     <td>${user.email || 'N/A'}</td>
+                     <td>${user.hospital || 'N/A'}</td>
+                     <td>${user.role || 'N/A'}</td>
+                     <td><span style="font-weight:bold; color:${user.status === 'active' ? 'green' : (user.status === 'pending' ? 'orange' : 'red')}">${user.status?.toUpperCase() || 'N/A'}</span></td>
+                     <td class="user-actions-cell">
+                         <button class="approve-btn" onclick="updateUserStatus('${user.uid}', 'active')">Approve</button>
+                         <button class="reject-btn" onclick="updateUserStatus('${user.uid}', 'rejected')">Reject</button>
+                         <button class="edit-btn" onclick="openEditModal('${user.uid}')">Edit</button>
+                         <button class="delete-btn" onclick="deleteUser('${user.uid}', '${user.name || 'this user'}')"><i class="fas fa-trash"></i></button>
+                     </td>
+                 `;
+             });
         }
         
         window.updateUserStatus = (uid, newStatus) => {
@@ -311,50 +453,215 @@
             }, true, name);
         };
 
-        window.openEditModal = (uid) => { /* ... existing logic from previous version ... */ };
+        window.openEditModal = (uid) => {
+            const user = allUsersData.find(u => u.uid === uid);
+            if (!user) return;
+            editUserId.value = user.uid;
+            editUserName.value = user.name;
+            editUserEmail.value = user.email;
+            
+            const hospitalSelect = document.getElementById('filterHospital');
+            editUserHospital.innerHTML = hospitalSelect.innerHTML;
+            editUserHospital.value = user.hospital;
+
+            editUserRole.value = user.role;
+            editUserStatus.value = user.status;
+            userEditModal.style.display = 'flex';
+        };
+
         window.closeEditModal = () => { userEditModal.style.display = 'none'; };
-        window.saveUserChanges = async () => { /* ... existing logic from previous version ... */ };
+
+        window.saveUserChanges = async () => {
+            showLoader();
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                await fetch(`${BACKEND_URL}/admin/update-user-status`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Authorization': `Bearer ${idToken}`,
+                        'X-Firebase-AppCheck': appCheckTokenResponse.token
+                    },
+                    body: JSON.stringify({
+                        uid: editUserId.value,
+                        hospital: editUserHospital.value,
+                        role: editUserRole.value,
+                        status: editUserStatus.value,
+                        admin_uid: currentAdminUid
+                    })
+                });
+                closeEditModal();
+                await loadAllUsers();
+            } catch (error) {
+                console.error("Error saving changes:", error);
+                alert("Failed to save changes.");
+            } finally {
+                hideLoader();
+            }
+        };
         
-        window.loadAllUsers = async () => { /* ... existing logic ... */ };
-        function renderUsers(usersToRender) {
-             const usersTableBody = document.getElementById('usersTableBody');
-             usersTableBody.innerHTML = '';
-             if (!usersToRender || usersToRender.length === 0) {
-                 usersTableBody.innerHTML = '<tr><td colspan="6" class="no-users-message">No users found.</td></tr>';
-                 return;
-             }
-             usersToRender.forEach(user => {
-                 const row = usersTableBody.insertRow();
-                 row.innerHTML = `
-                     <td>${user.name || 'N/A'}</td>
-                     <td>${user.email || 'N/A'}</td>
-                     <td>${user.hospital || 'N/A'}</td>
-                     <td>${user.role || 'N/A'}</td>
-                     <td><span style="font-weight:bold; color:${user.status === 'active' ? 'green' : (user.status === 'pending' ? 'orange' : 'red')}">${user.status?.toUpperCase() || 'N/A'}</span></td>
-                     <td class="user-actions-cell">
-                         <button class="approve-btn" onclick="updateUserStatus('${user.uid}', 'active')">Approve</button>
-                         <button class="reject-btn" onclick="updateUserStatus('${user.uid}', 'rejected')">Reject</button>
-                         <button class="edit-btn" onclick="openEditModal('${user.uid}')">Edit</button>
-                         <button class="delete-btn" onclick="deleteUser('${user.uid}', '${user.name || 'this user'}')"><i class="fas fa-trash"></i></button>
-                     </td>
-                 `;
-             });
+        function populateHospitalDataFilters() {
+            const yearSelect = document.getElementById('adminYearSelect');
+            const monthSelect = document.getElementById('adminMonthSelect');
+            if (yearSelect.options.length > 0) return;
+
+            const currentYear = new Date().getFullYear();
+            for (let i = currentYear; i >= currentYear - 5; i--) {
+                yearSelect.add(new Option(i, i));
+            }
+
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            months.forEach((m, i) => {
+                monthSelect.add(new Option(m, String(i + 1).padStart(2, '0')));
+            });
+            
+            monthSelect.value = String(new Date().getMonth() + 1).padStart(2, '0');
+        }
+
+        function populateAuditLogFilters() {
+            const dateFilter = document.getElementById('auditLogDateFilter');
+            if(!dateFilter.value) {
+                dateFilter.value = new Date().toISOString().split('T')[0];
+            }
+        }
+
+        window.loadHospitalQaData = async function() {
+            const hospitalId = document.getElementById('adminHospitalSelect').value;
+            const year = document.getElementById('adminYearSelect').value;
+            const month = document.getElementById('adminMonthSelect').value;
+            if (!hospitalId || !year || !month) return;
+            showLoader();
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                const response = await fetch(`${BACKEND_URL}/admin/hospital-data?hospitalId=${hospitalId}&month=${year}-${month}`, { 
+                    headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } 
+                });
+                if (!response.ok) throw new Error('Failed to fetch data');
+                const result = await response.json();
+                renderHospitalQaDataTable(result.data, year, month);
+            } catch (error) {
+                console.error("Error loading hospital data:", error);
+                document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`;
+            } finally {
+                hideLoader();
+            }
+        }
+        
+        function renderHospitalQaDataTable(allData, year, month) {
+            const container = document.getElementById('hospitalQaTableContainer');
+            const selectedDataType = document.getElementById('adminDataTypeSelect').value;
+            const dataForTable = allData[selectedDataType]; 
+            const config = dataTypesConfig[selectedDataType];
+
+            container.innerHTML = '';
+            if (!dataForTable || dataForTable.length === 0) {
+                container.innerHTML = `<p class="no-users-message">No '${selectedDataType}' data available for the selected period.</p>`;
+                return;
+            }
+
+            const numDays = new Date(year, month, 0).getDate();
+            let tableHTML = `<h3 style="text-align:center; margin-top:0;">${selectedDataType.charAt(0).toUpperCase() + selectedDataType.slice(1)} Data</h3>`;
+            tableHTML += '<table class="user-table hospital-qa-table"><thead><tr><th>Energy</th>';
+            for (let i = 1; i <= numDays; i++) {
+                tableHTML += `<th>${i}</th>`;
+            }
+            tableHTML += '</tr></thead><tbody>';
+
+            dataForTable.forEach(row => {
+                tableHTML += `<tr><td>${row[0]}</td>`;
+                const values = row.slice(1);
+                for (let i = 0; i < numDays; i++) {
+                    const value = values[i] || '';
+                    const numValue = parseFloat(value);
+                    let className = '';
+                    if (!isNaN(numValue)) {
+                        if (Math.abs(numValue) > config.tolerance) className = 'out';
+                        else if (Math.abs(numValue) > config.warning) className = 'warning';
+                        else className = 'within';
+                    }
+                    tableHTML += `<td class="${className}">${value}</td>`;
+                }
+                tableHTML += '</tr>';
+            });
+
+            tableHTML += '</tbody></table>';
+            container.innerHTML = tableHTML;
+        }
+
+        window.loadAuditLogs = async function(fetchAll = false) {
+            showLoader();
+            let hospitalId = document.getElementById('auditLogHospitalFilter').value;
+            let action = document.getElementById('auditLogActionFilter').value;
+            let date = document.getElementById('auditLogDateFilter').value;
+            const logsTableBody = document.getElementById('auditLogsTableBody');
+            logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">Loading logs...</td></tr>`;
+            
+            if (fetchAll) {
+                hospitalId = '';
+                action = '';
+                date = '';
+            }
+
+            let url = `${BACKEND_URL}/admin/audit-logs?`;
+            if(date) url += `date=${date}&`;
+            if(hospitalId) url += `hospitalId=${hospitalId}&`;
+            if(action) url += `action=${action}&`;
+
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                const response = await fetch(url, { 
+                    headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } 
+                });
+                if (!response.ok) throw new Error('Failed to fetch logs');
+                const result = await response.json();
+                logsTableBody.innerHTML = '';
+                if(result.logs.length === 0) {
+                    logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No logs found.</td></tr>`;
+                    return;
+                }
+                result.logs.forEach(log => {
+                    const row = logsTableBody.insertRow();
+                    const details = JSON.stringify(log.changes || log.deletedUserData || { info: "No detailed changes." }, null, 2);
+                    row.innerHTML = `<td>${log.timestamp}</td><td>${log.action}</td><td>${log.user_display || 'N/A'}</td><td><pre>${details}</pre></td>`;
+                });
+            } catch (error) {
+                console.error("Error loading audit logs:", error);
+                logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message" style="color:red;">Error loading logs.</td></tr>`;
+            } finally {
+                hideLoader();
+            }
         }
         
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentAdminUid = user.uid;
-                // Initial load
-                await loadAllUsers();
-                showAdminSection('manage-users-section');
+                const userRole = localStorage.getItem("userRole");
+                if (userRole !== "Admin") {
+                    alert("Access Denied.");
+                    logout();
+                } else {
+                    showLoader();
+                    try {
+                        await loadAllUsers(); 
+                        showAdminSection('manage-users-section');
+                    } catch (error) {
+                        console.error("Failed to initialize admin dashboard:", error);
+                    } finally {
+                        hideLoader();
+                    }
+                }
             } else {
                 window.location.href = "login.html";
             }
         });
 
-        // Other functions like filterUsers, populateHospitalDataFilters, etc. would go here...
-        // For brevity, including just the core logic to fix the reported issues.
-        // Make sure to copy the full JS logic from your last working version.
+        window.onclick = function(event) {
+            if (event.target == userEditModal) closeEditModal();
+            if (event.target == confirmationModal) hideConfirmationModal();
+        }
     });
 </script>
 </body>
