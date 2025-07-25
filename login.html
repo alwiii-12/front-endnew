@@ -8,18 +8,26 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body>
+<body class="centered-content">
   <div class="login-container">
     <h2>Login - LINAC QA</h2>
     <form id="loginForm" autocomplete="off">
       <div class="error" id="errorMsg"></div>
-      <input type="email" id="email" name="email" placeholder="Email" required autocomplete="off" />
-      <div class="password-input-container">
-        <input type="password" id="password" name="password" placeholder="Password" required autocomplete="new-password" />
-        <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span>
+      
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="Enter your email" required autocomplete="off" />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="password-input-container">
+          <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="new-password" />
+          <span toggle="#password" class="fa fa-fw fa-eye field-icon toggle-password"></span>
+        </div>
       </div>
 
       <div class="form-options">
@@ -34,7 +42,7 @@
     </form>
     <div class="footer">© 2025 LINAC QA System</div>
   </div>
-  <a href="index.html" class="home-link" title="Go to Home Page">Home</a>
+  <a href="index.html" class="home-link">Home</a>
   <div id="notification-container"></div>
   <div id="loading-overlay"></div>
 
@@ -46,7 +54,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
-    // --- UTILITY FUNCTIONS ---
     function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
     function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
 
