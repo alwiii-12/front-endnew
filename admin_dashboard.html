@@ -8,56 +8,61 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* --- Styles specific to Admin Dashboard enhancements --- */
+        /* --- Styles for Admin Dashboard Enhancements --- */
         
-        /* 1. Action Button Safety: Increased spacing between buttons */
-        .user-actions-cell {
+        /* CORRECTION 4: Logout Button Position */
+        .admin-header {
+            position: relative; /* Needed for absolute positioning of children */
             display: flex;
-            flex-wrap: wrap;
-            gap: 8px; /* Adds space between buttons */
+            justify-content: center; /* Center the title */
             align-items: center;
         }
-
-        /* 2. Table Readability: Sticky first column for the hospital data table */
-        .hospital-qa-table th:first-child,
-        .hospital-qa-table td:first-child {
-            position: -webkit-sticky; /* For Safari */
-            position: sticky;
-            left: 0;
-            z-index: 2; /* Ensures it's above other cells */
-            background-color: var(--bg-card); /* Match the card background */
+        .admin-header .header-buttons {
+            position: absolute;
+            right: 20px; /* Position to the far right */
         }
 
-        /* To ensure the sticky header has a higher z-index than the sticky column */
-        .user-table th {
-            z-index: 3;
+        /* CORRECTION 1: Sidebar Alignment & Size */
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* Space between buttons */
+            padding: 20px;
+            justify-content: flex-start; /* Align buttons to the top */
         }
-        
-        /* Give a slight shadow to indicate the sticky column */
-        .hospital-qa-table th:first-child,
-        .hospital-qa-table td:first-child {
-           box-shadow: 2px 0 5px rgba(0,0,0,0.05);
-        }
-
-        /* Specific background for the header of the sticky column */
-        .hospital-qa-table th:first-child {
-            background-color: var(--primary-light) !important;
+        .sidebar-nav .nav-btn {
+            padding: 15px; /* Makes buttons larger */
+            font-size: 1.05em;
         }
 
-        /* Style for the new delete confirmation input area */
-        #deleteConfirmArea {
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid var(--border-color);
+        /* CORRECTION 2: Hospital Data Table Borders & Fullscreen Button */
+        .hospital-qa-table th,
+        .hospital-qa-table td {
+            border: 1px solid var(--border-color); /* Adds borders to the table */
         }
-        #deleteConfirmArea label {
-            display: block;
-            margin-bottom: 10px;
-            font-size: 0.95em;
+        #hospital-data-access-section {
+            position: relative; /* Needed for fullscreen button positioning */
         }
-        #deleteConfirmInput {
-            width: 100%;
+        .fullscreen-btn {
+            position: absolute;
+            top: 25px;
+            right: 25px;
         }
+
+        /* CORRECTION 3: Audit Log Button Size */
+        #audit-logs-section .filter-search-container button {
+            padding: 12px 22px; /* Increased padding for a larger button */
+            font-size: 1em;
+        }
+
+        /* --- Previous Enhancements (Kept for functionality) --- */
+        .user-actions-cell { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .hospital-qa-table th:first-child, .hospital-qa-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: var(--bg-card); box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
+        .user-table th { z-index: 3; }
+        .hospital-qa-table th:first-child { background-color: var(--primary-light) !important; }
+        #deleteConfirmArea { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); }
+        #deleteConfirmArea label { display: block; margin-bottom: 10px; font-size: 0.95em; }
+        #deleteConfirmInput { width: 100%; }
     </style>
 </head>
 <body>
@@ -70,7 +75,7 @@
     
     <div class="main-admin-layout">
         
-        <div class="sidebar nav-btn">
+        <div class="sidebar-nav">
             <button class="nav-btn active" data-section="manage-users-section"><i class="fas fa-users"></i> Manage Users</button>
             <button class="nav-btn" data-section="hospital-data-access-section"><i class="fas fa-hospital"></i> View Hospital Data</button>
             <button class="nav-btn" data-section="audit-logs-section"><i class="fas fa-clipboard-list"></i> View Audit Logs</button>
@@ -94,10 +99,8 @@
             </div>
 
             <div class="card-section" id="hospital-data-access-section" style="display: none;">
-                <h2>
-                    <span>View Hospital LINAC QA Data</span>
-                    <button onclick="toggleFullWidth()" class="section-action-btn" title="Toggle Full Width"><i class="fas fa-expand"></i></button>
-                </h2>
+                <h2>View Hospital LINAC QA Data</h2>
+                <button onclick="toggleFullWidth()" class="section-action-btn fullscreen-btn" title="Toggle Full Width"><i class="fas fa-expand"></i></button>
                 <div class="filter-search-container" id="hospitalDataControls">
                     <select id="adminHospitalSelect" onchange="loadHospitalQaData()"><option value="">Select Hospital</option></select>
                     <select id="adminYearSelect" onchange="loadHospitalQaData()"></select>
@@ -187,7 +190,6 @@
         let allUsersData = [];
         let currentAdminUid = null;
 
-        // --- Element Selectors ---
         const loadingOverlay = document.getElementById('loading-overlay');
         const usersTableBody = document.getElementById('usersTableBody');
         const searchUserInput = document.getElementById('searchUserInput');
@@ -214,11 +216,9 @@
           crossline: { tolerance: 1.0, warning: 0.9 }
         };
 
-        // --- Utility Functions ---
         function showLoader() { loadingOverlay.style.display = 'flex'; }
         function hideLoader() { loadingOverlay.style.display = 'none'; }
 
-        // --- Custom Confirmation Modal Logic ---
         function showConfirmationModal(title, message, onConfirm, isDelete = false, userName = '') {
             document.getElementById('confirmationTitle').textContent = title;
             document.getElementById('confirmationMessage').textContent = message;
@@ -253,41 +253,26 @@
             confirmBtn.disabled = deleteConfirmInput.value !== deleteConfirmInput.dataset.expectedName;
         });
 
-        // --- Main Functions ---
         window.logout = async function() {
             showLoader();
-            const user = auth.currentUser;
             try {
+                const user = auth.currentUser;
                 const appCheckTokenResponse = await appCheck.getToken(false);
                 await fetch(`${BACKEND_URL}/log_event`, {
                     method: "POST",
-                    headers: { 
-                        "Content-Type": "application/json",
-                        "X-Firebase-AppCheck": appCheckTokenResponse.token
-                    },
-                    body: JSON.stringify({
-                        action: "user_logout",
-                        userUid: user ? user.uid : "unknown_uid",
-                        userEmail: localStorage.getItem("userEmail") || "unknown_email",
-                        hospital: localStorage.getItem("hospitalName") || "unknown_hospital",
-                        role: localStorage.getItem("userRole") || "unknown_role"
-                    })
+                    headers: { "Content-Type": "application/json", "X-Firebase-AppCheck": appCheckTokenResponse.token },
+                    body: JSON.stringify({ action: "user_logout", userUid: user ? user.uid : "unknown_uid" })
                 });
-            } catch (logError) {
-                console.error("Error sending logout log event:", logError);
-            }
+            } catch (logError) { console.error("Error sending logout log event:", logError); }
             auth.signOut().then(() => {
                 localStorage.clear();
                 window.location.replace("login.html");
-            }).catch(err => {
-                console.error("Logout failed:", err);
-                hideLoader();
             });
         }
 
         window.toggleFullWidth = function() {
             const layout = document.querySelector('.main-admin-layout');
-            const icon = document.querySelector('.section-action-btn i');
+            const icon = document.querySelector('.fullscreen-btn i');
             layout.classList.toggle('full-width-mode');
             if (layout.classList.contains('full-width-mode')) {
                 icon.classList.remove('fa-expand');
@@ -298,7 +283,7 @@
             }
         }
 
-        document.querySelector('.sidebar.nav-btn').addEventListener('click', (event) => {
+        document.querySelector('.sidebar-nav').addEventListener('click', (event) => {
             const button = event.target.closest('.nav-btn');
             if (button) {
                 const sectionId = button.dataset.section;
@@ -307,7 +292,7 @@
         });
 
         function showAdminSection(sectionId) {
-            document.querySelectorAll('.sidebar .nav-btn').forEach(btn => {
+            document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.section === sectionId);
             });
             document.querySelectorAll('.content-display-area .card-section').forEach(section => {
@@ -317,7 +302,6 @@
             const activeSection = document.getElementById(sectionId);
             activeSection.style.display = 'block';
             activeSection.classList.add('active-section');
-
             if (sectionId === 'hospital-data-access-section' && !document.getElementById('adminYearSelect').options.length) {
                 populateHospitalDataFilters();
             }
@@ -348,20 +332,16 @@
         function populateCommonFilters() {
             const hospitalSet = new Set(allUsersData.map(user => user.hospital).filter(Boolean));
             const sortedHospitals = [...hospitalSet].sort();
-
             const hospitalFilterSelects = [
                 document.getElementById('filterHospital'),
                 document.getElementById('adminHospitalSelect'),
                 document.getElementById('auditLogHospitalFilter')
             ];
-
             hospitalFilterSelects.forEach(select => {
                 if (select) {
                     const currentValue = select.value;
-                    let optionsHTML = select.querySelector('option').outerHTML; // Keep the first option
-                    sortedHospitals.forEach(h => {
-                        optionsHTML += `<option value="${h}">${h}</option>`;
-                    });
+                    let optionsHTML = select.querySelector('option').outerHTML;
+                    sortedHospitals.forEach(h => { optionsHTML += `<option value="${h}">${h}</option>`; });
                     select.innerHTML = optionsHTML;
                     select.value = currentValue;
                 }
@@ -406,50 +386,26 @@
         
         window.updateUserStatus = (uid, newStatus) => {
             const user = allUsersData.find(u => u.uid === uid);
-            const title = `Confirm Status Change`;
-            const message = `Are you sure you want to set status for ${user.name} to ${newStatus.toUpperCase()}?`;
-            
-            showConfirmationModal(title, message, async () => {
+            showConfirmationModal(`Confirm Status Change`, `Set status for ${user.name} to ${newStatus.toUpperCase()}?`, async () => {
                 showLoader();
                 try {
                     const idToken = await auth.currentUser.getIdToken(true);
                     const appCheckTokenResponse = await appCheck.getToken(false);
-                    await fetch(`${BACKEND_URL}/admin/update-user-status`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token },
-                        body: JSON.stringify({ uid, status: newStatus, admin_uid: currentAdminUid })
-                    });
+                    await fetch(`${BACKEND_URL}/admin/update-user-status`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token }, body: JSON.stringify({ uid, status: newStatus, admin_uid: currentAdminUid }) });
                     await loadAllUsers();
-                } catch (error) {
-                    console.error("Error updating status:", error);
-                    alert("Failed to update user status.");
-                } finally {
-                    hideLoader();
-                }
+                } catch (error) { console.error("Error updating status:", error); alert("Failed to update user status."); } finally { hideLoader(); }
             });
         };
 
         window.deleteUser = (uid, name) => {
-            const title = `Permanently Delete User`;
-            const message = `This action is irreversible. You are about to delete ${name}.`;
-
-            showConfirmationModal(title, message, async () => {
+            showConfirmationModal(`Permanently Delete User`, `This is irreversible. You are about to delete ${name}.`, async () => {
                 showLoader();
                 try {
                     const idToken = await auth.currentUser.getIdToken(true);
                     const appCheckTokenResponse = await appCheck.getToken(false);
-                    await fetch(`${BACKEND_URL}/admin/delete-user`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token },
-                        body: JSON.stringify({ uid, admin_uid: currentAdminUid })
-                    });
+                    await fetch(`${BACKEND_URL}/admin/delete-user`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token }, body: JSON.stringify({ uid, admin_uid: currentAdminUid }) });
                     await loadAllUsers();
-                } catch (error) {
-                    console.error("Error deleting user:", error);
-                    alert("Failed to delete user.");
-                } finally {
-                    hideLoader();
-                }
+                } catch (error) { console.error("Error deleting user:", error); alert("Failed to delete user."); } finally { hideLoader(); }
             }, true, name);
         };
 
@@ -459,11 +415,9 @@
             editUserId.value = user.uid;
             editUserName.value = user.name;
             editUserEmail.value = user.email;
-            
             const hospitalSelect = document.getElementById('filterHospital');
             editUserHospital.innerHTML = hospitalSelect.innerHTML;
             editUserHospital.value = user.hospital;
-
             editUserRole.value = user.role;
             editUserStatus.value = user.status;
             userEditModal.style.display = 'flex';
@@ -477,53 +431,28 @@
                 const idToken = await auth.currentUser.getIdToken(true);
                 const appCheckTokenResponse = await appCheck.getToken(false);
                 await fetch(`${BACKEND_URL}/admin/update-user-status`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json', 
-                        'Authorization': `Bearer ${idToken}`,
-                        'X-Firebase-AppCheck': appCheckTokenResponse.token
-                    },
-                    body: JSON.stringify({
-                        uid: editUserId.value,
-                        hospital: editUserHospital.value,
-                        role: editUserRole.value,
-                        status: editUserStatus.value,
-                        admin_uid: currentAdminUid
-                    })
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token },
+                    body: JSON.stringify({ uid: editUserId.value, hospital: editUserHospital.value, role: editUserRole.value, status: editUserStatus.value, admin_uid: currentAdminUid })
                 });
                 closeEditModal();
                 await loadAllUsers();
-            } catch (error) {
-                console.error("Error saving changes:", error);
-                alert("Failed to save changes.");
-            } finally {
-                hideLoader();
-            }
+            } catch (error) { console.error("Error saving changes:", error); alert("Failed to save changes."); } finally { hideLoader(); }
         };
         
         function populateHospitalDataFilters() {
             const yearSelect = document.getElementById('adminYearSelect');
             const monthSelect = document.getElementById('adminMonthSelect');
             if (yearSelect.options.length > 0) return;
-
             const currentYear = new Date().getFullYear();
-            for (let i = currentYear; i >= currentYear - 5; i--) {
-                yearSelect.add(new Option(i, i));
-            }
-
+            for (let i = currentYear; i >= currentYear - 5; i--) { yearSelect.add(new Option(i, i)); }
             const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            months.forEach((m, i) => {
-                monthSelect.add(new Option(m, String(i + 1).padStart(2, '0')));
-            });
-            
+            months.forEach((m, i) => { monthSelect.add(new Option(m, String(i + 1).padStart(2, '0'))); });
             monthSelect.value = String(new Date().getMonth() + 1).padStart(2, '0');
         }
 
         function populateAuditLogFilters() {
             const dateFilter = document.getElementById('auditLogDateFilter');
-            if(!dateFilter.value) {
-                dateFilter.value = new Date().toISOString().split('T')[0];
-            }
+            if(!dateFilter.value) { dateFilter.value = new Date().toISOString().split('T')[0]; }
         }
 
         window.loadHospitalQaData = async function() {
@@ -535,18 +464,11 @@
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
                 const appCheckTokenResponse = await appCheck.getToken(false);
-                const response = await fetch(`${BACKEND_URL}/admin/hospital-data?hospitalId=${hospitalId}&month=${year}-${month}`, { 
-                    headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } 
-                });
+                const response = await fetch(`${BACKEND_URL}/admin/hospital-data?hospitalId=${hospitalId}&month=${year}-${month}`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
                 if (!response.ok) throw new Error('Failed to fetch data');
                 const result = await response.json();
                 renderHospitalQaDataTable(result.data, year, month);
-            } catch (error) {
-                console.error("Error loading hospital data:", error);
-                document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`;
-            } finally {
-                hideLoader();
-            }
+            } catch (error) { console.error("Error loading hospital data:", error); document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`; } finally { hideLoader(); }
         }
         
         function renderHospitalQaDataTable(allData, year, month) {
@@ -554,21 +476,16 @@
             const selectedDataType = document.getElementById('adminDataTypeSelect').value;
             const dataForTable = allData[selectedDataType]; 
             const config = dataTypesConfig[selectedDataType];
-
             container.innerHTML = '';
             if (!dataForTable || dataForTable.length === 0) {
                 container.innerHTML = `<p class="no-users-message">No '${selectedDataType}' data available for the selected period.</p>`;
                 return;
             }
-
             const numDays = new Date(year, month, 0).getDate();
             let tableHTML = `<h3 style="text-align:center; margin-top:0;">${selectedDataType.charAt(0).toUpperCase() + selectedDataType.slice(1)} Data</h3>`;
             tableHTML += '<table class="user-table hospital-qa-table"><thead><tr><th>Energy</th>';
-            for (let i = 1; i <= numDays; i++) {
-                tableHTML += `<th>${i}</th>`;
-            }
+            for (let i = 1; i <= numDays; i++) { tableHTML += `<th>${i}</th>`; }
             tableHTML += '</tr></thead><tbody>';
-
             dataForTable.forEach(row => {
                 tableHTML += `<tr><td>${row[0]}</td>`;
                 const values = row.slice(1);
@@ -585,7 +502,6 @@
                 }
                 tableHTML += '</tr>';
             });
-
             tableHTML += '</tbody></table>';
             container.innerHTML = tableHTML;
         }
@@ -597,65 +513,40 @@
             let date = document.getElementById('auditLogDateFilter').value;
             const logsTableBody = document.getElementById('auditLogsTableBody');
             logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">Loading logs...</td></tr>`;
-            
-            if (fetchAll) {
-                hospitalId = '';
-                action = '';
-                date = '';
-            }
-
+            if (fetchAll) { hospitalId = ''; action = ''; date = ''; }
             let url = `${BACKEND_URL}/admin/audit-logs?`;
             if(date) url += `date=${date}&`;
             if(hospitalId) url += `hospitalId=${hospitalId}&`;
             if(action) url += `action=${action}&`;
-
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
                 const appCheckTokenResponse = await appCheck.getToken(false);
-                const response = await fetch(url, { 
-                    headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } 
-                });
+                const response = await fetch(url, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
                 if (!response.ok) throw new Error('Failed to fetch logs');
                 const result = await response.json();
                 logsTableBody.innerHTML = '';
-                if(result.logs.length === 0) {
-                    logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No logs found.</td></tr>`;
-                    return;
-                }
+                if(result.logs.length === 0) { logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No logs found.</td></tr>`; return; }
                 result.logs.forEach(log => {
                     const row = logsTableBody.insertRow();
                     const details = JSON.stringify(log.changes || log.deletedUserData || { info: "No detailed changes." }, null, 2);
                     row.innerHTML = `<td>${log.timestamp}</td><td>${log.action}</td><td>${log.user_display || 'N/A'}</td><td><pre>${details}</pre></td>`;
                 });
-            } catch (error) {
-                console.error("Error loading audit logs:", error);
-                logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message" style="color:red;">Error loading logs.</td></tr>`;
-            } finally {
-                hideLoader();
-            }
+            } catch (error) { console.error("Error loading audit logs:", error); logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message" style="color:red;">Error loading logs.</td></tr>`; } finally { hideLoader(); }
         }
         
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentAdminUid = user.uid;
                 const userRole = localStorage.getItem("userRole");
-                if (userRole !== "Admin") {
-                    alert("Access Denied.");
-                    logout();
-                } else {
+                if (userRole !== "Admin") { alert("Access Denied."); logout(); }
+                else {
                     showLoader();
                     try {
                         await loadAllUsers(); 
                         showAdminSection('manage-users-section');
-                    } catch (error) {
-                        console.error("Failed to initialize admin dashboard:", error);
-                    } finally {
-                        hideLoader();
-                    }
+                    } catch (error) { console.error("Failed to initialize admin dashboard:", error); } finally { hideLoader(); }
                 }
-            } else {
-                window.location.href = "login.html";
-            }
+            } else { window.location.href = "login.html"; }
         });
 
         window.onclick = function(event) {
