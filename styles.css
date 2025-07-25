@@ -856,3 +856,104 @@ body.dark input:focus, body.dark select:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.4);
 }
+
+/* --- NEW: Styles for Index/Welcome Page --- */
+body.index-page {
+    background: url('wave-bg.png') no-repeat center center;
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.welcome-card {
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    max-width: 900px;
+    width: 100%;
+    padding: 0;
+    background-color: var(--bg-card);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px var(--shadow-medium);
+    border: 1px solid var(--border-color);
+}
+
+.left-panel {
+    flex: 1;
+    padding: 50px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.left-panel h1 {
+    font-size: 2.2em;
+}
+
+.left-panel p {
+    font-size: 1.05em;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.button-group {
+    display: flex;
+    gap: 15px;
+}
+
+.left-panel .button {
+    padding: 14px 28px;
+    font-size: 1.1em;
+    flex-grow: 1;
+}
+
+.signup-btn {
+    background-color: var(--primary-color);
+    color: var(--text-white);
+}
+.signup-btn:hover {
+    background-color: var(--primary-dark);
+}
+
+.login-btn {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+.login-btn:hover {
+    background-color: #d4e8f7;
+}
+
+.right-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    padding: 20px;
+}
+
+.right-panel img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+@media (max-width: 768px) {
+    .welcome-card {
+        flex-direction: column;
+    }
+    .right-panel {
+        order: -1;
+        padding: 30px 20px;
+    }
+    .left-panel {
+        padding: 30px;
+        text-align: center;
+    }
+    .button-group {
+        flex-direction: column;
+    }
+}
