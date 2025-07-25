@@ -1,113 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>LINAC QA Portal</title>
-  <link rel="icon" href="/favicon.png" type="image/png">
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #e0f7fa, #ffffff);
-    }
-
-    .wrapper {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      padding: 20px;
-      background: url('wave-bg.png') no-repeat right center;
-      background-size: cover; /* REVERTED: back to 'cover' */
-    }
-
-    .card {
-      background: #f5faff;
-      display: flex;
-      flex-direction: row;
-      border-radius: 12px;
-      box-shadow: 0 0 30px rgba(0, 123, 255, 0.2);
-      overflow: hidden;
-      max-width: 1000px;
-      width: 100%;
-    }
-
-    .left-panel {
-      flex: 1;
-      padding: 40px;
-    }
-
-    .left-panel h1 {
-      font-size: 30px;
-      color: #0058FF; /* UPDATED for contrast: #0058FF */
-      margin-bottom: 15px;
-    }
-
-    .left-panel p {
-      font-size: 16px;
-      margin-bottom: 30px;
-      color: #333;
-    }
-
-    .left-panel a.button {
-      display: inline-block;
-      margin-right: 10px;
-      margin-top: 10px;
-      padding: 12px 24px;
-      background-color: #0046FF; /* UPDATED for contrast: #0046FF */
-      color: white;
-      text-decoration: none;
-      font-weight: bold;
-      border-radius: 6px;
-    }
-
-    .left-panel a.button:hover {
-      background-color: #0039CC; /* Adjusted hover color - please re-verify contrast */
-    }
-
-    .right-panel {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .right-panel img {
-      max-width: 90%;
-      height: auto;
-    }
-
-    @media (max-width: 768px) {
-      .wrapper {
-        flex-direction: column;
-        padding: 10px;
-      }
-
-      .card {
-        flex-direction: column;
-      }
-
-      .right-panel {
-        padding: 0;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to LINAC QA Portal</title>
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <div class="wrapper">
-    <div class="card">
-      <div class="left-panel">
-        <h1>Welcome to LINAC QA Portal</h1>
-        <p>Manage your LINAC QA data securely. Please sign up or log in to continue.</p>
-        <a href="signup.html" class="button">Sign Up</a>
-        <a href="login.html" class="button">Login</a>
-      </div>
-      <div class="right-panel">
-        <img src="linac.png" alt="Varian TrueBeam LINAC">
-      </div>
+<body class="index-page">
+    <div class="welcome-card">
+        <div class="left-panel">
+            <h1>Welcome to LINAC QA Portal</h1>
+            <p>Manage your LINAC QA data securely. Please sign up or log in to continue.</p>
+            <div class="button-group">
+                <a href="signup.html" class="button signup-btn">Sign Up</a>
+                <a href="login.html" class="button login-btn">Login</a>
+            </div>
+        </div>
+        <div class="right-panel">
+            <img src="https://storage.googleapis.com/gemini-generative-ai-api-file-cache/e8c3e89a200232c253b2f56b57ea32e5" alt="LINAC Machine">
+        </div>
     </div>
-  </div>
 </body>
 </html>
