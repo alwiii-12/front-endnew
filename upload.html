@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   
   <style>
-    /* This inline style block restores the original layout for this page */
+    /* This inline style block restores the original layout and applies the new fixes */
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
@@ -62,6 +62,12 @@
         margin: 0 0 20px;
         color: #007bff;
     }
+    /* CORRECTION 1: Month buttons layout */
+    #months {
+        display: flex;
+        flex-direction: column; /* Stack buttons vertically */
+        gap: 8px; /* Add space between buttons */
+    }
     .main {
         flex-grow: 1;
         padding: 20px;
@@ -105,9 +111,14 @@
         border: 1px solid #ccc;
         border-radius: 8px;
     }
+    /* CORRECTION 2: Center alignment for actions and heading */
+    .actions-section, .trend-chart-section {
+        text-align: center; /* Center align the content */
+        margin-top: 20px;
+    }
     .actions-section button {
         padding: 10px 15px;
-        margin-right: 10px;
+        margin: 0 5px;
         border-radius: 5px;
         border: none;
         cursor: pointer;
@@ -115,6 +126,13 @@
     }
     .save-btn { background-color: #007bff; }
     .export-btn { background-color: #28a745; }
+    
+    /* CORRECTION 3: Fix for infinite trend chart */
+    .chart-wrapper {
+        position: relative;
+        height: 40vh; /* Set a max height */
+        width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -138,7 +156,7 @@
       <p>© 2025 QA Dashboard</p>
     </div>
     <div class="main">
-      <h1 id="header"></h1>
+      <h1 id="header" style="text-align: center;"></h1>
       <div class="tab-nav">
         <button class="tab-nav-button active" onclick="switchTab('output')">Output</button>
         <button class="tab-nav-button" onclick="switchTab('flatness')">Flatness</button>
@@ -152,6 +170,7 @@
     </div>
   </div>
   <div id="loading-overlay"><div class="spinner"></div></div>
+  <!-- CORRECTION 4: Updated chatbox icon -->
   <div id="chat-bubble"><i class="fas fa-comment-dots"></i></div>
   <div id="chat-window">
     <div id="chat-header"><span>QA Copilot</span><button id="close-chat-btn">&times;</button></div>
@@ -217,16 +236,18 @@
                         <p>Out of Tolerance: <span id="out-${dataType}">0</span></p>
                     </div>
                 </div>
-                <div class="actions-section" style="margin-top: 20px;">
+                <div class="actions-section">
                     <button class="save-btn" onclick="manualSave('${dataType}')">Save ${config.label}</button>
                     <button class="export-btn" onclick="exportToExcel('${dataType}')">Export ${config.label}</button>
                     <span id="lastSaved-${dataType}"></span>
                 </div>
-                <div class="trend-chart-section" style="margin-top: 20px;">
+                <div class="trend-chart-section">
                     <h3>${config.label} Trend Analysis</h3>
                     <label>Select Energy:</label>
                     <select id="trendEnergySelect-${dataType}" onchange="updateTrendChart('${dataType}')"></select>
-                    <canvas id="trendChart-${dataType}"></canvas>
+                    <div class="chart-wrapper">
+                        <canvas id="trendChart-${dataType}"></canvas>
+                    </div>
                 </div>
             `;
         }
@@ -439,11 +460,13 @@
                             const note = prompt(`Enter annotation for ${selectedEnergy} on ${fullDate}:`, existingAnnotation);
                             if (note !== null) {
                                 showLoader();
-                                fetch(`${BACKEND_URL}/save-annotation`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": appCheck.getToken(false).token },
-                                    body: JSON.stringify({ uid: currentUID, month: monthKey, key: annotationKey, data: { text: note, dataType: dataType, energy: selectedEnergy }})
-                                }).then(() => updateTrendChart(dataType)).catch(e => console.error("Failed to save annotation", e)).finally(() => hideLoader());
+                                appCheck.getToken(false).then(appCheckTokenResponse => {
+                                    fetch(`${BACKEND_URL}/save-annotation`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": appCheckTokenResponse.token },
+                                        body: JSON.stringify({ uid: currentUID, month: monthKey, key: annotationKey, data: { text: note, dataType: dataType, energy: selectedEnergy }})
+                                    }).then(() => updateTrendChart(dataType)).catch(e => console.error("Failed to save annotation", e)).finally(() => hideLoader());
+                                });
                             }
                         }
                     },
