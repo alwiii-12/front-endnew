@@ -293,6 +293,29 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     color: var(--text-white);
 }
 
+/* --- NEW: Form Button Styling --- */
+#loginForm button[type="submit"],
+.signup-container button#signupButton {
+    width: 100%;
+    padding: 16px;
+    font-size: 1.2em;
+    background-color: var(--primary-color);
+    color: var(--text-white);
+    margin-top: 10px; /* Add some space above the button */
+}
+
+#loginForm button[type="submit"]:hover,
+.signup-container button#signupButton:hover {
+    background-color: var(--primary-dark);
+}
+
+#loginForm button[type="submit"]:active,
+.signup-container button#signupButton:active {
+    background-color: var(--primary-dark) !important;
+    transform: translateY(1px) scale(0.99);
+}
+
+
 /* --- Awaiting Approval & Message Pages --- */
 .message-container {
     padding: 50px;
