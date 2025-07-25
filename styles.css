@@ -226,15 +226,16 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
   margin-bottom: 30px;
 }
 
-#loginForm, .signup-container .form-group {
+#loginForm {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  text-align: left;
+  gap: 20px;
 }
 
-#loginForm {
-    gap: 20px;
+.signup-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 #loginForm input, .signup-container input, .signup-container select {
@@ -608,16 +609,22 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 
 .form-group {
     margin-bottom: 15px;
+    text-align: left;
 }
 .form-group label {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
 }
+.form-group .required {
+    color: var(--status-error);
+    margin-left: 4px;
+}
 
 .password-strength {
     font-size: 0.85em;
     margin-top: 5px;
+    text-align: left;
 }
 .password-strength.weak { color: var(--status-error); }
 .password-strength.intermediate { color: var(--status-warning); }
