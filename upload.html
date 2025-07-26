@@ -129,9 +129,9 @@
         background-color: var(--bg-card);
         box-shadow: 0 4px 12px var(--shadow-light);
     }
-    .actions-section {
+    .actions-section, .trend-chart-section {
         text-align: center;
-        margin: 30px 0; /* CORRECTION 4: Increased margin to move buttons up */
+        margin-top: 20px;
     }
     .actions-section button {
         padding: 10px 15px;
@@ -149,7 +149,6 @@
         height: 40vh;
         width: 100%;
     }
-    /* CORRECTION 1: Energy Selector Alignment */
     .energy-selector-container {
         display: flex;
         align-items: center;
@@ -178,13 +177,11 @@
         padding: 12px 25px;
         font-size: 1em;
     }
-    /* CORRECTION 2: Annotation Textbox Size */
     #annotationModal textarea {
         width: 100%;
-        min-height: 120px; /* Increased height */
+        min-height: 120px;
         resize: vertical;
     }
-    /* CORRECTION 3: Delete Button Style */
     #deleteAnnotationBtn {
         background-color: var(--status-error);
     }
@@ -540,7 +537,6 @@
             showLoader();
             try {
                 const appCheckTokenResponse = await appCheck.getToken(false);
-                // NOTE: This requires a new '/delete-annotation' endpoint on your backend (app.py)
                 await fetch(`${BACKEND_URL}/delete-annotation`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": appCheckTokenResponse.token },
