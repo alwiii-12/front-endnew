@@ -131,7 +131,7 @@
     }
     .actions-section {
         text-align: center;
-        margin-top: 20px;
+        margin: 30px 0; /* CORRECTION 4: Increased margin to move buttons up */
     }
     .actions-section button {
         padding: 10px 15px;
@@ -149,17 +149,24 @@
         height: 40vh;
         width: 100%;
     }
-    .trend-chart-section select {
-        max-width: 250px;
-        margin: 0 auto 15px auto;
-        display: block;
+    /* CORRECTION 1: Energy Selector Alignment */
+    .energy-selector-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 15px;
     }
+    .energy-selector-container select {
+        max-width: 250px;
+        margin: 0;
+    }
+
     #chat-bubble {
         display: flex;
         align-items: center;
         justify-content: center;
     }
-    /* CORRECTION 4: Trend chart background box */
     .trend-chart-section {
         padding: 20px;
         border: 1px solid var(--border-color);
@@ -167,10 +174,19 @@
         background-color: var(--bg-card);
         box-shadow: 0 4px 12px var(--shadow-light);
     }
-    /* CORRECTION 1: Annotation modal button size */
     #annotationModal .modal-buttons button {
         padding: 12px 25px;
         font-size: 1em;
+    }
+    /* CORRECTION 2: Annotation Textbox Size */
+    #annotationModal textarea {
+        width: 100%;
+        min-height: 120px; /* Increased height */
+        resize: vertical;
+    }
+    /* CORRECTION 3: Delete Button Style */
+    #deleteAnnotationBtn {
+        background-color: var(--status-error);
     }
   </style>
 </head>
@@ -222,6 +238,7 @@
         <h3 id="annotationModalTitle">Add/Edit Annotation</h3>
         <textarea id="annotationInput" placeholder="Enter your note here..."></textarea>
         <div class="modal-buttons">
+            <button id="deleteAnnotationBtn" class="button" style="display: none;">Delete Note</button>
             <button id="saveAnnotationBtn" class="save-btn">Save Note</button>
             <button class="cancel-btn" onclick="hideAnnotationModal()">Cancel</button>
         </div>
@@ -263,6 +280,7 @@
         const annotationModalTitle = document.getElementById('annotationModalTitle');
         const annotationInput = document.getElementById('annotationInput');
         const saveAnnotationBtn = document.getElementById('saveAnnotationBtn');
+        const deleteAnnotationBtn = document.getElementById('deleteAnnotationBtn');
         let currentAnnotationKey = null;
 
         function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
@@ -299,8 +317,10 @@
                 </div>
                 <div class="trend-chart-section">
                     <h3>${config.label} Trend Analysis</h3>
-                    <label>Select Energy:</label>
-                    <select id="trendEnergySelect-${dataType}" onchange="updateTrendChart('${dataType}')"></select>
+                    <div class="energy-selector-container">
+                        <label>Select Energy:</label>
+                        <select id="trendEnergySelect-${dataType}" onchange="updateTrendChart('${dataType}')"></select>
+                    </div>
                     <div class="chart-wrapper">
                         <canvas id="trendChart-${dataType}"></canvas>
                     </div>
@@ -480,6 +500,11 @@
             currentAnnotationKey = key;
             annotationModalTitle.textContent = `Note for ${energy} on ${date}`;
             annotationInput.value = existingText;
+            if (existingText) {
+                deleteAnnotationBtn.style.display = 'inline-flex';
+            } else {
+                deleteAnnotationBtn.style.display = 'none';
+            }
             annotationModal.style.display = 'flex';
         }
 
@@ -509,6 +534,26 @@
             finally { hideLoader(); }
         });
 
+        deleteAnnotationBtn.addEventListener('click', async () => {
+            if (!currentAnnotationKey) return;
+            const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            showLoader();
+            try {
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                // NOTE: This requires a new '/delete-annotation' endpoint on your backend (app.py)
+                await fetch(`${BACKEND_URL}/delete-annotation`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": appCheckTokenResponse.token },
+                    body: JSON.stringify({
+                        uid: currentUID, month: monthKey, key: currentAnnotationKey
+                    })
+                });
+                hideAnnotationModal();
+                await updateTrendChart(activeTab); 
+            } catch (e) { console.error("Failed to delete annotation", e); } 
+            finally { hideLoader(); }
+        });
+
         window.updateTrendChart = async function(dataType) {
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
@@ -532,15 +577,14 @@
             const ctx = canvasElement.getContext('2d');
             if (instances[dataType].trendChart) instances[dataType].trendChart.destroy();
 
-            // CORRECTION 2: Generate annotation lines from data
             const chartAnnotations = Object.entries(annotations)
-                .filter(([, value]) => value.energy === selectedEnergy)
+                .filter(([, value]) => value.energy === selectedEnergy && value.text)
                 .map(([key, value]) => {
-                    const datePart = key.split('-')[3]; // Extracts the day, e.g., "11"
+                    const datePart = key.split('-')[3];
                     return {
                         type: 'line',
                         scaleID: 'x',
-                        value: parseInt(datePart, 10) - 1, // Chart.js is 0-indexed
+                        value: parseInt(datePart, 10) - 1,
                         borderColor: 'red',
                         borderWidth: 1,
                         borderDash: [6, 6],
@@ -568,7 +612,6 @@
                             max: config.yAxisMax, 
                             title: { display: true, text: 'Value (%)' } 
                         },
-                        // CORRECTION 3: Add X-axis label
                         x: {
                             title: { display: true, text: 'Date' }
                         }
@@ -584,7 +627,7 @@
                     },
                     plugins: {
                         annotation: {
-                            annotations: chartAnnotations // Use the generated annotations
+                            annotations: chartAnnotations
                         },
                         tooltip: {
                              callbacks: {
