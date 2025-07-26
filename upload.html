@@ -129,7 +129,7 @@
         background-color: var(--bg-card);
         box-shadow: 0 4px 12px var(--shadow-light);
     }
-    .actions-section, .trend-chart-section {
+    .actions-section {
         text-align: center;
         margin-top: 20px;
     }
@@ -159,10 +159,18 @@
         align-items: center;
         justify-content: center;
     }
-    #annotationModal textarea {
-        width: 100%;
-        min-height: 100px;
-        resize: vertical;
+    /* CORRECTION 4: Trend chart background box */
+    .trend-chart-section {
+        padding: 20px;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        background-color: var(--bg-card);
+        box-shadow: 0 4px 12px var(--shadow-light);
+    }
+    /* CORRECTION 1: Annotation modal button size */
+    #annotationModal .modal-buttons button {
+        padding: 12px 25px;
+        font-size: 1em;
     }
   </style>
 </head>
@@ -208,7 +216,6 @@
     <div id="chat-input-area"><input type="text" id="chat-input" placeholder="Type..."><button id="send-chat-btn">&gt;</button></div>
   </div>
 
-  <!-- NEW: Custom Annotation Modal -->
   <div id="annotationModal" class="modal">
     <div class="modal-content">
         <span class="close-button" onclick="hideAnnotationModal()">&times;</span>
@@ -524,6 +531,29 @@
             const config = dataTypesConfig[dataType];
             const ctx = canvasElement.getContext('2d');
             if (instances[dataType].trendChart) instances[dataType].trendChart.destroy();
+
+            // CORRECTION 2: Generate annotation lines from data
+            const chartAnnotations = Object.entries(annotations)
+                .filter(([, value]) => value.energy === selectedEnergy)
+                .map(([key, value]) => {
+                    const datePart = key.split('-')[3]; // Extracts the day, e.g., "11"
+                    return {
+                        type: 'line',
+                        scaleID: 'x',
+                        value: parseInt(datePart, 10) - 1, // Chart.js is 0-indexed
+                        borderColor: 'red',
+                        borderWidth: 1,
+                        borderDash: [6, 6],
+                        label: {
+                            display: true,
+                            content: value.text,
+                            position: 'start',
+                            backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                            font: { size: 10 }
+                        }
+                    };
+                });
+
             instances[dataType].trendChart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -532,7 +562,17 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    scales: { y: { min: config.yAxisMin, max: config.yAxisMax, title: { display: true, text: 'Value (%)' } } },
+                    scales: { 
+                        y: { 
+                            min: config.yAxisMin, 
+                            max: config.yAxisMax, 
+                            title: { display: true, text: 'Value (%)' } 
+                        },
+                        // CORRECTION 3: Add X-axis label
+                        x: {
+                            title: { display: true, text: 'Date' }
+                        }
+                    },
                     onClick: (event, elements) => {
                         if (elements.length > 0) {
                             const pointIndex = elements[0].index;
@@ -543,6 +583,9 @@
                         }
                     },
                     plugins: {
+                        annotation: {
+                            annotations: chartAnnotations // Use the generated annotations
+                        },
                         tooltip: {
                              callbacks: {
                                  afterBody: (context) => {
