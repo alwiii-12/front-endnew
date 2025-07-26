@@ -44,7 +44,22 @@
     .topbar .header-buttons {
         display: flex;
         gap: 15px;
+        align-items: center;
     }
+    /* CORRECTION 5: Topbar Button Sizing */
+    .topbar .header-buttons .button, .topbar .header-buttons .header-btn {
+        padding: 10px 18px;
+        font-size: 1em;
+    }
+    .topbar .header-buttons .header-btn {
+        width: 44px;
+        height: 44px;
+    }
+    .topbar .header-buttons #myProfileBtn {
+        background-color: var(--primary-color);
+        color: var(--text-white);
+    }
+
     .content {
         display: flex;
         flex: 1;
@@ -61,13 +76,20 @@
     .sidebar h2 {
         margin: 0 0 20px;
         color: #007bff;
+        text-align: center;
     }
-    /* CORRECTION 1: Month buttons layout */
+    /* CORRECTION 1: Sidebar Month Buttons */
     #months {
         display: flex;
-        flex-direction: column; /* Stack buttons vertically */
-        gap: 8px; /* Add space between buttons */
+        flex-direction: column;
+        gap: 8px;
     }
+    #months button {
+        width: 100%;
+        padding: 12px 0; /* Increased vertical padding */
+        font-size: 1em;
+    }
+
     .main {
         flex-grow: 1;
         padding: 20px;
@@ -89,12 +111,8 @@
         border-bottom: 3px solid #007bff;
         font-weight: bold;
     }
-    .tab-content {
-        display: none;
-    }
-    .tab-content.active {
-        display: block;
-    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
     .container {
         display: flex;
         gap: 20px;
@@ -105,15 +123,17 @@
         flex-grow: 1;
         height: 500px;
     }
+    /* CORRECTION 3: Pie Chart Background */
     .summary-box {
         width: 300px;
         padding: 20px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        background-color: var(--bg-card);
+        box-shadow: 0 4px 12px var(--shadow-light);
     }
-    /* CORRECTION 2: Center alignment for actions and heading */
     .actions-section, .trend-chart-section {
-        text-align: center; /* Center align the content */
+        text-align: center;
         margin-top: 20px;
     }
     .actions-section button {
@@ -127,11 +147,22 @@
     .save-btn { background-color: #007bff; }
     .export-btn { background-color: #28a745; }
     
-    /* CORRECTION 3: Fix for infinite trend chart */
     .chart-wrapper {
         position: relative;
-        height: 40vh; /* Set a max height */
+        height: 40vh;
         width: 100%;
+    }
+    /* CORRECTION 2: Energy Selector Size */
+    .trend-chart-section select {
+        max-width: 250px;
+        margin: 0 auto 15px auto; /* Center the select box */
+        display: block;
+    }
+    /* CORRECTION 4: Chatbox Icon Alignment */
+    #chat-bubble {
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
   </style>
 </head>
@@ -170,7 +201,6 @@
     </div>
   </div>
   <div id="loading-overlay"><div class="spinner"></div></div>
-  <!-- CORRECTION 4: Updated chatbox icon -->
   <div id="chat-bubble"><i class="fas fa-comment-dots"></i></div>
   <div id="chat-window">
     <div id="chat-header"><span>QA Copilot</span><button id="close-chat-btn">&times;</button></div>
