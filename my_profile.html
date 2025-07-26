@@ -7,6 +7,36 @@
     <link rel="icon" href="/favicon.png" type="image/png">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* --- Styles for Profile Page Enhancements --- */
+        .profile-card {
+            max-width: 650px; /* Wider card for more space */
+        }
+
+        /* CORRECTION 1: Larger input fields */
+        .profile-card input[type="text"],
+        .profile-card input[type="email"],
+        .profile-card input[type="password"],
+        .profile-card select {
+            padding: 14px;
+            font-size: 1.05em;
+        }
+        
+        /* CORRECTION 1 & 2: Larger buttons */
+        .profile-card .button {
+            padding: 14px 28px;
+            font-size: 1.05em;
+        }
+
+        /* CORRECTION 2: Style for "Go to Dashboard" button */
+        .profile-actions .dashboard-link {
+            background-color: var(--secondary-color);
+            color: var(--text-white);
+        }
+        .profile-actions .dashboard-link:hover {
+            background-color: var(--secondary-dark);
+        }
+    </style>
 </head>
 <body class="centered-content">
     <div class="profile-card">
@@ -70,7 +100,7 @@
         </div>
         
         <div class="profile-actions" style="margin-top: 30px;">
-            <a href="upload.html" class="button">Go to Dashboard</a>
+            <a href="upload.html" class="button dashboard-link">Go to Dashboard</a>
         </div>
     </div>
 
@@ -90,7 +120,6 @@
         const appCheck = firebase.appCheck();
         const BACKEND_URL = "https://back-end-wrxi.onrender.com";
 
-        // --- Element Selectors ---
         const profileDisplay = document.getElementById('profileDisplay');
         const profileEdit = document.getElementById('profileEdit');
         const editProfileBtn = document.getElementById('editProfileBtn');
@@ -102,7 +131,6 @@
 
         let currentUserData = null;
 
-        // --- Utility Functions ---
         function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
         function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
         function showNotification(message, type = 'info', duration = 3000) {
@@ -117,7 +145,6 @@
             }, duration);
         }
         
-        // --- Populate Hospital Dropdown ---
         function populateHospitalDropdown(currentHospital) {
             const hospitals = ["aoi_gurugram", "medanta_gurugram", "fortis_delhi", "apollo_chennai", "max_delhi"];
             editHospital.innerHTML = '';
@@ -130,7 +157,6 @@
             editHospital.value = currentHospital;
         }
 
-        // --- Toggle Edit/View Mode ---
         function toggleEditMode(isEdit) {
             profileDisplay.style.display = isEdit ? 'none' : 'block';
             profileEdit.style.display = isEdit ? 'block' : 'none';
@@ -144,7 +170,6 @@
         editProfileBtn.addEventListener('click', () => toggleEditMode(true));
         cancelEditBtn.addEventListener('click', () => toggleEditMode(false));
 
-        // --- Load Profile Data ---
         async function loadProfile(uid) {
             const profileDetailsDiv = document.getElementById('profileDetails');
             profileDetailsDiv.innerHTML = '<p class="loading-message">Loading...</p>';
@@ -167,7 +192,6 @@
             }
         }
 
-        // --- Save Profile Changes ---
         saveProfileBtn.addEventListener('click', async () => {
             const user = auth.currentUser;
             if (!user) return;
@@ -206,14 +230,11 @@
             }
         });
 
-        // --- Change Password Logic (Existing but adapted) ---
         function togglePasswordForm() {
             document.getElementById('changePasswordForm').classList.toggle('open');
             document.querySelector('.change-password-header').classList.toggle('active');
         }
-        window.togglePasswordForm = togglePasswordForm; // Make it globally accessible
-
-        // ... (Your existing, complete changePassword and checkPasswordStrength functions go here) ...
+        window.togglePasswordForm = togglePasswordForm;
         
         auth.onAuthStateChanged(user => {
             if (user) {
