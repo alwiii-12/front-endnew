@@ -431,6 +431,13 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     color: var(--text-white);
 }
 
+/* --- FIX FOR MONTH BUTTON HIGHLIGHT --- */
+.sidebar #months button.active {
+    background-color: var(--primary-color);
+    color: var(--text-white);
+    font-weight: bold;
+}
+
 .main {
     flex-grow: 1;
     padding: 25px;
