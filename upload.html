@@ -615,10 +615,14 @@
             
             // Logic to prevent fetching predictions for future months
             const today = new Date();
-            const isCurrentMonthOrPast = currentDate.getFullYear() < today.getFullYear() || 
-                                      (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() <= today.getMonth());
+            // Set hours to 0 to compare dates only
+            today.setHours(0, 0, 0, 0);
+            currentDate.setHours(0, 0, 0, 0);
+
+            const isCurrentMonthOrPast = currentDate <= today;
 
             let forecastData = null;
+            // Only try to fetch predictions if the viewed month is not in the future
             if (isCurrentMonthOrPast) {
                 try {
                     const appCheckTokenResponse = await appCheck.getToken(false);
