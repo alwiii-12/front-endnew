@@ -293,13 +293,11 @@
           });
         }
 
-        // NEW FUNCTION TO TRIGGER RSO EMAIL ALERTS
         async function checkForAlerts(dataType, data) {
             const config = dataTypesConfig[dataType];
             const outOfToleranceValues = [];
             const dateCols = getMonthDates(currentDate);
 
-            // This loop finds all values that are out of tolerance
             data.forEach((row) => {
                 const energy = row[0];
                 row.slice(1).forEach((value, colIndex) => {
@@ -316,7 +314,6 @@
 
             console.log(`Checking for alerts for ${dataType}. Found ${outOfToleranceValues.length} out-of-tolerance values.`);
 
-            // This calls your backend /send-alert endpoint
             try {
                 const appCheckTokenResponse = await appCheck.getToken(false);
                 const response = await fetch(`${BACKEND_URL}/send-alert`, {
@@ -527,7 +524,6 @@
                 options: { responsive: true, maintainAspectRatio: true }
             });
 
-            // ADDED THIS LINE TO TRIGGER THE ALERT CHECK
             checkForAlerts(dataType, data);
         }
         
@@ -601,6 +597,7 @@
             finally { hideLoader(); }
         });
 
+        // THIS IS THE FINAL, CORRECTED FUNCTION FOR THE TREND CHART
         window.updateTrendChart = async function(dataType) {
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
@@ -616,21 +613,27 @@
             const historicalLabels = getMonthDates(currentDate).map(d => d.split('-')[2]);
             let allLabels = [...historicalLabels];
             
-            // 1. Fetch the prediction data
+            // Logic to prevent fetching predictions for future months
+            const today = new Date();
+            const isCurrentMonthOrPast = currentDate.getFullYear() < today.getFullYear() || 
+                                      (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() <= today.getMonth());
+
             let forecastData = null;
-            try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
-                const res = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}`, {
-                    headers: { "X-Firebase-AppCheck": appCheckTokenResponse.token }
-                });
-                if (res.ok) {
-                    const predictionResult = await res.json();
-                    forecastData = predictionResult.forecast;
-                } else {
-                    console.log("No prediction found for this configuration.");
+            if (isCurrentMonthOrPast) {
+                try {
+                    const appCheckTokenResponse = await appCheck.getToken(false);
+                    const res = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}`, {
+                        headers: { "X-Firebase-AppCheck": appCheckTokenResponse.token }
+                    });
+                    if (res.ok) {
+                        const predictionResult = await res.json();
+                        forecastData = predictionResult.forecast;
+                    } else {
+                        console.log("No prediction found for this configuration.");
+                    }
+                } catch (e) {
+                    console.error("Could not fetch predictions", e);
                 }
-            } catch (e) {
-                console.error("Could not fetch predictions", e);
             }
 
             // Prepare chart datasets array, starting with historical data
@@ -643,19 +646,17 @@
                 spanGaps: true
             }];
 
-            // 2. If forecast data exists, add it to the chart
+            // If forecast data exists, add it to the chart
             if (forecastData && forecastData.length > 0) {
                 const forecastLabels = forecastData.map(d => d.date.split('-')[2]);
                 allLabels = [...historicalLabels, ...forecastLabels];
 
-                // Create a data array for the prediction line that connects to the historical line
                 const predictionLine = [
-                    ...new Array(historicalPoints.length - 1).fill(null), // Gaps for historical part
-                    historicalPoints[historicalPoints.length - 1],       // Connect to last historical point
-                    ...forecastData.map(p => p.predicted_value)          // Add predicted values
+                    ...new Array(historicalPoints.length - 1).fill(null),
+                    historicalPoints[historicalPoints.length - 1],
+                    ...forecastData.map(p => p.predicted_value)
                 ];
 
-                // Create data arrays for the confidence interval band
                 const lowerBand = [
                     ...new Array(historicalPoints.length - 1).fill(null),
                     historicalPoints[historicalPoints.length - 1],
@@ -667,31 +668,30 @@
                     ...forecastData.map(p => p.upper_bound)
                 ];
 
-                // Add the new datasets for the chart
                 datasets.push({
                     label: 'Forecast',
                     data: predictionLine,
                     borderColor: 'rgba(255, 99, 132, 1)',
-                    borderDash: [5, 5], // Make the line dashed
+                    borderDash: [5, 5],
                     tension: 0.1,
                 });
                 datasets.push({
                     label: 'Confidence Interval',
-                    data: upperBand, // The top line of the shaded area
-                    fill: '+1',      // Fill the area to the next dataset in the list (the lowerBand)
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)', // Light red shaded area
+                    data: upperBand,
+                    fill: '+1',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
                     borderColor: 'transparent',
                     pointRadius: 0,
                 });
                 datasets.push({
-                    label: 'Confidence Interval (Lower)', // Not shown in legend
-                    data: lowerBand, // The bottom line of the shaded area
+                    label: 'Confidence Interval (Lower)',
+                    data: lowerBand,
                     borderColor: 'transparent',
                     pointRadius: 0,
                 });
             }
 
-            // 3. Render the chart
+            // Render the chart
             const canvasElement = document.getElementById(`trendChart-${dataType}`);
             const config = dataTypesConfig[dataType];
             const ctx = canvasElement.getContext('2d');
