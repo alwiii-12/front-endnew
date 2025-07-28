@@ -293,6 +293,54 @@
           });
         }
 
+        // NEW FUNCTION TO TRIGGER RSO EMAIL ALERTS
+        async function checkForAlerts(dataType, data) {
+            const config = dataTypesConfig[dataType];
+            const outOfToleranceValues = [];
+            const dateCols = getMonthDates(currentDate);
+
+            // This loop finds all values that are out of tolerance
+            data.forEach((row) => {
+                const energy = row[0];
+                row.slice(1).forEach((value, colIndex) => {
+                    const n = parseFloat(value);
+                    if (!isNaN(n) && Math.abs(n) > config.tolerance) {
+                        outOfToleranceValues.push({
+                            energy: energy,
+                            date: dateCols[colIndex],
+                            value: n
+                        });
+                    }
+                });
+            });
+
+            console.log(`Checking for alerts for ${dataType}. Found ${outOfToleranceValues.length} out-of-tolerance values.`);
+
+            // This calls your backend /send-alert endpoint
+            try {
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                const response = await fetch(`${BACKEND_URL}/send-alert`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Firebase-AppCheck': appCheckTokenResponse.token
+                    },
+                    body: JSON.stringify({
+                        uid: currentUID,
+                        hospitalName: currentHospital,
+                        month: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`,
+                        dataType: dataType,
+                        tolerance: config.tolerance,
+                        outValues: outOfToleranceValues
+                    })
+                });
+                const result = await response.json();
+                console.log('Alert response from server:', result);
+            } catch (error) {
+                console.error('Error sending alert:', error);
+            }
+        }
+
         function generateTabContentHTML(dataType) {
             const config = dataTypesConfig[dataType];
             return `
@@ -478,6 +526,9 @@
                 },
                 options: { responsive: true, maintainAspectRatio: true }
             });
+
+            // ADDED THIS LINE TO TRIGGER THE ALERT CHECK
+            checkForAlerts(dataType, data);
         }
         
         function populateTrendEnergySelect(dataType) {
@@ -550,7 +601,6 @@
             finally { hideLoader(); }
         });
 
-        // THIS IS THE NEW, UPDATED FUNCTION
         window.updateTrendChart = async function(dataType) {
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
