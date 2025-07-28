@@ -550,55 +550,108 @@
             finally { hideLoader(); }
         });
 
+        // THIS IS THE NEW, UPDATED FUNCTION
         window.updateTrendChart = async function(dataType) {
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
+
             const data = hotInstance.getData();
             const selectElement = document.getElementById(`trendEnergySelect-${dataType}`);
             if (!selectElement) return;
+
             const selectedEnergy = selectElement.value;
             const energyRow = data.find(row => row[0] === selectedEnergy);
-            const dataPoints = energyRow ? energyRow.slice(1).map(val => { const num = parseFloat(val); return isFinite(num) ? num : null; }) : [];
-            const labels = getMonthDates(currentDate);
-            const shortLabels = labels.map(d => d.split('-')[2]);
-            const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-            let annotations = {};
+            const historicalPoints = energyRow ? energyRow.slice(1).map(val => { const num = parseFloat(val); return isFinite(num) ? num : null; }) : [];
+            
+            const historicalLabels = getMonthDates(currentDate).map(d => d.split('-')[2]);
+            let allLabels = [...historicalLabels];
+            
+            // 1. Fetch the prediction data
+            let forecastData = null;
             try {
                 const appCheckTokenResponse = await appCheck.getToken(false);
-                const res = await fetch(`${BACKEND_URL}/annotations?month=${monthKey}&dataType=${dataType}&uid=${currentUID}`, { headers: { "X-Firebase-AppCheck": appCheckTokenResponse.token } });
-                if(res.ok) annotations = await res.json();
-            } catch (e) { console.error("Could not fetch annotations", e); }
+                const res = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}`, {
+                    headers: { "X-Firebase-AppCheck": appCheckTokenResponse.token }
+                });
+                if (res.ok) {
+                    const predictionResult = await res.json();
+                    forecastData = predictionResult.forecast;
+                } else {
+                    console.log("No prediction found for this configuration.");
+                }
+            } catch (e) {
+                console.error("Could not fetch predictions", e);
+            }
+
+            // Prepare chart datasets array, starting with historical data
+            const datasets = [{
+                label: `${selectedEnergy} Historical`,
+                data: historicalPoints,
+                borderColor: '#007bff',
+                backgroundColor: '#007bff',
+                tension: 0.1,
+                spanGaps: true
+            }];
+
+            // 2. If forecast data exists, add it to the chart
+            if (forecastData && forecastData.length > 0) {
+                const forecastLabels = forecastData.map(d => d.date.split('-')[2]);
+                allLabels = [...historicalLabels, ...forecastLabels];
+
+                // Create a data array for the prediction line that connects to the historical line
+                const predictionLine = [
+                    ...new Array(historicalPoints.length - 1).fill(null), // Gaps for historical part
+                    historicalPoints[historicalPoints.length - 1],       // Connect to last historical point
+                    ...forecastData.map(p => p.predicted_value)          // Add predicted values
+                ];
+
+                // Create data arrays for the confidence interval band
+                const lowerBand = [
+                    ...new Array(historicalPoints.length - 1).fill(null),
+                    historicalPoints[historicalPoints.length - 1],
+                    ...forecastData.map(p => p.lower_bound)
+                ];
+                const upperBand = [
+                    ...new Array(historicalPoints.length - 1).fill(null),
+                    historicalPoints[historicalPoints.length - 1],
+                    ...forecastData.map(p => p.upper_bound)
+                ];
+
+                // Add the new datasets for the chart
+                datasets.push({
+                    label: 'Forecast',
+                    data: predictionLine,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderDash: [5, 5], // Make the line dashed
+                    tension: 0.1,
+                });
+                datasets.push({
+                    label: 'Confidence Interval',
+                    data: upperBand, // The top line of the shaded area
+                    fill: '+1',      // Fill the area to the next dataset in the list (the lowerBand)
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)', // Light red shaded area
+                    borderColor: 'transparent',
+                    pointRadius: 0,
+                });
+                datasets.push({
+                    label: 'Confidence Interval (Lower)', // Not shown in legend
+                    data: lowerBand, // The bottom line of the shaded area
+                    borderColor: 'transparent',
+                    pointRadius: 0,
+                });
+            }
+
+            // 3. Render the chart
             const canvasElement = document.getElementById(`trendChart-${dataType}`);
             const config = dataTypesConfig[dataType];
             const ctx = canvasElement.getContext('2d');
             if (instances[dataType].trendChart) instances[dataType].trendChart.destroy();
-
-            const chartAnnotations = Object.entries(annotations)
-                .filter(([, value]) => value.energy === selectedEnergy && value.text)
-                .map(([key, value]) => {
-                    const datePart = key.split('-')[3];
-                    return {
-                        type: 'line',
-                        scaleID: 'x',
-                        value: parseInt(datePart, 10) - 1,
-                        borderColor: 'red',
-                        borderWidth: 1,
-                        borderDash: [6, 6],
-                        label: {
-                            display: true,
-                            content: value.text,
-                            position: 'start',
-                            backgroundColor: 'rgba(255, 0, 0, 0.7)',
-                            font: { size: 10 }
-                        }
-                    };
-                });
-
+            
             instances[dataType].trendChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: shortLabels,
-                    datasets: [{ label: `${selectedEnergy} Trend`, data: dataPoints, borderColor: '#007bff', tension: 0.1, spanGaps: true }]
+                    labels: allLabels,
+                    datasets: datasets
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
@@ -615,25 +668,13 @@
                     onClick: (event, elements) => {
                         if (elements.length > 0) {
                             const pointIndex = elements[0].index;
-                            const fullDate = labels[pointIndex];
-                            const annotationKey = `${selectedEnergy}-${fullDate}`;
-                            const existingAnnotation = annotations[annotationKey]?.text || "";
-                            showAnnotationModal(annotationKey, existingAnnotation, selectedEnergy, fullDate);
+                            if (pointIndex < historicalLabels.length) {
+                                const fullDate = getMonthDates(currentDate)[pointIndex];
+                                const annotationKey = `${selectedEnergy}-${fullDate}`;
+                                showAnnotationModal(annotationKey, "", selectedEnergy, fullDate);
+                            }
                         }
                     },
-                    plugins: {
-                        annotation: {
-                            annotations: chartAnnotations
-                        },
-                        tooltip: {
-                             callbacks: {
-                                 afterBody: (context) => {
-                                     const annotationKey = `${selectedEnergy}-${labels[context[0].dataIndex]}`;
-                                     return annotations[annotationKey] ? "Note: " + annotations[annotationKey].text : "";
-                                 }
-                             }
-                        }
-                    }
                 }
             });
         }
