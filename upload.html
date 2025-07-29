@@ -610,24 +610,15 @@
             const energyRow = data.find(row => row[0] === selectedEnergy);
             const historicalPoints = energyRow ? energyRow.slice(1).map(val => { const num = parseFloat(val); return isFinite(num) ? num : null; }) : [];
             
+            // This is the key fix: Check if there are any actual data points for the selected month.
+            const hasData = historicalPoints.some(point => point !== null);
+
             const historicalLabels = getMonthDates(currentDate).map(d => d.split('-')[2]);
             let allLabels = [...historicalLabels];
             
-            // This is the new, corrected logic for date comparison
-            const today = new Date();
-            const viewingMonth = currentDate.getMonth();
-            const viewingYear = currentDate.getFullYear();
-            const currentMonth = today.getMonth();
-            const currentYear = today.getFullYear();
-            
-            let isFutureMonth = viewingYear > currentYear;
-            if (viewingYear === currentYear && viewingMonth > currentMonth) {
-                isFutureMonth = true;
-            }
-
             let forecastData = null;
-            // Only try to fetch predictions if the viewed month is NOT in the future
-            if (!isFutureMonth) {
+            // Only try to fetch predictions if the CURRENT month being viewed has data.
+            if (hasData) {
                 try {
                     const appCheckTokenResponse = await appCheck.getToken(false);
                     const res = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}`, {
