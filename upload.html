@@ -304,7 +304,6 @@
         currentDate.setDate(1);
         const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
         const dataTypesConfig = {
-          // --- [UPDATED] Added diagnosticKeyword ---
           output: { label: 'Output', tolerance: 2.0, warning: 1.8, initialized: false, yAxisMin: -3, yAxisMax: 3, diagnosticKeyword: 'output drift' },
           flatness: { label: 'Flatness', tolerance: 1.0, warning: 0.9, initialized: false, yAxisMin: -2, yAxisMax: 2, diagnosticKeyword: 'flatness warning' },
           inline: { label: 'Inline Symmetry', tolerance: 1.0, warning: 0.9, initialized: false, yAxisMin: -2, yAxisMax: 2, diagnosticKeyword: 'flatness warning' },
@@ -323,12 +322,7 @@
         const deleteAnnotationBtn = document.getElementById('deleteAnnotationBtn');
         let currentAnnotationKey = null;
 
-        // --- [NEW] Diagnostics State ---
-        let diagnosticState = {
-            inProgress: false,
-            topic: null,
-            node_id: null
-        };
+        let diagnosticState = { inProgress: false, topic: null, node_id: null };
         const chatInputArea = document.getElementById('chat-input-area');
         const chatOptionsArea = document.getElementById('chat-options-area');
         const chatBody = document.getElementById('chat-body');
@@ -370,22 +364,14 @@
                 const appCheckTokenResponse = await appCheck.getToken(false);
                 await fetch(`${BACKEND_URL}/send-alert`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Firebase-AppCheck': appCheckTokenResponse.token
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckTokenResponse.token },
                     body: JSON.stringify({
-                        uid: currentUID,
-                        hospitalName: currentHospital,
+                        uid: currentUID, hospitalName: currentHospital,
                         month: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`,
-                        dataType: dataType,
-                        tolerance: config.tolerance,
-                        outValues: outOfToleranceValues
+                        dataType: dataType, tolerance: config.tolerance, outValues: outOfToleranceValues
                     })
                 });
-            } catch (error) {
-                console.error('Error sending alert:', error);
-            }
+            } catch (error) { console.error('Error sending alert:', error); }
         }
 
         function generateTabContentHTML(dataType) {
@@ -519,7 +505,6 @@
         }
 
         window.exportToExcel = async function(dataType) {
-            // This function is preserved from your original code
             showLoader();
             const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             try {
@@ -703,23 +688,32 @@
                 });
             }
             
+            // --- [FIX] Added try...catch block for annotations ---
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-            const annotationsRef = db.collection('annotations').doc(currentUID).collection(monthKey);
-            const annotationsSnapshot = await annotationsRef.get();
-            const annotations = {};
-            annotationsSnapshot.forEach(doc => {
-                const docData = doc.data();
-                if (docData.dataType === dataType) {
-                    annotations[doc.id] = {
-                        type: 'point',
-                        xValue: new Date(doc.id.split('-').slice(1).join('-')).getDate() - 1,
-                        yValue: data.find(r => r[0] === docData.energy)[new Date(doc.id.split('-').slice(1).join('-')).getDate()],
-                        backgroundColor: 'rgba(255, 204, 0, 0.7)',
-                        radius: 8,
-                        label: { content: docData.text, display: true, position: 'bottom' }
-                    };
-                }
-            });
+            let annotations = {}; // Default to empty object
+            try {
+                const annotationsRef = db.collection('annotations').doc(currentUID).collection(monthKey);
+                const annotationsSnapshot = await annotationsRef.get();
+                annotationsSnapshot.forEach(doc => {
+                    const docData = doc.data();
+                    if (docData.dataType === dataType) {
+                        const dateFromKey = new Date(doc.id.split('-').slice(1).join('-'));
+                        const dataRow = data.find(r => r[0] === docData.energy);
+                        if (dataRow && dataRow[dateFromKey.getDate()] !== undefined) {
+                            annotations[doc.id] = {
+                                type: 'point',
+                                xValue: dateFromKey.getDate() - 1,
+                                yValue: dataRow[dateFromKey.getDate()],
+                                backgroundColor: 'rgba(255, 204, 0, 0.7)',
+                                radius: 8,
+                                label: { content: docData.text, display: true, position: 'bottom' }
+                            };
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error("Could not fetch annotations due to a Firebase error, likely permissions. Chart will render without them.", e);
+            }
 
             const canvasElement = document.getElementById(`trendChart-${dataType}`);
             const config = dataTypesConfig[dataType];
@@ -746,7 +740,7 @@
                 }
             });
 
-            // --- [NEW] Logic to add Diagnose button ---
+            // --- Logic to add Diagnose button ---
             const trendSection = document.getElementById(`trend-section-${dataType}`);
             let existingBtn = trendSection.querySelector('.diagnose-btn');
             if (existingBtn) existingBtn.remove();
@@ -821,11 +815,7 @@
 
         function handleBotResponse(data) {
             if (data.status === 'diagnostic_start' || data.status === 'diagnostic_continue') {
-                diagnosticState = {
-                    inProgress: true,
-                    topic: data.topic,
-                    node_id: data.node_id
-                };
+                diagnosticState = { inProgress: true, topic: data.topic, node_id: data.node_id };
                 addChatMessage(data.question, 'bot');
                 renderChatOptions(data.options);
             } else if (data.status === 'success') {
@@ -840,7 +830,6 @@
         async function handleDiagnosticChoice(choice) {
             addChatMessage(choice, 'user');
             if (!diagnosticState.inProgress) return;
-
             try {
                 const appCheckToken = (await appCheck.getToken(false)).token;
                 const response = await fetch(`${BACKEND_URL}/diagnose-step`, {
@@ -853,7 +842,6 @@
                     })
                 });
                 const data = await response.json();
-                
                 if (data.status === 'diagnostic_end') {
                     addChatMessage(data.diagnosis, 'bot');
                     resetChatInput();
@@ -945,3 +933,26 @@
   </script>
 </body>
 </html>
+```
+
+### How to Fix the Root Cause
+
+As mentioned, the code fix above makes your chart work, but the underlying permission error still exists. To fix it permanently, you need to update your **Firestore Security Rules** in the Firebase console.
+
+Go to your Firebase Project > Firestore Database > Rules tab, and ensure your rules allow authenticated users to read their own annotations. A rule like this should work:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ... other rules for users, linac_data etc.
+
+    // Add this rule for annotations
+    match /annotations/{userId}/{month}/{annotationId} {
+      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+```
+
+This rule ensures that a user can only access the annotations that belong to them, which is secure and will resolve the permission err
