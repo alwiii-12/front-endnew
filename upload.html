@@ -91,7 +91,7 @@
     .main {
         flex-grow: 1;
         padding: 20px;
-        overflow: auto;
+        overflow: auto; /* This line fixes the layout issue */
     }
     .tab-nav {
         display: flex;
@@ -187,7 +187,7 @@
         background-color: var(--status-error);
     }
 
-    /* --- [NEW] Styles for Diagnostics Feature --- */
+    /* --- Styles for Diagnostics Feature & Blinking Animation --- */
     .diagnose-btn {
         position: absolute;
         top: 15px;
@@ -204,6 +204,17 @@
     .diagnose-btn:hover {
         background-color: #ffca2c;
     }
+    
+    /* [NEW] Blinking animation styles */
+    .blinking-btn {
+        animation: blink-animation 1.5s infinite;
+    }
+    @keyframes blink-animation {
+        0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
+        50% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+    }
+
     #chat-options-area {
         display: none; /* Hidden by default */
         flex-wrap: wrap;
@@ -266,7 +277,6 @@
   <div id="chat-window">
     <div id="chat-header"><span>QA Copilot</span><button id="close-chat-btn">&times;</button></div>
     <div id="chat-body"><div class="chat-message bot">Hello! Ask me about your data.</div></div>
-    <!-- [UPDATED] Chat input and options areas -->
     <div id="chat-input-area"><input type="text" id="chat-input" placeholder="Type..."><button id="send-chat-btn">&gt;</button></div>
     <div id="chat-options-area"></div>
   </div>
@@ -633,7 +643,6 @@
             finally { hideLoader(); }
         });
 
-        // --- [CORRECTED AND UPGRADED] Trend Chart function with Predictions AND Diagnostics ---
         window.updateTrendChart = async function(dataType) {
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
@@ -688,9 +697,8 @@
                 });
             }
             
-            // --- [FIX] Added try...catch block for annotations ---
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-            let annotations = {}; // Default to empty object
+            let annotations = {};
             try {
                 const annotationsRef = db.collection('annotations').doc(currentUID).collection(monthKey);
                 const annotationsSnapshot = await annotationsRef.get();
@@ -751,7 +759,8 @@
                 const avgLastTwo = (lastFive[3] + lastFive[4]) / 2;
                 if (Math.abs(avgLastTwo - avgFirstTwo) > 0.5) {
                     const diagnoseBtn = document.createElement('button');
-                    diagnoseBtn.className = 'diagnose-btn';
+                    // --- [UPDATED] Added blinking-btn class ---
+                    diagnoseBtn.className = 'diagnose-btn blinking-btn';
                     diagnoseBtn.innerHTML = '<i class="fas fa-stethoscope"></i> Diagnose';
                     diagnoseBtn.onclick = () => {
                         document.getElementById('chat-window').classList.add('open');
@@ -762,7 +771,6 @@
             }
         }
         
-        // --- [NEW AND UPDATED] Chatbot & Diagnostics Logic ---
         function addChatMessage(message, sender) {
             const msgDiv = document.createElement('div');
             msgDiv.className = `chat-message ${sender}`;
