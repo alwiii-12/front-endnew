@@ -79,24 +79,24 @@
                 <span>Change Password</span>
                 <i class="fas fa-chevron-down"></i>
             </div>
-            <div id="changePasswordForm" class="change-password-form">
+            <form id="changePasswordForm" class="change-password-form">
                 <div class="form-group">
                     <label for="currentPassword">Current Password</label>
-                    <input type="password" id="currentPassword" autocomplete="current-password">
+                    <input type="password" id="currentPassword" autocomplete="current-password" required>
                 </div>
                 <div class="form-group">
                     <label for="newPassword">New Password</label>
-                    <input type="password" id="newPassword" autocomplete="new-password">
+                    <input type="password" id="newPassword" autocomplete="new-password" required>
                     <div id="passwordStrength" class="password-strength"></div>
                 </div>
                 <div class="form-group">
                     <label for="confirmPassword">Confirm New Password</label>
-                    <input type="password" id="confirmPassword" autocomplete="new-password">
+                    <input type="password" id="confirmPassword" autocomplete="new-password" required>
                 </div>
                 <div class="profile-actions" style="margin-top: 10px;">
-                    <button id="changePasswordBtn" class="button" style="background-color: var(--primary-color); color: white;">Update Password</button>
+                    <button id="changePasswordBtn" type="submit" class="button" style="background-color: var(--primary-color); color: white;">Update Password</button>
                 </div>
-            </div>
+            </form>
         </div>
         
         <div class="profile-actions" style="margin-top: 30px;">
@@ -129,121 +129,7 @@
         const editEmail = document.getElementById('editEmail');
         const editHospital = document.getElementById('editHospital');
 
-        let currentUserData = null;
-
-        function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
-        function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
-        function showNotification(message, type = 'info', duration = 3000) {
-            const container = document.getElementById('notification-container');
-            const notification = document.createElement('div');
-            notification.className = `notification-message ${type} show`;
-            notification.textContent = message;
-            container.appendChild(notification);
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => notification.remove(), 500);
-            }, duration);
-        }
-        
-        function populateHospitalDropdown(currentHospital) {
-            const hospitals = ["aoi_gurugram", "medanta_gurugram", "fortis_delhi", "apollo_chennai", "max_delhi"];
-            editHospital.innerHTML = '';
-            hospitals.forEach(h => {
-                const option = document.createElement('option');
-                option.value = h;
-                option.textContent = h.replace(/_/g, ' ').toUpperCase();
-                editHospital.appendChild(option);
-            });
-            editHospital.value = currentHospital;
-        }
-
-        function toggleEditMode(isEdit) {
-            profileDisplay.style.display = isEdit ? 'none' : 'block';
-            profileEdit.style.display = isEdit ? 'block' : 'none';
-            if (isEdit && currentUserData) {
-                editName.value = currentUserData.name;
-                editEmail.value = currentUserData.email;
-                populateHospitalDropdown(currentUserData.hospital);
-            }
-        }
-
-        editProfileBtn.addEventListener('click', () => toggleEditMode(true));
-        cancelEditBtn.addEventListener('click', () => toggleEditMode(false));
-
-        async function loadProfile(uid) {
-            const profileDetailsDiv = document.getElementById('profileDetails');
-            profileDetailsDiv.innerHTML = '<p class="loading-message">Loading...</p>';
-            try {
-                const userDocSnap = await db.collection("users").doc(uid).get();
-                if (userDocSnap.exists) {
-                    currentUserData = userDocSnap.data();
-                    profileDetailsDiv.innerHTML = `
-                        <div class="profile-item"><strong>Name:</strong> <span>${currentUserData.name || 'N/A'}</span></div>
-                        <div class="profile-item"><strong>Email:</strong> <span>${currentUserData.email || 'N/A'}</span></div>
-                        <div class="profile-item"><strong>Hospital:</strong> <span>${currentUserData.hospital || 'N/A'}</span></div>
-                        <div class="profile-item"><strong>Role:</strong> <span>${currentUserData.role || 'N/A'}</span></div>
-                        <div class="profile-item"><strong>Status:</strong> <span style="font-weight:bold; color:${currentUserData.status === 'active' ? 'var(--status-success)' : 'var(--status-warning)'}">${currentUserData.status?.toUpperCase() || 'N/A'}</span></div>
-                    `;
-                } else {
-                    profileDetailsDiv.innerHTML = '<p class="loading-message" style="color: var(--status-error);">Error: User profile not found.</p>';
-                }
-            } catch (error) {
-                profileDetailsDiv.innerHTML = `<p class="loading-message" style="color: var(--status-error);">Error: Could not load profile data.</p>`;
-            }
-        }
-
-        saveProfileBtn.addEventListener('click', async () => {
-            const user = auth.currentUser;
-            if (!user) return;
-
-            const newName = editName.value.trim();
-            const newHospital = editHospital.value;
-
-            if (!newName || !newHospital) {
-                showNotification("Name and hospital cannot be empty.", "warning");
-                return;
-            }
-
-            showLoader();
-            try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
-                const response = await fetch(`${BACKEND_URL}/update-profile`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckTokenResponse.token },
-                    body: JSON.stringify({
-                        uid: user.uid,
-                        name: newName,
-                        hospital: newHospital
-                    })
-                });
-
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.message || 'Failed to update profile.');
-
-                showNotification("Profile updated successfully!", "success");
-                await loadProfile(user.uid);
-                toggleEditMode(false);
-            } catch (error) {
-                showNotification(`Error: ${error.message}`, "error");
-            } finally {
-                hideLoader();
-            }
-        });
-
-        function togglePasswordForm() {
-            document.getElementById('changePasswordForm').classList.toggle('open');
-            document.querySelector('.change-password-header').classList.toggle('active');
-        }
-        window.togglePasswordForm = togglePasswordForm;
-        
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                loadProfile(user.uid);
-            } else {
-                window.location.replace("login.html");
-            }
-        });
-    });
-    </script>
-</body>
-</html>
+        // --- [NEW] Password change elements ---
+        const changePasswordForm = document.getElementById('changePasswordForm');
+        const newPasswordInput = document.getElementById('newPassword');
+        const passwordStrength
