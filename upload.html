@@ -933,26 +933,3 @@
   </script>
 </body>
 </html>
-```
-
-### How to Fix the Root Cause
-
-As mentioned, the code fix above makes your chart work, but the underlying permission error still exists. To fix it permanently, you need to update your **Firestore Security Rules** in the Firebase console.
-
-Go to your Firebase Project > Firestore Database > Rules tab, and ensure your rules allow authenticated users to read their own annotations. A rule like this should work:
-
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // ... other rules for users, linac_data etc.
-
-    // Add this rule for annotations
-    match /annotations/{userId}/{month}/{annotationId} {
-      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
-    }
-  }
-}
-```
-
-This rule ensures that a user can only access the annotations that belong to them, which is secure and will resolve the permission err
