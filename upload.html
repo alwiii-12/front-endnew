@@ -304,6 +304,7 @@
         currentDate.setDate(1);
         const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
         const dataTypesConfig = {
+          // --- [UPDATED] Added diagnosticKeyword ---
           output: { label: 'Output', tolerance: 2.0, warning: 1.8, initialized: false, yAxisMin: -3, yAxisMax: 3, diagnosticKeyword: 'output drift' },
           flatness: { label: 'Flatness', tolerance: 1.0, warning: 0.9, initialized: false, yAxisMin: -2, yAxisMax: 2, diagnosticKeyword: 'flatness warning' },
           inline: { label: 'Inline Symmetry', tolerance: 1.0, warning: 0.9, initialized: false, yAxisMin: -2, yAxisMax: 2, diagnosticKeyword: 'flatness warning' },
@@ -331,6 +332,7 @@
         const chatInputArea = document.getElementById('chat-input-area');
         const chatOptionsArea = document.getElementById('chat-options-area');
         const chatBody = document.getElementById('chat-body');
+        const chatInput = document.getElementById('chat-input');
 
         function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
         function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
@@ -368,14 +370,22 @@
                 const appCheckTokenResponse = await appCheck.getToken(false);
                 await fetch(`${BACKEND_URL}/send-alert`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckTokenResponse.token },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Firebase-AppCheck': appCheckTokenResponse.token
+                    },
                     body: JSON.stringify({
-                        uid: currentUID, hospitalName: currentHospital,
+                        uid: currentUID,
+                        hospitalName: currentHospital,
                         month: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`,
-                        dataType: dataType, tolerance: config.tolerance, outValues: outOfToleranceValues
+                        dataType: dataType,
+                        tolerance: config.tolerance,
+                        outValues: outOfToleranceValues
                     })
                 });
-            } catch (error) { console.error('Error sending alert:', error); }
+            } catch (error) {
+                console.error('Error sending alert:', error);
+            }
         }
 
         function generateTabContentHTML(dataType) {
@@ -397,7 +407,7 @@
                     <button class="export-btn" onclick="exportToExcel('${dataType}')">Export ${config.label}</button>
                     <span id="lastSaved-${dataType}"></span>
                 </div>
-                <div id="trend-section-${dataType}" class="trend-chart-section">
+                <div class="trend-chart-section" id="trend-section-${dataType}">
                     <h3>${config.label} Trend Analysis</h3>
                     <div class="energy-selector-container">
                         <label>Select Energy:</label>
@@ -432,6 +442,7 @@
 
         async function loadDataForTab(dataType) {
             showLoader();
+            const config = dataTypesConfig[dataType];
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             try {
                 const appCheckTokenResponse = await appCheck.getToken(false);
@@ -468,7 +479,6 @@
                             props.className = 'future-cell-readonly';
                         } else {
                             const val = parseFloat(this.instance.getDataAtCell(r, c));
-                            const config = dataTypesConfig[dataType];
                             if (!isNaN(val)) {
                                 if (Math.abs(val) < config.warning) props.className = 'within';
                                 else if (Math.abs(val) <= config.tolerance) props.className = 'warning';
@@ -509,7 +519,31 @@
         }
 
         window.exportToExcel = async function(dataType) {
-            /* This function remains unchanged */
+            // This function is preserved from your original code
+            showLoader();
+            const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            try {
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                const response = await fetch(`${BACKEND_URL}/export-excel`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": appCheckTokenResponse.token },
+                    body: JSON.stringify({ month, uid: currentUID, dataType })
+                });
+                if (!response.ok) throw new Error('Failed to generate file.');
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `LINAC_QA_${dataType.toUpperCase()}_${month}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error(`Export failed for ${dataType}:`, error);
+            } finally {
+                hideLoader();
+            }
         }
 
         function updateSummaryAndChart(dataType, data) {
@@ -558,15 +592,61 @@
         }
 
         function showAnnotationModal(key, existingText, energy, date) {
-            /* This function remains unchanged */
+            currentAnnotationKey = key;
+            annotationModalTitle.textContent = `Note for ${energy} on ${date}`;
+            annotationInput.value = existingText;
+            if (existingText) {
+                deleteAnnotationBtn.style.display = 'inline-flex';
+            } else {
+                deleteAnnotationBtn.style.display = 'none';
+            }
+            annotationModal.style.display = 'flex';
         }
 
         window.hideAnnotationModal = function() {
-            /* This function remains unchanged */
+            annotationModal.style.display = 'none';
+            currentAnnotationKey = null;
         }
         
-        saveAnnotationBtn.addEventListener('click', async () => { /* This function remains unchanged */ });
-        deleteAnnotationBtn.addEventListener('click', async () => { /* This function remains unchanged */ });
+        saveAnnotationBtn.addEventListener('click', async () => {
+            if (!currentAnnotationKey) return;
+            const note = annotationInput.value;
+            const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            showLoader();
+            try {
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                await fetch(`${BACKEND_URL}/save-annotation`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": appCheckTokenResponse.token },
+                    body: JSON.stringify({
+                        uid: currentUID, month: monthKey, key: currentAnnotationKey,
+                        data: { text: note, dataType: activeTab, energy: currentAnnotationKey.split('-')[0] }
+                    })
+                });
+                hideAnnotationModal();
+                await updateTrendChart(activeTab); 
+            } catch (e) { console.error("Failed to save annotation", e); } 
+            finally { hideLoader(); }
+        });
+
+        deleteAnnotationBtn.addEventListener('click', async () => {
+            if (!currentAnnotationKey) return;
+            const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            showLoader();
+            try {
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                await fetch(`${BACKEND_URL}/delete-annotation`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": appCheckTokenResponse.token },
+                    body: JSON.stringify({
+                        uid: currentUID, month: monthKey, key: currentAnnotationKey
+                    })
+                });
+                hideAnnotationModal();
+                await updateTrendChart(activeTab); 
+            } catch (e) { console.error("Failed to delete annotation", e); } 
+            finally { hideLoader(); }
+        });
 
         // --- [CORRECTED AND UPGRADED] Trend Chart function with Predictions AND Diagnostics ---
         window.updateTrendChart = async function(dataType) {
@@ -592,32 +672,23 @@
                     const res = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}`, {
                         headers: { "X-Firebase-AppCheck": appCheckTokenResponse.token }
                     });
-                    if (res.ok) {
-                        forecastData = (await res.json()).forecast;
-                    }
-                } catch (e) {
-                    console.error("Could not fetch predictions", e);
-                }
+                    if (res.ok) forecastData = (await res.json()).forecast;
+                } catch (e) { console.error("Could not fetch predictions", e); }
             }
 
             const datasets = [{
-                label: `${selectedEnergy} Historical`,
-                data: historicalPoints,
-                borderColor: '#007bff',
-                backgroundColor: '#007bff',
-                tension: 0.1,
-                spanGaps: true
+                label: `${selectedEnergy} Historical`, data: historicalPoints,
+                borderColor: '#007bff', backgroundColor: '#007bff',
+                tension: 0.1, spanGaps: true
             }];
 
             if (forecastData && forecastData.length > 0) {
                 const forecastLabels = forecastData.map(d => d.date.split('-')[2]);
                 allLabels = [...historicalLabels, ...forecastLabels];
-
                 const lastHistoricalPoint = historicalPoints[historicalPoints.length - 1];
                 const predictionLine = [...new Array(historicalPoints.length - 1).fill(null), lastHistoricalPoint, ...forecastData.map(p => p.predicted_value)];
                 const lowerBand = [...new Array(historicalPoints.length - 1).fill(null), lastHistoricalPoint, ...forecastData.map(p => p.lower_bound)];
                 const upperBand = [...new Array(historicalPoints.length - 1).fill(null), lastHistoricalPoint, ...forecastData.map(p => p.upper_bound)];
-
                 datasets.push({
                     label: 'Forecast', data: predictionLine, borderColor: 'rgba(255, 99, 132, 1)',
                     borderDash: [5, 5], tension: 0.1,
@@ -631,6 +702,24 @@
                     borderColor: 'transparent', pointRadius: 0,
                 });
             }
+            
+            const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            const annotationsRef = db.collection('annotations').doc(currentUID).collection(monthKey);
+            const annotationsSnapshot = await annotationsRef.get();
+            const annotations = {};
+            annotationsSnapshot.forEach(doc => {
+                const docData = doc.data();
+                if (docData.dataType === dataType) {
+                    annotations[doc.id] = {
+                        type: 'point',
+                        xValue: new Date(doc.id.split('-').slice(1).join('-')).getDate() - 1,
+                        yValue: data.find(r => r[0] === docData.energy)[new Date(doc.id.split('-').slice(1).join('-')).getDate()],
+                        backgroundColor: 'rgba(255, 204, 0, 0.7)',
+                        radius: 8,
+                        label: { content: docData.text, display: true, position: 'bottom' }
+                    };
+                }
+            });
 
             const canvasElement = document.getElementById(`trendChart-${dataType}`);
             const config = dataTypesConfig[dataType];
@@ -638,23 +727,29 @@
             if (instances[dataType].trendChart) instances[dataType].trendChart.destroy();
             
             instances[dataType].trendChart = new Chart(ctx, {
-                type: 'line',
-                data: { labels: allLabels, datasets: datasets },
+                type: 'line', data: { labels: allLabels, datasets: datasets },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    scales: { 
-                        y: { min: config.yAxisMin, max: config.yAxisMax, title: { display: true, text: 'Value (%)' } },
-                        x: { title: { display: true, text: 'Date' } }
+                    scales: { y: { min: config.yAxisMin, max: config.yAxisMax, title: { display: true, text: 'Value (%)' } }, x: { title: { display: true, text: 'Date' } } },
+                    plugins: { annotation: { annotations: annotations } },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const pointIndex = elements[0].index;
+                            if (pointIndex < historicalLabels.length) {
+                                const fullDate = getMonthDates(currentDate)[pointIndex];
+                                const annotationKey = `${selectedEnergy}-${fullDate}`;
+                                const existingAnnotation = annotations[annotationKey];
+                                showAnnotationModal(annotationKey, existingAnnotation ? existingAnnotation.label.content : "", selectedEnergy, fullDate);
+                            }
+                        }
                     },
-                    onClick: (event, elements) => { /* Annotation logic remains unchanged */ }
                 }
             });
 
-            // --- Logic to add Diagnose button ---
+            // --- [NEW] Logic to add Diagnose button ---
             const trendSection = document.getElementById(`trend-section-${dataType}`);
             let existingBtn = trendSection.querySelector('.diagnose-btn');
             if (existingBtn) existingBtn.remove();
-
             const validPoints = historicalPoints.filter(p => p !== null);
             if (validPoints.length >= 5) {
                 const lastFive = validPoints.slice(-5);
@@ -702,7 +797,6 @@
         }
 
         async function sendChatMessage(isSystem = false, systemQuery = '') {
-            const chatInput = document.getElementById('chat-input');
             const query = isSystem ? systemQuery : chatInput.value.trim();
             if (!query) return;
 
@@ -772,16 +866,51 @@
             }
         }
         
-        function changeMonth(monthIndex) { /* This function remains unchanged */ }
-        function changeYear(offset) { /* This function remains unchanged */ }
-        function buildMonthButtons() { /* This function remains unchanged */ }
-        function highlightActiveMonth() { /* This function remains unchanged */ }
+        function changeMonth(monthIndex) {
+            currentDate.setMonth(monthIndex);
+            header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
+            highlightActiveMonth();
+            Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
+            switchTab(activeTab);
+        }
+
+        function changeYear(offset) {
+            currentDate.setFullYear(currentDate.getFullYear() + offset);
+            yearLabel.textContent = currentDate.getFullYear();
+            Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
+            switchTab(activeTab);
+        }
+
+        function buildMonthButtons() {
+            monthsDiv.innerHTML = '';
+            ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].forEach((m, i) => {
+                const btn = document.createElement('button');
+                btn.textContent = m;
+                btn.onclick = () => changeMonth(i);
+                monthsDiv.appendChild(btn);
+            });
+            highlightActiveMonth();
+        }
+
+        function highlightActiveMonth() {
+            [...monthsDiv.querySelectorAll('button')].forEach((btn, i) => {
+                btn.classList.toggle('active', i === currentDate.getMonth());
+            });
+        }
+
         function getMonthDates(date) {
          var y = date.getFullYear(), m = date.getMonth();
          return Array.from({length: new Date(y, m + 1, 0).getDate()}, (_, i) => `${y}-${String(m + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`);
         }
-        function toggleDarkMode(isInitialLoad = false) { /* This function remains unchanged */ }
 
+        function toggleDarkMode(isInitialLoad = false) {
+            const isDark = document.getElementById('darkToggle').checked;
+            document.body.classList.toggle('dark', isDark);
+            if(!isInitialLoad) {
+                localStorage.setItem('darkMode', isDark);
+            }
+        }
+        
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUID = user.uid;
