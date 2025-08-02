@@ -205,7 +205,6 @@
         background-color: #ffca2c;
     }
     
-    /* [NEW] Blinking animation styles */
     .blinking-btn {
         animation: blink-animation 1.5s infinite;
     }
@@ -677,7 +676,10 @@
             }];
 
             if (forecastData && forecastData.length > 0) {
-                const forecastLabels = forecastData.map(d => d.date.split('-')[2]);
+                const forecastLabels = forecastData.map(d => {
+                    const dateParts = d.date.split('-');
+                    return `${parseInt(dateParts[2])}/${parseInt(dateParts[1])}`;
+                });
                 allLabels = [...historicalLabels, ...forecastLabels];
                 const lastHistoricalPoint = historicalPoints[historicalPoints.length - 1];
                 const predictionLine = [...new Array(historicalPoints.length - 1).fill(null), lastHistoricalPoint, ...forecastData.map(p => p.predicted_value)];
@@ -748,7 +750,6 @@
                 }
             });
 
-            // --- Logic to add Diagnose button ---
             const trendSection = document.getElementById(`trend-section-${dataType}`);
             let existingBtn = trendSection.querySelector('.diagnose-btn');
             if (existingBtn) existingBtn.remove();
@@ -759,7 +760,6 @@
                 const avgLastTwo = (lastFive[3] + lastFive[4]) / 2;
                 if (Math.abs(avgLastTwo - avgFirstTwo) > 0.5) {
                     const diagnoseBtn = document.createElement('button');
-                    // --- [UPDATED] Added blinking-btn class ---
                     diagnoseBtn.className = 'diagnose-btn blinking-btn';
                     diagnoseBtn.innerHTML = '<i class="fas fa-stethoscope"></i> Diagnose';
                     diagnoseBtn.onclick = () => {
