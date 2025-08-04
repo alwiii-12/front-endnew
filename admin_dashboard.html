@@ -10,7 +10,6 @@
     <style>
         /* --- Styles for Admin Dashboard Enhancements --- */
         
-        /* CORRECTION 4: Logout Button Position & Size */
         .admin-header {
             position: relative;
             display: flex;
@@ -22,29 +21,28 @@
             right: 25px;
         }
         .admin-header .header-btn {
-            width: 44px; /* Increased size */
-            height: 44px; /* Increased size */
+            width: 44px;
+            height: 44px;
             font-size: 1.2em;
-            background-color: var(--status-error); /* Highlight color */
+            background-color: var(--status-error);
         }
         .admin-header .header-btn:hover {
-            background-color: #c82333; /* Darker on hover */
+            background-color: #c82333;
         }
 
-        /* CORRECTION 1: Sidebar Structure, Alignment & Button Size */
         .sidebar-nav {
             display: flex;
             flex-direction: column;
             gap: 15px;
             padding: 20px;
-            justify-content: flex-start; /* Aligns buttons to the top */
+            justify-content: flex-start;
             background-color: var(--bg-card);
             box-shadow: 2px 0 8px var(--shadow-light);
-            width: 240px; /* Define a fixed width for the sidebar */
+            width: 240px;
             flex-shrink: 0;
         }
         .sidebar-nav .nav-btn {
-            padding: 15px; /* Makes buttons larger */
+            padding: 15px;
             font-size: 1.05em;
             background-color: var(--primary-light);
             color: var(--primary-dark);
@@ -57,30 +55,27 @@
             color: var(--text-white);
         }
 
-        /* CORRECTION 2: Hospital Data Table Borders & Fullscreen Button */
         .hospital-qa-table th,
         .hospital-qa-table td {
-            border: 1px solid var(--border-color); /* Adds borders to all table cells */
+            border: 1px solid var(--border-color);
         }
         #hospital-data-access-section {
-            position: relative; /* Needed for fullscreen button positioning */
+            position: relative;
         }
         .fullscreen-btn {
             position: absolute;
             top: 25px;
             right: 25px;
-            width: 40px;  /* Increased size */
-            height: 40px; /* Increased size */
+            width: 40px;
+            height: 40px;
         }
 
-        /* CORRECTION 3: Manage Users & Audit Log Button Size */
         #manage-users-section .filter-search-container button,
         #audit-logs-section .filter-search-container button {
-            padding: 12px 22px; /* Increased padding for a larger button */
+            padding: 12px 22px;
             font-size: 1em;
         }
 
-        /* --- Previous Enhancements (Kept for functionality) --- */
         .user-actions-cell { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
         .hospital-qa-table th:first-child, .hospital-qa-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: var(--bg-card); box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
         .user-table th { z-index: 3; }
@@ -88,6 +83,21 @@
         #deleteConfirmArea { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); }
         #deleteConfirmArea label { display: block; margin-bottom: 10px; font-size: 0.95em; }
         #deleteConfirmInput { width: 100%; }
+        
+        /* Renamed for clarity */
+        .performance-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .performance-table th, .performance-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .performance-table th {
+            background-color: var(--primary-light);
+        }
+
     </style>
 </head>
 <body>
@@ -102,6 +112,8 @@
         
         <div class="sidebar-nav">
             <button class="nav-btn active" data-section="manage-users-section"><i class="fas fa-users"></i> Manage Users</button>
+            <!-- [NEW] Hospital Performance Button -->
+            <button class="nav-btn" data-section="hospital-performance-section"><i class="fas fa-trophy"></i> Hospital Performance</button>
             <button class="nav-btn" data-section="hospital-data-access-section"><i class="fas fa-hospital"></i> View Hospital Data</button>
             <button class="nav-btn" data-section="audit-logs-section"><i class="fas fa-clipboard-list"></i> View Audit Logs</button>
         </div>
@@ -119,6 +131,25 @@
                     <table class="user-table">
                         <thead><tr><th>Name</th><th>Email</th><th>Hospital</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
                         <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- [NEW] Hospital Performance Section -->
+            <div class="card-section" id="hospital-performance-section" style="display: none;">
+                <h2>Hospital Performance (This Month)</h2>
+                <div class="user-table-container">
+                    <table class="performance-table">
+                        <thead>
+                            <tr>
+                                <th>Hospital</th>
+                                <th>Warnings</th>
+                                <th>Out-of-Tolerance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="performanceTableBody">
+                            <tr><td colspan="3" class="no-users-message">Loading performance data...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -327,12 +358,18 @@
             const activeSection = document.getElementById(sectionId);
             activeSection.style.display = 'block';
             activeSection.classList.add('active-section');
+            
+            // [UPDATED] Load data for sections when they are first shown
             if (sectionId === 'hospital-data-access-section' && !document.getElementById('adminYearSelect').options.length) {
                 populateHospitalDataFilters();
             }
             if (sectionId === 'audit-logs-section' && !document.getElementById('auditLogDateFilter').value) {
                 populateAuditLogFilters();
                 loadAuditLogs();
+            }
+            if (sectionId === 'hospital-performance-section' && !activeSection.dataset.loaded) {
+                loadPerformanceData();
+                activeSection.dataset.loaded = 'true';
             }
         }
 
@@ -557,6 +594,40 @@
                     row.innerHTML = `<td>${log.timestamp}</td><td>${log.action}</td><td>${log.user_display || 'N/A'}</td><td><pre>${details}</pre></td>`;
                 });
             } catch (error) { console.error("Error loading audit logs:", error); logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message" style="color:red;">Error loading logs.</td></tr>`; } finally { hideLoader(); }
+        }
+
+        // [NEW] Function to load and render hospital performance data
+        async function loadPerformanceData() {
+            const performanceTableBody = document.getElementById('performanceTableBody');
+            showLoader();
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
+                const response = await fetch(`${BACKEND_URL}/dashboard-summary`, {
+                    headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
+                });
+                if (!response.ok) throw new Error('Failed to load performance data.');
+                const data = await response.json();
+                
+                performanceTableBody.innerHTML = '';
+                if (data.leaderboard && data.leaderboard.length > 0) {
+                    data.leaderboard.forEach(h => {
+                        const row = performanceTableBody.insertRow();
+                        row.innerHTML = `
+                            <td>${h.hospital}</td>
+                            <td>${h.warnings}</td>
+                            <td>${h.oot}</td>
+                        `;
+                    });
+                } else {
+                    performanceTableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">No performance data available.</td></tr>';
+                }
+            } catch (error) {
+                console.error("Error loading performance data:", error);
+                performanceTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message" style="color:red;">Error loading data.</td></tr>`;
+            } finally {
+                hideLoader();
+            }
         }
         
         auth.onAuthStateChanged(async (user) => {
