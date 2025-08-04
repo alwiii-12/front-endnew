@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | LINAC QA</title>
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        .main-dashboard {
+            padding: 25px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .dashboard-header h1 {
+            margin: 0;
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .kpi-card {
+            background-color: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow-light);
+            text-align: center;
+        }
+        .kpi-card .value {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+        .kpi-card .label {
+            font-size: 1em;
+            color: var(--text-secondary);
+        }
+        .dashboard-section {
+            background-color: var(--bg-card);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow-light);
+            margin-bottom: 25px;
+        }
+        .dashboard-section h2 {
+            margin-top: 0;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        .attention-list {
+            list-style: none;
+            padding: 0;
+        }
+        .attention-list li {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .attention-list li:last-child {
+            border-bottom: none;
+        }
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .leaderboard-table th, .leaderboard-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .leaderboard-table th {
+            background-color: var(--primary-light);
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="hospital-info-box">
+            <span id="hospitalName">Loading...</span>
+        </div>
+        <div class="header-buttons">
+            <button class="header-btn" onclick="window.location.href='my_profile.html'"><i class="fas fa-user"></i> My Profile</button>
+            <button class="header-btn" onclick="logout()" style="background-color: var(--status-error); color: white;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </div>
+
+    <main class="main-dashboard">
+        <div class="dashboard-header">
+            <h1 id="welcomeMessage">Welcome!</h1>
+            <a href="upload.html" class="button" style="background-color: var(--secondary-color); color: white;"><i class="fas fa-chart-line"></i> Go to Data Entry</a>
+        </div>
+
+        <!-- This section will be populated by JavaScript -->
+        <div id="dashboard-content">
+            <p>Loading dashboard data...</p>
+        </div>
+    </main>
+
+    <div id="loading-overlay"><div class="spinner"></div></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-check-compat.js"></script>
+    <script src="firebase-init.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const auth = firebase.auth();
+            const appCheck = firebase.appCheck();
+            const BACKEND_URL = "https://back-end-wrxi.onrender.com";
+
+            const hospitalNameEl = document.getElementById('hospitalName');
+            const welcomeMessageEl = document.getElementById('welcomeMessage');
+            const dashboardContentEl = document.getElementById('dashboard-content');
+
+            function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
+            function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
+
+            window.logout = function() {
+                auth.signOut().then(() => {
+                    localStorage.clear();
+                    window.location.replace("login.html");
+                });
+            }
+
+            async function loadDashboard(user) {
+                showLoader();
+                try {
+                    const idToken = await user.getIdToken(true);
+                    const appCheckToken = (await appCheck.getToken(false)).token;
+
+                    const response = await fetch(`${BACKEND_URL}/dashboard-summary`, {
+                        headers: {
+                            'Authorization': `Bearer ${idToken}`,
+                            'X-Firebase-AppCheck': appCheckToken
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to load dashboard data.');
+                    }
+
+                    const data = await response.json();
+                    renderDashboard(data);
+
+                } catch (error) {
+                    dashboardContentEl.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                } finally {
+                    hideLoader();
+                }
+            }
+
+            function renderDashboard(data) {
+                hospitalNameEl.textContent = localStorage.getItem("hospitalName") || "My Hospital";
+                welcomeMessageEl.textContent = `Welcome, ${localStorage.getItem("userName") || "User"}!`;
+
+                let contentHTML = '';
+
+                if (data.role === 'Admin') {
+                    // Admin View
+                    contentHTML += `
+                        <div class="kpi-grid">
+                            <div class="kpi-card">
+                                <div class="value">${data.pending_users_count}</div>
+                                <div class="label">Pending User Approvals</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="value">${data.total_warnings}</div>
+                                <div class="label">Total Warnings (This Month)</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="value">${data.total_oot}</div>
+                                <div class="label">Total Out-of-Tolerance (This Month)</div>
+                            </div>
+                        </div>
+                        <div class="dashboard-section">
+                            <h2>Hospital Performance (This Month)</h2>
+                            <table class="leaderboard-table">
+                                <thead>
+                                    <tr>
+                                        <th>Hospital</th>
+                                        <th>Warnings</th>
+                                        <th>Out-of-Tolerance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.leaderboard.map(h => `
+                                        <tr>
+                                            <td>${h.hospital}</td>
+                                            <td>${h.warnings}</td>
+                                            <td>${h.oot}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                } else {
+                    // Regular User View
+                    contentHTML += `
+                        <div class="kpi-grid">
+                            <div class="kpi-card">
+                                <div class="value">${data.warnings}</div>
+                                <div class="label">Warnings (This Month)</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="value">${data.oot}</div>
+                                <div class="label">Out-of-Tolerance (This Month)</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="value">${data.last_service_date}</div>
+                                <div class="label">Last Service/Calibration</div>
+                            </div>
+                        </div>
+                        <div class="dashboard-section">
+                            <h2>Machines Needing Attention</h2>
+                            <ul class="attention-list">
+                                ${data.machines_needing_attention.length > 0 ? 
+                                  data.machines_needing_attention.map(item => `<li>${item}</li>`).join('') :
+                                  '<li>All machines are performing within normal parameters.</li>'
+                                }
+                            </ul>
+                        </div>
+                    `;
+                }
+                dashboardContentEl.innerHTML = contentHTML;
+            }
+
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    loadDashboard(user);
+                } else {
+                    window.location.replace("login.html");
+                }
+            });
+        });
+    </script>
+</body>
+</html>
