@@ -73,6 +73,7 @@
     
     document.addEventListener('DOMContentLoaded', () => {
         const auth = firebase.auth();
+        const db = firebase.firestore();
         const appCheck = firebase.appCheck();
         const errorMsg = document.getElementById("errorMsg");
         const emailInput = document.getElementById('email');
@@ -164,17 +165,23 @@
                 if (!response.ok) {
                     throw new Error(data.message || 'An unknown error occurred.');
                 }
+                
+                // Fetch the user's full name to display on the dashboard
+                const userDoc = await db.collection("users").doc(user.uid).get();
+                if(userDoc.exists) {
+                    localStorage.setItem("userName", userDoc.data().name);
+                }
 
                 localStorage.setItem("userEmail", email);
                 localStorage.setItem("hospitalName", data.hospital.toUpperCase());
                 localStorage.setItem("userRole", data.role);
                 localStorage.setItem("userStatus", data.status);
 
-                if (data.role === "Admin") {
-                    window.location.href = "admin_dashboard.html";
-                } else {
-                    window.location.href = "upload.html";
-                }
+                // --- [UPDATED] ---
+                // Both Admins and regular users will now be sent to the dashboard.
+                // The dashboard will automatically show the correct view based on their role.
+                window.location.href = "dashboard.html";
+
 
             } catch (error) {
                 console.error("Login process failed:", error);
