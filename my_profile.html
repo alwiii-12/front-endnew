@@ -13,7 +13,6 @@
             max-width: 650px; /* Wider card for more space */
         }
 
-        /* CORRECTION 1: Larger input fields */
         .profile-card input[type="text"],
         .profile-card input[type="email"],
         .profile-card input[type="password"],
@@ -22,13 +21,11 @@
             font-size: 1.05em;
         }
         
-        /* CORRECTION 1 & 2: Larger buttons */
         .profile-card .button {
             padding: 14px 28px;
             font-size: 1.05em;
         }
 
-        /* CORRECTION 2: Style for "Go to Dashboard" button */
         .profile-actions .dashboard-link {
             background-color: var(--secondary-color);
             color: var(--text-white);
@@ -115,6 +112,7 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        console.log("DEBUG: DOMContentLoaded fired. Initializing scripts.");
         const auth = firebase.auth();
         const db = firebase.firestore();
         const appCheck = firebase.appCheck();
@@ -129,7 +127,205 @@
         const editEmail = document.getElementById('editEmail');
         const editHospital = document.getElementById('editHospital');
 
-        // --- [NEW] Password change elements ---
         const changePasswordForm = document.getElementById('changePasswordForm');
         const newPasswordInput = document.getElementById('newPassword');
-        const passwordStrength
+        const passwordStrengthDiv = document.getElementById('passwordStrength');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+
+        let currentUserData = null;
+
+        function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
+        function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
+        function showNotification(message, type = 'info', duration = 3000) {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = `notification-message ${type} show`;
+            notification.textContent = message;
+            container.appendChild(notification);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 500);
+            }, duration);
+        }
+        
+        function populateHospitalDropdown(currentHospital) {
+            const hospitals = ["aoi_gurugram", "medanta_gurugram", "fortis_delhi", "apollo_chennai", "max_delhi"];
+            editHospital.innerHTML = '';
+            hospitals.forEach(h => {
+                const option = document.createElement('option');
+                option.value = h;
+                option.textContent = h.replace(/_/g, ' ').toUpperCase();
+                editHospital.appendChild(option);
+            });
+            editHospital.value = currentHospital;
+        }
+
+        function toggleEditMode(isEdit) {
+            profileDisplay.style.display = isEdit ? 'none' : 'block';
+            profileEdit.style.display = isEdit ? 'block' : 'none';
+            if (isEdit && currentUserData) {
+                editName.value = currentUserData.name;
+                editEmail.value = currentUserData.email;
+                populateHospitalDropdown(currentUserData.hospital);
+            }
+        }
+
+        editProfileBtn.addEventListener('click', () => toggleEditMode(true));
+        cancelEditBtn.addEventListener('click', () => toggleEditMode(false));
+
+        async function loadProfile(uid) {
+            console.log("DEBUG: loadProfile function called with UID:", uid);
+            const profileDetailsDiv = document.getElementById('profileDetails');
+            profileDetailsDiv.innerHTML = '<p class="loading-message">Loading...</p>';
+            try {
+                console.log("DEBUG: Attempting to fetch user document from Firestore...");
+                const userDocSnap = await db.collection("users").doc(uid).get();
+                console.log("DEBUG: Firestore request completed.");
+
+                if (userDocSnap.exists) {
+                    console.log("DEBUG: User document found.");
+                    currentUserData = userDocSnap.data();
+                    profileDetailsDiv.innerHTML = `
+                        <div class="profile-item"><strong>Name:</strong> <span>${currentUserData.name || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Email:</strong> <span>${currentUserData.email || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Hospital:</strong> <span>${currentUserData.hospital || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Role:</strong> <span>${currentUserData.role || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Status:</strong> <span style="font-weight:bold; color:${currentUserData.status === 'active' ? 'var(--status-success)' : 'var(--status-warning)'}">${currentUserData.status?.toUpperCase() || 'N/A'}</span></div>
+                    `;
+                } else {
+                    console.error("DEBUG: User document NOT found in Firestore for UID:", uid);
+                    profileDetailsDiv.innerHTML = '<p class="loading-message" style="color: var(--status-error);">Error: User profile not found.</p>';
+                }
+            } catch (error) {
+                console.error("DEBUG: An error occurred while fetching the profile:", error);
+                profileDetailsDiv.innerHTML = `<p class="loading-message" style="color: var(--status-error);">Error: Could not load profile data. Check console for details.</p>`;
+            }
+        }
+
+        saveProfileBtn.addEventListener('click', async () => {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const newName = editName.value.trim();
+            const newHospital = editHospital.value;
+
+            if (!newName || !newHospital) {
+                showNotification("Name and hospital cannot be empty.", "warning");
+                return;
+            }
+
+            showLoader();
+            try {
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                const response = await fetch(`${BACKEND_URL}/update-profile`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckTokenResponse.token },
+                    body: JSON.stringify({
+                        uid: user.uid,
+                        name: newName,
+                        hospital: newHospital
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Failed to update profile.');
+
+                showNotification("Profile updated successfully!", "success");
+                await loadProfile(user.uid);
+                toggleEditMode(false);
+            } catch (error) {
+                showNotification(`Error: ${error.message}`, "error");
+            } finally {
+                hideLoader();
+            }
+        });
+
+        function togglePasswordForm() {
+            document.getElementById('changePasswordForm').classList.toggle('open');
+            document.querySelector('.change-password-header').classList.toggle('active');
+        }
+        window.togglePasswordForm = togglePasswordForm;
+        
+        function checkPasswordStrength() {
+            const password = newPasswordInput.value;
+            let strength = 0;
+            let message = '';
+            let type = '';
+            if (password.length > 0) {
+                if (password.length >= 8) strength++;
+                if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+                if (password.match(/\d/)) strength++;
+                if (password.match(/[^a-zA-Z0-9]/)) strength++;
+                if (strength < 2) { message = 'Weak'; type = 'weak'; }
+                else if (strength < 4) { message = 'Intermediate'; type = 'intermediate'; }
+                else { message = 'Strong'; type = 'strong'; }
+            }
+            passwordStrengthDiv.textContent = message;
+            passwordStrengthDiv.className = 'password-strength ' + type;
+        }
+        newPasswordInput.addEventListener('input', checkPasswordStrength);
+
+        changePasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = newPasswordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showNotification("Please fill in all password fields.", "warning");
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                showNotification("New passwords do not match.", "warning");
+                return;
+            }
+            if (passwordStrengthDiv.classList.contains('weak')) {
+                showNotification("Please choose a stronger password.", 'warning');
+                return;
+            }
+
+            showLoader();
+            try {
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
+                await user.reauthenticateWithCredential(credential);
+                await user.updatePassword(newPassword);
+                
+                hideLoader();
+                showNotification("Password updated successfully!", "success");
+                changePasswordForm.reset();
+                passwordStrengthDiv.textContent = '';
+                passwordStrengthDiv.className = 'password-strength';
+                if (document.getElementById('changePasswordForm').classList.contains('open')) {
+                    togglePasswordForm();
+                }
+            } catch (error) {
+                hideLoader();
+                console.error("Password change error:", error);
+                let friendlyMessage = "Failed to update password.";
+                if (error.code === 'auth/wrong-password') {
+                    friendlyMessage = "The current password you entered is incorrect.";
+                } else if (error.code === 'auth/weak-password') {
+                    friendlyMessage = "The new password is too weak.";
+                }
+                showNotification(friendlyMessage, "error");
+            }
+        });
+        
+        console.log("DEBUG: Setting up auth state listener...");
+        auth.onAuthStateChanged(user => {
+            console.log("DEBUG: onAuthStateChanged fired.");
+            if (user) {
+                console.log("DEBUG: User is logged in. UID:", user.uid);
+                loadProfile(user.uid);
+            } else {
+                console.log("DEBUG: User is not logged in. Redirecting to login.html.");
+                window.location.replace("login.html");
+            }
+        });
+    });
+    </script>
+</body>
+</html>
