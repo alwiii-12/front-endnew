@@ -235,6 +235,16 @@
         background-color: var(--primary-color);
         color: var(--text-white);
     }
+    /* [NEW] Style for the service day checkbox */
+    .service-day-checkbox {
+        margin-top: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
   </style>
 </head>
 <body>
@@ -285,6 +295,11 @@
         <span class="close-button" onclick="hideAnnotationModal()">&times;</span>
         <h3 id="annotationModalTitle">Add/Edit Annotation</h3>
         <textarea id="annotationInput" placeholder="Enter your note here..."></textarea>
+        <!-- [NEW] Service Day Checkbox -->
+        <div class="service-day-checkbox">
+            <input type="checkbox" id="isServiceDayInput">
+            <label for="isServiceDayInput">Mark as Service/Calibration Day</label>
+        </div>
         <div class="modal-buttons">
             <button id="deleteAnnotationBtn" class="button" style="display: none;">Delete Note</button>
             <button id="saveAnnotationBtn" class="save-btn">Save Note</button>
@@ -329,6 +344,8 @@
         const annotationInput = document.getElementById('annotationInput');
         const saveAnnotationBtn = document.getElementById('saveAnnotationBtn');
         const deleteAnnotationBtn = document.getElementById('deleteAnnotationBtn');
+        // [NEW] Service Day Checkbox element
+        const isServiceDayInput = document.getElementById('isServiceDayInput');
         let currentAnnotationKey = null;
 
         let diagnosticState = { inProgress: false, topic: null, node_id: null };
@@ -585,11 +602,18 @@
             if (energyTypes.length > 0) select.value = energyTypes[0];
         }
 
-        function showAnnotationModal(key, existingText, energy, date) {
+        // --- [UPDATED] showAnnotationModal to handle service day checkbox ---
+        async function showAnnotationModal(key, existingText, energy, date) {
             currentAnnotationKey = key;
             annotationModalTitle.textContent = `Note for ${energy} on ${date}`;
             annotationInput.value = existingText;
-            if (existingText) {
+
+            // Check if this date is already marked as a service day
+            const serviceEventRef = db.collection('service_events').doc(currentUID).collection('events').doc(date);
+            const serviceEventSnap = await serviceEventRef.get();
+            isServiceDayInput.checked = serviceEventSnap.exists;
+
+            if (existingText || isServiceDayInput.checked) {
                 deleteAnnotationBtn.style.display = 'inline-flex';
             } else {
                 deleteAnnotationBtn.style.display = 'none';
@@ -602,10 +626,14 @@
             currentAnnotationKey = null;
         }
         
+        // --- [UPDATED] saveAnnotationBtn to handle service day checkbox ---
         saveAnnotationBtn.addEventListener('click', async () => {
             if (!currentAnnotationKey) return;
             const note = annotationInput.value;
+            const isServiceDay = isServiceDayInput.checked;
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            const fullDate = currentAnnotationKey.split('-').slice(1).join('-');
+
             showLoader();
             try {
                 const appCheckTokenResponse = await appCheck.getToken(false);
@@ -613,8 +641,16 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": appCheckTokenResponse.token },
                     body: JSON.stringify({
-                        uid: currentUID, month: monthKey, key: currentAnnotationKey,
-                        data: { text: note, dataType: activeTab, energy: currentAnnotationKey.split('-')[0] }
+                        uid: currentUID,
+                        month: monthKey,
+                        key: currentAnnotationKey,
+                        data: { 
+                            text: note, 
+                            dataType: activeTab, 
+                            energy: currentAnnotationKey.split('-')[0],
+                            isServiceEvent: isServiceDay, // Send the checkbox state to the backend
+                            eventDate: fullDate
+                        }
                     })
                 });
                 hideAnnotationModal();
@@ -657,7 +693,7 @@
             const hasData = historicalPoints.some(point => point !== null);
             const historicalLabels = getMonthDates(currentDate).map(d => {
                 const dateParts = d.split('-');
-                return `${parseInt(dateParts[2])}`; // Only show day number for current month
+                return `${parseInt(dateParts[2])}`;
             });
             let allLabels = [...historicalLabels];
             
@@ -665,7 +701,6 @@
             if (hasData) {
                 try {
                     const appCheckTokenResponse = await appCheck.getToken(false);
-                    // --- [UPDATED] Send the current month to the backend ---
                     const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
                     const res = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}&month=${monthKey}`, {
                         headers: { "X-Firebase-AppCheck": appCheckTokenResponse.token }
