@@ -665,7 +665,9 @@
             if (hasData) {
                 try {
                     const appCheckTokenResponse = await appCheck.getToken(false);
-                    const res = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}`, {
+                    // --- [UPDATED] Send the current month to the backend ---
+                    const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+                    const res = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}&month=${monthKey}`, {
                         headers: { "X-Firebase-AppCheck": appCheckTokenResponse.token }
                     });
                     if (res.ok) forecastData = (await res.json()).forecast;
@@ -692,7 +694,7 @@
                 
                 allLabels = [...historicalLabels, ...forecastLabels];
 
-                const lastHistoricalPoint = historicalPoints[historicalPoints.length - 1];
+                const lastHistoricalPoint = historicalPoints.filter(p => p !== null).pop();
                 const predictionLine = [...new Array(historicalPoints.length - 1).fill(null), lastHistoricalPoint, ...forecastData.map(p => p.predicted_value)];
                 const lowerBand = [...new Array(historicalPoints.length - 1).fill(null), lastHistoricalPoint, ...forecastData.map(p => p.lower_bound)];
                 const upperBand = [...new Array(historicalPoints.length - 1).fill(null), lastHistoricalPoint, ...forecastData.map(p => p.upper_bound)];
