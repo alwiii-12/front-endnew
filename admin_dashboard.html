@@ -84,7 +84,6 @@
         #deleteConfirmArea label { display: block; margin-bottom: 10px; font-size: 0.95em; }
         #deleteConfirmInput { width: 100%; }
         
-        /* Renamed for clarity */
         .performance-table {
             width: 100%;
             border-collapse: collapse;
@@ -96,6 +95,26 @@
         }
         .performance-table th {
             background-color: var(--primary-light);
+        }
+
+        /* [NEW] Styles for the performance date navigation */
+        .performance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .performance-nav {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .performance-nav button {
+            padding: 5px 10px;
+        }
+        .performance-nav span {
+            font-weight: 600;
+            font-size: 1.2em;
         }
 
     </style>
@@ -112,7 +131,6 @@
         
         <div class="sidebar-nav">
             <button class="nav-btn active" data-section="manage-users-section"><i class="fas fa-users"></i> Manage Users</button>
-            <!-- [NEW] Hospital Performance Button -->
             <button class="nav-btn" data-section="hospital-performance-section"><i class="fas fa-trophy"></i> Hospital Performance</button>
             <button class="nav-btn" data-section="hospital-data-access-section"><i class="fas fa-hospital"></i> View Hospital Data</button>
             <button class="nav-btn" data-section="audit-logs-section"><i class="fas fa-clipboard-list"></i> View Audit Logs</button>
@@ -135,9 +153,16 @@
                 </div>
             </div>
 
-            <!-- [NEW] Hospital Performance Section -->
             <div class="card-section" id="hospital-performance-section" style="display: none;">
-                <h2>Hospital Performance (This Month)</h2>
+                <!-- [NEW] Header with navigation -->
+                <div class="performance-header">
+                    <h2 style="margin: 0;">Hospital Performance</h2>
+                    <div class="performance-nav">
+                        <button id="prev-performance-month">&lt;</button>
+                        <span id="performance-month-display">This Month</span>
+                        <button id="next-performance-month">&gt;</button>
+                    </div>
+                </div>
                 <div class="user-table-container">
                     <table class="performance-table">
                         <thead>
@@ -245,6 +270,9 @@
         const BACKEND_URL = "https://back-end-wrxi.onrender.com";
         let allUsersData = [];
         let currentAdminUid = null;
+
+        // [NEW] State for performance date
+        let performanceDate = new Date();
 
         const loadingOverlay = document.getElementById('loading-overlay');
         const usersTableBody = document.getElementById('usersTableBody');
@@ -359,7 +387,6 @@
             activeSection.style.display = 'block';
             activeSection.classList.add('active-section');
             
-            // [UPDATED] Load data for sections when they are first shown
             if (sectionId === 'hospital-data-access-section' && !document.getElementById('adminYearSelect').options.length) {
                 populateHospitalDataFilters();
             }
@@ -596,19 +623,29 @@
             } catch (error) { console.error("Error loading audit logs:", error); logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message" style="color:red;">Error loading logs.</td></tr>`; } finally { hideLoader(); }
         }
 
-        // [NEW] Function to load and render hospital performance data
-        async function loadPerformanceData() {
+        // [UPDATED] Function to load and render hospital performance data for a specific month
+        async function loadPerformanceData(monthStr = null) {
             const performanceTableBody = document.getElementById('performanceTableBody');
+            const monthDisplay = document.getElementById('performance-month-display');
+            performanceTableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Loading...</td></tr>';
             showLoader();
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
                 const appCheckToken = (await appCheck.getToken(false)).token;
-                const response = await fetch(`${BACKEND_URL}/dashboard-summary`, {
+                
+                let url = `${BACKEND_URL}/dashboard-summary`;
+                if (monthStr) {
+                    url += `?month=${monthStr}`;
+                }
+
+                const response = await fetch(url, {
                     headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
                 });
                 if (!response.ok) throw new Error('Failed to load performance data.');
                 const data = await response.json();
                 
+                monthDisplay.textContent = data.display_month || "This Month";
+
                 performanceTableBody.innerHTML = '';
                 if (data.leaderboard && data.leaderboard.length > 0) {
                     data.leaderboard.forEach(h => {
@@ -620,7 +657,7 @@
                         `;
                     });
                 } else {
-                    performanceTableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">No performance data available.</td></tr>';
+                    performanceTableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">No performance data available for this period.</td></tr>';
                 }
             } catch (error) {
                 console.error("Error loading performance data:", error);
@@ -629,6 +666,19 @@
                 hideLoader();
             }
         }
+
+        // [NEW] Event listeners for performance navigation
+        document.getElementById('prev-performance-month').addEventListener('click', () => {
+            performanceDate.setMonth(performanceDate.getMonth() - 1);
+            const monthStr = `${performanceDate.getFullYear()}-${String(performanceDate.getMonth() + 1).padStart(2, '0')}`;
+            loadPerformanceData(monthStr);
+        });
+
+        document.getElementById('next-performance-month').addEventListener('click', () => {
+            performanceDate.setMonth(performanceDate.getMonth() + 1);
+            const monthStr = `${performanceDate.getFullYear()}-${String(performanceDate.getMonth() + 1).padStart(2, '0')}`;
+            loadPerformanceData(monthStr);
+        });
         
         auth.onAuthStateChanged(async (user) => {
             if (user) {
