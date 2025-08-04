@@ -85,6 +85,17 @@
         .leaderboard-table th {
             background-color: var(--primary-light);
         }
+        /* [NEW] Styles for the action button */
+        .action-button-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .action-button-container .button {
+            padding: 15px 40px; /* Larger padding */
+            font-size: 1.2em;   /* Larger font */
+            width: auto;
+            max-width: 400px;
+        }
     </style>
 </head>
 <body>
@@ -101,7 +112,7 @@
     <main class="main-dashboard">
         <div class="dashboard-header">
             <h1 id="welcomeMessage">Welcome!</h1>
-            <a href="upload.html" class="button" style="background-color: var(--secondary-color); color: white;"><i class="fas fa-chart-line"></i> Go to Data Entry</a>
+            <!-- The "Go to Data Entry" button has been moved from here -->
         </div>
 
         <!-- This section will be populated by JavaScript -->
@@ -209,6 +220,10 @@
                                 </tbody>
                             </table>
                         </div>
+                        <!-- [NEW] Button moved and enlarged for Admins -->
+                        <div class="action-button-container">
+                           <a href="admin_dashboard.html" class="button"><i class="fas fa-users-cog"></i> Manage Users & Data</a>
+                        </div>
                     `;
                 } else {
                     // Regular User View
@@ -235,6 +250,10 @@
                                   '<li>All machines are performing within normal parameters.</li>'
                                 }
                             </ul>
+                        </div>
+                        <!-- [NEW] Button moved and enlarged for regular users -->
+                        <div class="action-button-container">
+                            <a href="upload.html" class="button" style="background-color: var(--secondary-color); color: white;"><i class="fas fa-chart-line"></i> Go to Data Entry</a>
                         </div>
                     `;
                 }
