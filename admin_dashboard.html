@@ -97,7 +97,6 @@
             background-color: var(--primary-light);
         }
 
-        /* [NEW] Styles for the performance date navigation */
         .performance-header {
             display: flex;
             justify-content: space-between;
@@ -115,6 +114,12 @@
         .performance-nav span {
             font-weight: 600;
             font-size: 1.2em;
+        }
+        /* [NEW] Style for the month picker */
+        #performance-month-picker {
+            border: 1px solid var(--border-color);
+            padding: 4px 8px;
+            border-radius: 6px;
         }
 
     </style>
@@ -154,12 +159,11 @@
             </div>
 
             <div class="card-section" id="hospital-performance-section" style="display: none;">
-                <!-- [NEW] Header with navigation -->
                 <div class="performance-header">
                     <h2 style="margin: 0;">Hospital Performance</h2>
                     <div class="performance-nav">
                         <button id="prev-performance-month">&lt;</button>
-                        <span id="performance-month-display">This Month</span>
+                        <input type="month" id="performance-month-picker">
                         <button id="next-performance-month">&gt;</button>
                     </div>
                 </div>
@@ -271,7 +275,6 @@
         let allUsersData = [];
         let currentAdminUid = null;
 
-        // [NEW] State for performance date
         let performanceDate = new Date();
 
         const loadingOverlay = document.getElementById('loading-overlay');
@@ -292,6 +295,9 @@
         const confirmBtn = document.getElementById('confirmBtn');
         const deleteConfirmInput = document.getElementById('deleteConfirmInput');
         let onConfirmCallback = null;
+        
+        // [NEW] Performance date picker element
+        const performanceMonthPicker = document.getElementById('performance-month-picker');
 
         const dataTypesConfig = {
           output: { tolerance: 2.0, warning: 1.8 },
@@ -624,19 +630,17 @@
         }
 
         // [UPDATED] Function to load and render hospital performance data for a specific month
-        async function loadPerformanceData(monthStr = null) {
+        async function loadPerformanceData() {
             const performanceTableBody = document.getElementById('performanceTableBody');
-            const monthDisplay = document.getElementById('performance-month-display');
+            // [UPDATED] Use the month picker's value
+            const monthStr = performanceMonthPicker.value;
             performanceTableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Loading...</td></tr>';
             showLoader();
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
                 const appCheckToken = (await appCheck.getToken(false)).token;
                 
-                let url = `${BACKEND_URL}/dashboard-summary`;
-                if (monthStr) {
-                    url += `?month=${monthStr}`;
-                }
+                let url = `${BACKEND_URL}/dashboard-summary?month=${monthStr}`;
 
                 const response = await fetch(url, {
                     headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
@@ -644,8 +648,6 @@
                 if (!response.ok) throw new Error('Failed to load performance data.');
                 const data = await response.json();
                 
-                monthDisplay.textContent = data.display_month || "This Month";
-
                 performanceTableBody.innerHTML = '';
                 if (data.leaderboard && data.leaderboard.length > 0) {
                     data.leaderboard.forEach(h => {
@@ -666,20 +668,37 @@
                 hideLoader();
             }
         }
-
-        // [NEW] Event listeners for performance navigation
-        document.getElementById('prev-performance-month').addEventListener('click', () => {
-            performanceDate.setMonth(performanceDate.getMonth() - 1);
-            const monthStr = `${performanceDate.getFullYear()}-${String(performanceDate.getMonth() + 1).padStart(2, '0')}`;
-            loadPerformanceData(monthStr);
-        });
-
-        document.getElementById('next-performance-month').addEventListener('click', () => {
-            performanceDate.setMonth(performanceDate.getMonth() + 1);
-            const monthStr = `${performanceDate.getFullYear()}-${String(performanceDate.getMonth() + 1).padStart(2, '0')}`;
-            loadPerformanceData(monthStr);
-        });
         
+        // [NEW] Function to initialize and handle performance date controls
+        function setupPerformanceNav() {
+            const year = performanceDate.getFullYear();
+            const month = String(performanceDate.getMonth() + 1).padStart(2, '0');
+            performanceMonthPicker.value = `${year}-${month}`;
+
+            document.getElementById('prev-performance-month').addEventListener('click', () => {
+                performanceDate.setMonth(performanceDate.getMonth() - 1);
+                updatePerformanceView();
+            });
+
+            document.getElementById('next-performance-month').addEventListener('click', () => {
+                performanceDate.setMonth(performanceDate.getMonth() + 1);
+                updatePerformanceView();
+            });
+
+            performanceMonthPicker.addEventListener('change', () => {
+                const [year, month] = performanceMonthPicker.value.split('-');
+                performanceDate = new Date(year, month - 1, 1);
+                loadPerformanceData();
+            });
+        }
+        
+        function updatePerformanceView() {
+            const year = performanceDate.getFullYear();
+            const month = String(performanceDate.getMonth() + 1).padStart(2, '0');
+            performanceMonthPicker.value = `${year}-${month}`;
+            loadPerformanceData();
+        }
+
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentAdminUid = user.uid;
@@ -689,6 +708,7 @@
                     showLoader();
                     try {
                         await loadAllUsers(); 
+                        setupPerformanceNav(); // Initialize the date controls
                         showAdminSection('manage-users-section');
                     } catch (error) { console.error("Failed to initialize admin dashboard:", error); } finally { hideLoader(); }
                 }
