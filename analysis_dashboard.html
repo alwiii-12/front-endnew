@@ -52,6 +52,11 @@
     </style>
 </head>
 <body>
+    <!-- TEMPORARY DEBUG MESSAGE -->
+    <h1 style="color: limegreen; text-align: center; background-color: black; padding: 5px; margin: 0;">
+        DEBUG: Version 3 Loaded
+    </h1>
+
     <div class="topbar">
         <div id="hospitalInfoBox" class="hospital-info-box">Hospital: <span id="hospitalName"></span></div>
         <div class="header-buttons">
@@ -157,10 +162,7 @@
                         const errorData = await response.json();
                         throw new Error(errorData.error || 'Failed to load plot data.');
                     }
-
-                    // --- [THE FIX IS HERE] ---
-                    // response.json() now directly gives us the correct object.
-                    // The extra JSON.parse() is removed.
+                    
                     const figure = await response.json();
                     
                     Plotly.newPlot(plotContainer, figure.data, figure.layout, {responsive: true});
