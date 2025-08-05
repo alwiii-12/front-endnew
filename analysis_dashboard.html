@@ -161,6 +161,9 @@
                     const graphJSON = await response.json();
                     const figure = JSON.parse(graphJSON);
                     
+                    // --- [THE FIX IS HERE] ---
+                    // The 'figure' object already contains the 'data' and 'layout' properties directly.
+                    // We remove the incorrect '.plot' accessor.
                     Plotly.newPlot(plotContainer, figure.data, figure.layout, {responsive: true});
 
                 } catch (error) {
