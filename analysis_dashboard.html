@@ -158,12 +158,11 @@
                         throw new Error(errorData.error || 'Failed to load plot data.');
                     }
 
-                    const graphJSON = await response.json();
-                    const figure = JSON.parse(graphJSON);
-                    
                     // --- [THE FIX IS HERE] ---
-                    // The 'figure' object already contains the 'data' and 'layout' properties directly.
-                    // We remove the incorrect '.plot' accessor.
+                    // response.json() now directly gives us the correct object.
+                    // The extra JSON.parse() is removed.
+                    const figure = await response.json();
+                    
                     Plotly.newPlot(plotContainer, figure.data, figure.layout, {responsive: true});
 
                 } catch (error) {
