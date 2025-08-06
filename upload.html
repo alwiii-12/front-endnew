@@ -295,7 +295,6 @@
         <span class="close-button" onclick="hideAnnotationModal()">&times;</span>
         <h3 id="annotationModalTitle">Add/Edit Annotation</h3>
         <textarea id="annotationInput" placeholder="Enter your note here..."></textarea>
-        <!-- [NEW] Service Day Checkbox -->
         <div class="service-day-checkbox">
             <input type="checkbox" id="isServiceDayInput">
             <label for="isServiceDayInput">Mark as Service/Calibration Day</label>
@@ -921,6 +920,7 @@
         function changeYear(offset) {
             currentDate.setFullYear(currentDate.getFullYear() + offset);
             yearLabel.textContent = currentDate.getFullYear();
+            header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
             Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
             switchTab(activeTab);
         }
