@@ -693,8 +693,6 @@
             let allLabels = [...historicalLabels];
             
             let forecastData = null;
-            // --- [THE FIX IS HERE] ---
-            // Only fetch predictions if we are viewing the current month
             const today = new Date();
             if (hasData && currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() === today.getMonth()) {
                 try {
@@ -728,16 +726,14 @@
                 forecastData.forEach(d => {
                     const day = parseInt(d.date.split('-')[2]);
                     const index = allLabels.indexOf(day);
-                    if(index !== -1 && index >= lastHistoricalIndex) { // Only plot forecast points after the last historical point
+                    if(index !== -1 && index >= lastHistoricalIndex) {
                         forecastPoints[index] = d.predicted_value;
                     }
                 });
                 
-                // Connect the forecast line to the last historical point
                 if (lastHistoricalIndex !== -1 && historicalPoints[lastHistoricalIndex] !== null) {
                     forecastPoints[lastHistoricalIndex] = historicalPoints[lastHistoricalIndex];
                 }
-
 
                 datasets.push({
                     label: 'Forecast', data: forecastPoints, borderColor: 'rgba(255, 99, 132, 1)',
