@@ -807,7 +807,9 @@
                 const lastFive = validPoints.slice(-5);
                 const avgFirstTwo = (lastFive[0] + lastFive[1]) / 2;
                 const avgLastTwo = (lastFive[3] + lastFive[4]) / 2;
-                if (Math.abs(avgLastTwo - avgFirstTwo) > 0.5) {
+                // --- [THE FIX IS HERE] ---
+                // Lowered the threshold to make the button appear more readily
+                if (Math.abs(avgLastTwo - avgFirstTwo) > 0.2) {
                     const diagnoseBtn = document.createElement('button');
                     diagnoseBtn.className = 'diagnose-btn blinking-btn';
                     diagnoseBtn.innerHTML = '<i class="fas fa-stethoscope"></i> Diagnose';
