@@ -771,6 +771,16 @@
             } catch (e) {
                 console.error("Could not fetch annotations due to a Firebase error, likely permissions. Chart will render without them.", e);
             }
+            
+            // This adds the dark, dashed baseline at y=0 to the chart.
+            annotations['zeroBaseline'] = {
+                type: 'line',
+                yMin: 0,
+                yMax: 0,
+                borderColor: 'rgba(0, 0, 0, 0.8)',
+                borderWidth: 1.5,
+                borderDash: [6, 6] // This makes the line dashed
+            };
 
             const canvasElement = document.getElementById(`trendChart-${dataType}`);
             const config = dataTypesConfig[dataType];
