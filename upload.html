@@ -760,10 +760,16 @@
                     historicalPoints.push(null);
                 }
 
-                // Add the new forecast labels to the end of the axis
-                allLabels = allLabels.concat(forecastLabels.slice(historicalPoints.filter(p => p !== null).length));
+                // Find the first forecast point that is in the next month
+                const firstNextMonthIndex = forecastData.findIndex(d => new Date(d.date).getMonth() !== currentDate.getMonth());
 
-
+                if (firstNextMonthIndex > -1) {
+                    // If we have points in the next month, get only those new labels
+                    const newLabelsToAdd = forecastLabels.slice(firstNextMonthIndex);
+                    // Add the new labels to the end of the chart's X-axis
+                    allLabels = historicalLabels.concat(newLabelsToAdd);
+                }
+                
                 const lastHistoricalPointIndex = historicalPoints.map((y, i) => ({y, i})).filter(p => p.y !== null).pop()?.i ?? -1;
                 
                 const predictionLine = new Array(lastHistoricalPointIndex).fill(null);
@@ -777,6 +783,7 @@
                 const upperBand = new Array(lastHistoricalPointIndex).fill(null);
                 upperBand.push(historicalPoints[lastHistoricalPointIndex]);
                 upperBand.push(...forecastData.map(p => p.upper_bound));
+                // --- [CORRECTED LOGIC END] ---
 
                 datasets.push({
                     label: 'Forecast', data: predictionLine, borderColor: 'rgba(255, 99, 132, 1)',
@@ -791,7 +798,6 @@
                     borderColor: 'transparent', pointRadius: 0,
                 });
             }
-            // --- [CORRECTED LOGIC END] ---
             
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             let annotations = {};
@@ -916,7 +922,7 @@
                 chatOptionsArea.appendChild(btn);
             });
             chatInputArea.style.display = 'none';
-            chatOptionsArea.style.display = 'flex';
+            chatInputArea.style.display = 'flex';
         }
 
         function resetChatInput() {
