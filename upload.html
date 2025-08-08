@@ -696,15 +696,44 @@
             });
             let allLabels = [...historicalLabels];
             
-            let forecastData = null;
+            let forecastData = [];
             if (hasData) {
                 try {
                     const appCheckTokenResponse = await appCheck.getToken(false);
+                    const token = appCheckTokenResponse.token;
                     const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-                    const res = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}&month=${monthKey}`, {
-                        headers: { "X-Firebase-AppCheck": appCheckTokenResponse.token }
+                    
+                    // --- [NEW LOGIC START] ---
+                    // Fetch the forecast for the current month first
+                    const res1 = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}&month=${monthKey}`, {
+                        headers: { "X-Firebase-AppCheck": token }
                     });
-                    if (res.ok) forecastData = (await res.json()).forecast;
+
+                    if (res1.ok) {
+                        const firstForecast = await res1.json();
+                        forecastData = firstForecast.forecast || [];
+                    }
+
+                    // If the first forecast is shorter than 7 days, fetch the next month's forecast
+                    if (forecastData.length < 7) {
+                        const nextMonthDate = new Date(currentDate);
+                        nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+                        const nextMonthKey = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, '0')}`;
+                        
+                        const res2 = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}&month=${nextMonthKey}`, {
+                           headers: { "X-Firebase-AppCheck": token }
+                        });
+
+                        if (res2.ok) {
+                            const secondForecast = await res2.json();
+                            const neededDays = 7 - forecastData.length;
+                            if (secondForecast.forecast && secondForecast.forecast.length > 0) {
+                                forecastData = forecastData.concat(secondForecast.forecast.slice(0, neededDays));
+                            }
+                        }
+                    }
+                    // --- [NEW LOGIC END] ---
+
                 } catch (e) { console.error("Could not fetch predictions", e); }
             }
 
@@ -720,18 +749,23 @@
                     const year = parseInt(dateParts[0]);
                     const month = parseInt(dateParts[1]);
                     const day = parseInt(dateParts[2]);
-                    if (year > currentDate.getFullYear() || month > currentDate.getMonth() + 1) {
-                        return `${day}/${month}/${String(year).slice(-2)}`;
+
+                    // Check if the forecast date is in a different month than the currently viewed month
+                    if (month !== currentDate.getMonth() + 1) {
+                        return `${day}/${month}`; // Show day/month for clarity
                     }
-                    return `${day}/${month}`;
+                    return `${day}`; // Otherwise, just show the day
                 });
                 
-                allLabels = [...historicalLabels, ...forecastLabels];
+                // Adjust allLabels to only add new labels not already present
+                const newLabels = forecastLabels.slice(historicalLabels.length);
+                allLabels = [...historicalLabels, ...newLabels];
 
                 const lastHistoricalPoint = historicalPoints.filter(p => p !== null).pop();
                 const predictionLine = [...new Array(historicalPoints.length - 1).fill(null), lastHistoricalPoint, ...forecastData.map(p => p.predicted_value)];
                 const lowerBand = [...new Array(historicalPoints.length - 1).fill(null), lastHistoricalPoint, ...forecastData.map(p => p.lower_bound)];
                 const upperBand = [...new Array(historicalPoints.length - 1).fill(null), lastHistoricalPoint, ...forecastData.map(p => p.upper_bound)];
+                
                 datasets.push({
                     label: 'Forecast', data: predictionLine, borderColor: 'rgba(255, 99, 132, 1)',
                     borderDash: [5, 5], tension: 0.1,
@@ -792,7 +826,23 @@
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: { y: { min: config.yAxisMin, max: config.yAxisMax, title: { display: true, text: 'Value (%)' } }, x: { title: { display: true, text: 'Date' } } },
-                    plugins: { annotation: { annotations: annotations } },
+                    plugins: { 
+                        annotation: { annotations: annotations },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    // Custom tooltip to show full date for clarity
+                                    const pointDate = new Date(currentDate);
+                                    const day = parseInt(context[0].label);
+                                    if (!isNaN(day)) {
+                                       pointDate.setDate(day);
+                                       return pointDate.toDateString();
+                                    }
+                                    return context[0].label;
+                                }
+                            }
+                        }
+                    },
                     onClick: (event, elements) => {
                         if (elements.length > 0) {
                             const pointIndex = elements[0].index;
