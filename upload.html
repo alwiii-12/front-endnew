@@ -401,7 +401,6 @@
             } catch (error) { console.error('Error sending alert:', error); }
         }
 
-        // This function creates the HTML structure for each tab's content.
         function generateTabContentHTML(dataType) {
             const config = dataTypesConfig[dataType];
             return `
@@ -752,6 +751,7 @@
             }
         };
 
+        // --- [THIS IS THE FULLY CORRECTED FUNCTION] ---
         window.updateTrendChart = async function(dataType) {
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
@@ -856,6 +856,41 @@
             let annotations = {};
             annotations['zeroBaseline'] = { type: 'line', yMin: 0, yMax: 0, borderColor: 'rgba(0, 0, 0, 0.8)', borderWidth: 1.5, borderDash: [6, 6] };
             
+            try {
+                const serviceEventsRef = db.collection('service_events').doc(currentUID).collection('events');
+                const querySnapshot = await serviceEventsRef.get();
+                querySnapshot.forEach(doc => {
+                    const dateParts = doc.id.split('-'); // doc.id is 'YYYY-MM-DD'
+                    const eventYear = parseInt(dateParts[0]);
+                    const eventMonth = parseInt(dateParts[1]) - 1; // JS months are 0-indexed
+                    const eventDay = dateParts[2];
+
+                    if (eventYear === currentDate.getFullYear() && eventMonth === currentDate.getMonth()) {
+                        const annotationKey = `serviceDay-${doc.id}`;
+                        annotations[annotationKey] = {
+                            type: 'line',
+                            scaleID: 'x',
+                            value: String(parseInt(eventDay)), // Use the parsed day string
+                            borderColor: 'rgba(220, 53, 69, 0.8)',
+                            borderWidth: 2,
+                            borderDash: [10, 5],
+                            label: {
+                                content: 'Service',
+                                display: true,
+                                position: 'start',
+                                backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                                color: 'white',
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        };
+                    }
+                });
+            } catch (error) {
+                console.error("Error fetching service events for chart annotations:", error);
+            }
+
             const canvasElement = document.getElementById(`trendChart-${dataType}`);
             const config = dataTypesConfig[dataType];
             const ctx = canvasElement.getContext('2d');
