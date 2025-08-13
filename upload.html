@@ -677,11 +677,13 @@
             finally { hideLoader(); }
         });
         
+        // --- [THIS IS THE CORRECTED FUNCTION] ---
         window.validatePrediction = async function(dataType) {
             showLoader();
             const selectedEnergy = document.getElementById(`trendEnergySelect-${dataType}`).value;
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-            
+            const button = document.getElementById(`validateBtn-${dataType}`);
+
             try {
                 const appCheckTokenResponse = await appCheck.getToken(false);
                 const response = await fetch(`${BACKEND_URL}/historical-forecast`, {
@@ -701,18 +703,29 @@
                 }
 
                 const result = await response.json();
-                
                 const chart = instances[dataType].trendChart;
                 if (!chart) return;
-                
-                const historicalData = chart.data.datasets[0].data;
-                const lastHistoricalIndex = historicalData.map((y, i) => ({y, i})).filter(p => p.y !== null).pop()?.i ?? -1;
-                
-                const forecastLine = new Array(lastHistoricalIndex + 1).fill(null);
-                forecastLine.push(...result.forecast.map(p => p.yhat));
-                
-                const actualsLine = new Array(lastHistoricalIndex + 1).fill(null);
-                actualsLine.push(...result.actuals);
+
+                const numDays = chart.data.labels.length;
+
+                const forecastLine = new Array(numDays).fill(null);
+                if (result.forecast) {
+                    result.forecast.forEach((point) => {
+                        const dayIndex = new Date(point.ds).getUTCDate() - 1;
+                        if (dayIndex >= 0 && dayIndex < numDays) {
+                            forecastLine[dayIndex] = point.yhat;
+                        }
+                    });
+                }
+
+                const actualsLine = new Array(numDays).fill(null);
+                if (result.actuals) {
+                    result.actuals.forEach((value, index) => {
+                        if (index < numDays) {
+                            actualsLine[index] = value;
+                        }
+                    });
+                }
 
                 chart.data.datasets.push({
                     label: 'Historical Forecast',
@@ -723,7 +736,7 @@
                 });
 
                 chart.data.datasets.push({
-                    label: 'Next Month Actuals',
+                    label: 'Validation Actuals',
                     data: actualsLine,
                     borderColor: 'rgba(108, 117, 125, 1)',
                     tension: 0.1,
@@ -731,7 +744,6 @@
                 
                 chart.update();
                 
-                const button = document.getElementById(`validateBtn-${dataType}`);
                 if (button) button.disabled = true;
 
             } catch (error) {
@@ -850,13 +862,12 @@
             const ctx = canvasElement.getContext('2d');
             if (instances[dataType].trendChart) instances[dataType].trendChart.destroy();
             
-            // --- [CORRECTED CODE BLOCK] ---
             instances[dataType].trendChart = new Chart(ctx, {
                 type: 'line',
                 data: { labels: allLabels, datasets: datasets },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // Important for fitting chart in its container
+                    maintainAspectRatio: false,
                     scales: {
                         y: {
                             min: config.yAxisMin,
@@ -878,12 +889,11 @@
                             position: 'top',
                         },
                         annotation: {
-                            annotations: annotations // This keeps your zero line and other annotations
+                            annotations: annotations
                         }
                     }
                 }
             });
-            // --- [END OF CORRECTION] ---
         };
         
         function changeMonth(monthIndex) {
