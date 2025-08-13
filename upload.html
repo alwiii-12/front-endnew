@@ -401,7 +401,7 @@
             } catch (error) { console.error('Error sending alert:', error); }
         }
 
-        // [CORRECTED] This function creates the HTML structure for each tab's content.
+        // This function creates the HTML structure for each tab's content.
         function generateTabContentHTML(dataType) {
             const config = dataTypesConfig[dataType];
             return `
@@ -849,11 +849,41 @@
             const config = dataTypesConfig[dataType];
             const ctx = canvasElement.getContext('2d');
             if (instances[dataType].trendChart) instances[dataType].trendChart.destroy();
+            
+            // --- [CORRECTED CODE BLOCK] ---
             instances[dataType].trendChart = new Chart(ctx, {
                 type: 'line',
                 data: { labels: allLabels, datasets: datasets },
-                options: { /* ... options ... */ }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Important for fitting chart in its container
+                    scales: {
+                        y: {
+                            min: config.yAxisMin,
+                            max: config.yAxisMax,
+                            title: {
+                                display: true,
+                                text: 'Deviation (%)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: `Day of Month`
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        annotation: {
+                            annotations: annotations // This keeps your zero line and other annotations
+                        }
+                    }
+                }
             });
+            // --- [END OF CORRECTION] ---
         };
         
         function changeMonth(monthIndex) {
