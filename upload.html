@@ -677,7 +677,6 @@
             finally { hideLoader(); }
         });
         
-        // --- [THIS IS THE CORRECTED FUNCTION] ---
         window.validatePrediction = async function(dataType) {
             showLoader();
             const selectedEnergy = document.getElementById(`trendEnergySelect-${dataType}`).value;
@@ -890,6 +889,30 @@
                         },
                         annotation: {
                             annotations: annotations
+                        }
+                    },
+                    onClick: async (e) => {
+                        const points = instances[dataType].trendChart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+                        if (points.length) {
+                            const firstPoint = points[0];
+                            const dateLabel = instances[dataType].trendChart.data.labels[firstPoint.index];
+                            const selectedEnergy = document.getElementById(`trendEnergySelect-${dataType}`).value;
+                            const fullDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(dateLabel).padStart(2, '0')}`;
+                            const key = `${selectedEnergy}-${fullDate}`;
+                            
+                            const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+                            let existingText = '';
+                            try {
+                                const annotationRef = db.collection('annotations').doc(currentUID).collection(monthKey).doc(key);
+                                const doc = await annotationRef.get();
+                                if (doc.exists) {
+                                    existingText = doc.data().text || '';
+                                }
+                            } catch (error) {
+                                console.error("Error fetching existing annotation:", error);
+                            }
+
+                            showAnnotationModal(key, existingText, selectedEnergy, fullDate);
                         }
                     }
                 }
