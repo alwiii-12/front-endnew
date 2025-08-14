@@ -964,51 +964,39 @@ body.index-page {
     }
 }
 
-/* --- [FIX] Dark Mode Contrast Enhancements --- */
+/* --- [FIX] Final Dark Mode Adjustments --- */
 
-/* Fixes the text color inside the Handsontable grid */
-body.dark .handsontable .htCore td,
-body.dark .handsontable .htCore th {
-    color: #f0f0f0; /* A light grey for all cell text */
+/* Makes section titles visible in dark mode */
+body.dark .summary-box h3, 
+body.dark .trend-chart-section h3 {
+    color: #f0f0f0;
 }
 
-/* Enhances the contrast for status colors (within, warning, out) in dark mode */
+/* --- Force Handsontable to always be light-themed --- */
+body.dark .handsontable .htCore td,
+body.dark .handsontable .htCore th,
+body.dark .handsontable .ht_clone_top th {
+    background-color: #ffffff !important;
+    color: #333333 !important;
+    border-color: #ccc !important;
+}
+
+/* Ensure the first column (Energy) keeps its light grey background */
+body.dark .handsontable .htCore td:first-child,
+body.dark .handsontable .htCore th:first-child {
+    background-color: #f0f0f0 !important;
+}
+
+/* Revert the status colors to their original light theme versions */
 body.dark .handsontable .within {
-    background-color: #1a3c2a !important;
-    color: #8bffbe !important;
+    background-color: var(--ht-within) !important;
+    color: var(--ht-text-within) !important;
 }
 body.dark .handsontable .warning {
-    background-color: #4d3800 !important;
-    color: #ffdead !important;
+    background-color: var(--ht-warning) !important;
+    color: var(--ht-text-warning) !important;
 }
 body.dark .handsontable .out {
-    background-color: #58151c !important;
-    color: #ffb3b8 !important;
-}
-
-/* Fixes the text color in the "Output Summary" box */
-body.dark .summary-box p {
-    color: #ccc;
-}
-body.dark .summary-box span {
-    color: #fff;
-}
-
-/* Fixes the month buttons in the sidebar */
-body.dark #months button {
-    background-color: #444;
-    color: #eee;
-}
-body.dark #months button:hover {
-    background-color: #555;
-}
-body.dark #months button.active {
-    background-color: var(--primary-color);
-    color: var(--text-white);
-}
-
-/* Improves button contrast */
-body.dark .actions-section .save-btn,
-body.dark .actions-section .export-btn {
-    color: var(--text-white);
+    background-color: var(--ht-out) !important;
+    color: var(--ht-text-out) !important;
 }
