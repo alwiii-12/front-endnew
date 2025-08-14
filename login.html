@@ -44,7 +44,7 @@
   </div>
   <a href="index.html" class="home-link">Home</a>
   <div id="notification-container"></div>
-  <div id="loading-overlay"></div>
+  <div id="loading-overlay"><div class="spinner"></div></div>
 
 
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
@@ -171,7 +171,6 @@
                 localStorage.setItem("userRole", data.role);
                 localStorage.setItem("userStatus", data.status);
 
-                // --- [UPDATED] Reverted to the original, direct login flow ---
                 if (data.role === "Admin") {
                     window.location.href = "admin_dashboard.html";
                 } else {
