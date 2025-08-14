@@ -557,7 +557,7 @@
                 hideLoader();
             }
         }
-
+        
         // --- [THIS IS THE CORRECTED FUNCTION] ---
         function updateSummaryAndChart(dataType, data) {
             const config = dataTypesConfig[dataType];
@@ -786,6 +786,7 @@
             }
         };
 
+        // --- [THIS IS THE FULLY CORRECTED FUNCTION] ---
         window.updateTrendChart = async function(dataType) {
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
@@ -930,6 +931,11 @@
             const ctx = canvasElement.getContext('2d');
             if (instances[dataType].trendChart) instances[dataType].trendChart.destroy();
             
+            const isDarkMode = document.body.classList.contains('dark');
+            const legendColor = isDarkMode ? 'white' : '#666';
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const ticksColor = isDarkMode ? '#ddd' : '#666';
+
             instances[dataType].trendChart = new Chart(ctx, {
                 type: 'line',
                 data: { labels: allLabels, datasets: datasets },
@@ -942,19 +948,27 @@
                             max: config.yAxisMax,
                             title: {
                                 display: true,
-                                text: 'Deviation (%)'
-                            }
+                                text: 'Deviation (%)',
+                                color: ticksColor
+                            },
+                            grid: { color: gridColor },
+                            ticks: { color: ticksColor }
                         },
                         x: {
                             title: {
                                 display: true,
-                                text: `Day of Month`
-                            }
+                                text: `Day of Month`,
+                                color: ticksColor
+                            },
+                            grid: { color: gridColor },
+                            ticks: { color: ticksColor }
                         }
                     },
                     plugins: {
                         legend: {
-                            position: 'top',
+                            labels: {
+                                color: legendColor
+                            }
                         },
                         annotation: {
                             annotations: annotations
