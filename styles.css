@@ -841,15 +841,6 @@ body.dark .tab-nav-button.active {
     color: var(--primary-light);
     border-bottom-color: var(--primary-light);
 }
-body.dark .handsontable .htCore td:first-child, body.dark .handsontable .htCore th:first-child {
-    background-color: #3a3a3a !important;
-    color: #ddd !important;
-}
-body.dark .handsontable th, body.dark .handsontable td {
-    background-color: var(--bg-dark-card);
-    color: #eee;
-    border-color: #555;
-}
 body.dark input, body.dark select {
     background-color: #3a3a3a;
     color: #eee;
@@ -1005,4 +996,23 @@ body.dark .handsontable .warning {
 body.dark .handsontable .out {
     background-color: var(--ht-out) !important;
     color: var(--ht-text-out) !important;
+}
+
+/* --- [FIX] Final Dark Mode Visibility Fixes --- */
+
+/* 1. Brighter text for inactive tabs */
+body.dark .tab-nav-button {
+    color: #ddd;
+}
+
+/* 2. Force light text color on main action buttons */
+body.dark .actions-section button {
+    color: white !important;
+}
+
+/* 3. Brighter text for section headings and labels */
+body.dark .energy-selector-container label,
+body.dark .trend-chart-section h3,
+body.dark .summary-box h3 {
+    color: #f0f0f0;
 }
