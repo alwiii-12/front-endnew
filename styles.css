@@ -431,7 +431,6 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     color: var(--text-white);
 }
 
-/* --- FIX FOR MONTH BUTTON HIGHLIGHT --- */
 .sidebar #months button.active {
     background-color: var(--primary-color);
     color: var(--text-white);
@@ -882,7 +881,6 @@ body.index-page {
     max-width: 900px;
     width: 100%;
     padding: 0;
-    /* THIS IS THE FIX: Explicitly set the background color */
     background-color: var(--bg-card);
     border-radius: 16px;
     box-shadow: 0 10px 30px var(--shadow-medium);
@@ -964,4 +962,53 @@ body.index-page {
     .button-group {
         flex-direction: column;
     }
+}
+
+/* --- [FIX] Dark Mode Contrast Enhancements --- */
+
+/* Fixes the text color inside the Handsontable grid */
+body.dark .handsontable .htCore td,
+body.dark .handsontable .htCore th {
+    color: #f0f0f0; /* A light grey for all cell text */
+}
+
+/* Enhances the contrast for status colors (within, warning, out) in dark mode */
+body.dark .handsontable .within {
+    background-color: #1a3c2a !important;
+    color: #8bffbe !important;
+}
+body.dark .handsontable .warning {
+    background-color: #4d3800 !important;
+    color: #ffdead !important;
+}
+body.dark .handsontable .out {
+    background-color: #58151c !important;
+    color: #ffb3b8 !important;
+}
+
+/* Fixes the text color in the "Output Summary" box */
+body.dark .summary-box p {
+    color: #ccc;
+}
+body.dark .summary-box span {
+    color: #fff;
+}
+
+/* Fixes the month buttons in the sidebar */
+body.dark #months button {
+    background-color: #444;
+    color: #eee;
+}
+body.dark #months button:hover {
+    background-color: #555;
+}
+body.dark #months button.active {
+    background-color: var(--primary-color);
+    color: var(--text-white);
+}
+
+/* Improves button contrast */
+body.dark .actions-section .save-btn,
+body.dark .actions-section .export-btn {
+    color: var(--text-white);
 }
