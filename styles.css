@@ -964,7 +964,7 @@ body.index-page {
     }
 }
 
-/* --- [FIX] Final Dark Mode Adjustments --- */
+/* --- [FIX] Final Dark Mode Adjustments (v2) --- */
 
 /* Makes section titles visible in dark mode */
 body.dark .summary-box h3, 
@@ -972,13 +972,19 @@ body.dark .trend-chart-section h3 {
     color: #f0f0f0;
 }
 
-/* --- Force Handsontable to always be light-themed --- */
-body.dark .handsontable .htCore td,
+/* --- Force Handsontable to always be light-themed (with status colors) --- */
 body.dark .handsontable .htCore th,
 body.dark .handsontable .ht_clone_top th {
     background-color: #ffffff !important;
     color: #333333 !important;
     border-color: #ccc !important;
+}
+
+/* Set default text color for cells, but NOT the background */
+body.dark .handsontable .htCore td {
+     color: #333333 !important;
+     border-color: #ccc !important;
+     background-color: #ffffff; /* Default cell background to white */
 }
 
 /* Ensure the first column (Energy) keeps its light grey background */
