@@ -558,6 +558,7 @@
             }
         }
 
+        // --- [THIS IS THE CORRECTED FUNCTION] ---
         function updateSummaryAndChart(dataType, data) {
             const config = dataTypesConfig[dataType];
             let total = 0, within = 0, warning = 0, out = 0;
@@ -578,13 +579,26 @@
             document.getElementById(`out-${dataType}`).textContent = out;
             const ctx = document.getElementById(`summaryChart-${dataType}`).getContext('2d');
             if (instances[dataType].summaryChart) instances[dataType].summaryChart.destroy();
+
+            const legendColor = document.body.classList.contains('dark') ? 'white' : '#666';
+
             instances[dataType].summaryChart = new Chart(ctx, {
                 type: 'pie',
                 data: {
                     labels: ['Within', 'Warning', 'Out of Tolerance'],
                     datasets: [{ data: [within, warning, out], backgroundColor: ['#66cc66', '#ffcc00', '#ff6666'] }]
                 },
-                options: { responsive: true, maintainAspectRatio: true }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: legendColor
+                            }
+                        }
+                    }
+                }
             });
 
             checkForAlerts(dataType, data);
@@ -707,16 +721,21 @@
                 const numDays = chart.data.labels.length;
 
                 const forecastLine = new Array(numDays).fill(null);
+                const lowerBand = new Array(numDays).fill(null);
+                const upperBand = new Array(numDays).fill(null);
+                const actualsLine = new Array(numDays).fill(null);
+
                 if (result.forecast) {
                     result.forecast.forEach((point) => {
                         const dayIndex = new Date(point.ds).getUTCDate() - 1;
                         if (dayIndex >= 0 && dayIndex < numDays) {
                             forecastLine[dayIndex] = point.yhat;
+                            lowerBand[dayIndex] = point.yhat_lower;
+                            upperBand[dayIndex] = point.yhat_upper;
                         }
                     });
                 }
-
-                const actualsLine = new Array(numDays).fill(null);
+                
                 if (result.actuals) {
                     result.actuals.forEach((value, index) => {
                         if (index < numDays) {
@@ -734,6 +753,23 @@
                 });
 
                 chart.data.datasets.push({
+                    label: 'Confidence Interval',
+                    data: upperBand,
+                    fill: '+1',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'transparent',
+                    pointRadius: 0,
+                });
+
+                chart.data.datasets.push({
+                    label: 'Confidence Interval (Lower)',
+                    data: lowerBand,
+                    fill: false,
+                    borderColor: 'transparent',
+                    pointRadius: 0,
+                });
+                
+                chart.data.datasets.push({
                     label: 'Validation Actuals',
                     data: actualsLine,
                     borderColor: 'rgba(108, 117, 125, 1)',
@@ -741,7 +777,6 @@
                 });
                 
                 chart.update();
-                
                 if (button) button.disabled = true;
 
             } catch (error) {
@@ -751,7 +786,6 @@
             }
         };
 
-        // --- [THIS IS THE FULLY CORRECTED FUNCTION] ---
         window.updateTrendChart = async function(dataType) {
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
