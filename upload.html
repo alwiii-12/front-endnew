@@ -875,8 +875,8 @@
             }
             
             const trendSection = document.getElementById(`trend-section-${dataType}`);
-            let existingBtn = trendSection.querySelector('.validate-btn, .diagnose-btn');
-            if (existingBtn) existingBtn.remove();
+            let existingBtns = trendSection.querySelectorAll('.validate-btn, .diagnose-btn');
+            existingBtns.forEach(btn => btn.remove());
             
             const isPastMonth = lastDataMonth ? viewingMonthKey < lastDataMonth : false;
             if (hasData && isPastMonth) {
@@ -886,6 +886,17 @@
                 validateBtn.innerHTML = '<i class="fas fa-history"></i> Validate Prediction';
                 validateBtn.onclick = () => validatePrediction(dataType);
                 trendSection.prepend(validateBtn);
+            }
+            
+            // --- [NEW] ADD THE RE-FORECAST BUTTON FOR THE CURRENT MONTH ---
+            const isLiveMonth = viewingMonthKey === lastDataMonth;
+            if (hasData && isLiveMonth) {
+                const reForecastBtn = document.createElement('button');
+                reForecastBtn.className = 'diagnose-btn'; // Using diagnose-btn style for a different color
+                reForecastBtn.id = `reforecastBtn-${dataType}`;
+                reForecastBtn.innerHTML = '<i class="fas fa-magic"></i> Re-Forecast';
+                reForecastBtn.onclick = () => reForecast(dataType);
+                trendSection.prepend(reForecastBtn);
             }
             
             let annotations = {};
@@ -1002,6 +1013,71 @@
             });
         };
         
+        // --- [NEW] FUNCTION TO HANDLE REAL-TIME RE-FORECASTING ---
+        window.reForecast = async function(dataType) {
+            showLoader();
+            const selectedEnergy = document.getElementById(`trendEnergySelect-${dataType}`).value;
+            const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            const chart = instances[dataType].trendChart;
+
+            // Remove any previous re-forecast line before creating a new one
+            const reforecastIndex = chart.data.datasets.findIndex(d => d.label === 'Re-Forecast');
+            if (reforecastIndex > -1) {
+                chart.data.datasets.splice(reforecastIndex, 1);
+            }
+
+            try {
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                const response = await fetch(`${BACKEND_URL}/re-forecast`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckTokenResponse.token },
+                    body: JSON.stringify({
+                        uid: currentUID,
+                        month: monthKey,
+                        dataType: dataType,
+                        energy: selectedEnergy
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to generate re-forecast.');
+                }
+
+                const result = await response.json();
+                if (!result.forecast || result.forecast.length === 0) {
+                    hideLoader();
+                    return; // Nothing to forecast
+                }
+
+                // Find the last actual data point to connect the new line smoothly
+                const historicalData = chart.data.datasets[0].data;
+                const lastDataPointIndex = historicalData.map((y, i) => ({y, i})).filter(p => p.y !== null).pop()?.i ?? -1;
+
+                // Create the new dataset, padding with nulls so it starts at the right place
+                const reforecastLine = new Array(lastDataPointIndex).fill(null);
+                reforecastLine.push(historicalData[lastDataPointIndex]); // Connect to the last point
+                reforecastLine.push(...result.forecast.map(p => p.yhat));
+
+                // Add the new line to the chart with a distinct color
+                chart.data.datasets.push({
+                    label: 'Re-Forecast',
+                    data: reforecastLine,
+                    borderColor: 'rgba(75, 192, 192, 1)', // A nice teal color
+                    backgroundColor: 'rgba(75, 192, 192, 1)',
+                    borderDash: [5, 5], // Dashed line to distinguish it
+                    tension: 0.1,
+                });
+                
+                chart.update();
+
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            } finally {
+                hideLoader();
+            }
+        };
+
         function changeMonth(monthIndex) {
             currentDate.setMonth(monthIndex);
             header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
