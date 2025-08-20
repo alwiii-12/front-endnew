@@ -111,7 +111,6 @@
         .performance-nav button {
             padding: 5px 10px;
         }
-        /* [NEW] Styles for the improved calendar dropdowns */
         .performance-nav select {
             border: 1px solid var(--border-color);
             padding: 4px 8px;
@@ -159,11 +158,8 @@
                 <div class="performance-header">
                     <h2 style="margin: 0;">Hospital Performance</h2>
                     <div class="performance-nav">
-                        <button id="prev-performance-month">&lt;</button>
-                        <!-- [NEW] Separate Month and Year dropdowns -->
                         <select id="performance-month-select"></select>
                         <select id="performance-year-select"></select>
-                        <button id="next-performance-month">&gt;</button>
                     </div>
                 </div>
                 <div class="user-table-container">
@@ -669,7 +665,6 @@
             }
         }
         
-        // [NEW] Function to set up the new calendar controls
         function setupPerformanceNav() {
             const currentYear = new Date().getFullYear();
             for (let i = currentYear; i >= currentYear - 5; i--) {
@@ -682,16 +677,6 @@
 
             performanceYearSelect.value = performanceDate.getFullYear();
             performanceMonthSelect.value = performanceDate.getMonth() + 1;
-
-            document.getElementById('prev-performance-month').addEventListener('click', () => {
-                performanceDate.setMonth(performanceDate.getMonth() - 1);
-                updatePerformanceView();
-            });
-
-            document.getElementById('next-performance-month').addEventListener('click', () => {
-                performanceDate.setMonth(performanceDate.getMonth() + 1);
-                updatePerformanceView();
-            });
 
             performanceYearSelect.addEventListener('change', updatePerformanceView);
             performanceMonthSelect.addEventListener('change', updatePerformanceView);
