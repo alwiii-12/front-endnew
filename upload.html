@@ -817,7 +817,7 @@
             }];
             let allLabels = [...historicalLabels];
 
-            if (hasData) { // Fetch predictions regardless of whether it's the live month or not
+            if (hasData) { 
                 let forecastData = [];
                 try {
                     const appCheckTokenResponse = await appCheck.getToken(false);
@@ -829,8 +829,6 @@
                 } catch (e) { console.error("Could not fetch predictions", e); }
                 
                 if (forecastData.length > 0) {
-                    const lastHistoricalPointIndex = historicalPoints.map((y, i) => ({y, i})).filter(p => p.y !== null).pop()?.i ?? -1;
-                    
                     const predictionLine = new Array(historicalPoints.length).fill(null);
                     forecastData.forEach(p => {
                         const dayIndex = new Date(p.date).getUTCDate() - 1;
@@ -922,6 +920,45 @@
                 console.error("Error fetching service events for chart annotations:", error);
             }
 
+            // --- [NEW] FETCH AND DISPLAY TEXT NOTE ANNOTATIONS ---
+            try {
+                const notesSnapshot = await db.collection('annotations').doc(currentUID).collection(viewingMonthKey)
+                    .where('energy', '==', selectedEnergy)
+                    .get();
+                    
+                notesSnapshot.forEach(doc => {
+                    const noteData = doc.data();
+                    const noteKey = doc.id; // e.g., "6X-2025-08-08"
+                    const dateParts = noteKey.split('-');
+                    const day = parseInt(dateParts[3]);
+                    
+                    // Find the corresponding y-value for the annotation
+                    const yValue = historicalPoints[day - 1];
+
+                    if (noteData.text && yValue !== null) {
+                        annotations[noteKey] = {
+                            type: 'point',
+                            xValue: day,
+                            yValue: yValue,
+                            backgroundColor: 'rgba(0, 123, 255, 0.7)',
+                            radius: 5,
+                            label: {
+                                content: noteData.text,
+                                display: 'auto', // Show on hover
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                color: 'white',
+                                padding: 6,
+                                borderRadius: 6,
+                                yAdjust: -15
+                            }
+                        };
+                    }
+                });
+            } catch (error) {
+                console.error("Error fetching text notes for chart:", error);
+            }
+            // --- [END NEW] ---
+
             const canvasElement = document.getElementById(`trendChart-${dataType}`);
             const config = dataTypesConfig[dataType];
             const ctx = canvasElement.getContext('2d');
@@ -998,7 +1035,6 @@
             });
         };
         
-        // --- [MODIFIED] LIVE FORECAST UPDATE FUNCTION ---
         window.updateLiveForecast = async function(dataType) {
             showLoader();
             const selectedEnergy = document.getElementById(`trendEnergySelect-${dataType}`).value;
@@ -1022,8 +1058,6 @@
                     throw new Error(error.error || 'Failed to update live forecast.');
                 }
 
-                // After the backend confirms the forecast is updated and saved,
-                // we just need to refresh the chart to pull the new data.
                 await updateTrendChart(dataType);
 
             } catch (error) {
