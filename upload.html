@@ -816,15 +816,18 @@
                 tension: 0.1, spanGaps: true
             }];
             let allLabels = [...historicalLabels];
+            let forecastData = []; // Define forecastData here to be accessible later
 
             if (hasData) { 
-                let forecastData = [];
                 try {
                     const appCheckTokenResponse = await appCheck.getToken(false);
                     const token = appCheckTokenResponse.token;
                     
                     const res = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}&month=${viewingMonthKey}`, { headers: { "X-Firebase-AppCheck": token } });
-                    if (res.ok) forecastData = (await res.json()).forecast || [];
+                    if (res.ok) {
+                        const forecastResult = await res.json();
+                        forecastData = forecastResult.forecast || [];
+                    }
 
                 } catch (e) { console.error("Could not fetch predictions", e); }
                 
@@ -920,7 +923,6 @@
                 console.error("Error fetching service events for chart annotations:", error);
             }
 
-            // --- [NEW] FETCH AND DISPLAY TEXT NOTE ANNOTATIONS ---
             try {
                 const notesSnapshot = await db.collection('annotations').doc(currentUID).collection(viewingMonthKey)
                     .where('energy', '==', selectedEnergy)
@@ -928,11 +930,9 @@
                     
                 notesSnapshot.forEach(doc => {
                     const noteData = doc.data();
-                    const noteKey = doc.id; // e.g., "6X-2025-08-08"
+                    const noteKey = doc.id; 
                     const dateParts = noteKey.split('-');
                     const day = parseInt(dateParts[3]);
-                    
-                    // Find the corresponding y-value for the annotation
                     const yValue = historicalPoints[day - 1];
 
                     if (noteData.text && yValue !== null) {
@@ -944,7 +944,7 @@
                             radius: 5,
                             label: {
                                 content: noteData.text,
-                                display: 'auto', // Show on hover
+                                display: 'auto', 
                                 backgroundColor: 'rgba(0, 0, 0, 0.8)',
                                 color: 'white',
                                 padding: 6,
@@ -956,6 +956,45 @@
                 });
             } catch (error) {
                 console.error("Error fetching text notes for chart:", error);
+            }
+
+            // --- [NEW] COMPARE ACTUALS TO FORECAST AND CREATE "RED FLAG" ANNOTATIONS ---
+            if (forecastData.length > 0) {
+                historicalPoints.forEach((actualValue, index) => {
+                    if (actualValue === null) return; // Skip days with no actual data
+
+                    const day = index + 1;
+                    const forecastForDay = forecastData.find(f => new Date(f.date).getUTCDate() === day);
+
+                    if (forecastForDay) {
+                        const lowerBound = forecastForDay.lower_bound;
+                        const upperBound = forecastForDay.upper_bound;
+
+                        if (actualValue < lowerBound || actualValue > upperBound) {
+                            const flagKey = `redflag-${day}`;
+                            const isHigh = actualValue > upperBound;
+                            
+                            annotations[flagKey] = {
+                                type: 'point',
+                                xValue: day,
+                                yValue: actualValue,
+                                backgroundColor: 'rgba(220, 53, 69, 0.9)',
+                                radius: 6,
+                                pointStyle: 'triangle',
+                                rotation: isHigh ? 0 : 180,
+                                label: {
+                                    content: `Flag: Actual (${actualValue.toFixed(2)}%) is outside interval [${lowerBound.toFixed(2)}, ${upperBound.toFixed(2)}]`,
+                                    display: 'auto',
+                                    backgroundColor: 'rgba(220, 53, 69, 0.9)',
+                                    color: 'white',
+                                    padding: 6,
+                                    borderRadius: 6,
+                                    yAdjust: isHigh ? -15 : 15
+                                }
+                            };
+                        }
+                    }
+                });
             }
             // --- [END NEW] ---
 
