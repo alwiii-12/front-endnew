@@ -77,22 +77,55 @@
         color: #007bff;
         text-align: center;
     }
-    #months {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    #months button {
-        width: 100%;
-        padding: 12px 0;
-        font-size: 1em;
-    }
-
+    
     .main {
         flex-grow: 1;
         padding: 20px;
-        overflow: auto; /* This line fixes the layout issue */
+        overflow: auto;
     }
+    
+    /* --- STYLES FOR THE TOP DATE SELECTOR BAR --- */
+    .date-selector-bar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding: 10px;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .year-nav {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    #months {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    #months button {
+        width: auto;
+        padding: 8px 12px;
+        font-size: 0.9em;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background-color: transparent;
+    }
+    #months button:hover {
+        background-color: var(--primary-light);
+        border-color: var(--primary-color);
+    }
+    #months button.active {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    /* --- END STYLES --- */
+
     .tab-nav {
         display: flex;
         border-bottom: 2px solid #ccc;
@@ -133,117 +166,13 @@
         text-align: center;
         margin-top: 20px;
     }
-    .actions-section button {
-        padding: 10px 15px;
-        margin: 0 5px;
-        border-radius: 5px;
-        border: none;
-        cursor: pointer;
-        color: white;
-    }
-    .save-btn { background-color: #007bff; }
-    .export-btn { background-color: #28a745; }
-    
-    .chart-wrapper {
-        position: relative;
-        height: 40vh;
-        width: 100%;
-    }
-    .energy-selector-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 15px;
-        margin-bottom: 15px;
-    }
-    .energy-selector-container select {
-        max-width: 250px;
-        margin: 0;
-    }
-
-    #chat-bubble {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
     .trend-chart-section {
-        position: relative; /* Needed for diagnose button */
+        position: relative;
         padding: 20px;
         border: 1px solid var(--border-color);
         border-radius: 16px;
         background-color: var(--bg-card);
         box-shadow: 0 4px 12px var(--shadow-light);
-    }
-    #annotationModal .modal-buttons button {
-        padding: 12px 25px;
-        font-size: 1em;
-    }
-    #annotationModal textarea {
-        width: 100%;
-        min-height: 120px;
-        resize: vertical;
-    }
-    #deleteAnnotationBtn {
-        background-color: var(--status-error);
-    }
-
-    /* --- Styles for Diagnostics Feature & Blinking Animation --- */
-    .diagnose-btn, .validate-btn {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        color: var(--text-main);
-        padding: 8px 12px;
-        font-size: 0.9em;
-        border-radius: 6px;
-        z-index: 10;
-        border: none;
-        cursor: pointer;
-    }
-    .diagnose-btn { background-color: var(--status-warning); }
-    .validate-btn { background-color: #17a2b8; color: white; }
-    
-    .diagnose-btn:hover { background-color: #ffca2c; }
-    .validate-btn:hover { background-color: #138496; }
-
-    .blinking-btn {
-        animation: blink-animation 1.5s infinite;
-    }
-    @keyframes blink-animation {
-        0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
-        50% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
-    }
-
-    #chat-options-area {
-        display: none; /* Hidden by default */
-        flex-wrap: wrap;
-        gap: 10px;
-        padding: 10px 15px;
-        border-top: 1px solid var(--border-color);
-    }
-    .chat-option-btn {
-        flex-grow: 1;
-        background-color: var(--primary-light);
-        color: var(--primary-dark);
-        padding: 10px;
-        border-radius: 8px;
-        font-weight: 600;
-        border: none;
-        cursor: pointer;
-    }
-    .chat-option-btn:hover {
-        background-color: var(--primary-color);
-        color: var(--text-white);
-    }
-    .service-day-checkbox {
-        margin-top: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        font-weight: 600;
-        color: var(--primary-dark);
     }
   </style>
 </head>
@@ -251,24 +180,28 @@
   <div class="topbar">
     <div id="hospitalInfoBox" class="hospital-info-box">Hospital: <span id="hospitalName"></span></div>
     <div class="header-buttons">
-        <a href="my_profile.html" id="myProfileBtn" class="button">My Profile</a>
+        <a href="my_profile.html" class="button">My Profile</a>
         <button id="logoutBtn" title="Logout" aria-label="Logout" class="header-btn" style="background-color: var(--status-error); color: white;"><i class="fas fa-sign-out-alt"></i></button>
     </div>
   </div>
   <div class="content">
     <div class="sidebar">
       <h2>LINAC QA</h2>
-     <div class="year-nav">
-        <button id="prevYearBtn" aria-label="Previous Year">&lt;</button>
-        <span id="year">2025</span>
-        <button id="nextYearBtn" aria-label="Next Year">&gt;</button>
-    </div>
-      <div id="months"></div>
       <label style="margin-top: auto; padding-top: 20px;"><input type="checkbox" id="darkToggle"> Dark Mode</label>
       <p>© 2025 QA Dashboard</p>
     </div>
     <div class="main">
       <h1 id="header" style="text-align: center;"></h1>
+
+      <div class="date-selector-bar">
+        <div class="year-nav">
+            <button id="prevYearBtn" aria-label="Previous Year">&lt;</button>
+            <span id="year">2025</span>
+            <button id="nextYearBtn" aria-label="Next Year">&gt;</button>
+        </div>
+        <div id="months"></div>
+      </div>
+
       <div class="tab-nav">
         <button class="tab-nav-button active" onclick="switchTab('output')">Output</button>
         <button class="tab-nav-button" onclick="switchTab('flatness')">Flatness</button>
@@ -281,6 +214,7 @@
       <div id="tab-content-crossline" class="tab-content"></div>
     </div>
   </div>
+  
   <div id="loading-overlay"><div class="spinner"></div></div>
   <div id="chat-bubble"><i class="fas fa-comment-dots"></i></div>
   <div id="chat-window">
@@ -816,7 +750,7 @@
                 tension: 0.1, spanGaps: true
             }];
             let allLabels = [...historicalLabels];
-            let forecastData = []; // Define forecastData here to be accessible later
+            let forecastData = []; 
 
             if (hasData) { 
                 try {
@@ -958,10 +892,10 @@
                 console.error("Error fetching text notes for chart:", error);
             }
 
-            // --- [NEW] COMPARE ACTUALS TO FORECAST AND CREATE "RED FLAG" ANNOTATIONS ---
+            // --- [MODIFIED] "RED FLAG" ANNOTATIONS LOGIC WITH FIX ---
             if (forecastData.length > 0) {
                 historicalPoints.forEach((actualValue, index) => {
-                    if (actualValue === null) return; // Skip days with no actual data
+                    if (actualValue === null) return; 
 
                     const day = index + 1;
                     const forecastForDay = forecastData.find(f => new Date(f.date).getUTCDate() === day);
@@ -976,7 +910,7 @@
                             
                             annotations[flagKey] = {
                                 type: 'point',
-                                xValue: day,
+                                xValue: day, // This correctly targets the day of the deviation
                                 yValue: actualValue,
                                 backgroundColor: 'rgba(220, 53, 69, 0.9)',
                                 radius: 6,
@@ -996,7 +930,7 @@
                     }
                 });
             }
-            // --- [END NEW] ---
+            // --- [END MODIFICATION] ---
 
             const canvasElement = document.getElementById(`trendChart-${dataType}`);
             const config = dataTypesConfig[dataType];
@@ -1197,4 +1131,4 @@
     });
   </script>
 </body>
-</html>
+</ht
