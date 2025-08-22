@@ -248,7 +248,6 @@
   </style>
 </head>
 <body>
-  <h1>VERSION TEST - IF YOU SEE THIS, THE NEW CODE IS LIVE</h1>
   <div class="topbar">
     <div id="hospitalInfoBox" class="hospital-info-box">Hospital: <span id="hospitalName"></span></div>
     <div class="header-buttons">
@@ -819,6 +818,11 @@
             let allLabels = [...historicalLabels];
             let forecastData = [];
 
+            // --- ADD THESE TWO LINES FOR DEBUGGING ---
+            console.log("DEBUG - Historical Points Array:", historicalPoints);
+            console.log("DEBUG - Forecast Data (before fetch):", forecastData);
+            // -----------------------------------------
+
             if (hasData) { 
                 try {
                     const appCheckTokenResponse = await appCheck.getToken(false);
@@ -828,6 +832,10 @@
                     if (res.ok) {
                         const forecastResult = await res.json();
                         forecastData = forecastResult.forecast || [];
+                        
+                        // --- ADD THIS LINE FOR DEBUGGING ---
+                        console.log("DEBUG - Forecast Data (after fetch):", forecastData);
+                        // -------------------------------------
                     }
 
                 } catch (e) { console.error("Could not fetch predictions", e); }
