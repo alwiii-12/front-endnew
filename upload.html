@@ -958,19 +958,22 @@
                 console.error("Error fetching text notes for chart:", error);
             }
 
-            // --- [NEW] COMPARE ACTUALS TO FORECAST AND CREATE "RED FLAG" ANNOTATIONS ---
+            // --- [CORRECTED] COMPARE ACTUALS TO FORECAST AND CREATE "RED FLAG" ANNOTATIONS ---
             if (forecastData.length > 0) {
                 historicalPoints.forEach((actualValue, index) => {
-                    if (actualValue === null) return; // Skip days with no actual data
-
                     const day = index + 1;
                     const forecastForDay = forecastData.find(f => new Date(f.date).getUTCDate() === day);
 
-                    if (forecastForDay) {
+                    // **MODIFIED LOGIC**
+                    // Only proceed if a valid historical number AND a forecast exist for this day.
+                    if (actualValue !== null && isFinite(actualValue) && forecastForDay) {
+                        
                         const lowerBound = forecastForDay.lower_bound;
                         const upperBound = forecastForDay.upper_bound;
 
+                        // Now, check if the valid actual value is outside the bounds.
                         if (actualValue < lowerBound || actualValue > upperBound) {
+                            
                             const flagKey = `redflag-${day}`;
                             const isHigh = actualValue > upperBound;
                             
@@ -996,7 +999,6 @@
                     }
                 });
             }
-            // --- [END NEW] ---
 
             const canvasElement = document.getElementById(`trendChart-${dataType}`);
             const config = dataTypesConfig[dataType];
