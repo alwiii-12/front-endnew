@@ -816,7 +816,7 @@
                 tension: 0.1, spanGaps: true
             }];
             let allLabels = [...historicalLabels];
-            let forecastData = []; // Define forecastData here to be accessible later
+            let forecastData = [];
 
             if (hasData) { 
                 try {
@@ -958,54 +958,40 @@
                 console.error("Error fetching text notes for chart:", error);
             }
 
-            // --- [CORRECTED v2] COMPARE ACTUALS TO FORECAST AND CREATE "RED FLAG" ANNOTATIONS ---
+            // --- [NEW APPROACH] Create a separate dataset for red flags ---
             if (forecastData.length > 0) {
-                
-                // We create a filtered list of only the data points we need to check.
-                const checkableDataPoints = historicalPoints.map((actualValue, index) => {
+                const redFlagPoints = historicalPoints.map((actualValue, index) => {
                     const day = index + 1;
                     const forecastForDay = forecastData.find(f => new Date(f.date).getUTCDate() === day);
 
-                    // A point is "checkable" only if it has a valid number AND a forecast.
                     if (actualValue !== null && isFinite(actualValue) && forecastForDay) {
-                        return {
-                            day: day,
-                            actual: actualValue,
-                            forecast: forecastForDay
-                        };
+                        const lowerBound = forecastForDay.lower_bound;
+                        const upperBound = forecastForDay.upper_bound;
+                        if (actualValue < lowerBound || actualValue > upperBound) {
+                            return actualValue; // This value is a red flag
+                        }
                     }
-                    return null;
-                }).filter(point => point !== null); // Filter out all the null entries.
+                    return null; // This day is not a red flag
+                });
 
-                // Now, we can iterate over a clean list of valid points to check.
-                checkableDataPoints.forEach(point => {
-                    const lowerBound = point.forecast.lower_bound;
-                    const upperBound = point.forecast.upper_bound;
-
-                    if (point.actual < lowerBound || point.actual > upperBound) {
-                        
-                        const flagKey = `redflag-${point.day}`;
-                        const isHigh = point.actual > upperBound;
-                        
-                        annotations[flagKey] = {
-                            type: 'point',
-                            xValue: point.day,
-                            yValue: point.actual,
-                            backgroundColor: 'rgba(220, 53, 69, 0.9)',
-                            radius: 6,
-                            pointStyle: 'triangle',
-                            rotation: isHigh ? 0 : 180,
-                            label: {
-                                content: `Flag: Actual (${point.actual.toFixed(2)}%) is outside interval [${lowerBound.toFixed(2)}, ${upperBound.toFixed(2)}]`,
-                                display: 'auto',
-                                backgroundColor: 'rgba(220, 53, 69, 0.9)',
-                                color: 'white',
-                                padding: 6,
-                                borderRadius: 6,
-                                yAdjust: isHigh ? -15 : 15
-                            }
-                        };
-                    }
+                // Add the new dataset to the chart
+                datasets.push({
+                    label: 'Flagged Deviation',
+                    data: redFlagPoints,
+                    pointStyle: 'triangle',
+                    radius: 8,
+                    rotation: (context) => {
+                        // We need to find the forecast for this point to determine rotation
+                        const day = context.dataIndex + 1;
+                        const forecastForDay = forecastData.find(f => new Date(f.date).getUTCDate() === day);
+                        if (forecastForDay && context.raw > forecastForDay.upper_bound) {
+                            return 0; // Point up if high
+                        }
+                        return 180; // Point down if low
+                    },
+                    backgroundColor: 'rgba(220, 53, 69, 0.9)',
+                    borderColor: 'rgba(220, 53, 69, 0.9)',
+                    showLine: false
                 });
             }
 
@@ -1055,6 +1041,28 @@
                         },
                         annotation: {
                             annotations: annotations
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toFixed(2) + '%';
+                                    }
+                                    // Add extra info for flagged points
+                                    if (context.dataset.label === 'Flagged Deviation') {
+                                        const day = context.dataIndex + 1;
+                                        const forecastForDay = forecastData.find(f => new Date(f.date).getUTCDate() === day);
+                                        if (forecastForDay) {
+                                            label += ` (Interval: [${forecastForDay.lower_bound.toFixed(2)}, ${forecastForDay.upper_bound.toFixed(2)}])`;
+                                        }
+                                    }
+                                    return label;
+                                }
+                            }
                         }
                     },
                     onClick: async (e) => {
