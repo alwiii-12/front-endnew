@@ -958,11 +958,12 @@
                 console.error("Error fetching text notes for chart:", error);
             }
 
-            // --- [NEW APPROACH] Create a separate dataset for red flags ---
+            // --- [FINAL CORRECTED APPROACH] Create a separate dataset for red flags ---
             if (forecastData.length > 0) {
                 const redFlagPoints = historicalPoints.map((actualValue, index) => {
                     const day = index + 1;
-                    const forecastForDay = forecastData.find(f => new Date(f.date).getUTCDate() === day);
+                    // **TIMEZONE FIX IS HERE**
+                    const forecastForDay = forecastData.find(f => new Date(f.date + 'T00:00:00Z').getUTCDate() === day);
 
                     if (actualValue !== null && isFinite(actualValue) && forecastForDay) {
                         const lowerBound = forecastForDay.lower_bound;
@@ -981,9 +982,9 @@
                     pointStyle: 'triangle',
                     radius: 8,
                     rotation: (context) => {
-                        // We need to find the forecast for this point to determine rotation
                         const day = context.dataIndex + 1;
-                        const forecastForDay = forecastData.find(f => new Date(f.date).getUTCDate() === day);
+                        // **TIMEZONE FIX IS HERE**
+                        const forecastForDay = forecastData.find(f => new Date(f.date + 'T00:00:00Z').getUTCDate() === day);
                         if (forecastForDay && context.raw > forecastForDay.upper_bound) {
                             return 0; // Point up if high
                         }
@@ -1052,10 +1053,10 @@
                                     if (context.parsed.y !== null) {
                                         label += context.parsed.y.toFixed(2) + '%';
                                     }
-                                    // Add extra info for flagged points
                                     if (context.dataset.label === 'Flagged Deviation') {
                                         const day = context.dataIndex + 1;
-                                        const forecastForDay = forecastData.find(f => new Date(f.date).getUTCDate() === day);
+                                        // **TIMEZONE FIX IS HERE**
+                                        const forecastForDay = forecastData.find(f => new Date(f.date + 'T00:00:00Z').getUTCDate() === day);
                                         if (forecastForDay) {
                                             label += ` (Interval: [${forecastForDay.lower_bound.toFixed(2)}, ${forecastForDay.upper_bound.toFixed(2)}])`;
                                         }
