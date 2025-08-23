@@ -187,7 +187,6 @@
         background-color: var(--status-error);
     }
 
-    /* --- [START] CSS FIX FOR OVERLAPPING BUTTONS --- */
     .chart-actions-container {
         position: absolute;
         top: 15px;
@@ -198,7 +197,7 @@
     }
 
     .diagnose-btn, .validate-btn {
-        position: static; /* This is changed from 'absolute' */
+        position: static;
         color: var(--text-main);
         padding: 8px 12px;
         font-size: 0.9em;
@@ -207,7 +206,6 @@
         border: none;
         cursor: pointer;
     }
-    /* --- [END] CSS FIX FOR OVERLAPPING BUTTONS --- */
 
     .diagnose-btn { background-color: var(--status-warning); }
     .validate-btn { background-color: #17a2b8; color: white; }
@@ -727,11 +725,15 @@
                 }
 
                 const result = await response.json();
+                
                 const chart = instances[dataType].trendChart;
                 if (!chart) return;
 
-                const numDays = chart.data.labels.length;
+                // Remove the old 'Live Forecast' datasets before adding the new ones
+                const labelsToRemove = ['Forecast', 'Confidence Interval', 'Confidence Interval (Lower)'];
+                chart.data.datasets = chart.data.datasets.filter(dataset => !labelsToRemove.includes(dataset.label));
 
+                const numDays = chart.data.labels.length;
                 const forecastLine = new Array(numDays).fill(null);
                 const lowerBand = new Array(numDays).fill(null);
                 const upperBand = new Array(numDays).fill(null);
