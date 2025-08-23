@@ -729,7 +729,6 @@
                 const chart = instances[dataType].trendChart;
                 if (!chart) return;
 
-                // Remove the old 'Live Forecast' datasets before adding the new ones
                 const labelsToRemove = ['Forecast', 'Confidence Interval', 'Confidence Interval (Lower)'];
                 chart.data.datasets = chart.data.datasets.filter(dataset => !labelsToRemove.includes(dataset.label));
 
@@ -830,25 +829,7 @@
             let allLabels = [...historicalLabels];
             let forecastData = [];
 
-            if (hasData && isPastMonth) {
-                try {
-                    const appCheckTokenResponse = await appCheck.getToken(false);
-                    const response = await fetch(`${BACKEND_URL}/historical-forecast`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckTokenResponse.token },
-                        body: JSON.stringify({ uid: currentUID, month: viewingMonthKey, dataType: dataType, energy: selectedEnergy })
-                    });
-                    if (response.ok) {
-                        const result = await response.json();
-                        forecastData = result.forecast.map(p => ({
-                            date: p.ds.substring(0, 10),
-                            predicted_value: p.yhat,
-                            lower_bound: p.yhat_lower,
-                            upper_bound: p.yhat_upper
-                        }));
-                    }
-                } catch (e) { console.error("Could not fetch historical forecast", e); }
-            } else if (hasData) { 
+            if (hasData && isViewingLiveMonth) { 
                 try {
                     const appCheckTokenResponse = await appCheck.getToken(false);
                     const token = appCheckTokenResponse.token;
@@ -894,24 +875,28 @@
             let existingActions = trendSection.querySelector('.chart-actions-container');
             if (existingActions) existingActions.remove();
 
-            if (hasData && isViewingLiveMonth) {
-                const actionsContainer = document.createElement('div');
-                actionsContainer.className = 'chart-actions-container';
+            const actionsContainer = document.createElement('div');
+            actionsContainer.className = 'chart-actions-container';
 
+            if (hasData && isViewingLiveMonth) {
                 const updateBtn = document.createElement('button');
                 updateBtn.className = 'diagnose-btn';
                 updateBtn.id = `updateForecastBtn-${dataType}`;
                 updateBtn.innerHTML = '<i class="fas fa-magic"></i> Update Live Forecast';
                 updateBtn.onclick = () => updateLiveForecast(dataType);
                 actionsContainer.appendChild(updateBtn);
-                
+            }
+
+            if (hasData && isPastMonth) {
                 const validateBtn = document.createElement('button');
                 validateBtn.className = 'validate-btn';
                 validateBtn.id = `validateBtn-${dataType}`;
                 validateBtn.innerHTML = '<i class="fas fa-history"></i> Validate Prediction';
                 validateBtn.onclick = () => validatePrediction(dataType);
                 actionsContainer.appendChild(validateBtn);
-
+            }
+            
+            if (actionsContainer.hasChildNodes()) {
                 trendSection.prepend(actionsContainer);
             }
             
