@@ -187,11 +187,18 @@
         background-color: var(--status-error);
     }
 
-    /* --- Styles for Diagnostics Feature & Blinking Animation --- */
-    .diagnose-btn, .validate-btn {
+    /* --- [START] CSS FIX FOR OVERLAPPING BUTTONS --- */
+    .chart-actions-container {
         position: absolute;
         top: 15px;
         right: 15px;
+        display: flex;
+        gap: 10px;
+        z-index: 10;
+    }
+
+    .diagnose-btn, .validate-btn {
+        position: static; /* This is changed from 'absolute' */
         color: var(--text-main);
         padding: 8px 12px;
         font-size: 0.9em;
@@ -200,6 +207,8 @@
         border: none;
         cursor: pointer;
     }
+    /* --- [END] CSS FIX FOR OVERLAPPING BUTTONS --- */
+
     .diagnose-btn { background-color: var(--status-warning); }
     .validate-btn { background-color: #17a2b8; color: white; }
     
@@ -819,9 +828,7 @@
             let allLabels = [...historicalLabels];
             let forecastData = [];
 
-            // [START] REVISED FORECAST FETCHING LOGIC
             if (hasData && isPastMonth) {
-                // If it's a past month, run the historical validation automatically
                 try {
                     const appCheckTokenResponse = await appCheck.getToken(false);
                     const response = await fetch(`${BACKEND_URL}/historical-forecast`, {
@@ -831,7 +838,6 @@
                     });
                     if (response.ok) {
                         const result = await response.json();
-                        // Repopulate forecastData with the correct historical forecast
                         forecastData = result.forecast.map(p => ({
                             date: p.ds.substring(0, 10),
                             predicted_value: p.yhat,
@@ -841,7 +847,6 @@
                     }
                 } catch (e) { console.error("Could not fetch historical forecast", e); }
             } else if (hasData) { 
-                // This is the original logic for the current or future month's live forecast
                 try {
                     const appCheckTokenResponse = await appCheck.getToken(false);
                     const token = appCheckTokenResponse.token;
@@ -852,12 +857,11 @@
                     }
                 } catch (e) { console.error("Could not fetch predictions", e); }
             }
-            // [END] REVISED FORECAST FETCHING LOGIC
             
             if (forecastData.length > 0) {
                 const predictionLine = new Array(historicalPoints.length).fill(null);
                 forecastData.forEach(p => {
-                    const dayIndex = new Date(p.date).getUTCDate() - 1;
+                    const dayIndex = new Date(p.date + 'T00:00:00Z').getUTCDate() - 1;
                     if(dayIndex >= 0 && dayIndex < predictionLine.length) {
                        predictionLine[dayIndex] = p.predicted_value;
                     }
@@ -865,7 +869,7 @@
 
                 const lowerBand = new Array(historicalPoints.length).fill(null);
                 forecastData.forEach(p => {
-                    const dayIndex = new Date(p.date).getUTCDate() - 1;
+                    const dayIndex = new Date(p.date + 'T00:00:00Z').getUTCDate() - 1;
                     if(dayIndex >= 0 && dayIndex < lowerBand.length) {
                        lowerBand[dayIndex] = p.lower_bound;
                     }
@@ -873,7 +877,7 @@
 
                 const upperBand = new Array(historicalPoints.length).fill(null);
                  forecastData.forEach(p => {
-                    const dayIndex = new Date(p.date).getUTCDate() - 1;
+                    const dayIndex = new Date(p.date + 'T00:00:00Z').getUTCDate() - 1;
                     if(dayIndex >= 0 && dayIndex < upperBand.length) {
                        upperBand[dayIndex] = p.upper_bound;
                     }
@@ -883,26 +887,30 @@
                 datasets.push({ label: 'Confidence Interval', data: upperBand, fill: '+1', backgroundColor: 'rgba(255, 99, 132, 0.2)', borderColor: 'transparent', pointRadius: 0 });
                 datasets.push({ label: 'Confidence Interval (Lower)', data: lowerBand, borderColor: 'transparent', pointRadius: 0, fill: false });
             }
-
-            const trendSection = document.getElementById(`trend-section-${dataType}`);
-            let existingBtns = trendSection.querySelectorAll('.validate-btn, .diagnose-btn');
-            existingBtns.forEach(btn => btn.remove());
             
-            // [MODIFIED] Only show buttons for the current, live month
+            const trendSection = document.getElementById(`trend-section-${dataType}`);
+            let existingActions = trendSection.querySelector('.chart-actions-container');
+            if (existingActions) existingActions.remove();
+
             if (hasData && isViewingLiveMonth) {
-                const validateBtn = document.createElement('button');
-                validateBtn.className = 'validate-btn';
-                validateBtn.id = `validateBtn-${dataType}`;
-                validateBtn.innerHTML = '<i class="fas fa-history"></i> Validate Prediction';
-                validateBtn.onclick = () => validatePrediction(dataType);
-                trendSection.prepend(validateBtn);
-                
+                const actionsContainer = document.createElement('div');
+                actionsContainer.className = 'chart-actions-container';
+
                 const updateBtn = document.createElement('button');
                 updateBtn.className = 'diagnose-btn';
                 updateBtn.id = `updateForecastBtn-${dataType}`;
                 updateBtn.innerHTML = '<i class="fas fa-magic"></i> Update Live Forecast';
                 updateBtn.onclick = () => updateLiveForecast(dataType);
-                trendSection.prepend(updateBtn);
+                actionsContainer.appendChild(updateBtn);
+                
+                const validateBtn = document.createElement('button');
+                validateBtn.className = 'validate-btn';
+                validateBtn.id = `validateBtn-${dataType}`;
+                validateBtn.innerHTML = '<i class="fas fa-history"></i> Validate Prediction';
+                validateBtn.onclick = () => validatePrediction(dataType);
+                actionsContainer.appendChild(validateBtn);
+
+                trendSection.prepend(actionsContainer);
             }
             
             let annotations = {};
@@ -981,16 +989,17 @@
             if (forecastData.length > 0) {
                 const redFlagPoints = historicalPoints.map((actualValue, index) => {
                     const day = index + 1;
-                    const forecastForDay = forecastData.find(f => new Date(f.date + 'T00:00:00Z').getUTCDate() === day);
+                    const dateToFind = `${viewingMonthKey}-${String(day).padStart(2, '0')}`;
+                    const forecastForDay = forecastData.find(f => f.date === dateToFind);
 
                     if (actualValue !== null && isFinite(actualValue) && forecastForDay) {
                         const lowerBound = forecastForDay.lower_bound;
                         const upperBound = forecastForDay.upper_bound;
                         if (actualValue < lowerBound || actualValue > upperBound) {
-                            return actualValue; // This value is a red flag
+                            return actualValue;
                         }
                     }
-                    return null; // This day is not a red flag
+                    return null;
                 });
 
                 datasets.push({
@@ -1000,11 +1009,12 @@
                     radius: 8,
                     rotation: (context) => {
                         const day = context.dataIndex + 1;
-                        const forecastForDay = forecastData.find(f => new Date(f.date + 'T00:00:00Z').getUTCDate() === day);
+                        const dateToFind = `${viewingMonthKey}-${String(day).padStart(2, '0')}`;
+                        const forecastForDay = forecastData.find(f => f.date === dateToFind);
                         if (forecastForDay && context.raw > forecastForDay.upper_bound) {
-                            return 0; // Point up if high
+                            return 0;
                         }
-                        return 180; // Point down if low
+                        return 180;
                     },
                     backgroundColor: 'rgba(220, 53, 69, 0.9)',
                     borderColor: 'rgba(220, 53, 69, 0.9)',
@@ -1071,7 +1081,8 @@
                                     }
                                     if (context.dataset.label === 'Flagged Deviation') {
                                         const day = context.dataIndex + 1;
-                                        const forecastForDay = forecastData.find(f => new Date(f.date + 'T00:00:00Z').getUTCDate() === day);
+                                        const dateToFind = `${viewingMonthKey}-${String(day).padStart(2, '0')}`;
+                                        const forecastForDay = forecastData.find(f => f.date === dateToFind);
                                         if (forecastForDay) {
                                             label += ` (Interval: [${forecastForDay.lower_bound.toFixed(2)}, ${forecastForDay.upper_bound.toFixed(2)}])`;
                                         }
