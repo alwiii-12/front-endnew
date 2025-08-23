@@ -740,7 +740,7 @@
 
                 if (result.forecast) {
                     result.forecast.forEach((point) => {
-                        const dayIndex = new Date(point.ds).getUTCDate() - 1;
+                        const dayIndex = parseInt(point.ds.split('-')[2], 10) - 1;
                         if (dayIndex >= 0 && dayIndex < numDays) {
                             forecastLine[dayIndex] = point.yhat;
                             lowerBand[dayIndex] = point.yhat_lower;
@@ -844,7 +844,7 @@
             if (forecastData.length > 0) {
                 const predictionLine = new Array(historicalPoints.length).fill(null);
                 forecastData.forEach(p => {
-                    const dayIndex = new Date(p.date + 'T00:00:00Z').getUTCDate() - 1;
+                    const dayIndex = parseInt(p.date.split('-')[2], 10) - 1;
                     if(dayIndex >= 0 && dayIndex < predictionLine.length) {
                        predictionLine[dayIndex] = p.predicted_value;
                     }
@@ -852,7 +852,7 @@
 
                 const lowerBand = new Array(historicalPoints.length).fill(null);
                 forecastData.forEach(p => {
-                    const dayIndex = new Date(p.date + 'T00:00:00Z').getUTCDate() - 1;
+                    const dayIndex = parseInt(p.date.split('-')[2], 10) - 1;
                     if(dayIndex >= 0 && dayIndex < lowerBand.length) {
                        lowerBand[dayIndex] = p.lower_bound;
                     }
@@ -860,7 +860,7 @@
 
                 const upperBand = new Array(historicalPoints.length).fill(null);
                  forecastData.forEach(p => {
-                    const dayIndex = new Date(p.date + 'T00:00:00Z').getUTCDate() - 1;
+                    const dayIndex = parseInt(p.date.split('-')[2], 10) - 1;
                     if(dayIndex >= 0 && dayIndex < upperBand.length) {
                        upperBand[dayIndex] = p.upper_bound;
                     }
