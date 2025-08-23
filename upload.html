@@ -808,6 +808,7 @@
             });
             
             const viewingMonthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            const isPastMonth = lastDataMonth ? viewingMonthKey < lastDataMonth : false;
             const isViewingLiveMonth = viewingMonthKey === lastDataMonth;
             
             const datasets = [{
@@ -818,65 +819,84 @@
             let allLabels = [...historicalLabels];
             let forecastData = [];
 
-            if (hasData) { 
+            // [START] REVISED FORECAST FETCHING LOGIC
+            if (hasData && isPastMonth) {
+                // If it's a past month, run the historical validation automatically
+                try {
+                    const appCheckTokenResponse = await appCheck.getToken(false);
+                    const response = await fetch(`${BACKEND_URL}/historical-forecast`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckTokenResponse.token },
+                        body: JSON.stringify({ uid: currentUID, month: viewingMonthKey, dataType: dataType, energy: selectedEnergy })
+                    });
+                    if (response.ok) {
+                        const result = await response.json();
+                        // Repopulate forecastData with the correct historical forecast
+                        forecastData = result.forecast.map(p => ({
+                            date: p.ds.substring(0, 10),
+                            predicted_value: p.yhat,
+                            lower_bound: p.yhat_lower,
+                            upper_bound: p.yhat_upper
+                        }));
+                    }
+                } catch (e) { console.error("Could not fetch historical forecast", e); }
+            } else if (hasData) { 
+                // This is the original logic for the current or future month's live forecast
                 try {
                     const appCheckTokenResponse = await appCheck.getToken(false);
                     const token = appCheckTokenResponse.token;
-                    
                     const res = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}&month=${viewingMonthKey}`, { headers: { "X-Firebase-AppCheck": token } });
                     if (res.ok) {
                         const forecastResult = await res.json();
                         forecastData = forecastResult.forecast || [];
                     }
-
                 } catch (e) { console.error("Could not fetch predictions", e); }
-                
-                if (forecastData.length > 0) {
-                    const predictionLine = new Array(historicalPoints.length).fill(null);
-                    forecastData.forEach(p => {
-                        const dayIndex = new Date(p.date).getUTCDate() - 1;
-                        if(dayIndex >= 0 && dayIndex < predictionLine.length) {
-                           predictionLine[dayIndex] = p.predicted_value;
-                        }
-                    });
-
-                    const lowerBand = new Array(historicalPoints.length).fill(null);
-                    forecastData.forEach(p => {
-                        const dayIndex = new Date(p.date).getUTCDate() - 1;
-                        if(dayIndex >= 0 && dayIndex < lowerBand.length) {
-                           lowerBand[dayIndex] = p.lower_bound;
-                        }
-                    });
-
-                    const upperBand = new Array(historicalPoints.length).fill(null);
-                     forecastData.forEach(p => {
-                        const dayIndex = new Date(p.date).getUTCDate() - 1;
-                        if(dayIndex >= 0 && dayIndex < upperBand.length) {
-                           upperBand[dayIndex] = p.upper_bound;
-                        }
-                    });
-
-                    datasets.push({ label: 'Forecast', data: predictionLine, borderColor: 'rgba(255, 99, 132, 1)', borderDash: [5, 5] });
-                    datasets.push({ label: 'Confidence Interval', data: upperBand, fill: '+1', backgroundColor: 'rgba(255, 99, 132, 0.2)', borderColor: 'transparent', pointRadius: 0 });
-                    datasets.push({ label: 'Confidence Interval (Lower)', data: lowerBand, borderColor: 'transparent', pointRadius: 0, fill: false });
-                }
             }
+            // [END] REVISED FORECAST FETCHING LOGIC
             
+            if (forecastData.length > 0) {
+                const predictionLine = new Array(historicalPoints.length).fill(null);
+                forecastData.forEach(p => {
+                    const dayIndex = new Date(p.date).getUTCDate() - 1;
+                    if(dayIndex >= 0 && dayIndex < predictionLine.length) {
+                       predictionLine[dayIndex] = p.predicted_value;
+                    }
+                });
+
+                const lowerBand = new Array(historicalPoints.length).fill(null);
+                forecastData.forEach(p => {
+                    const dayIndex = new Date(p.date).getUTCDate() - 1;
+                    if(dayIndex >= 0 && dayIndex < lowerBand.length) {
+                       lowerBand[dayIndex] = p.lower_bound;
+                    }
+                });
+
+                const upperBand = new Array(historicalPoints.length).fill(null);
+                 forecastData.forEach(p => {
+                    const dayIndex = new Date(p.date).getUTCDate() - 1;
+                    if(dayIndex >= 0 && dayIndex < upperBand.length) {
+                       upperBand[dayIndex] = p.upper_bound;
+                    }
+                });
+
+                datasets.push({ label: 'Forecast', data: predictionLine, borderColor: 'rgba(255, 99, 132, 1)', borderDash: [5, 5] });
+                datasets.push({ label: 'Confidence Interval', data: upperBand, fill: '+1', backgroundColor: 'rgba(255, 99, 132, 0.2)', borderColor: 'transparent', pointRadius: 0 });
+                datasets.push({ label: 'Confidence Interval (Lower)', data: lowerBand, borderColor: 'transparent', pointRadius: 0, fill: false });
+            }
+
             const trendSection = document.getElementById(`trend-section-${dataType}`);
             let existingBtns = trendSection.querySelectorAll('.validate-btn, .diagnose-btn');
             existingBtns.forEach(btn => btn.remove());
             
-            const isPastMonth = lastDataMonth ? viewingMonthKey < lastDataMonth : false;
-            if (hasData && isPastMonth) {
+            // [MODIFIED] Only show buttons for the current, live month
+            if (hasData && isViewingLiveMonth) {
                 const validateBtn = document.createElement('button');
                 validateBtn.className = 'validate-btn';
                 validateBtn.id = `validateBtn-${dataType}`;
                 validateBtn.innerHTML = '<i class="fas fa-history"></i> Validate Prediction';
                 validateBtn.onclick = () => validatePrediction(dataType);
                 trendSection.prepend(validateBtn);
-            }
-            
-            if (hasData && isViewingLiveMonth) {
+                
                 const updateBtn = document.createElement('button');
                 updateBtn.className = 'diagnose-btn';
                 updateBtn.id = `updateForecastBtn-${dataType}`;
@@ -958,11 +978,9 @@
                 console.error("Error fetching text notes for chart:", error);
             }
 
-            // --- [FINAL CORRECTED APPROACH] Create a separate dataset for red flags ---
             if (forecastData.length > 0) {
                 const redFlagPoints = historicalPoints.map((actualValue, index) => {
                     const day = index + 1;
-                    // **TIMEZONE FIX IS HERE**
                     const forecastForDay = forecastData.find(f => new Date(f.date + 'T00:00:00Z').getUTCDate() === day);
 
                     if (actualValue !== null && isFinite(actualValue) && forecastForDay) {
@@ -975,7 +993,6 @@
                     return null; // This day is not a red flag
                 });
 
-                // Add the new dataset to the chart
                 datasets.push({
                     label: 'Flagged Deviation',
                     data: redFlagPoints,
@@ -983,7 +1000,6 @@
                     radius: 8,
                     rotation: (context) => {
                         const day = context.dataIndex + 1;
-                        // **TIMEZONE FIX IS HERE**
                         const forecastForDay = forecastData.find(f => new Date(f.date + 'T00:00:00Z').getUTCDate() === day);
                         if (forecastForDay && context.raw > forecastForDay.upper_bound) {
                             return 0; // Point up if high
@@ -1055,7 +1071,6 @@
                                     }
                                     if (context.dataset.label === 'Flagged Deviation') {
                                         const day = context.dataIndex + 1;
-                                        // **TIMEZONE FIX IS HERE**
                                         const forecastForDay = forecastData.find(f => new Date(f.date + 'T00:00:00Z').getUTCDate() === day);
                                         if (forecastForDay) {
                                             label += ` (Interval: [${forecastForDay.lower_bound.toFixed(2)}, ${forecastForDay.upper_bound.toFixed(2)}])`;
