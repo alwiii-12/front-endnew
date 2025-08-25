@@ -444,7 +444,7 @@
                     <h3>${config.label} Trend Analysis</h3>
                     <div class="energy-selector-container">
                         <label>Select Energy:</label>
-                        <select id="trendEnergySelect-${dataType}" onchange="updateTrendChart('${dataType}')"></select>
+                        <select id="trendEnergySelect-${dataType}" onchange="updateTrendChart()"></select>
                     </div>
                     <div class="chart-wrapper">
                         <canvas id="trendChart-${dataType}"></canvas>
@@ -713,15 +713,13 @@
             finally { hideLoader(); }
         });
         
-        // This function now just fetches the data and then tells the master function to draw it.
         window.validatePrediction = async function() {
             const dataType = activeTab;
             showLoader();
             const selectedEnergy = document.getElementById(`trendEnergySelect-${dataType}`).value;
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             const button = document.getElementById(`validateBtn-${dataType}`);
-            button.disabled = true;
-
+            
             try {
                 const appCheckTokenResponse = await appCheck.getToken(false);
                 const response = await fetch(`${BACKEND_URL}/historical-forecast`, {
@@ -729,18 +727,18 @@
                     headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckTokenResponse.token },
                     body: JSON.stringify({ uid: currentUID, month: monthKey, dataType: dataType, energy: selectedEnergy })
                 });
-
+                
                 if (!response.ok) {
                     const error = await response.json();
                     throw new Error(error.error || 'Failed to generate historical forecast.');
                 }
+
                 const result = await response.json();
-                
                 await updateTrendChart(result);
+                button.disabled = true;
 
             } catch (error) {
                 alert(`Error: ${error.message}`);
-                button.disabled = false;
             } finally {
                 hideLoader();
             }
@@ -781,12 +779,15 @@
             let forecastLabel = 'Forecast';
 
             if (passedData) {
-                // If data was passed, it means we ran a validation.
-                forecastData = passedData.forecast || [];
+                forecastData = (passedData.forecast || []).map(p => ({
+                    date: p.ds.substring(0, 10),
+                    predicted_value: p.yhat,
+                    lower_bound: p.yhat_lower,
+                    upper_bound: p.yhat_upper
+                }));
                 validationActuals = passedData.actuals || [];
                 forecastLabel = 'Historical Forecast';
             } else if (hasData && isViewingLiveMonth) { 
-                // Otherwise, fetch the live forecast if it's the current month
                 try {
                     const appCheckTokenResponse = await appCheck.getToken(false);
                     const token = appCheckTokenResponse.token;
@@ -804,11 +805,13 @@
                 const upperBand = new Array(historicalPoints.length).fill(null);
 
                 forecastData.forEach(p => {
-                    const dayIndex = parseInt(p.date.split('-')[2], 10) - 1;
-                    if(dayIndex >= 0 && dayIndex < predictionLine.length) {
-                       predictionLine[dayIndex] = p.predicted_value;
-                       lowerBand[dayIndex] = p.lower_bound;
-                       upperBand[dayIndex] = p.upper_bound;
+                    if (p && p.date) {
+                        const dayIndex = parseInt(p.date.split('-')[2], 10) - 1;
+                        if(dayIndex >= 0 && dayIndex < predictionLine.length) {
+                           predictionLine[dayIndex] = p.predicted_value;
+                           lowerBand[dayIndex] = p.lower_bound;
+                           upperBand[dayIndex] = p.upper_bound;
+                        }
                     }
                 });
                 
@@ -818,7 +821,6 @@
             }
 
             if (validationActuals.length > 0) {
-                // This will overwrite the live historical data with validation data
                 datasets.push({ label: 'Validation Actuals', data: validationActuals, borderColor: 'rgba(108, 117, 125, 1)', tension: 0.1 });
             }
             
@@ -834,7 +836,7 @@
                 updateBtn.className = 'diagnose-btn';
                 updateBtn.id = `updateForecastBtn-${dataType}`;
                 updateBtn.innerHTML = '<i class="fas fa-magic"></i> Update Live Forecast';
-                updateBtn.onclick = () => updateLiveForecast(dataType);
+                updateBtn.onclick = () => updateLiveForecast();
                 actionsContainer.appendChild(updateBtn);
             }
 
@@ -1058,7 +1060,8 @@
             });
         };
         
-        window.updateLiveForecast = async function(dataType) {
+        window.updateLiveForecast = async function() {
+            const dataType = activeTab;
             showLoader();
             const selectedEnergy = document.getElementById(`trendEnergySelect-${dataType}`).value;
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
