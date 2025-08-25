@@ -484,7 +484,7 @@
                     afterChange: (changes, source) => {
                         if (source !== 'loadData') {
                             updateSummaryAndChart(dataType, instances[dataType].hot.getData());
-                            updateTrendChart(dataType); 
+                            updateTrendChart(); 
                         }
                     },
                     cells: function (r, c) {
@@ -509,7 +509,7 @@
                     }
                 });
                 updateSummaryAndChart(dataType, data);
-                updateTrendChart(dataType);
+                updateTrendChart();
             } catch (e) { console.error(`Error loading data for ${dataType}:`, e); } finally { hideLoader(); }
         }
 
@@ -531,7 +531,7 @@
                 document.getElementById(`lastSaved-${dataType}`).textContent = "Saved: " + new Date().toLocaleTimeString();
                 
                 lastDataMonth = month;
-                updateTrendChart(activeTab); 
+                updateTrendChart(); 
 
             } catch (err) {
                 console.error(`Save process failed for ${dataType}:`, err);
@@ -676,7 +676,7 @@
                     })
                 });
                 hideAnnotationModal();
-                await updateTrendChart(activeTab); 
+                await updateTrendChart(); 
             } catch (e) { console.error("Failed to save annotation", e); } 
             finally { hideLoader(); }
         });
@@ -695,16 +695,18 @@
                     })
                 });
                 hideAnnotationModal();
-                await updateTrendChart(activeTab); 
+                await updateTrendChart(); 
             } catch (e) { console.error("Failed to delete annotation", e); } 
             finally { hideLoader(); }
         });
         
-        window.validatePrediction = async function(dataType) {
+        window.validatePrediction = async function() {
+            const dataType = activeTab; // Get active tab
             showLoader();
             const selectedEnergy = document.getElementById(`trendEnergySelect-${dataType}`).value;
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             const button = document.getElementById(`validateBtn-${dataType}`);
+            button.disabled = true; // Disable button immediately
 
             try {
                 const appCheckTokenResponse = await appCheck.getToken(false);
@@ -723,83 +725,22 @@
                     const error = await response.json();
                     throw new Error(error.error || 'Failed to generate historical forecast.');
                 }
-
                 const result = await response.json();
                 
-                const chart = instances[dataType].trendChart;
-                if (!chart) return;
-
-                const labelsToRemove = ['Forecast', 'Confidence Interval', 'Confidence Interval (Lower)'];
-                chart.data.datasets = chart.data.datasets.filter(dataset => !labelsToRemove.includes(dataset.label));
-
-                const numDays = chart.data.labels.length;
-                const forecastLine = new Array(numDays).fill(null);
-                const lowerBand = new Array(numDays).fill(null);
-                const upperBand = new Array(numDays).fill(null);
-                const actualsLine = new Array(numDays).fill(null);
-
-                if (result.forecast) {
-                    result.forecast.forEach((point) => {
-                        const dayIndex = parseInt(point.ds.split('-')[2], 10) - 1;
-                        if (dayIndex >= 0 && dayIndex < numDays) {
-                            forecastLine[dayIndex] = point.yhat;
-                            lowerBand[dayIndex] = point.yhat_lower;
-                            upperBand[dayIndex] = point.yhat_upper;
-                        }
-                    });
-                }
-                
-                if (result.actuals) {
-                    result.actuals.forEach((value, index) => {
-                        if (index < numDays) {
-                            actualsLine[index] = value;
-                        }
-                    });
-                }
-
-                chart.data.datasets.push({
-                    label: 'Historical Forecast',
-                    data: forecastLine,
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderDash: [5, 5],
-                    tension: 0.1,
-                });
-
-                chart.data.datasets.push({
-                    label: 'Confidence Interval',
-                    data: upperBand,
-                    fill: '+1',
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    borderColor: 'transparent',
-                    pointRadius: 0,
-                });
-
-                chart.data.datasets.push({
-                    label: 'Confidence Interval (Lower)',
-                    data: lowerBand,
-                    fill: false,
-                    borderColor: 'transparent',
-                    pointRadius: 0,
-                });
-                
-                chart.data.datasets.push({
-                    label: 'Validation Actuals',
-                    data: actualsLine,
-                    borderColor: 'rgba(108, 117, 125, 1)',
-                    tension: 0.1,
-                });
-                
-                chart.update();
-                if (button) button.disabled = true;
+                // Call the master chart drawing function with the new historical data
+                await updateTrendChart(result.forecast);
 
             } catch (error) {
                 alert(`Error: ${error.message}`);
+                button.disabled = false; // Re-enable button on error
             } finally {
                 hideLoader();
             }
         };
 
-        window.updateTrendChart = async function(dataType) {
+        // This is now the single master function for drawing the chart
+        async function updateTrendChart(passedForecastData = null) {
+            const dataType = activeTab;
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
 
@@ -829,7 +770,16 @@
             let allLabels = [...historicalLabels];
             let forecastData = [];
 
-            if (hasData && isViewingLiveMonth) { 
+            if (passedForecastData) {
+                // If forecast data was passed from validatePrediction, use it
+                forecastData = passedForecastData.map(p => ({
+                    date: p.ds.substring(0, 10),
+                    predicted_value: p.yhat,
+                    lower_bound: p.yhat_lower,
+                    upper_bound: p.yhat_upper
+                }));
+            } else if (hasData && isViewingLiveMonth) { 
+                // Otherwise, fetch the live forecast if it's the current month
                 try {
                     const appCheckTokenResponse = await appCheck.getToken(false);
                     const token = appCheckTokenResponse.token;
@@ -865,8 +815,9 @@
                        upperBand[dayIndex] = p.upper_bound;
                     }
                 });
-
-                datasets.push({ label: 'Forecast', data: predictionLine, borderColor: 'rgba(255, 99, 132, 1)', borderDash: [5, 5] });
+                
+                const forecastLabel = passedForecastData ? 'Historical Forecast' : 'Forecast';
+                datasets.push({ label: forecastLabel, data: predictionLine, borderColor: 'rgba(255, 99, 132, 1)', borderDash: [5, 5] });
                 datasets.push({ label: 'Confidence Interval', data: upperBand, fill: '+1', backgroundColor: 'rgba(255, 99, 132, 0.2)', borderColor: 'transparent', pointRadius: 0 });
                 datasets.push({ label: 'Confidence Interval (Lower)', data: lowerBand, borderColor: 'transparent', pointRadius: 0, fill: false });
             }
@@ -892,7 +843,7 @@
                 validateBtn.className = 'validate-btn';
                 validateBtn.id = `validateBtn-${dataType}`;
                 validateBtn.innerHTML = '<i class="fas fa-history"></i> Validate Prediction';
-                validateBtn.onclick = () => validatePrediction(dataType);
+                validateBtn.onclick = () => validatePrediction();
                 actionsContainer.appendChild(validateBtn);
             }
             
@@ -1130,7 +1081,7 @@
                     throw new Error(error.error || 'Failed to update live forecast.');
                 }
 
-                await updateTrendChart(dataType);
+                await updateTrendChart();
 
             } catch (error) {
                 alert(`Error: ${error.message}`);
