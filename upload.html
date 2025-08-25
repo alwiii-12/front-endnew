@@ -365,15 +365,28 @@
         function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
         function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
         
-        function logout() {
-          showLoader();
-          auth.signOut().then(() => {
-            localStorage.clear();
-            window.location.replace("login.html");
-          }).catch(err => {
-            hideLoader();
-          });
+        async function logout() {
+            showLoader();
+            try {
+                const user = auth.currentUser;
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                await fetch(`${BACKEND_URL}/log_event`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-Firebase-AppCheck": appCheckTokenResponse.token },
+                    body: JSON.stringify({ action: "user_logout", userUid: user ? user.uid : "unknown_uid" })
+                });
+            } catch (logError) { 
+                console.error("Error sending logout log event:", logError); 
+            }
+            
+            auth.signOut().then(() => {
+                localStorage.clear();
+                window.location.replace("login.html");
+            }).catch(err => {
+                hideLoader();
+            });
         }
+        window.logout = logout;
 
         async function checkForAlerts(dataType, data) {
             const config = dataTypesConfig[dataType];
@@ -700,25 +713,21 @@
             finally { hideLoader(); }
         });
         
+        // This function now just fetches the data and then tells the master function to draw it.
         window.validatePrediction = async function() {
-            const dataType = activeTab; // Get active tab
+            const dataType = activeTab;
             showLoader();
             const selectedEnergy = document.getElementById(`trendEnergySelect-${dataType}`).value;
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             const button = document.getElementById(`validateBtn-${dataType}`);
-            button.disabled = true; // Disable button immediately
+            button.disabled = true;
 
             try {
                 const appCheckTokenResponse = await appCheck.getToken(false);
                 const response = await fetch(`${BACKEND_URL}/historical-forecast`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckTokenResponse.token },
-                    body: JSON.stringify({
-                        uid: currentUID,
-                        month: monthKey,
-                        dataType: dataType,
-                        energy: selectedEnergy
-                    })
+                    body: JSON.stringify({ uid: currentUID, month: monthKey, dataType: dataType, energy: selectedEnergy })
                 });
 
                 if (!response.ok) {
@@ -727,19 +736,18 @@
                 }
                 const result = await response.json();
                 
-                // Call the master chart drawing function with the new historical data
-                await updateTrendChart(result.forecast);
+                await updateTrendChart(result);
 
             } catch (error) {
                 alert(`Error: ${error.message}`);
-                button.disabled = false; // Re-enable button on error
+                button.disabled = false;
             } finally {
                 hideLoader();
             }
         };
 
         // This is now the single master function for drawing the chart
-        async function updateTrendChart(passedForecastData = null) {
+        async function updateTrendChart(passedData = null) {
             const dataType = activeTab;
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
@@ -769,15 +777,14 @@
             }];
             let allLabels = [...historicalLabels];
             let forecastData = [];
+            let validationActuals = [];
+            let forecastLabel = 'Forecast';
 
-            if (passedForecastData) {
-                // If forecast data was passed from validatePrediction, use it
-                forecastData = passedForecastData.map(p => ({
-                    date: p.ds.substring(0, 10),
-                    predicted_value: p.yhat,
-                    lower_bound: p.yhat_lower,
-                    upper_bound: p.yhat_upper
-                }));
+            if (passedData) {
+                // If data was passed, it means we ran a validation.
+                forecastData = passedData.forecast || [];
+                validationActuals = passedData.actuals || [];
+                forecastLabel = 'Historical Forecast';
             } else if (hasData && isViewingLiveMonth) { 
                 // Otherwise, fetch the live forecast if it's the current month
                 try {
@@ -793,33 +800,26 @@
             
             if (forecastData.length > 0) {
                 const predictionLine = new Array(historicalPoints.length).fill(null);
+                const lowerBand = new Array(historicalPoints.length).fill(null);
+                const upperBand = new Array(historicalPoints.length).fill(null);
+
                 forecastData.forEach(p => {
                     const dayIndex = parseInt(p.date.split('-')[2], 10) - 1;
                     if(dayIndex >= 0 && dayIndex < predictionLine.length) {
                        predictionLine[dayIndex] = p.predicted_value;
-                    }
-                });
-
-                const lowerBand = new Array(historicalPoints.length).fill(null);
-                forecastData.forEach(p => {
-                    const dayIndex = parseInt(p.date.split('-')[2], 10) - 1;
-                    if(dayIndex >= 0 && dayIndex < lowerBand.length) {
                        lowerBand[dayIndex] = p.lower_bound;
-                    }
-                });
-
-                const upperBand = new Array(historicalPoints.length).fill(null);
-                 forecastData.forEach(p => {
-                    const dayIndex = parseInt(p.date.split('-')[2], 10) - 1;
-                    if(dayIndex >= 0 && dayIndex < upperBand.length) {
                        upperBand[dayIndex] = p.upper_bound;
                     }
                 });
                 
-                const forecastLabel = passedForecastData ? 'Historical Forecast' : 'Forecast';
                 datasets.push({ label: forecastLabel, data: predictionLine, borderColor: 'rgba(255, 99, 132, 1)', borderDash: [5, 5] });
                 datasets.push({ label: 'Confidence Interval', data: upperBand, fill: '+1', backgroundColor: 'rgba(255, 99, 132, 0.2)', borderColor: 'transparent', pointRadius: 0 });
                 datasets.push({ label: 'Confidence Interval (Lower)', data: lowerBand, borderColor: 'transparent', pointRadius: 0, fill: false });
+            }
+
+            if (validationActuals.length > 0) {
+                // This will overwrite the live historical data with validation data
+                datasets.push({ label: 'Validation Actuals', data: validationActuals, borderColor: 'rgba(108, 117, 125, 1)', tension: 0.1 });
             }
             
             const trendSection = document.getElementById(`trend-section-${dataType}`);
