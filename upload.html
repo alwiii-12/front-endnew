@@ -212,46 +212,6 @@
     
     .diagnose-btn:hover { background-color: #ffca2c; }
     .validate-btn:hover { background-color: #138496; }
-
-    .blinking-btn {
-        animation: blink-animation 1.5s infinite;
-    }
-    @keyframes blink-animation {
-        0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
-        50% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
-    }
-
-    #chat-options-area {
-        display: none; /* Hidden by default */
-        flex-wrap: wrap;
-        gap: 10px;
-        padding: 10px 15px;
-        border-top: 1px solid var(--border-color);
-    }
-    .chat-option-btn {
-        flex-grow: 1;
-        background-color: var(--primary-light);
-        color: var(--primary-dark);
-        padding: 10px;
-        border-radius: 8px;
-        font-weight: 600;
-        border: none;
-        cursor: pointer;
-    }
-    .chat-option-btn:hover {
-        background-color: var(--primary-color);
-        color: var(--text-white);
-    }
-    .service-day-checkbox {
-        margin-top: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        font-weight: 600;
-        color: var(--primary-dark);
-    }
   </style>
 </head>
 <body>
@@ -356,11 +316,6 @@
         let currentAnnotationKey = null;
 
         let diagnosticState = { inProgress: false, topic: null, node_id: null };
-        const chatInputArea = document.getElementById('chat-input-area');
-        const chatOptionsArea = document.getElementById('chat-options-area');
-        const chatBody = document.getElementById('chat-body');
-        const chatInput = document.getElementById('chat-input');
-
 
         function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
         function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
@@ -387,39 +342,6 @@
             });
         }
         window.logout = logout;
-
-        async function checkForAlerts(dataType, data) {
-            const config = dataTypesConfig[dataType];
-            const outOfToleranceValues = [];
-            const dateCols = getMonthDates(currentDate);
-
-            data.forEach((row) => {
-                const energy = row[0];
-                row.slice(1).forEach((value, colIndex) => {
-                    const n = parseFloat(value);
-                    if (!isNaN(n) && Math.abs(n) > config.tolerance) {
-                        outOfToleranceValues.push({
-                            energy: energy,
-                            date: dateCols[colIndex],
-                            value: n
-                        });
-                    }
-                });
-            });
-
-            try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
-                await fetch(`${BACKEND_URL}/send-alert`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckTokenResponse.token },
-                    body: JSON.stringify({
-                        uid: currentUID, hospitalName: currentHospital,
-                        month: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`,
-                        dataType: dataType, tolerance: config.tolerance, outValues: outOfToleranceValues
-                    })
-                });
-            } catch (error) { console.error('Error sending alert:', error); }
-        }
 
         function generateTabContentHTML(dataType) {
             const config = dataTypesConfig[dataType];
@@ -499,7 +421,6 @@
                             updateSummaryAndChart(dataType, instances[dataType].hot.getData());
                             updateTrendChart();
 
-                            // Re-enable the update forecast button on data change
                             const updateBtn = document.getElementById(`updateForecastBtn-${dataType}`);
                             if (updateBtn) {
                                 updateBtn.disabled = false;
@@ -745,13 +666,13 @@
 
             } catch (error) {
                 alert(`Error: ${error.message}`);
-                if (button) button.disabled = false; // Re-enable on error
+                if (button) button.disabled = false;
             } finally {
                 hideLoader();
             }
         };
-        
-        window.updateTrendChart = async function(passedData = null) {
+
+        async function updateTrendChart(passedData = null) {
             const dataType = activeTab;
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
@@ -786,7 +707,7 @@
 
             if (passedData) {
                 forecastData = (passedData.forecast || []).map(p => {
-                    if (p && p.ds) { // Defensive check
+                    if (p && p.ds) {
                         return {
                             date: p.ds.substring(0, 10),
                             predicted_value: p.yhat,
@@ -795,7 +716,7 @@
                         };
                     }
                     return null;
-                }).filter(Boolean); // Filter out any null entries
+                }).filter(Boolean);
                 validationActuals = passedData.actuals || [];
                 forecastLabel = 'Historical Forecast';
             } else if (hasData && isViewingLiveMonth) { 
@@ -816,7 +737,7 @@
                 const upperBand = new Array(historicalPoints.length).fill(null);
 
                 forecastData.forEach(p => {
-                    if (p && p.date) { // Defensive check
+                    if (p && p.date) {
                         const dayIndex = parseInt(p.date.split('-')[2], 10) - 1;
                         if(dayIndex >= 0 && dayIndex < predictionLine.length) {
                            predictionLine[dayIndex] = p.predicted_value;
@@ -1201,4 +1122,3 @@
   </script>
 </body>
 </html>
-i made the changes as u said, but its still showing
