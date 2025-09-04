@@ -541,7 +541,6 @@
         onConfirmCallback = null;
     }
 
-    // --- Helper functions (not called by HTML) ---
     function renderUsers(usersToRender) {
         const usersTableBody = document.getElementById('usersTableBody');
         usersTableBody.innerHTML = '';
@@ -598,7 +597,37 @@
     }
 
     function renderHospitalQaDataTable(allData, year, month) {
-        // ... (implementation is long, keeping it collapsed for brevity)
+        const container = document.getElementById('hospitalQaTableContainer');
+        const selectedDataType = document.getElementById('adminDataTypeSelect').value;
+        const dataForTable = allData[selectedDataType]; 
+        const config = { tolerance: 2.0, warning: 1.8 }; // Simplified config for display
+        container.innerHTML = '';
+        if (!dataForTable || dataForTable.length === 0) {
+            container.innerHTML = `<p class="no-users-message">No '${selectedDataType}' data available.</p>`;
+            return;
+        }
+        const numDays = new Date(year, month, 0).getDate();
+        let tableHTML = `<h3 style="text-align:center; margin-top:0;">${selectedDataType.charAt(0).toUpperCase() + selectedDataType.slice(1)} Data</h3><table class="user-table hospital-qa-table"><thead><tr><th>Energy</th>`;
+        for (let i = 1; i <= numDays; i++) { tableHTML += `<th>${i}</th>`; }
+        tableHTML += '</tr></thead><tbody>';
+        dataForTable.forEach(row => {
+            tableHTML += `<tr><td>${row[0]}</td>`;
+            const values = row.slice(1);
+            for (let i = 0; i < numDays; i++) {
+                const value = values[i] || '';
+                const numValue = parseFloat(value);
+                let className = '';
+                if (!isNaN(numValue)) {
+                    if (Math.abs(numValue) > config.tolerance) className = 'out';
+                    else if (Math.abs(numValue) > config.warning) className = 'warning';
+                    else className = 'within';
+                }
+                tableHTML += `<td class="${className}">${value}</td>`;
+            }
+            tableHTML += '</tr>';
+        });
+        tableHTML += '</tbody></table>';
+        container.innerHTML = tableHTML;
     }
 
     function populateAuditLogFilters() {
@@ -626,10 +655,92 @@
         loadPerformanceData();
     }
     
-    async function loadPerformanceData() { /* ... implementation ... */ }
+    async function loadPerformanceData() {
+        const performanceTableBody = document.getElementById('performanceTableBody');
+        const year = performanceDate.getFullYear();
+        const month = String(performanceDate.getMonth() + 1).padStart(2, '0');
+        const monthStr = `${year}-${month}`;
+        
+        performanceTableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Loading...</td></tr>';
+        showLoader();
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const url = `${BACKEND_URL}/dashboard-summary?month=${monthStr}`;
+            const response = await fetch(url, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken } });
+            if (!response.ok) throw new Error('Failed to load performance data.');
+            const data = await response.json();
+            
+            performanceTableBody.innerHTML = '';
+            if (data.leaderboard && data.leaderboard.length > 0) {
+                data.leaderboard.forEach(h => {
+                    const row = performanceTableBody.insertRow();
+                    row.innerHTML = `<td>${h.hospital}</td><td>${h.warnings}</td><td>${h.oot}</td>`;
+                });
+            } else {
+                performanceTableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">No performance data available for this period.</td></tr>';
+            }
+        } catch (error) {
+            console.error("Error loading performance data:", error);
+            performanceTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message" style="color:red;">Error loading data.</td></tr>`;
+        } finally {
+            hideLoader();
+        }
+    }
     
-    function renderBenchmarkCharts(data) { /* ... implementation ... */ }
-    function renderBenchmarkTable(data) { /* ... implementation ... */ }
+    function renderBenchmarkCharts(data) {
+        const isDarkMode = document.body.classList.contains('dark');
+        const ticksColor = isDarkMode ? '#ddd' : '#666';
+        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        const labels = data.map(d => d.hospital);
+        
+        const meanDevCtx = document.getElementById('meanDeviationChart').getContext('2d');
+        if (benchmarkCharts.meanDeviation) benchmarkCharts.meanDeviation.destroy();
+        benchmarkCharts.meanDeviation = new Chart(meanDevCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Mean Deviation (Output %)',
+                    data: data.map(d => d.metrics.output.mean_deviation),
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: 'Mean Deviation (Output)', color: ticksColor } }, scales: { y: { ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
+        });
+
+        const stdDevCtx = document.getElementById('stdDeviationChart').getContext('2d');
+        if (benchmarkCharts.stdDeviation) benchmarkCharts.stdDeviation.destroy();
+        benchmarkCharts.stdDeviation = new Chart(stdDevCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Std. Deviation (Output %)',
+                    data: data.map(d => d.metrics.output.std_deviation),
+                    backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: 'Machine Stability (Output Std. Dev.)', color: ticksColor } }, scales: { y: { beginAtZero: true, ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
+        });
+    }
+
+    function renderBenchmarkTable(data) {
+        const tableBody = document.getElementById('benchmarkTableBody');
+        tableBody.innerHTML = '';
+        if (!data || data.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No benchmark data available.</td></tr>`;
+            return;
+        }
+        data.forEach(item => {
+            const row = tableBody.insertRow();
+            row.innerHTML = `<td>${item.hospital}</td><td>${item.oots}</td><td>${item.warnings}</td><td>${item.metrics.output.data_points}</td>`;
+        });
+    }
 
 
     // --- Entry Point ---
@@ -663,7 +774,7 @@
         });
         
         document.getElementById('confirmBtn').addEventListener('click', () => {
-            if (onConfirmCallback) onConfirmCallback();
+            if (window.onConfirmCallback) window.onConfirmCallback();
             hideConfirmationModal();
         });
 
