@@ -251,6 +251,7 @@
                         <option value="inline">Inline Symmetry</option>
                         <option value="crossline">Crossline Symmetry</option>
                     </select>
+                    <button onclick="loadServiceEfficacyData(true)"><i class="fas fa-sync-alt"></i> Refresh Analysis</button>
                 </div>
                 <div class="user-table-container">
                     <table class="user-table">
@@ -352,67 +353,38 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-<!-- [START OF FIX] Refactored script block -->
 <script>
-    // --- Global variables ---
     const BACKEND_URL = "https://back-end-wrxi.onrender.com";
-    let allUsersData = [];
-    let currentAdminUid = null;
-    let benchmarkCharts = {};
-    let performanceDate = new Date();
-    let serviceEfficacyData = [];
+    let allUsersData = [], currentAdminUid = null, benchmarkCharts = {}, performanceDate = new Date(), serviceEfficacyData = [];
     let auth, db, appCheck;
-
-    // --- All functions are defined in the global scope for onclick ---
 
     function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
     function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
 
     function showAdminSection(sectionId) {
         document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.section === sectionId));
-        document.querySelectorAll('.content-display-area .card-section').forEach(section => {
-            section.style.display = 'none';
-            section.classList.remove('active-section');
-        });
+        document.querySelectorAll('.content-display-area .card-section').forEach(section => section.style.display = 'none');
         const activeSection = document.getElementById(sectionId);
         activeSection.style.display = 'block';
-        activeSection.classList.add('active-section');
         
         if (sectionId === 'hospital-data-access-section' && document.getElementById('adminYearSelect').options.length === 0) populateHospitalDataFilters();
-        if (sectionId === 'audit-logs-section' && !document.getElementById('auditLogDateFilter').value) {
-            populateAuditLogFilters();
-            loadAuditLogs();
-        }
-        if (sectionId === 'hospital-performance-section' && !activeSection.dataset.loaded) {
-            loadPerformanceData();
-            activeSection.dataset.loaded = 'true';
-        }
-        if (sectionId === 'benchmark-section' && !activeSection.dataset.loaded) {
-            loadBenchmarkData();
-            activeSection.dataset.loaded = 'true';
-        }
-        if (sectionId === 'service-efficacy-section' && !activeSection.dataset.loaded) {
-            loadServiceEfficacyData();
-            activeSection.dataset.loaded = 'true';
-        }
+        if (sectionId === 'audit-logs-section' && !document.getElementById('auditLogDateFilter').value) { populateAuditLogFilters(); loadAuditLogs(); }
+        if (sectionId === 'hospital-performance-section' && !activeSection.dataset.loaded) { loadPerformanceData(); activeSection.dataset.loaded = 'true'; }
+        if (sectionId === 'benchmark-section' && !activeSection.dataset.loaded) { loadBenchmarkData(); activeSection.dataset.loaded = 'true'; }
+        if (sectionId === 'service-efficacy-section' && !activeSection.dataset.loaded) { loadServiceEfficacyData(); activeSection.dataset.loaded = 'true'; }
     }
 
     async function loadAllUsers() {
         showLoader();
         try {
             const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckTokenResponse = await appCheck.getToken(false);
-            const response = await fetch(`${BACKEND_URL}/admin/users`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const response = await fetch(`${BACKEND_URL}/admin/users`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken } });
             if (!response.ok) throw new Error('Failed to fetch users');
             allUsersData = await response.json();
             populateCommonFilters();
             renderUsers(allUsersData);
-        } catch (error) {
-            console.error("Error loading users:", error);
-            document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="6" class="no-users-message">Error loading users.</td></tr>`;
-        } finally {
-            hideLoader();
-        }
+        } catch (error) { console.error("Error loading users:", error); } finally { hideLoader(); }
     }
 
     function filterUsers() {
@@ -432,18 +404,15 @@
         try {
             const user = auth.currentUser;
             if (user) {
-                const appCheckTokenResponse = await appCheck.getToken(false);
+                const appCheckToken = (await appCheck.getToken(false)).token;
                 await fetch(`${BACKEND_URL}/log_event`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", "X-Firebase-AppCheck": appCheckTokenResponse.token },
+                    headers: { "Content-Type": "application/json", "X-Firebase-AppCheck": appCheckToken },
                     body: JSON.stringify({ action: "user_logout", userUid: user.uid })
                 });
             }
         } catch (logError) { console.error("Error sending logout log event:", logError); }
-        auth.signOut().then(() => {
-            localStorage.clear();
-            window.location.replace("login.html");
-        });
+        auth.signOut().then(() => { localStorage.clear(); window.location.replace("login.html"); });
     }
 
     async function loadBenchmarkData() {
@@ -452,19 +421,12 @@
         try {
             const idToken = await auth.currentUser.getIdToken(true);
             const appCheckToken = (await appCheck.getToken(false)).token;
-            const response = await fetch(`${BACKEND_URL}/admin/benchmark-metrics?period=${period}`, {
-                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-            });
+            const response = await fetch(`${BACKEND_URL}/admin/benchmark-metrics?period=${period}`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken } });
             if (!response.ok) throw new Error('Failed to load benchmark data.');
             const data = await response.json();
             renderBenchmarkCharts(data);
             renderBenchmarkTable(data);
-        } catch (error) {
-            console.error("Error loading benchmark data:", error);
-            document.getElementById('benchmark-content').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`;
-        } finally {
-            hideLoader();
-        }
+        } catch (error) { console.error("Error loading benchmark data:", error); } finally { hideLoader(); }
     }
 
     function updateUserStatus(uid, newStatus) {
@@ -473,10 +435,10 @@
             showLoader();
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
-                const appCheckTokenResponse = await appCheck.getToken(false);
-                await fetch(`${BACKEND_URL}/admin/update-user-status`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token }, body: JSON.stringify({ uid, status: newStatus, admin_uid: currentAdminUid }) });
+                const appCheckToken = (await appCheck.getToken(false)).token;
+                await fetch(`${BACKEND_URL}/admin/update-user-status`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }, body: JSON.stringify({ uid, status: newStatus, admin_uid: currentAdminUid }) });
                 await loadAllUsers();
-            } catch (error) { console.error("Error updating status:", error); alert("Failed to update user status."); } finally { hideLoader(); }
+            } catch (error) { console.error("Error updating status:", error); } finally { hideLoader(); }
         });
     }
 
@@ -485,10 +447,10 @@
             showLoader();
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
-                const appCheckTokenResponse = await appCheck.getToken(false);
-                await fetch(`${BACKEND_URL}/admin/delete-user`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token }, body: JSON.stringify({ uid, admin_uid: currentAdminUid }) });
+                const appCheckToken = (await appCheck.getToken(false)).token;
+                await fetch(`${BACKEND_URL}/admin/delete-user`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }, body: JSON.stringify({ uid, admin_uid: currentAdminUid }) });
                 await loadAllUsers();
-            } catch (error) { console.error("Error deleting user:", error); alert("Failed to delete user."); } finally { hideLoader(); }
+            } catch (error) { console.error("Error deleting user:", error); } finally { hideLoader(); }
         }, true, name);
     }
     
@@ -513,125 +475,97 @@
         showLoader();
         try {
             const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckTokenResponse = await appCheck.getToken(false);
+            const appCheckToken = (await appCheck.getToken(false)).token;
             await fetch(`${BACKEND_URL}/admin/update-user-status`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token },
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
                 body: JSON.stringify({ uid: document.getElementById('editUserId').value, hospital: document.getElementById('editUserHospital').value, role: document.getElementById('editUserRole').value, status: document.getElementById('editUserStatus').value, admin_uid: currentAdminUid })
             });
             closeEditModal();
             await loadAllUsers();
-        } catch (error) { console.error("Error saving changes:", error); alert("Failed to save changes."); } finally { hideLoader(); }
+        } catch (error) { console.error("Error saving changes:", error); } finally { hideLoader(); }
     }
     
     async function loadAuditLogs(fetchAll = false) {
         showLoader();
-        let hospitalId = document.getElementById('auditLogHospitalFilter').value;
-        let action = document.getElementById('auditLogActionFilter').value;
-        let date = document.getElementById('auditLogDateFilter').value;
+        let hospitalId = document.getElementById('auditLogHospitalFilter').value, action = document.getElementById('auditLogActionFilter').value, date = document.getElementById('auditLogDateFilter').value;
         const logsTableBody = document.getElementById('auditLogsTableBody');
         logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">Loading logs...</td></tr>`;
         if (fetchAll) { hospitalId = ''; action = ''; date = ''; }
-        let url = `${BACKEND_URL}/admin/audit-logs?`;
-        if(date) url += `date=${date}&`;
-        if(hospitalId) url += `hospitalId=${hospitalId}&`;
-        if(action) url += `action=${action}&`;
+        let url = `${BACKEND_URL}/admin/audit-logs?${new URLSearchParams({date, hospitalId, action}).toString()}`;
         try {
             const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckTokenResponse = await appCheck.getToken(false);
-            const response = await fetch(url, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const response = await fetch(url, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken } });
             if (!response.ok) throw new Error('Failed to fetch logs');
-            const result = await response.json();
+            const { logs } = await response.json();
             logsTableBody.innerHTML = '';
-            if(result.logs.length === 0) { logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No logs found.</td></tr>`; return; }
-            result.logs.forEach(log => {
+            if(!logs.length) { logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No logs found.</td></tr>`; return; }
+            logs.forEach(log => {
                 const row = logsTableBody.insertRow();
                 const details = JSON.stringify(log.details || log.changes || log.deletedUserData || {}, null, 2);
                 row.innerHTML = `<td>${log.timestamp}</td><td>${log.action}</td><td>${log.user_display || 'N/A'}</td><td><pre>${details}</pre></td>`;
             });
-        } catch (error) { console.error("Error loading audit logs:", error); logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message" style="color:red;">Error loading logs.</td></tr>`; } finally { hideLoader(); }
+        } catch (error) { console.error("Error loading audit logs:", error); } finally { hideLoader(); }
     }
 
     async function loadHospitalQaData() {
-        const hospitalId = document.getElementById('adminHospitalSelect').value;
-        const year = document.getElementById('adminYearSelect').value;
-        const month = document.getElementById('adminMonthSelect').value;
+        const hospitalId = document.getElementById('adminHospitalSelect').value, year = document.getElementById('adminYearSelect').value, month = document.getElementById('adminMonthSelect').value;
         if (!hospitalId || !year || !month) return;
         showLoader();
         try {
             const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckTokenResponse = await appCheck.getToken(false);
-            const response = await fetch(`${BACKEND_URL}/admin/hospital-data?hospitalId=${hospitalId}&month=${year}-${month}`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const response = await fetch(`${BACKEND_URL}/admin/hospital-data?${new URLSearchParams({hospitalId, month: `${year}-${month}`})}`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken } });
             if (!response.ok) throw new Error('Failed to fetch data');
-            const result = await response.json();
-            renderHospitalQaDataTable(result.data, year, month);
-        } catch (error) { console.error("Error loading hospital data:", error); document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`; } finally { hideLoader(); }
+            const { data } = await response.json();
+            renderHospitalQaDataTable(data, year, month);
+        } catch (error) { console.error("Error loading hospital data:", error); } finally { hideLoader(); }
     }
 
     function toggleFullWidth() {
-        const layout = document.querySelector('.main-admin-layout');
+        document.querySelector('.main-admin-layout').classList.toggle('full-width-mode');
         const icon = document.querySelector('.fullscreen-btn i');
-        layout.classList.toggle('full-width-mode');
-        icon.classList.toggle('fa-expand', !layout.classList.contains('full-width-mode'));
-        icon.classList.toggle('fa-compress', layout.classList.contains('full-width-mode'));
+        icon.classList.toggle('fa-expand', !icon.classList.contains('fa-compress'));
+        icon.classList.toggle('fa-compress', !icon.classList.contains('fa-expand'));
     }
 
     function hideConfirmationModal() {
         document.getElementById('confirmationModal').style.display = 'none';
         window.onConfirmCallback = null;
     }
-    
+
     function renderUsers(usersToRender) {
         const usersTableBody = document.getElementById('usersTableBody');
         usersTableBody.innerHTML = '';
-        if (!usersToRender || usersToRender.length === 0) {
+        if (!usersToRender.length) {
             usersTableBody.innerHTML = '<tr><td colspan="6" class="no-users-message">No users found.</td></tr>';
             return;
         }
         usersToRender.forEach(user => {
             const row = usersTableBody.insertRow();
-            row.innerHTML = `
-                <td>${user.name || 'N/A'}</td>
-                <td>${user.email || 'N/A'}</td>
-                <td>${user.hospital || 'N/A'}</td>
-                <td>${user.role || 'N/A'}</td>
-                <td><span style="font-weight:bold; color:${user.status === 'active' ? 'green' : (user.status === 'pending' ? 'orange' : 'red')}">${user.status?.toUpperCase() || 'N/A'}</span></td>
-                <td class="user-actions-cell">
-                    <button class="approve-btn" onclick="updateUserStatus('${user.uid}', 'active')">Approve</button>
-                    <button class="reject-btn" onclick="updateUserStatus('${user.uid}', 'rejected')">Reject</button>
-                    <button class="edit-btn" onclick="openEditModal('${user.uid}')">Edit</button>
-                    <button class="delete-btn" onclick="deleteUser('${user.uid}', '${user.name || 'this user'}')"><i class="fas fa-trash"></i></button>
-                </td>
-            `;
+            row.innerHTML = `<td>${user.name || 'N/A'}</td><td>${user.email || 'N/A'}</td><td>${user.hospital || 'N/A'}</td><td>${user.role || 'N/A'}</td><td><span style="font-weight:bold; color:${user.status === 'active' ? 'green' : (user.status === 'pending' ? 'orange' : 'red')}">${user.status?.toUpperCase() || 'N/A'}</span></td><td class="user-actions-cell"><button class="approve-btn" onclick="updateUserStatus('${user.uid}', 'active')">Approve</button><button class="reject-btn" onclick="updateUserStatus('${user.uid}', 'rejected')">Reject</button><button class="edit-btn" onclick="openEditModal('${user.uid}')">Edit</button><button class="delete-btn" onclick="deleteUser('${user.uid}', '${user.name || 'this user'}')"><i class="fas fa-trash"></i></button></td>`;
         });
     }
 
     function populateCommonFilters() {
         const hospitalSet = new Set(allUsersData.map(user => user.hospital).filter(Boolean));
         const sortedHospitals = [...hospitalSet].sort();
-        const hospitalFilterSelects = [
-            document.getElementById('filterHospital'),
-            document.getElementById('adminHospitalSelect'),
-            document.getElementById('auditLogHospitalFilter')
-        ];
-        hospitalFilterSelects.forEach(select => {
+        [ 'filterHospital', 'adminHospitalSelect', 'auditLogHospitalFilter'].forEach(id => {
+            const select = document.getElementById(id);
             if (select) {
                 const currentValue = select.value;
-                let optionsHTML = select.querySelector('option').outerHTML;
-                sortedHospitals.forEach(h => { optionsHTML += `<option value="${h}">${h}</option>`; });
-                select.innerHTML = optionsHTML;
+                select.innerHTML = `<option value="">${select.firstElementChild.textContent}</option>` + sortedHospitals.map(h => `<option value="${h}">${h}</option>`).join('');
                 select.value = currentValue;
             }
         });
     }
 
     function populateHospitalDataFilters() {
-        const yearSelect = document.getElementById('adminYearSelect');
-        const monthSelect = document.getElementById('adminMonthSelect');
-        if (yearSelect.options.length > 0) return;
+        const yearSelect = document.getElementById('adminYearSelect'), monthSelect = document.getElementById('adminMonthSelect');
         const currentYear = new Date().getFullYear();
-        for (let i = currentYear; i >= currentYear - 5; i--) { yearSelect.add(new Option(i, i)); }
+        for (let i = currentYear; i >= currentYear - 5; i--) yearSelect.add(new Option(i, i));
         const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        months.forEach((m, i) => { monthSelect.add(new Option(m, String(i + 1).padStart(2, '0'))); });
+        months.forEach((m, i) => monthSelect.add(new Option(m, String(i + 1).padStart(2, '0'))));
         monthSelect.value = String(new Date().getMonth() + 1).padStart(2, '0');
     }
 
@@ -639,52 +573,32 @@
         const container = document.getElementById('hospitalQaTableContainer');
         const selectedDataType = document.getElementById('adminDataTypeSelect').value;
         const dataForTable = allData[selectedDataType]; 
-        const config = { tolerance: 2.0, warning: 1.8 }; // Simplified config for display
         container.innerHTML = '';
-        if (!dataForTable || dataForTable.length === 0) {
+        if (!dataForTable || !dataForTable.length) {
             container.innerHTML = `<p class="no-users-message">No '${selectedDataType}' data available.</p>`;
             return;
         }
         const numDays = new Date(year, month, 0).getDate();
         let tableHTML = `<h3 style="text-align:center; margin-top:0;">${selectedDataType.charAt(0).toUpperCase() + selectedDataType.slice(1)} Data</h3><table class="user-table hospital-qa-table"><thead><tr><th>Energy</th>`;
-        for (let i = 1; i <= numDays; i++) { tableHTML += `<th>${i}</th>`; }
-        tableHTML += '</tr></thead><tbody>';
-        dataForTable.forEach(row => {
-            tableHTML += `<tr><td>${row[0]}</td>`;
-            const values = row.slice(1);
-            for (let i = 0; i < numDays; i++) {
-                const value = values[i] || '';
-                const numValue = parseFloat(value);
-                let className = '';
-                if (!isNaN(numValue)) {
-                    if (Math.abs(numValue) > config.tolerance) className = 'out';
-                    else if (Math.abs(numValue) > config.warning) className = 'warning';
-                    else className = 'within';
-                }
-                tableHTML += `<td class="${className}">${value}</td>`;
-            }
-            tableHTML += '</tr>';
-        });
-        tableHTML += '</tbody></table>';
+        for (let i = 1; i <= numDays; i++) tableHTML += `<th>${i}</th>`;
+        tableHTML += '</tr></thead><tbody>' + dataForTable.map(row => `<tr><td>${row[0]}</td>` + row.slice(1).map(val => `<td>${val || ''}</td>`).join('') + `</tr>`).join('') + '</tbody></table>';
         container.innerHTML = tableHTML;
     }
 
     function populateAuditLogFilters() {
-        const dateFilter = document.getElementById('auditLogDateFilter');
-        if(!dateFilter.value) { dateFilter.value = new Date().toISOString().split('T')[0]; }
+        document.getElementById('auditLogDateFilter').value = new Date().toISOString().split('T')[0];
     }
     
     function setupPerformanceNav() {
-        const performanceYearSelect = document.getElementById('performance-year-select');
-        const performanceMonthSelect = document.getElementById('performance-month-select');
+        const yearSelect = document.getElementById('performance-year-select'), monthSelect = document.getElementById('performance-month-select');
         const currentYear = new Date().getFullYear();
-        for (let i = currentYear; i >= currentYear - 5; i--) { performanceYearSelect.add(new Option(i, i)); }
+        for (let i = currentYear; i >= currentYear - 5; i--) yearSelect.add(new Option(i, i));
         const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        months.forEach((m, i) => { performanceMonthSelect.add(new Option(m, i + 1)); });
-        performanceYearSelect.value = performanceDate.getFullYear();
-        performanceMonthSelect.value = performanceDate.getMonth() + 1;
-        performanceYearSelect.addEventListener('change', updatePerformanceView);
-        performanceMonthSelect.addEventListener('change', updatePerformanceView);
+        months.forEach((m, i) => monthSelect.add(new Option(m, i + 1)));
+        yearSelect.value = performanceDate.getFullYear();
+        monthSelect.value = performanceDate.getMonth() + 1;
+        yearSelect.addEventListener('change', updatePerformanceView);
+        monthSelect.addEventListener('change', updatePerformanceView);
     }
     
     function updatePerformanceView() {
@@ -695,151 +609,80 @@
     }
     
     async function loadPerformanceData() {
-        const performanceTableBody = document.getElementById('performanceTableBody');
-        const year = performanceDate.getFullYear();
-        const month = String(performanceDate.getMonth() + 1).padStart(2, '0');
-        const monthStr = `${year}-${month}`;
-        
-        performanceTableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Loading...</td></tr>';
+        const tableBody = document.getElementById('performanceTableBody');
+        const monthStr = `${performanceDate.getFullYear()}-${String(performanceDate.getMonth() + 1).padStart(2, '0')}`;
+        tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Loading...</td></tr>';
         showLoader();
         try {
             const idToken = await auth.currentUser.getIdToken(true);
             const appCheckToken = (await appCheck.getToken(false)).token;
-            const url = `${BACKEND_URL}/dashboard-summary?month=${monthStr}`;
-            const response = await fetch(url, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken } });
+            const response = await fetch(`${BACKEND_URL}/dashboard-summary?month=${monthStr}`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken } });
             if (!response.ok) throw new Error('Failed to load performance data.');
             const data = await response.json();
-            
-            performanceTableBody.innerHTML = '';
+            tableBody.innerHTML = '';
             if (data.leaderboard && data.leaderboard.length > 0) {
                 data.leaderboard.forEach(h => {
-                    const row = performanceTableBody.insertRow();
+                    const row = tableBody.insertRow();
                     row.innerHTML = `<td>${h.hospital}</td><td>${h.warnings}</td><td>${h.oot}</td>`;
                 });
             } else {
-                performanceTableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">No performance data available for this period.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">No performance data available.</td></tr>';
             }
-        } catch (error) {
-            console.error("Error loading performance data:", error);
-            performanceTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message" style="color:red;">Error loading data.</td></tr>`;
-        } finally {
-            hideLoader();
-        }
+        } catch (error) { console.error("Error loading performance data:", error); } finally { hideLoader(); }
     }
     
     function renderBenchmarkCharts(data) {
-        const isDarkMode = document.body.classList.contains('dark');
-        const ticksColor = isDarkMode ? '#ddd' : '#666';
-        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        const isDarkMode = document.body.classList.contains('dark'), ticksColor = isDarkMode ? '#ddd' : '#666', gridColor = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
         const labels = data.map(d => d.hospital);
         
         const meanDevCtx = document.getElementById('meanDeviationChart').getContext('2d');
         if (benchmarkCharts.meanDeviation) benchmarkCharts.meanDeviation.destroy();
-        benchmarkCharts.meanDeviation = new Chart(meanDevCtx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Mean Deviation (Output %)',
-                    data: data.map(d => d.metrics.output.mean_deviation),
-                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: { responsive: true, plugins: { title: { display: true, text: 'Mean Deviation (Output)', color: ticksColor } }, scales: { y: { ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
-        });
+        benchmarkCharts.meanDeviation = new Chart(meanDevCtx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Mean Deviation (Output %)', data: data.map(d => d.metrics.output.mean_deviation), backgroundColor: 'rgba(54, 162, 235, 0.6)', borderWidth: 1 }] }, options: { responsive: true, plugins: { title: { display: true, text: 'Mean Deviation (Output)', color: ticksColor } }, scales: { y: { ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } } });
 
         const stdDevCtx = document.getElementById('stdDeviationChart').getContext('2d');
         if (benchmarkCharts.stdDeviation) benchmarkCharts.stdDeviation.destroy();
-        benchmarkCharts.stdDeviation = new Chart(stdDevCtx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Std. Deviation (Output %)',
-                    data: data.map(d => d.metrics.output.std_deviation),
-                    backgroundColor: 'rgba(255, 159, 64, 0.6)',
-                    borderColor: 'rgba(255, 159, 64, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: { responsive: true, plugins: { title: { display: true, text: 'Machine Stability (Output Std. Dev.)', color: ticksColor } }, scales: { y: { beginAtZero: true, ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
-        });
+        benchmarkCharts.stdDeviation = new Chart(stdDevCtx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Std. Deviation (Output %)', data: data.map(d => d.metrics.output.std_deviation), backgroundColor: 'rgba(255, 159, 64, 0.6)', borderWidth: 1 }] }, options: { responsive: true, plugins: { title: { display: true, text: 'Machine Stability (Std. Dev.)', color: ticksColor } }, scales: { y: { beginAtZero: true, ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } } });
     }
 
     function renderBenchmarkTable(data) {
         const tableBody = document.getElementById('benchmarkTableBody');
-        tableBody.innerHTML = '';
-        if (!data || data.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No benchmark data available.</td></tr>`;
-            return;
-        }
-        data.forEach(item => {
-            const row = tableBody.insertRow();
-            row.innerHTML = `<td>${item.hospital}</td><td>${item.oots}</td><td>${item.warnings}</td><td>${item.metrics.output.data_points}</td>`;
-        });
+        tableBody.innerHTML = !data.length ? `<tr><td colspan="4" class="no-users-message">No benchmark data available.</td></tr>` : data.map(item => `<tr><td>${item.hospital}</td><td>${item.oots}</td><td>${item.warnings}</td><td>${item.metrics.output.data_points}</td></tr>`).join('');
     }
 
-    async function loadServiceEfficacyData() {
+    async function loadServiceEfficacyData(forceRefresh = false) {
+        if (serviceEfficacyData.length && !forceRefresh) { renderServiceEfficacyTable(); return; }
         showLoader();
         const tableBody = document.getElementById('serviceEfficacyTableBody');
         tableBody.innerHTML = `<tr><td colspan="5" class="no-users-message">Loading analysis...</td></tr>`;
         try {
             const idToken = await auth.currentUser.getIdToken(true);
             const appCheckToken = (await appCheck.getToken(false)).token;
-            const response = await fetch(`${BACKEND_URL}/admin/service-impact-analysis`, {
-                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-            });
+            const response = await fetch(`${BACKEND_URL}/admin/service-impact-analysis`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken } });
             if (!response.ok) throw new Error('Failed to load service efficacy data.');
             serviceEfficacyData = await response.json();
             renderServiceEfficacyTable();
-        } catch (error) {
-            console.error("Error loading service efficacy data:", error);
-            tableBody.innerHTML = `<tr><td colspan="5" class="no-users-message" style="color:red;">Error loading data.</td></tr>`;
-        } finally {
-            hideLoader();
-        }
+        } catch (error) { console.error("Error loading service efficacy data:", error); } finally { hideLoader(); }
     }
 
     function renderServiceEfficacyTable() {
         const tableBody = document.getElementById('serviceEfficacyTableBody');
         const selectedType = document.getElementById('efficacyDataTypeSelect').value;
         tableBody.innerHTML = '';
-
-        if (!serviceEfficacyData || serviceEfficacyData.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="5" class="no-users-message">No service events found to analyze.</td></tr>`;
-            return;
-        }
-
+        if (!serviceEfficacyData.length) { tableBody.innerHTML = `<tr><td colspan="5" class="no-users-message">No service events found to analyze.</td></tr>`; return; }
         let rowsAdded = 0;
         serviceEfficacyData.forEach(event => {
             const analysis = event.analysis[selectedType];
             if (analysis) {
                 const improvement = analysis.stability_improvement_percent;
-                let improvementClass = '';
-                if (improvement > 5) improvementClass = 'improvement-positive';
-                if (improvement < -5) improvementClass = 'improvement-negative';
-                
+                let improvementClass = improvement > 5 ? 'improvement-positive' : (improvement < -5 ? 'improvement-negative' : '');
                 const row = tableBody.insertRow();
-                row.innerHTML = `
-                    <td>${event.hospital}</td>
-                    <td>${event.service_date}</td>
-                    <td>${analysis.before_std.toFixed(4)}</td>
-                    <td>${analysis.after_std.toFixed(4)}</td>
-                    <td class="${improvementClass}">${improvement.toFixed(2)}%</td>
-                `;
+                row.innerHTML = `<td>${event.hospital}</td><td>${event.service_date}</td><td>${analysis.before_std.toFixed(4)}</td><td>${analysis.after_std.toFixed(4)}</td><td class="${improvementClass}">${improvement.toFixed(2)}%</td>`;
                 rowsAdded++;
             }
         });
-
-        if (rowsAdded === 0) {
-             tableBody.innerHTML = `<tr><td colspan="5" class="no-users-message">No data available for '${selectedType}' around the service dates.</td></tr>`;
-        }
+        if (rowsAdded === 0) tableBody.innerHTML = `<tr><td colspan="5" class="no-users-message">No data available for '${selectedType}' around service dates.</td></tr>`;
     }
 
-
-    // --- Entry Point ---
     document.addEventListener('DOMContentLoaded', () => {
         auth = firebase.auth();
         db = firebase.firestore();
@@ -848,22 +691,17 @@
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentAdminUid = user.uid;
-                if (localStorage.getItem("userRole") !== "Admin") {
-                    alert("Access Denied.");
-                    logout();
-                } else {
+                if (localStorage.getItem("userRole") !== "Admin") { alert("Access Denied."); logout(); } 
+                else {
                     showLoader();
                     await loadAllUsers();
                     setupPerformanceNav();
                     showAdminSection('manage-users-section');
                     hideLoader();
                 }
-            } else {
-                window.location.href = "login.html";
-            }
+            } else { window.location.href = "login.html"; }
         });
-
-        // Event listeners
+        
         document.querySelector('.sidebar-nav').addEventListener('click', (event) => {
             const button = event.target.closest('.nav-btn');
             if (button) showAdminSection(button.dataset.section);
