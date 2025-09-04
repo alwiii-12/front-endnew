@@ -118,7 +118,6 @@
             border-radius: 6px;
             font-size: 0.95em;
         }
-        /* [NEW] Styles for Benchmark Dashboard */
         .benchmark-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -133,6 +132,15 @@
         }
         body.dark .benchmark-chart-container {
              background-color: var(--bg-dark-card);
+        }
+
+        .improvement-positive {
+            color: var(--status-success);
+            font-weight: bold;
+        }
+        .improvement-negative {
+            color: var(--status-error);
+            font-weight: bold;
         }
 
     </style>
@@ -151,6 +159,7 @@
             <button class="nav-btn active" data-section="manage-users-section"><i class="fas fa-users"></i> Manage Users</button>
             <button class="nav-btn" data-section="hospital-performance-section"><i class="fas fa-trophy"></i> Hospital Performance</button>
             <button class="nav-btn" data-section="benchmark-section"><i class="fas fa-balance-scale"></i> Benchmarking</button>
+            <button class="nav-btn" data-section="service-efficacy-section"><i class="fas fa-tools"></i> Service Efficacy</button>
             <button class="nav-btn" data-section="hospital-data-access-section"><i class="fas fa-hospital"></i> View Hospital Data</button>
             <button class="nav-btn" data-section="audit-logs-section"><i class="fas fa-clipboard-list"></i> View Audit Logs</button>
         </div>
@@ -229,6 +238,33 @@
                              <tbody id="benchmarkTableBody"></tbody>
                          </table>
                     </div>
+                </div>
+            </div>
+
+            <div class="card-section" id="service-efficacy-section" style="display: none;">
+                <h2>Service Efficacy Analysis</h2>
+                <div class="filter-search-container">
+                    <label for="efficacyDataTypeSelect">Analyze Parameter:</label>
+                    <select id="efficacyDataTypeSelect" onchange="renderServiceEfficacyTable()">
+                        <option value="output" selected>Output</option>
+                        <option value="flatness">Flatness</option>
+                        <option value="inline">Inline Symmetry</option>
+                        <option value="crossline">Crossline Symmetry</option>
+                    </select>
+                </div>
+                <div class="user-table-container">
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>Hospital</th>
+                                <th>Service Date</th>
+                                <th>Stability Before (Std. Dev.)</th>
+                                <th>Stability After (Std. Dev.)</th>
+                                <th>Improvement</th>
+                            </tr>
+                        </thead>
+                        <tbody id="serviceEfficacyTableBody"></tbody>
+                    </table>
                 </div>
             </div>
 
@@ -318,15 +354,16 @@
 
 <!-- [START OF FIX] Refactored script block -->
 <script>
+    // --- Global variables ---
     const BACKEND_URL = "https://back-end-wrxi.onrender.com";
     let allUsersData = [];
     let currentAdminUid = null;
     let benchmarkCharts = {};
     let performanceDate = new Date();
-    
+    let serviceEfficacyData = [];
     let auth, db, appCheck;
 
-    // --- All functions are defined in the global scope ---
+    // --- All functions are defined in the global scope for onclick ---
 
     function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
     function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
@@ -341,9 +378,7 @@
         activeSection.style.display = 'block';
         activeSection.classList.add('active-section');
         
-        if (sectionId === 'hospital-data-access-section' && document.getElementById('adminYearSelect').options.length === 0) {
-            populateHospitalDataFilters();
-        }
+        if (sectionId === 'hospital-data-access-section' && document.getElementById('adminYearSelect').options.length === 0) populateHospitalDataFilters();
         if (sectionId === 'audit-logs-section' && !document.getElementById('auditLogDateFilter').value) {
             populateAuditLogFilters();
             loadAuditLogs();
@@ -354,6 +389,10 @@
         }
         if (sectionId === 'benchmark-section' && !activeSection.dataset.loaded) {
             loadBenchmarkData();
+            activeSection.dataset.loaded = 'true';
+        }
+        if (sectionId === 'service-efficacy-section' && !activeSection.dataset.loaded) {
+            loadServiceEfficacyData();
             activeSection.dataset.loaded = 'true';
         }
     }
@@ -538,9 +577,9 @@
 
     function hideConfirmationModal() {
         document.getElementById('confirmationModal').style.display = 'none';
-        onConfirmCallback = null;
+        window.onConfirmCallback = null;
     }
-
+    
     function renderUsers(usersToRender) {
         const usersTableBody = document.getElementById('usersTableBody');
         usersTableBody.innerHTML = '';
@@ -740,6 +779,63 @@
             const row = tableBody.insertRow();
             row.innerHTML = `<td>${item.hospital}</td><td>${item.oots}</td><td>${item.warnings}</td><td>${item.metrics.output.data_points}</td>`;
         });
+    }
+
+    async function loadServiceEfficacyData() {
+        showLoader();
+        const tableBody = document.getElementById('serviceEfficacyTableBody');
+        tableBody.innerHTML = `<tr><td colspan="5" class="no-users-message">Loading analysis...</td></tr>`;
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const response = await fetch(`${BACKEND_URL}/admin/service-impact-analysis`, {
+                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
+            });
+            if (!response.ok) throw new Error('Failed to load service efficacy data.');
+            serviceEfficacyData = await response.json();
+            renderServiceEfficacyTable();
+        } catch (error) {
+            console.error("Error loading service efficacy data:", error);
+            tableBody.innerHTML = `<tr><td colspan="5" class="no-users-message" style="color:red;">Error loading data.</td></tr>`;
+        } finally {
+            hideLoader();
+        }
+    }
+
+    function renderServiceEfficacyTable() {
+        const tableBody = document.getElementById('serviceEfficacyTableBody');
+        const selectedType = document.getElementById('efficacyDataTypeSelect').value;
+        tableBody.innerHTML = '';
+
+        if (!serviceEfficacyData || serviceEfficacyData.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" class="no-users-message">No service events found to analyze.</td></tr>`;
+            return;
+        }
+
+        let rowsAdded = 0;
+        serviceEfficacyData.forEach(event => {
+            const analysis = event.analysis[selectedType];
+            if (analysis) {
+                const improvement = analysis.stability_improvement_percent;
+                let improvementClass = '';
+                if (improvement > 5) improvementClass = 'improvement-positive';
+                if (improvement < -5) improvementClass = 'improvement-negative';
+                
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${event.hospital}</td>
+                    <td>${event.service_date}</td>
+                    <td>${analysis.before_std.toFixed(4)}</td>
+                    <td>${analysis.after_std.toFixed(4)}</td>
+                    <td class="${improvementClass}">${improvement.toFixed(2)}%</td>
+                `;
+                rowsAdded++;
+            }
+        });
+
+        if (rowsAdded === 0) {
+             tableBody.innerHTML = `<tr><td colspan="5" class="no-users-message">No data available for '${selectedType}' around the service dates.</td></tr>`;
+        }
     }
 
 
