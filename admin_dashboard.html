@@ -7,6 +7,8 @@
     <link rel="icon" href="/favicon.png" type="image/png">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- [ADD THIS LINE] Import Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* --- Styles for Admin Dashboard Enhancements --- */
         
@@ -117,6 +119,22 @@
             border-radius: 6px;
             font-size: 0.95em;
         }
+        /* [NEW] Styles for Benchmark Dashboard */
+        .benchmark-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        .benchmark-chart-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        body.dark .benchmark-chart-container {
+             background-color: var(--bg-dark-card);
+        }
 
     </style>
 </head>
@@ -133,6 +151,8 @@
         <div class="sidebar-nav">
             <button class="nav-btn active" data-section="manage-users-section"><i class="fas fa-users"></i> Manage Users</button>
             <button class="nav-btn" data-section="hospital-performance-section"><i class="fas fa-trophy"></i> Hospital Performance</button>
+            <!-- [ADD THIS LINE] New button for the Benchmark Dashboard -->
+            <button class="nav-btn" data-section="benchmark-section"><i class="fas fa-balance-scale"></i> Benchmarking</button>
             <button class="nav-btn" data-section="hospital-data-access-section"><i class="fas fa-hospital"></i> View Hospital Data</button>
             <button class="nav-btn" data-section="audit-logs-section"><i class="fas fa-clipboard-list"></i> View Audit Logs</button>
         </div>
@@ -175,6 +195,43 @@
                             <tr><td colspan="3" class="no-users-message">Loading performance data...</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- [ADD THIS SECTION] New content panel for the Benchmark Dashboard -->
+            <div class="card-section" id="benchmark-section" style="display: none;">
+                <h2>Inter-Institutional Benchmarking</h2>
+                <div class="filter-search-container">
+                    <label for="benchmarkPeriodSelect">Time Period:</label>
+                    <select id="benchmarkPeriodSelect" onchange="loadBenchmarkData()">
+                        <option value="30">Last 30 Days</option>
+                        <option value="90" selected>Last 90 Days</option>
+                        <option value="180">Last 180 Days</option>
+                        <option value="365">Last 365 Days</option>
+                    </select>
+                </div>
+                <div id="benchmark-content">
+                    <div class="benchmark-grid">
+                        <div class="benchmark-chart-container">
+                            <canvas id="meanDeviationChart"></canvas>
+                        </div>
+                        <div class="benchmark-chart-container">
+                            <canvas id="stdDeviationChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="user-table-container" style="margin-top: 25px;">
+                         <table class="user-table">
+                             <thead>
+                                 <tr>
+                                     <th>Hospital</th>
+                                     <th>Total OOTs</th>
+                                     <th>Total Warnings</th>
+                                     <th>Data Points (Output)</th>
+                                 </tr>
+                             </thead>
+                             <tbody id="benchmarkTableBody"></tbody>
+                         </table>
+                    </div>
                 </div>
             </div>
 
@@ -256,11 +313,6 @@
         </div>
     </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-check-compat.js"></script>
-<script src="firebase-init.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const auth = firebase.auth();
@@ -269,6 +321,7 @@
         const BACKEND_URL = "https://back-end-wrxi.onrender.com";
         let allUsersData = [];
         let currentAdminUid = null;
+        let benchmarkCharts = {}; // [NEW] Object to hold chart instances
 
         let performanceDate = new Date();
 
@@ -388,6 +441,7 @@
             activeSection.style.display = 'block';
             activeSection.classList.add('active-section');
             
+            // [MODIFY THIS BLOCK] Add the new benchmark section logic
             if (sectionId === 'hospital-data-access-section' && !document.getElementById('adminYearSelect').options.length) {
                 populateHospitalDataFilters();
             }
@@ -397,6 +451,10 @@
             }
             if (sectionId === 'hospital-performance-section' && !activeSection.dataset.loaded) {
                 loadPerformanceData();
+                activeSection.dataset.loaded = 'true';
+            }
+            if (sectionId === 'benchmark-section' && !activeSection.dataset.loaded) {
+                loadBenchmarkData();
                 activeSection.dataset.loaded = 'true';
             }
         }
@@ -663,6 +721,97 @@
             } finally {
                 hideLoader();
             }
+        }
+        
+        // [ADD THIS ENTIRE BLOCK] New functions for the Benchmark Dashboard
+        window.loadBenchmarkData = async function() {
+            const period = document.getElementById('benchmarkPeriodSelect').value;
+            showLoader();
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
+                const response = await fetch(`${BACKEND_URL}/admin/benchmark-metrics?period=${period}`, {
+                    headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
+                });
+                if (!response.ok) throw new Error('Failed to load benchmark data.');
+                const data = await response.json();
+                renderBenchmarkCharts(data);
+                renderBenchmarkTable(data);
+            } catch (error) {
+                console.error("Error loading benchmark data:", error);
+                document.getElementById('benchmark-content').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`;
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function renderBenchmarkCharts(data) {
+            const isDarkMode = document.body.classList.contains('dark');
+            const ticksColor = isDarkMode ? '#ddd' : '#666';
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const labels = data.map(d => d.hospital);
+            
+            // Chart 1: Mean Deviation for Output
+            const meanDevCtx = document.getElementById('meanDeviationChart').getContext('2d');
+            if (benchmarkCharts.meanDeviation) benchmarkCharts.meanDeviation.destroy();
+            benchmarkCharts.meanDeviation = new Chart(meanDevCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Mean Deviation (Output %)',
+                        data: data.map(d => d.metrics.output.mean_deviation),
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { title: { display: true, text: 'Mean Deviation (Output)', color: ticksColor } },
+                    scales: { y: { ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } }
+                }
+            });
+
+            // Chart 2: Standard Deviation for Output
+            const stdDevCtx = document.getElementById('stdDeviationChart').getContext('2d');
+            if (benchmarkCharts.stdDeviation) benchmarkCharts.stdDeviation.destroy();
+            benchmarkCharts.stdDeviation = new Chart(stdDevCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Std. Deviation (Output %)',
+                        data: data.map(d => d.metrics.output.std_deviation),
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { title: { display: true, text: 'Machine Stability (Output Std. Dev.)', color: ticksColor } },
+                    scales: { y: { beginAtZero: true, ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } }
+                }
+            });
+        }
+
+        function renderBenchmarkTable(data) {
+            const tableBody = document.getElementById('benchmarkTableBody');
+            tableBody.innerHTML = '';
+            if (!data || data.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No benchmark data available.</td></tr>`;
+                return;
+            }
+            data.forEach(item => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${item.hospital}</td>
+                    <td>${item.oots}</td>
+                    <td>${item.warnings}</td>
+                    <td>${item.metrics.output.data_points}</td>
+                `;
+            });
         }
         
         function setupPerformanceNav() {
