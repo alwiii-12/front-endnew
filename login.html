@@ -73,7 +73,8 @@
                 const appCheckTokenResponse = await appCheck.getToken(false);
                 const appCheckToken = appCheckTokenResponse.token;
 
-                const response = await fetch(`${BACKEND_URL}/auth/login`, {
+                // FIX: Changed "/auth/login" to "/login" to match the correct backend route
+                const response = await fetch(`${BACKEND_URL}/login`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json", "X-Firebase-AppCheck": appCheckToken },
                     body: JSON.stringify({ uid: user.uid })
