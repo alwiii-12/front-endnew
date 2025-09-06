@@ -118,7 +118,6 @@
             border-radius: 6px;
             font-size: 0.95em;
         }
-        /* [NEW] Styles for Benchmark Dashboard */
         .benchmark-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -324,11 +323,37 @@
     let performanceDate = new Date();
     
     let auth, db, appCheck;
+    let onConfirmCallback = null; // Holds the function to run when the confirm button is clicked
 
     // --- All functions are defined in the global scope ---
 
     function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
     function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
+
+    // FIX: Added the missing showConfirmationModal function
+    function showConfirmationModal(title, message, callback, isDelete = false, name = '') {
+        const modal = document.getElementById('confirmationModal');
+        document.getElementById('confirmationTitle').textContent = title;
+        document.getElementById('confirmationMessage').textContent = message;
+
+        const deleteConfirmArea = document.getElementById('deleteConfirmArea');
+        const deleteConfirmInput = document.getElementById('deleteConfirmInput');
+        const confirmBtn = document.getElementById('confirmBtn');
+
+        if (isDelete) {
+            document.getElementById('deleteConfirmName').textContent = name;
+            deleteConfirmArea.style.display = 'block';
+            deleteConfirmInput.value = '';
+            deleteConfirmInput.dataset.expectedName = name;
+            confirmBtn.disabled = true;
+        } else {
+            deleteConfirmArea.style.display = 'none';
+            confirmBtn.disabled = false;
+        }
+
+        onConfirmCallback = callback;
+        modal.style.display = 'flex';
+    }
 
     function showAdminSection(sectionId) {
         document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.section === sectionId));
@@ -505,7 +530,6 @@
             if(result.logs.length === 0) { logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message">No logs found.</td></tr>`; return; }
             result.logs.forEach(log => {
                 const row = logsTableBody.insertRow();
-                // FIX: Removed the details column and added a <pre> tag to the user column for proper formatting
                 row.innerHTML = `
                     <td>${log.timestamp}</td>
                     <td>${log.action}</td>
@@ -777,7 +801,7 @@
         });
         
         document.getElementById('confirmBtn').addEventListener('click', () => {
-            if (window.onConfirmCallback) window.onConfirmCallback();
+            if (onConfirmCallback) onConfirmCallback();
             hideConfirmationModal();
         });
 
