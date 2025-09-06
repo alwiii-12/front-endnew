@@ -39,7 +39,6 @@
     <div class="profile-card">
         <h1>User Profile</h1>
         
-        <!-- Profile Display View -->
         <div id="profileDisplay">
             <div id="profileDetails">
                 <p class="loading-message">Loading profile data...</p>
@@ -49,7 +48,6 @@
             </div>
         </div>
 
-        <!-- Profile Edit View -->
         <div id="profileEdit" style="display: none;">
             <div class="form-group">
                 <label for="editName">Full Name</label>
@@ -112,7 +110,6 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        console.log("DEBUG: DOMContentLoaded fired. Initializing scripts.");
         const auth = firebase.auth();
         const db = firebase.firestore();
         const appCheck = firebase.appCheck();
@@ -149,12 +146,19 @@
         }
         
         function populateHospitalDropdown(currentHospital) {
-            const hospitals = ["aoi_gurugram", "medanta_gurugram", "fortis_delhi", "apollo_chennai", "max_delhi"];
+            const hospitals = [
+                "aoi_aligarh", "aoi_coimbatore", "aoi_guntur", "aoi_gurugram", 
+                "aoi_hisar_2", "aoi_hisar_1", "aoi_imphal", "aoi_jammu", 
+                "aoi_kota", "aoi_ludhiana", "aoi_nagpur", "aoi_raipur", 
+                "aoi_ganganagar", "aoi_vijayawada", "aoi_hyderabad"
+            ];
             editHospital.innerHTML = '';
             hospitals.forEach(h => {
                 const option = document.createElement('option');
                 option.value = h;
-                option.textContent = h.replace(/_/g, ' ').toUpperCase();
+                // A simple formatter to make IDs more readable
+                let displayName = h.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                option.textContent = displayName;
                 editHospital.appendChild(option);
             });
             editHospital.value = currentHospital;
@@ -174,16 +178,12 @@
         cancelEditBtn.addEventListener('click', () => toggleEditMode(false));
 
         async function loadProfile(uid) {
-            console.log("DEBUG: loadProfile function called with UID:", uid);
             const profileDetailsDiv = document.getElementById('profileDetails');
             profileDetailsDiv.innerHTML = '<p class="loading-message">Loading...</p>';
             try {
-                console.log("DEBUG: Attempting to fetch user document from Firestore...");
                 const userDocSnap = await db.collection("users").doc(uid).get();
-                console.log("DEBUG: Firestore request completed.");
 
                 if (userDocSnap.exists) {
-                    console.log("DEBUG: User document found.");
                     currentUserData = userDocSnap.data();
                     profileDetailsDiv.innerHTML = `
                         <div class="profile-item"><strong>Name:</strong> <span>${currentUserData.name || 'N/A'}</span></div>
@@ -193,11 +193,9 @@
                         <div class="profile-item"><strong>Status:</strong> <span style="font-weight:bold; color:${currentUserData.status === 'active' ? 'var(--status-success)' : 'var(--status-warning)'}">${currentUserData.status?.toUpperCase() || 'N/A'}</span></div>
                     `;
                 } else {
-                    console.error("DEBUG: User document NOT found in Firestore for UID:", uid);
                     profileDetailsDiv.innerHTML = '<p class="loading-message" style="color: var(--status-error);">Error: User profile not found.</p>';
                 }
             } catch (error) {
-                console.error("DEBUG: An error occurred while fetching the profile:", error);
                 profileDetailsDiv.innerHTML = `<p class="loading-message" style="color: var(--status-error);">Error: Could not load profile data. Check console for details.</p>`;
             }
         }
@@ -314,14 +312,10 @@
             }
         });
         
-        console.log("DEBUG: Setting up auth state listener...");
         auth.onAuthStateChanged(user => {
-            console.log("DEBUG: onAuthStateChanged fired.");
             if (user) {
-                console.log("DEBUG: User is logged in. UID:", user.uid);
                 loadProfile(user.uid);
             } else {
-                console.log("DEBUG: User is not logged in. Redirecting to login.html.");
                 window.location.replace("login.html");
             }
         });
