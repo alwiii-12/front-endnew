@@ -418,11 +418,6 @@
                         if (source !== 'loadData') {
                             updateSummaryAndChart(dataType, instances[dataType].hot.getData());
                             updateTrendChart();
-
-                            const updateBtn = document.getElementById(`updateForecastBtn-${dataType}`);
-                            if (updateBtn) {
-                                updateBtn.disabled = false;
-                            }
                         }
                     },
                     cells: function (r, c) {
@@ -759,15 +754,6 @@
             const actionsContainer = document.createElement('div');
             actionsContainer.className = 'chart-actions-container';
 
-            if (hasData && isViewingLiveMonth) {
-                const updateBtn = document.createElement('button');
-                updateBtn.className = 'diagnose-btn';
-                updateBtn.id = `updateForecastBtn-${dataType}`;
-                updateBtn.innerHTML = '<i class="fas fa-magic"></i> Update Live Forecast';
-                updateBtn.onclick = () => updateLiveForecast();
-                actionsContainer.appendChild(updateBtn);
-            }
-
             if (hasData && isPastMonth) {
                 const validateBtn = document.createElement('button');
                 validateBtn.className = 'validate-btn';
@@ -988,44 +974,6 @@
             });
         };
         
-        window.updateLiveForecast = async function() {
-            const dataType = activeTab;
-            showLoader();
-            const selectedEnergy = document.getElementById(`trendEnergySelect-${dataType}`).value;
-            const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-            
-            try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
-                const response = await fetch(`${BACKEND_URL}/update-live-forecast`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckTokenResponse.token },
-                    body: JSON.stringify({
-                        uid: currentUID,
-                        month: monthKey,
-                        dataType: dataType,
-                        energy: selectedEnergy
-                    })
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Failed to update live forecast.');
-                }
-
-                await updateTrendChart();
-                
-                const updateBtn = document.getElementById(`updateForecastBtn-${dataType}`);
-                if (updateBtn) {
-                    updateBtn.disabled = true;
-                }
-
-            } catch (error) {
-                alert(`Error: ${error.message}`);
-            } finally {
-                hideLoader();
-            }
-        };
-
         function changeMonth(monthIndex) {
             currentDate.setMonth(monthIndex);
             header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
@@ -1118,4 +1066,3 @@
   </script>
 </body>
 </html>
-
