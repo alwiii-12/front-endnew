@@ -268,7 +268,7 @@
                 </div>
                 <div class="user-table-container">
                     <table class="user-table">
-                        <thead><tr><th>Timestamp</th><th>Action</th><th>User</th><th>Details</th></tr></thead>
+                        <thead><tr><th>Timestamp</th><th>Action</th><th>User</th></tr></thead>
                         <tbody id="auditLogsTableBody"></tbody>
                     </table>
                 </div>
@@ -316,7 +316,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-<!-- [START OF FIX] Refactored script block -->
 <script>
     const BACKEND_URL = "https://back-end-wrxi.onrender.com";
     let allUsersData = [];
@@ -490,7 +489,7 @@
         let action = document.getElementById('auditLogActionFilter').value;
         let date = document.getElementById('auditLogDateFilter').value;
         const logsTableBody = document.getElementById('auditLogsTableBody');
-        logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">Loading logs...</td></tr>`;
+        logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message">Loading logs...</td></tr>`;
         if (fetchAll) { hospitalId = ''; action = ''; date = ''; }
         let url = `${BACKEND_URL}/admin/audit-logs?`;
         if(date) url += `date=${date}&`;
@@ -503,13 +502,17 @@
             if (!response.ok) throw new Error('Failed to fetch logs');
             const result = await response.json();
             logsTableBody.innerHTML = '';
-            if(result.logs.length === 0) { logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No logs found.</td></tr>`; return; }
+            if(result.logs.length === 0) { logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message">No logs found.</td></tr>`; return; }
             result.logs.forEach(log => {
                 const row = logsTableBody.insertRow();
-                const details = JSON.stringify(log.details || log.changes || log.deletedUserData || {}, null, 2);
-                row.innerHTML = `<td>${log.timestamp}</td><td>${log.action}</td><td>${log.user_display || 'N/A'}</td><td><pre>${details}</pre></td>`;
+                // FIX: Removed the details column and added a <pre> tag to the user column for proper formatting
+                row.innerHTML = `
+                    <td>${log.timestamp}</td>
+                    <td>${log.action}</td>
+                    <td><pre style="margin: 0; font-family: inherit; font-size: inherit;">${log.user_display || 'N/A'}</pre></td>
+                `;
             });
-        } catch (error) { console.error("Error loading audit logs:", error); logsTableBody.innerHTML = `<tr><td colspan="4" class="no-users-message" style="color:red;">Error loading logs.</td></tr>`; } finally { hideLoader(); }
+        } catch (error) { console.error("Error loading audit logs:", error); logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message" style="color:red;">Error loading logs.</td></tr>`; } finally { hideLoader(); }
     }
 
     async function loadHospitalQaData() {
@@ -790,4 +793,3 @@
 </script>
 </body>
 </html>
-
