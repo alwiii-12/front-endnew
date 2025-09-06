@@ -134,7 +134,6 @@
              background-color: var(--bg-dark-card);
         }
 
-        /* --- [NEW] STYLES FOR SERVICE EFFICACY TAB --- */
         .efficacy-table {
             width: 100%;
             border-collapse: collapse;
@@ -430,6 +429,7 @@
             loadAuditLogs();
         }
         if (sectionId === 'hospital-performance-section' && !activeSection.dataset.loaded) {
+            setupPerformanceNav();
             loadPerformanceData();
             activeSection.dataset.loaded = 'true';
         }
@@ -585,6 +585,27 @@
             localStorage.clear();
             window.location.replace("login.html");
         });
+    }
+
+    async function loadBenchmarkData() {
+        const period = document.getElementById('benchmarkPeriodSelect').value;
+        showLoader();
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const response = await fetch(`${BACKEND_URL}/admin/benchmark-metrics?period=${period}`, {
+                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
+            });
+            if (!response.ok) throw new Error('Failed to load benchmark data.');
+            const data = await response.json();
+            renderBenchmarkCharts(data);
+            renderBenchmarkTable(data);
+        } catch (error) {
+            console.error("Error loading benchmark data:", error);
+            document.getElementById('benchmark-content').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`;
+        } finally {
+            hideLoader();
+        }
     }
 
     function updateUserStatus(uid, newStatus) {
@@ -918,7 +939,6 @@
                 } else {
                     showLoader();
                     await loadAllUsers();
-                    setupPerformanceNav();
                     showAdminSection('manage-users-section');
                     hideLoader();
                 }
