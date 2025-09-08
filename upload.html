@@ -1082,6 +1082,7 @@
         function setupProactiveChatListener(uid) {
             if (proactiveChatListener) proactiveChatListener();
             
+            // --- [FINAL CORRECTED QUERY] ---
             const proactiveQuery = db.collection('proactive_chats')
                 .where('uid', '==', uid)
                 .where('read', '==', false)
@@ -1089,6 +1090,7 @@
                 .limit(1);
 
             proactiveChatListener = proactiveQuery.onSnapshot(snapshot => {
+                // This logic ensures the pop-up only fires for brand new messages
                 snapshot.docChanges().forEach(change => {
                     if (change.type === 'added') {
                         const chatData = change.doc.data();
@@ -1100,11 +1102,13 @@
                             if (answer === "Yes, help diagnose") {
                                 sendChatMessage(chatData.topic.replace(/_/g, " "));
                             }
+                            // Mark the message as read so it doesn't appear again
                             change.doc.ref.update({ read: true });
                         });
                     }
                 });
             }, error => {
+                // This will catch the index error if it still occurs
                 console.error("Error in snapshot listener:", error);
             });
         }
