@@ -379,7 +379,6 @@
 
 <script>
     const BACKEND_URL = "https://back-end-wrxi.onrender.com";
-    // --- [NEW] ADDED CONFIGURATION OBJECT ---
     const dataTypesConfig = {
       output: { tolerance: 2.0, warning: 1.8 },
       flatness: { tolerance: 1.0, warning: 0.9 },
@@ -589,7 +588,12 @@
             }
         } catch (logError) { console.error("Error sending logout log event:", logError); }
         auth.signOut().then(() => {
-            localStorage.clear();
+            // --- [MODIFIED] More specific logout to preserve "Remember Me" ---
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('hospitalName');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('userStatus');
             window.location.replace("login.html");
         });
     }
@@ -718,7 +722,6 @@
         } catch (error) { console.error("Error loading hospital data:", error); document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`; } finally { hideLoader(); }
     }
 
-    // --- [MODIFIED] FUNCTION ---
     function renderHospitalQaDataTable(allData, year, month) {
         const container = document.getElementById('hospitalQaTableContainer');
         const selectedDataType = document.getElementById('adminDataTypeSelect').value;
