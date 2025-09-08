@@ -357,7 +357,6 @@
             }
             
             auth.signOut().then(() => {
-                // --- [MODIFIED] More specific logout to preserve "Remember Me" ---
                 localStorage.removeItem('userName');
                 localStorage.removeItem('userEmail');
                 localStorage.removeItem('hospitalName');
@@ -441,12 +440,26 @@
                 let data = Array.isArray(result.data) && result.data.length > 0
                     ? result.data.map(r => r.map(c => c === null || c === "None" ? "" : c))
                     : energyTypes.map(e => [e, ...new Array(dateCols.length).fill('')]);
+                
+                // --- [NEW] DYNAMIC COLUMN CONFIG FOR VALIDATION ---
+                const columnsConfig = [{ type: 'text', readOnly: true }]; // Energy column
+                for (let i = 0; i < dateCols.length; i++) {
+                    columnsConfig.push({
+                        type: 'numeric',
+                        numericFormat: {
+                            pattern: '0.00' // Format to 2 decimal places
+                        },
+                        allowInvalid: false, // Prevents non-numeric input
+                        allowEmpty: true
+                    });
+                }
+
                 const container = document.getElementById(`table-${dataType}`);
                 if (instances[dataType].hot) instances[dataType].hot.destroy();
                 instances[dataType].hot = new Handsontable(container, {
                     data, rowHeaders: false, stretchH: 'all', height: 500, licenseKey: 'non-commercial-and-evaluation',
                     colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
-                    columns: Array(dateCols.length + 1).fill({ type: 'text' }),
+                    columns: columnsConfig, // Use the new dynamic config
                     afterChange: (changes, source) => {
                         if (source !== 'loadData') {
                             updateSummaryAndChart(dataType, instances[dataType].hot.getData());
