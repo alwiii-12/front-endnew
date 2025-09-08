@@ -214,8 +214,9 @@
     .validate-btn:hover { background-color: #138496; }
   </style>
 </head>
-<body>
+<body class="upload-page">
   <div class="topbar">
+    <button id="menu-toggle" class="header-btn menu-toggle-btn"><i class="fas fa-bars"></i></button>
     <div id="hospitalInfoBox" class="hospital-info-box">Hospital: <span id="hospitalName"></span></div>
     <div class="header-buttons">
         <a href="my_profile.html" id="myProfileBtn" class="button">My Profile</a>
@@ -441,7 +442,7 @@
                     ? result.data.map(r => r.map(c => c === null || c === "None" ? "" : c))
                     : energyTypes.map(e => [e, ...new Array(dateCols.length).fill('')]);
                 
-                // --- [NEW] DYNAMIC COLUMN CONFIG FOR VALIDATION ---
+                // --- [MODIFIED] DYNAMIC COLUMN CONFIG FOR VALIDATION ---
                 const columnsConfig = [{ type: 'text', readOnly: true }]; // Energy column
                 for (let i = 0; i < dateCols.length; i++) {
                     columnsConfig.push({
@@ -1200,6 +1201,11 @@
                     darkToggle.checked = localStorage.getItem('darkMode') === 'true';
                     toggleDarkMode(true);
                     darkToggle.addEventListener('change', () => toggleDarkMode(false));
+                    
+                    // [NEW] Mobile Menu Toggle
+                    document.getElementById('menu-toggle').addEventListener('click', () => {
+                        document.querySelector('.sidebar').classList.toggle('sidebar-visible');
+                    });
                     
                     document.getElementById('chat-bubble').onclick = () => chatWindow.classList.toggle('open');
                     document.getElementById('close-chat-btn').onclick = () => chatWindow.classList.remove('open');
