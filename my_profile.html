@@ -7,33 +7,6 @@
     <link rel="icon" href="/favicon.png" type="image/png">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        /* --- Styles for Profile Page Enhancements --- */
-        .profile-card {
-            max-width: 650px; /* Wider card for more space */
-        }
-
-        .profile-card input[type="text"],
-        .profile-card input[type="email"],
-        .profile-card input[type="password"],
-        .profile-card select {
-            padding: 14px;
-            font-size: 1.05em;
-        }
-        
-        .profile-card .button {
-            padding: 14px 28px;
-            font-size: 1.05em;
-        }
-
-        .profile-actions .dashboard-link {
-            background-color: var(--secondary-color);
-            color: var(--text-white);
-        }
-        .profile-actions .dashboard-link:hover {
-            background-color: var(--secondary-dark);
-        }
-    </style>
 </head>
 <body class="centered-content">
     <div class="profile-card">
@@ -102,19 +75,18 @@
     <div id="notification-container"></div>
     <div id="loading-overlay"></div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-check-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
     <script src="firebase-init.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const auth = firebase.auth();
         const db = firebase.firestore();
         const appCheck = firebase.appCheck();
-        const BACKEND_URL = "https://back-end-wrxi.onrender.com";
-
+        
         const profileDisplay = document.getElementById('profileDisplay');
         const profileEdit = document.getElementById('profileEdit');
         const editProfileBtn = document.getElementById('editProfileBtn');
@@ -156,7 +128,6 @@
             hospitals.forEach(h => {
                 const option = document.createElement('option');
                 option.value = h;
-                // A simple formatter to make IDs more readable
                 let displayName = h.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 option.textContent = displayName;
                 editHospital.appendChild(option);
@@ -214,12 +185,19 @@
 
             showLoader();
             try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
+                // [SECURITY EDIT] Get secure tokens
+                const appCheckToken = (await appCheck.getToken(false)).token;
+                const idToken = await user.getIdToken(true);
+
                 const response = await fetch(`${BACKEND_URL}/update-profile`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckTokenResponse.token },
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'X-Firebase-AppCheck': appCheckToken,
+                        'Authorization': `Bearer ${idToken}` // Secure token
+                    },
                     body: JSON.stringify({
-                        uid: user.uid,
+                        // UID is removed from body; backend gets it from the token
                         name: newName,
                         hospital: newHospital
                     })
@@ -227,6 +205,10 @@
 
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.message || 'Failed to update profile.');
+                
+                // Update local storage if hospital name changed
+                localStorage.setItem("hospitalName", newHospital);
+                localStorage.setItem("userName", newName);
 
                 showNotification("Profile updated successfully!", "success");
                 await loadProfile(user.uid);
