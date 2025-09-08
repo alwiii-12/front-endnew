@@ -1,5 +1,8 @@
 // This is the full content for firebase-init.js
 
+// [NEW] Centralized Backend URL
+const BACKEND_URL = "https://back-end-wrxi.onrender.com";
+
 // Your web app's updated Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
