@@ -1082,11 +1082,9 @@
         function setupProactiveChatListener(uid) {
             if (proactiveChatListener) proactiveChatListener();
             
+            // TEMPORARY TEST CODE
             const proactiveQuery = db.collection('proactive_chats')
-                .where('uid', '==', uid)
-                .where('read', '==', false)
-                .orderBy('timestamp', 'desc')
-                .limit(1);
+                .where('uid', '==', uid);
 
             proactiveChatListener = proactiveQuery.onSnapshot(snapshot => {
                 if (!snapshot.empty) {
