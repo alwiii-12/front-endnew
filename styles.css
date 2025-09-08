@@ -955,14 +955,6 @@ body.index-page {
     }
 }
 
-/* --- [FIX] Final Dark Mode Adjustments (v2) --- */
-
-/* Makes section titles visible in dark mode */
-body.dark .summary-box h3, 
-body.dark .trend-chart-section h3 {
-    color: #f0f0f0;
-}
-
 /* --- Force Handsontable to always be light-themed (with status colors) --- */
 body.dark .handsontable .htCore th,
 body.dark .handsontable .ht_clone_top th {
@@ -971,14 +963,12 @@ body.dark .handsontable .ht_clone_top th {
     border-color: #ccc !important;
 }
 
-/* Set default text color for cells, but NOT the background */
 body.dark .handsontable .htCore td {
      color: #333333 !important;
      border-color: #ccc !important;
      background-color: #ffffff; /* Default cell background to white */
 }
 
-/* Ensure the first column (Energy) keeps its light grey background */
 body.dark .handsontable .htCore td:first-child,
 body.dark .handsontable .htCore th:first-child {
     background-color: #f0f0f0 !important;
@@ -998,27 +988,8 @@ body.dark .handsontable .out {
     color: var(--ht-text-out) !important;
 }
 
-/* --- [FIX] Final Dark Mode Visibility Fixes --- */
 
-/* 1. Brighter text for inactive tabs */
-body.dark .tab-nav-button {
-    color: #ddd;
-}
-
-/* 2. Force light text color on main action buttons */
-body.dark .actions-section button {
-    color: white !important;
-}
-
-/* 3. Brighter text for section headings and labels */
-body.dark .energy-selector-container label,
-body.dark .trend-chart-section h3,
-body.dark .summary-box h3 {
-    color: #f0f0f0;
-}
-
-
-/* --- [NEW] Responsive Design (Mobile-First Adjustments) --- */
+/* --- [MODIFIED] Dark Mode Visibility and Responsive Design --- */
 .menu-toggle-btn {
     display: none; /* Hidden by default on desktop */
     background-color: var(--primary-color);
@@ -1027,6 +998,27 @@ body.dark .summary-box h3 {
     width: 44px;
     height: 44px;
 }
+
+/* --- [NEW] Comprehensive Dark Mode Text Color Fixes --- */
+body.dark .summary-box,
+body.dark .trend-chart-section {
+    color: #f0f0f0; /* Set default text color for the whole box */
+}
+
+body.dark .summary-box h3,
+body.dark .trend-chart-section h3,
+body.dark .energy-selector-container label {
+    color: #f0f0f0;
+}
+
+body.dark .tab-nav-button {
+    color: #ddd;
+}
+
+body.dark .actions-section button {
+    color: white !important;
+}
+
 
 @media (max-width: 768px) {
     html, body {
