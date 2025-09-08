@@ -1082,25 +1082,30 @@
         function setupProactiveChatListener(uid) {
             if (proactiveChatListener) proactiveChatListener();
             
-            // TEMPORARY TEST CODE
             const proactiveQuery = db.collection('proactive_chats')
-                .where('uid', '==', uid);
+                .where('uid', '==', uid)
+                .where('read', '==', false)
+                .orderBy('timestamp', 'desc')
+                .limit(1);
 
             proactiveChatListener = proactiveQuery.onSnapshot(snapshot => {
-                if (!snapshot.empty) {
-                    const doc = snapshot.docs[0];
-                    const chatData = doc.data();
-                    
-                    chatWindow.classList.add('open');
-                    appendChatMessage(chatData.initial_message, 'bot');
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === 'added') {
+                        const chatData = change.doc.data();
+                        
+                        chatWindow.classList.add('open');
+                        appendChatMessage(chatData.initial_message, 'bot');
 
-                    showChatOptions(["Yes, help diagnose", "No, thanks"], (answer) => {
-                        if (answer === "Yes, help diagnose") {
-                            sendChatMessage(chatData.topic.replace(/_/g, " "));
-                        }
-                        doc.ref.update({ read: true });
-                    });
-                }
+                        showChatOptions(["Yes, help diagnose", "No, thanks"], (answer) => {
+                            if (answer === "Yes, help diagnose") {
+                                sendChatMessage(chatData.topic.replace(/_/g, " "));
+                            }
+                            change.doc.ref.update({ read: true });
+                        });
+                    }
+                });
+            }, error => {
+                console.error("Error in snapshot listener:", error);
             });
         }
         
