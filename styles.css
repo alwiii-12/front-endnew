@@ -989,7 +989,7 @@ body.dark .handsontable .out {
 }
 
 
-/* --- [MODIFIED] Dark Mode Visibility and Responsive Design --- */
+/* --- Responsive and Dark Mode Fixes --- */
 .menu-toggle-btn {
     display: none; /* Hidden by default on desktop */
     background-color: var(--primary-color);
@@ -999,26 +999,20 @@ body.dark .handsontable .out {
     height: 44px;
 }
 
-/* --- [NEW] Comprehensive Dark Mode Text Color Fixes --- */
+/* --- [CORRECTED] Dark Mode Text Visibility --- */
 body.dark .summary-box,
 body.dark .trend-chart-section {
-    color: #f0f0f0; /* Set default text color for the whole box */
+    color: #e0e0e0; /* Sets a light base color for text like 'Total Entries:' */
 }
 
 body.dark .summary-box h3,
-body.dark .trend-chart-section h3,
+body.dark .trend-chart-section h3 {
+    color: #ffffff; /* Makes the main headings pure white */
+}
+
 body.dark .energy-selector-container label {
-    color: #f0f0f0;
+    color: #e0e0e0; /* Makes the 'Select Energy:' label light */
 }
-
-body.dark .tab-nav-button {
-    color: #ddd;
-}
-
-body.dark .actions-section button {
-    color: white !important;
-}
-
 
 @media (max-width: 768px) {
     html, body {
