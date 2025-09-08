@@ -379,6 +379,13 @@
 
 <script>
     const BACKEND_URL = "https://back-end-wrxi.onrender.com";
+    // --- [NEW] ADDED CONFIGURATION OBJECT ---
+    const dataTypesConfig = {
+      output: { tolerance: 2.0, warning: 1.8 },
+      flatness: { tolerance: 1.0, warning: 0.9 },
+      inline: { tolerance: 1.0, warning: 0.9 },
+      crossline: { tolerance: 1.0, warning: 0.9 }
+    };
     let allUsersData = [];
     let currentAdminUid = null;
     let benchmarkCharts = {};
@@ -711,6 +718,42 @@
         } catch (error) { console.error("Error loading hospital data:", error); document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`; } finally { hideLoader(); }
     }
 
+    // --- [MODIFIED] FUNCTION ---
+    function renderHospitalQaDataTable(allData, year, month) {
+        const container = document.getElementById('hospitalQaTableContainer');
+        const selectedDataType = document.getElementById('adminDataTypeSelect').value;
+        const dataForTable = allData[selectedDataType]; 
+        const config = dataTypesConfig[selectedDataType]; // Use dynamic config
+        container.innerHTML = '';
+        if (!dataForTable || dataForTable.length === 0 || !config) {
+            container.innerHTML = `<p class="no-users-message">No '${selectedDataType}' data available.</p>`;
+            return;
+        }
+        const numDays = new Date(year, month, 0).getDate();
+        let tableHTML = `<h3 style="text-align:center; margin-top:0;">${selectedDataType.charAt(0).toUpperCase() + selectedDataType.slice(1)} Data</h3><table class="user-table hospital-qa-table"><thead><tr><th>Energy</th>`;
+        for (let i = 1; i <= numDays; i++) { tableHTML += `<th>${i}</th>`; }
+        tableHTML += '</tr></thead><tbody>';
+        dataForTable.forEach(row => {
+            tableHTML += `<tr><td>${row[0]}</td>`;
+            const values = row.slice(1);
+            for (let i = 0; i < numDays; i++) {
+                const value = values[i] || '';
+                const numValue = parseFloat(value);
+                let className = '';
+                if (!isNaN(numValue)) {
+                    // Corrected logic to match upload.html
+                    if (Math.abs(numValue) > config.tolerance) className = 'out';
+                    else if (Math.abs(numValue) >= config.warning) className = 'warning';
+                    else className = 'within';
+                }
+                tableHTML += `<td class="${className}">${value}</td>`;
+            }
+            tableHTML += '</tr>';
+        });
+        tableHTML += '</tbody></table>';
+        container.innerHTML = tableHTML;
+    }
+
     function toggleFullWidth() {
         const layout = document.querySelector('.main-admin-layout');
         const icon = document.querySelector('.fullscreen-btn i');
@@ -777,40 +820,6 @@
         const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         months.forEach((m, i) => { monthSelect.add(new Option(m, String(i + 1).padStart(2, '0'))); });
         monthSelect.value = String(new Date().getMonth() + 1).padStart(2, '0');
-    }
-
-    function renderHospitalQaDataTable(allData, year, month) {
-        const container = document.getElementById('hospitalQaTableContainer');
-        const selectedDataType = document.getElementById('adminDataTypeSelect').value;
-        const dataForTable = allData[selectedDataType]; 
-        const config = { tolerance: 2.0, warning: 1.8 };
-        container.innerHTML = '';
-        if (!dataForTable || dataForTable.length === 0) {
-            container.innerHTML = `<p class="no-users-message">No '${selectedDataType}' data available.</p>`;
-            return;
-        }
-        const numDays = new Date(year, month, 0).getDate();
-        let tableHTML = `<h3 style="text-align:center; margin-top:0;">${selectedDataType.charAt(0).toUpperCase() + selectedDataType.slice(1)} Data</h3><table class="user-table hospital-qa-table"><thead><tr><th>Energy</th>`;
-        for (let i = 1; i <= numDays; i++) { tableHTML += `<th>${i}</th>`; }
-        tableHTML += '</tr></thead><tbody>';
-        dataForTable.forEach(row => {
-            tableHTML += `<tr><td>${row[0]}</td>`;
-            const values = row.slice(1);
-            for (let i = 0; i < numDays; i++) {
-                const value = values[i] || '';
-                const numValue = parseFloat(value);
-                let className = '';
-                if (!isNaN(numValue)) {
-                    if (Math.abs(numValue) > config.tolerance) className = 'out';
-                    else if (Math.abs(numValue) > config.warning) className = 'warning';
-                    else className = 'within';
-                }
-                tableHTML += `<td class="${className}">${value}</td>`;
-            }
-            tableHTML += '</tr>';
-        });
-        tableHTML += '</tbody></table>';
-        container.innerHTML = tableHTML;
     }
 
     function populateAuditLogFilters() {
