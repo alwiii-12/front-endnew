@@ -58,14 +58,44 @@
         const emailInput = document.getElementById('email');
         const BACKEND_URL = "https://back-end-wrxi.onrender.com";
 
-        // ... (other functions like showLoader, showNotification, etc.)
+        // --- [NEW] PASSWORD TOGGLE LOGIC ---
+        document.querySelectorAll('.toggle-password').forEach(function(toggle) {
+            toggle.addEventListener('click', function() {
+                const passwordInput = document.querySelector(this.getAttribute('toggle'));
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    this.classList.remove('fa-eye');
+                    this.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    this.classList.remove('fa-eye-slash');
+                    this.classList.add('fa-eye');
+                }
+            });
+        });
+        
+        // This function needs to be defined to avoid console errors.
+        window.sendPasswordReset = function() {
+            const email = emailInput.value;
+            if (!email) {
+                alert("Please enter your email address to reset your password.");
+                return;
+            }
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    alert("Password reset email sent! Please check your inbox.");
+                })
+                .catch((error) => {
+                    console.error("Password reset error:", error);
+                    alert("Error sending password reset email: " + error.message);
+                });
+        };
 
         document.getElementById("loginForm").addEventListener("submit", async function (e) {
             e.preventDefault();
+            document.getElementById('loading-overlay').style.display = 'flex';
             const email = emailInput.value;
             const password = document.getElementById("password").value;
-
-            // ... (show loader, etc.)
 
             try {
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
@@ -73,7 +103,6 @@
                 const appCheckTokenResponse = await appCheck.getToken(false);
                 const appCheckToken = appCheckTokenResponse.token;
 
-                // FIX: Changed "/auth/login" to "/login" to match the correct backend route
                 const response = await fetch(`${BACKEND_URL}/login`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json", "X-Firebase-AppCheck": appCheckToken },
@@ -99,7 +128,6 @@
 
             } catch (error) {
                 console.error("Login process failed:", error);
-                // FIX: Added 'auth/invalid-credential' for broader coverage
                 const credentialErrors = ['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-credential'];
                 if (credentialErrors.includes(error.code)) {
                     errorMsg.textContent = "Error: Invalid email or password.";
@@ -107,7 +135,7 @@
                     errorMsg.textContent = error.message || "An unknown login error occurred.";
                 }
             } finally {
-                // ... (hide loader, etc.)
+                document.getElementById('loading-overlay').style.display = 'none';
             }
         });
     });
