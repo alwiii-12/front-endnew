@@ -357,7 +357,12 @@
             }
             
             auth.signOut().then(() => {
-                localStorage.clear();
+                // --- [MODIFIED] More specific logout to preserve "Remember Me" ---
+                localStorage.removeItem('userName');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('hospitalName');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userStatus');
                 window.location.replace("login.html");
             }).catch(err => {
                 hideLoader();
@@ -1089,7 +1094,6 @@
                 .limit(1);
 
             proactiveChatListener = proactiveQuery.onSnapshot(snapshot => {
-                // This logic ensures the pop-up only fires for brand new messages
                 snapshot.docChanges().forEach(change => {
                     if (change.type === 'added') {
                         // Mark as read immediately to prevent re-popping on next load
