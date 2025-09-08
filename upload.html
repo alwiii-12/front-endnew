@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LINAC Output Entry</title>
+  <title>LINAC Data Entry</title>
   <link rel="icon" href="/favicon.png" type="image/png">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -12,207 +12,6 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.css" />
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  
-  <style>
-    /* This inline style block restores the original layout and applies the new fixes */
-    body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background-color: #f5f5f5;
-      color: #333;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-      flex-direction: column;
-    }
-    .topbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: #ffffff;
-        padding: 10px 20px;
-        border-bottom: 1px solid #ccc;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-    }
-    .hospital-info-box {
-        background-color: #e0f7fa;
-        color: #0056b3;
-        padding: 8px 15px;
-        border-radius: 8px;
-        font-weight: 600;
-    }
-    .topbar .header-buttons {
-        display: flex;
-        gap: 15px;
-        align-items: center;
-    }
-    .topbar .header-buttons .button, .topbar .header-buttons .header-btn {
-        padding: 10px 18px;
-        font-size: 1em;
-    }
-    .topbar .header-buttons .header-btn {
-        width: 44px;
-        height: 44px;
-    }
-    .topbar .header-buttons #myProfileBtn {
-        background-color: var(--primary-color);
-        color: var(--text-white);
-    }
-
-    .content {
-        display: flex;
-        flex: 1;
-        overflow: hidden;
-    }
-    .sidebar {
-        width: 200px;
-        background: #ffffff;
-        padding: 20px;
-        box-shadow: 2px 0 5px rgba(0,0,0,0.08);
-        display: flex;
-        flex-direction: column;
-    }
-    .sidebar h2 {
-        margin: 0 0 20px;
-        color: #007bff;
-        text-align: center;
-    }
-    #months {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    #months button {
-        width: 100%;
-        padding: 12px 0;
-        font-size: 1em;
-    }
-
-    .main {
-        flex-grow: 1;
-        padding: 20px;
-        overflow: auto; /* This line fixes the layout issue */
-    }
-    .tab-nav {
-        display: flex;
-        border-bottom: 2px solid #ccc;
-        margin-bottom: 20px;
-    }
-    .tab-nav-button {
-        padding: 10px 20px;
-        background-color: transparent;
-        border: none;
-        cursor: pointer;
-        font-size: 1em;
-    }
-    .tab-nav-button.active {
-        border-bottom: 3px solid #007bff;
-        font-weight: bold;
-    }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .container {
-        display: flex;
-        gap: 20px;
-        align-items: flex-start;
-        flex-wrap: wrap;
-    }
-    .table-container {
-        flex-grow: 1;
-        height: 500px;
-    }
-    .summary-box {
-        width: 300px;
-        padding: 20px;
-        border: 1px solid var(--border-color);
-        border-radius: 16px;
-        background-color: var(--bg-card);
-        box-shadow: 0 4px 12px var(--shadow-light);
-    }
-    .actions-section, .trend-chart-section {
-        text-align: center;
-        margin-top: 20px;
-    }
-    .actions-section button {
-        padding: 10px 15px;
-        margin: 0 5px;
-        border-radius: 5px;
-        border: none;
-        cursor: pointer;
-        color: white;
-    }
-    .save-btn { background-color: #007bff; }
-    .export-btn { background-color: #28a745; }
-    
-    .chart-wrapper {
-        position: relative;
-        height: 40vh;
-        width: 100%;
-    }
-    .energy-selector-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 15px;
-        margin-bottom: 15px;
-    }
-    .energy-selector-container select {
-        max-width: 250px;
-        margin: 0;
-    }
-
-    #chat-bubble {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .trend-chart-section {
-        position: relative; /* Needed for diagnose button */
-        padding: 20px;
-        border: 1px solid var(--border-color);
-        border-radius: 16px;
-        background-color: var(--bg-card);
-        box-shadow: 0 4px 12px var(--shadow-light);
-    }
-    #annotationModal .modal-buttons button {
-        padding: 12px 25px;
-        font-size: 1em;
-    }
-    #annotationModal textarea {
-        width: 100%;
-        min-height: 120px;
-        resize: vertical;
-    }
-    #deleteAnnotationBtn {
-        background-color: var(--status-error);
-    }
-
-    .chart-actions-container {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        display: flex;
-        gap: 10px;
-        z-index: 10;
-    }
-
-    .diagnose-btn, .validate-btn {
-        position: static;
-        color: var(--text-main);
-        padding: 8px 12px;
-        font-size: 0.9em;
-        border-radius: 6px;
-        z-index: 10;
-        border: none;
-        cursor: pointer;
-    }
-
-    .diagnose-btn { background-color: var(--status-warning); }
-    .validate-btn { background-color: #17a2b8; color: white; }
-    
-    .diagnose-btn:hover { background-color: #ffca2c; }
-    .validate-btn:hover { background-color: #138496; }
-  </style>
 </head>
 <body class="upload-page">
   <div class="topbar">
@@ -250,6 +49,7 @@
     </div>
   </div>
   <div id="loading-overlay"><div class="spinner"></div></div>
+  <div id="notification-container"></div>
   <div id="chat-bubble"><i class="fas fa-comment-dots"></i></div>
   <div id="chat-window">
     <div id="chat-header"><span>QA Copilot</span><button id="close-chat-btn">&times;</button></div>
@@ -278,19 +78,18 @@
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-check-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
   <script src="firebase-init.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
         const auth = firebase.auth();
         const db = firebase.firestore();
         const appCheck = firebase.appCheck();
-        const BACKEND_URL = "https://back-end-wrxi.onrender.com";
-        let currentUID, currentHospital;
+        let currentHospital;
         let currentDate = new Date();
         currentDate.setDate(1);
         let lastDataMonth = null; 
@@ -343,26 +142,40 @@
             }, duration);
         }
 
+        /**
+         * [SECURITY EDIT] Creates a secure headers object for all authenticated API calls.
+         * This function gets the App Check token and the user's ID token.
+         * @returns {Promise<HeadersInit>} A promise that resolves to the headers object.
+         */
+        async function getSecureHeaders() {
+            const user = auth.currentUser;
+            if (!user) throw new Error("User not authenticated.");
+            
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const idToken = await user.getIdToken(true);
+
+            return {
+                "Content-Type": "application/json",
+                "X-Firebase-AppCheck": appCheckToken,
+                "Authorization": `Bearer ${idToken}`
+            };
+        }
+
         async function logout() {
             showLoader();
             try {
-                const user = auth.currentUser;
-                const appCheckTokenResponse = await appCheck.getToken(false);
+                const headers = await getSecureHeaders();
                 await fetch(`${BACKEND_URL}/log_event`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", "X-Firebase-AppCheck": appCheckTokenResponse.token },
-                    body: JSON.stringify({ action: "user_logout", userUid: user ? user.uid : "unknown_uid" })
+                    headers: headers,
+                    body: JSON.stringify({ action: "user_logout" })
                 });
             } catch (logError) { 
                 console.error("Error sending logout log event:", logError); 
             }
             
             auth.signOut().then(() => {
-                localStorage.removeItem('userName');
-                localStorage.removeItem('userEmail');
-                localStorage.removeItem('hospitalName');
-                localStorage.removeItem('userRole');
-                localStorage.removeItem('userStatus');
+                localStorage.clear();
                 window.location.replace("login.html");
             }).catch(err => {
                 hideLoader();
@@ -431,10 +244,10 @@
             const config = dataTypesConfig[dataType];
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
-                const res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&uid=${currentUID}&dataType=${dataType}`, {
-                    headers: { "X-Firebase-AppCheck": appCheckTokenResponse.token }
-                });
+                const headers = await getSecureHeaders();
+                // [SECURITY EDIT] Switched to using secure headers, removed uid from query.
+                const res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&dataType=${dataType}`, { headers: { ...headers, 'Content-Type': undefined } }); // GET requests don't need Content-Type
+                
                 if (!res.ok) throw new Error(`Server error: ${res.statusText}`);
                 const result = await res.json();
                 const dateCols = getMonthDates(currentDate);
@@ -442,25 +255,17 @@
                     ? result.data.map(r => r.map(c => c === null || c === "None" ? "" : c))
                     : energyTypes.map(e => [e, ...new Array(dateCols.length).fill('')]);
                 
-                // --- [MODIFIED] DYNAMIC COLUMN CONFIG FOR VALIDATION ---
-                const columnsConfig = [{ type: 'text', readOnly: true }]; // Energy column
+                const columnsConfig = [{ type: 'text', readOnly: true }];
                 for (let i = 0; i < dateCols.length; i++) {
-                    columnsConfig.push({
-                        type: 'numeric',
-                        numericFormat: {
-                            pattern: '0.00' // Format to 2 decimal places
-                        },
-                        allowInvalid: false, // Prevents non-numeric input
-                        allowEmpty: true
-                    });
+                    columnsConfig.push({ type: 'numeric', numericFormat: { pattern: '0.00' }, allowInvalid: false, allowEmpty: true });
                 }
 
                 const container = document.getElementById(`table-${dataType}`);
                 if (instances[dataType].hot) instances[dataType].hot.destroy();
                 instances[dataType].hot = new Handsontable(container, {
                     data, rowHeaders: false, stretchH: 'all', height: 500, licenseKey: 'non-commercial-and-evaluation',
-                    colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
-                    columns: columnsConfig, // Use the new dynamic config
+                    colHeaders: i => i === 0 ? 'Energy' : (getMonthDates(currentDate)[i - 1] || '').split('-')[2],
+                    columns: columnsConfig,
                     afterChange: (changes, source) => {
                         if (source !== 'loadData') {
                             updateSummaryAndChart(dataType, instances[dataType].hot.getData());
@@ -507,11 +312,7 @@
                 row.slice(1).forEach((value, index) => {
                     const numValue = parseFloat(value);
                     if (!isNaN(numValue) && Math.abs(numValue) > config.tolerance) {
-                        outOfToleranceValues.push({
-                            energy: energy,
-                            date: dateHeaders[index],
-                            value: numValue
-                        });
+                        outOfToleranceValues.push({ energy: energy, date: dateHeaders[index], value: numValue });
                     }
                 });
             });
@@ -519,16 +320,12 @@
             if (outOfToleranceValues.length > 0) {
                 console.log("Out of tolerance values detected, sending alert...", outOfToleranceValues);
                 try {
-                    const appCheckTokenResponse = await appCheck.getToken(false);
+                    const headers = await getSecureHeaders();
                     const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
                     const response = await fetch(`${BACKEND_URL}/send-alert`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Firebase-AppCheck': appCheckTokenResponse.token
-                        },
+                        headers: headers,
                         body: JSON.stringify({
-                            uid: currentUID,
                             hospitalName: currentHospital,
                             month: monthKey,
                             dataType: dataType,
@@ -546,8 +343,6 @@
                     console.error("Failed to send alert:", error);
                     showNotification("Failed to send alert email.", 'error');
                 }
-            } else {
-                 console.log("No out of tolerance values found.");
             }
         }
 
@@ -559,11 +354,10 @@
             const changedData = instances[dataType].hot.getData();
             const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
-                const token = appCheckTokenResponse.token;
+                const headers = await getSecureHeaders();
                 const saveResponse = await fetch(`${BACKEND_URL}/save`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": token },
-                    body: JSON.stringify({ data: changedData, month, uid: currentUID, dataType: dataType })
+                    method: 'POST', headers: headers,
+                    body: JSON.stringify({ data: changedData, month, dataType: dataType })
                 });
                 if (!saveResponse.ok) { throw new Error(`Save failed: ${await saveResponse.text()}`); }
                 document.getElementById(`lastSaved-${dataType}`).textContent = "Saved: " + new Date().toLocaleTimeString();
@@ -586,11 +380,11 @@
             showLoader();
             const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
+                const headers = await getSecureHeaders();
                 const response = await fetch(`${BACKEND_URL}/export-excel`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": appCheckTokenResponse.token },
-                    body: JSON.stringify({ month, uid: currentUID, dataType })
+                    headers: headers,
+                    body: JSON.stringify({ month, dataType })
                 });
                 if (!response.ok) throw new Error('Failed to generate file.');
                 const blob = await response.blob();
@@ -670,7 +464,7 @@
             annotationModalTitle.textContent = `Note for ${energy} on ${date}`;
             annotationInput.value = existingText;
 
-            const serviceEventRef = db.collection('service_events').doc(currentUID).collection('events').doc(date);
+            const serviceEventRef = db.collection('service_events').doc(auth.currentUser.uid).collection('events').doc(date);
             const serviceEventSnap = await serviceEventRef.get();
             isServiceDayInput.checked = serviceEventSnap.exists;
 
@@ -696,12 +490,11 @@
 
             showLoader();
             try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
+                const headers = await getSecureHeaders();
                 await fetch(`${BACKEND_URL}/save-annotation`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": appCheckTokenResponse.token },
+                    headers: headers,
                     body: JSON.stringify({
-                        uid: currentUID,
                         month: monthKey,
                         key: currentAnnotationKey,
                         data: { 
@@ -724,12 +517,12 @@
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             showLoader();
             try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
+                const headers = await getSecureHeaders();
                 await fetch(`${BACKEND_URL}/delete-annotation`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": appCheckTokenResponse.token },
+                    headers: headers,
                     body: JSON.stringify({
-                        uid: currentUID, month: monthKey, key: currentAnnotationKey
+                        month: monthKey, key: currentAnnotationKey
                     })
                 });
                 hideAnnotationModal();
@@ -746,11 +539,11 @@
             const button = document.getElementById(`validateBtn-${dataType}`);
             
             try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
+                const headers = await getSecureHeaders();
                 const response = await fetch(`${BACKEND_URL}/historical-forecast`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckTokenResponse.token },
-                    body: JSON.stringify({ uid: currentUID, month: monthKey, dataType: dataType, energy: selectedEnergy })
+                    headers: headers,
+                    body: JSON.stringify({ month: monthKey, dataType: dataType, energy: selectedEnergy })
                 });
                 
                 if (!response.ok) {
@@ -818,9 +611,9 @@
                 forecastLabel = 'Historical Forecast';
             } else { 
                 try {
-                    const appCheckTokenResponse = await appCheck.getToken(false);
-                    const token = appCheckTokenResponse.token;
-                    const res = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}&month=${viewingMonthKey}`, { headers: { "X-Firebase-AppCheck": token } });
+                    const headers = await getSecureHeaders();
+                    // [SECURITY EDIT] Using secure headers
+                    const res = await fetch(`${BACKEND_URL}/predictions?dataType=${dataType}&energy=${selectedEnergy}&month=${viewingMonthKey}`, { headers: { ...headers, 'Content-Type': undefined } });
                     if (res.ok) {
                         const forecastResult = await res.json();
                         forecastData = forecastResult.forecast || [];
@@ -877,7 +670,7 @@
             annotations['zeroBaseline'] = { type: 'line', yMin: 0, yMax: 0, borderColor: 'rgba(0, 0, 0, 0.8)', borderWidth: 1.5, borderDash: [6, 6] };
             
             try {
-                const serviceEventsRef = db.collection('service_events').doc(currentUID).collection('events');
+                const serviceEventsRef = db.collection('service_events').doc(auth.currentUser.uid).collection('events');
                 const querySnapshot = await serviceEventsRef.get();
                 querySnapshot.forEach(doc => {
                     const dateParts = doc.id.split('-');
@@ -901,7 +694,7 @@
             } catch (error) { console.error("Error fetching service events for chart annotations:", error); }
 
             try {
-                const notesSnapshot = await db.collection('annotations').doc(currentUID).collection(viewingMonthKey)
+                const notesSnapshot = await db.collection('annotations').doc(auth.currentUser.uid).collection(viewingMonthKey)
                     .where('energy', '==', selectedEnergy)
                     .get();
                     
@@ -997,7 +790,7 @@
                             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
                             let existingText = '';
                             try {
-                                const annotationRef = db.collection('annotations').doc(currentUID).collection(monthKey).doc(key);
+                                const annotationRef = db.collection('annotations').doc(auth.currentUser.uid).collection(monthKey).doc(key);
                                 const doc = await annotationRef.get();
                                 if (doc.exists) {
                                     existingText = doc.data().text || '';
@@ -1041,10 +834,10 @@
             chatInput.value = '';
             
             try {
-                const appCheckToken = (await appCheck.getToken(false)).token;
+                const headers = await getSecureHeaders();
                 const response = await fetch(`${BACKEND_URL}/query-qa-data`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckToken },
+                    headers: headers,
                     body: JSON.stringify({ query_text: queryText })
                 });
                 const data = await response.json();
@@ -1068,10 +861,10 @@
             if (!diagnosticState.inProgress) return;
             
             try {
-                const appCheckToken = (await appCheck.getToken(false)).token;
+                const headers = await getSecureHeaders();
                 const response = await fetch(`${BACKEND_URL}/diagnose-step`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckToken },
+                    headers: headers,
                     body: JSON.stringify({ 
                         topic: diagnosticState.topic, 
                         node_id: diagnosticState.node_id, 
@@ -1110,7 +903,6 @@
             proactiveChatListener = proactiveQuery.onSnapshot(snapshot => {
                 snapshot.docChanges().forEach(change => {
                     if (change.type === 'added') {
-                        // Mark as read immediately to prevent re-popping on next load
                         change.doc.ref.update({ read: true });
 
                         const chatData = change.doc.data();
@@ -1122,7 +914,6 @@
                             if (answer === "Yes, help diagnose") {
                                 sendChatMessage(chatData.topic.replace(/_/g, " "));
                             }
-                            // The update call was moved up to happen immediately
                         });
                     }
                 });
@@ -1178,7 +969,6 @@
         auth.onAuthStateChanged(async (user) => {
             try {
                 if (user) {
-                    currentUID = user.uid;
                     currentHospital = localStorage.getItem("hospitalName");
                     document.getElementById("hospitalName").textContent = currentHospital;
 
@@ -1202,7 +992,6 @@
                     toggleDarkMode(true);
                     darkToggle.addEventListener('change', () => toggleDarkMode(false));
                     
-                    // [NEW] Mobile Menu Toggle
                     document.getElementById('menu-toggle').addEventListener('click', () => {
                         document.querySelector('.sidebar').classList.toggle('sidebar-visible');
                     });
@@ -1212,9 +1001,9 @@
                     document.getElementById('chat-input').onkeypress = e => { if (e.key === 'Enter' && !diagnosticState.inProgress) sendChatMessage(); };
                     document.getElementById('send-chat-btn').onclick = () => { if(!diagnosticState.inProgress) sendChatMessage(); };
 
-                    setupProactiveChatListener(currentUID);
+                    setupProactiveChatListener(user.uid);
                     
-                    switchTab('output');
+                    await switchTab('output');
 
                 } else {
                     window.location.replace("login.html");
