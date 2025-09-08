@@ -999,20 +999,23 @@ body.dark .handsontable .out {
     height: 44px;
 }
 
-/* --- [CORRECTED] Dark Mode Text Visibility --- */
+/* --- [FINAL] Dark Mode Visibility Fix --- */
+/* This rule ensures all text inside the summary and trend boxes is light in dark mode. */
 body.dark .summary-box,
 body.dark .trend-chart-section {
-    color: #e0e0e0; /* Sets a light base color for text like 'Total Entries:' */
+    color: #e0e0e0; /* Sets a light base color for p tags and other text */
 }
 
+/* This rule makes all headings (like "Output Summary") light blue, matching "LINAC QA". */
 body.dark .summary-box h3,
 body.dark .trend-chart-section h3 {
-    color: #ffffff; /* Makes the main headings pure white */
+    color: var(--primary-light);
 }
 
 body.dark .energy-selector-container label {
     color: #e0e0e0; /* Makes the 'Select Energy:' label light */
 }
+
 
 @media (max-width: 768px) {
     html, body {
