@@ -661,20 +661,58 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 
 
 /* --- Data Upload Page (Handsontable, Tabs, Charts) --- */
-.month-header-box {
-    background: var(--primary-color);
-    color: var(--text-white);
-    padding: 15px 20px;
+/* [MODIFIED] New styles for the header area to hold the title and new panel */
+.main-header-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+.main-header-controls h1 {
+    flex-grow: 1;
+    margin-bottom: 0;
+    text-align: left;
+}
+.daily-check-box {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 10px 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px var(--shadow-light);
+}
+.daily-check-inputs {
+    display: flex;
+    gap: 15px;
+}
+.daily-check-box .form-group {
+    margin-bottom: 0;
+}
+.daily-check-box .form-group label {
+    font-size: 0.8em;
     text-align: center;
-    font-size: 1.6em;
+    font-weight: 500;
+}
+.daily-check-box input {
+    font-size: 1em;
+    padding: 8px;
+    max-width: 100px;
+}
+#selected-date-display {
     font-weight: 600;
-    border-radius: 16px;
+    color: var(--primary-color);
+    min-height: 1.2em;
+    font-size: 0.9em;
 }
 
 .tab-nav {
     display: flex;
     border-bottom: 2px solid var(--border-color);
-    margin-bottom: 20px;
 }
 
 .tab-nav-button {
@@ -713,38 +751,6 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     width: 300px;
     min-width: 280px;
     padding: 20px;
-}
-
-/* --- [NEW] Styles for Daily Vitals Panel --- */
-.daily-vitals-box {
-    width: 300px;
-    min-width: 280px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.daily-vitals-box h3 {
-    text-align: center;
-    margin-bottom: 5px;
-}
-
-#selected-date-display {
-    text-align: center;
-    font-weight: bold;
-    color: var(--primary-color);
-    min-height: 1.2em;
-    margin-bottom: 10px;
-}
-
-.daily-vitals-box .form-group label {
-    font-size: 0.9em;
-}
-
-.daily-vitals-box input {
-    font-size: 1.1em;
-    padding: 10px;
 }
 
 /* Handsontable status colors */
@@ -1031,18 +1037,15 @@ body.dark .handsontable .out {
     height: 44px;
 }
 
-/* --- [FINAL] Dark Mode Visibility Fix --- */
-/* This rule ensures all text inside the summary and trend boxes is light in dark mode. */
 body.dark .summary-box,
 body.dark .trend-chart-section,
-body.dark .daily-vitals-box {
-    color: #e0e0e0; /* Sets a light base color for p tags and other text */
+body.dark .daily-check-box {
+    color: #e0e0e0;
 }
 
-/* This rule makes all headings (like "Output Summary") light blue, matching "LINAC QA". */
 body.dark .summary-box h3,
 body.dark .trend-chart-section h3,
-body.dark .daily-vitals-box h3 {
+body.dark .daily-check-box h3 {
     color: var(--primary-light);
 }
 
@@ -1051,10 +1054,9 @@ body.dark #selected-date-display {
 }
 
 body.dark .energy-selector-container label {
-    color: #e0e0e0; /* Makes the 'Select Energy:' label light */
+    color: #e0e0e0;
 }
 
-/* --- [NEW] Styles for Correlation Analysis Table --- */
 .correlation-table {
     width: 100%;
     border-collapse: collapse;
@@ -1086,8 +1088,21 @@ body.dark .energy-selector-container label {
     .upload-page .container {
         flex-direction: column;
     }
-    .upload-page .summary-box, .upload-page .daily-vitals-box {
+    .upload-page .summary-box {
         width: 100%;
+    }
+    /* [MODIFIED] Make header stack vertically on medium screens */
+    .main-header-controls {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+    .daily-check-box {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .daily-check-inputs {
+        justify-content: center;
     }
 }
 
