@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | LINAC QA</title>
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* --- Styles for Admin Dashboard Enhancements --- */
+        
+        .admin-header {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .admin-header .header-buttons {
+            position: absolute;
+            right: 25px;
+        }
+        .admin-header .header-btn {
+            width: 44px;
+            height: 44px;
+            font-size: 1.2em;
+            background-color: var(--status-error);
+        }
+        .admin-header .header-btn:hover {
+            background-color: #c82333;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+            justify-content: flex-start;
+            background-color: var(--bg-card);
+            box-shadow: 2px 0 8px var(--shadow-light);
+            width: 240px;
+            flex-shrink: 0;
+        }
+        .sidebar-nav .nav-btn {
+            padding: 15px;
+            font-size: 1.05em;
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+        .sidebar-nav .nav-btn:hover:not(.active) {
+            background-color: #ddebfd;
+        }
+        .sidebar-nav .nav-btn.active {
+            background-color: var(--primary-color);
+            color: var(--text-white);
+        }
+
+        .hospital-qa-table th,
+        .hospital-qa-table td {
+            border: 1px solid var(--border-color);
+        }
+        #hospital-data-access-section {
+            position: relative;
+        }
+        .fullscreen-btn {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            width: 40px;
+            height: 40px;
+        }
+
+        #manage-users-section .filter-search-container button,
+        #audit-logs-section .filter-search-container button {
+            padding: 12px 22px;
+            font-size: 1em;
+        }
+
+        .user-actions-cell { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .hospital-qa-table th:first-child, .hospital-qa-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: var(--bg-card); box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
+        .user-table th { z-index: 3; }
+        .hospital-qa-table th:first-child { background-color: var(--primary-light) !important; }
+        #deleteConfirmArea { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); }
+        #deleteConfirmArea label { display: block; margin-bottom: 10px; font-size: 0.95em; }
+        #deleteConfirmInput { width: 100%; }
+        
+        .performance-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .performance-table th, .performance-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .performance-table th {
+            background-color: var(--primary-light);
+        }
+
+        .performance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .performance-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .performance-nav button {
+            padding: 5px 10px;
+        }
+        .performance-nav select {
+            border: 1px solid var(--border-color);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+        .benchmark-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        .benchmark-chart-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        body.dark .benchmark-chart-container {
+             background-color: var(--bg-dark-card);
+        }
+
+        .efficacy-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .efficacy-table th, .efficacy-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .efficacy-table th {
+            background-color: var(--primary-light);
+        }
+        .sparkline {
+            width: 150px;
+            height: 40px;
+        }
+        .sparkline-line {
+            stroke: var(--primary-color);
+            stroke-width: 2;
+            fill: none;
+        }
+        .sparkline-midline {
+            stroke: #ccc;
+            stroke-width: 1;
+            stroke-dasharray: 2,2;
+        }
+        .improvement-positive {
+            color: var(--status-success);
+            font-weight: bold;
+        }
+        .improvement-negative {
+            color: var(--status-error);
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="admin-header">
+        <button id="menu-toggle" class="header-btn menu-toggle-btn" style="position: absolute; left: 25px;"><i class="fas fa-bars"></i></button>
+        <h1>LINAC QA Admin Portal</h1>
+        <div class="header-buttons">
+            <button onclick="logout()" class="header-btn" title="Logout" aria-label="Logout"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </div>
+    
+    <div class="main-admin-layout">
+        
+        <div class="sidebar-nav">
+            <button class="nav-btn active" data-section="manage-users-section"><i class="fas fa-users"></i> Manage Users</button>
+            <button class="nav-btn" data-section="hospital-performance-section"><i class="fas fa-trophy"></i> Hospital Performance</button>
+            <button class="nav-btn" data-section="benchmark-section"><i class="fas fa-balance-scale"></i> Benchmarking</button>
+            <button class="nav-btn" data-section="service-efficacy-section"><i class="fas fa-tools"></i> Service Efficacy</button>
+            <button class="nav-btn" data-section="hospital-data-access-section"><i class="fas fa-hospital"></i> View Hospital Data</button>
+            <button class="nav-btn" data-section="audit-logs-section"><i class="fas fa-clipboard-list"></i> View Audit Logs</button>
+        </div>
+        
+        <div class="content-display-area">
+            <div class="card-section active-section" id="manage-users-section">
+                <h2>Manage User Accounts</h2>
+                <div class="filter-search-container">
+                    <input type="text" id="searchUserInput" placeholder="Search by name or email..." onkeyup="filterUsers()">
+                    <select id="filterStatus" onchange="filterUsers()"><option value="">All Statuses</option><option value="pending">Pending</option><option value="active">Active</option><option value="rejected">Rejected</option></select>
+                    <select id="filterHospital" onchange="filterUsers()"><option value="">All Hospitals</option></select>
+                    <button onclick="loadAllUsers()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
+                <div class="user-table-container">
+                    <table class="user-table">
+                        <thead><tr><th>Name</th><th>Email</th><th>Hospital</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card-section" id="hospital-performance-section" style="display: none;">
+                <div class="performance-header">
+                    <h2 style="margin: 0;">Hospital Performance</h2>
+                    <div class="performance-nav">
+                        <select id="performance-month-select"></select>
+                        <select id="performance-year-select"></select>
+                    </div>
+                </div>
+                <div class="user-table-container">
+                    <table class="performance-table">
+                        <thead>
+                            <tr>
+                                <th>Hospital</th>
+                                <th>Warnings</th>
+                                <th>Out-of-Tolerance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="performanceTableBody">
+                            <tr><td colspan="3" class="no-users-message">Loading performance data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="card-section" id="benchmark-section" style="display: none;">
+                <h2>Inter-Institutional Benchmarking</h2>
+                <div class="filter-search-container">
+                    <label for="benchmarkPeriodSelect">Time Period:</label>
+                    <select id="benchmarkPeriodSelect" onchange="loadBenchmarkData()">
+                        <option value="30">Last 30 Days</option>
+                        <option value="90" selected>Last 90 Days</option>
+                        <option value="180">Last 180 Days</option>
+                        <option value="365">Last 365 Days</option>
+                    </select>
+                </div>
+                <div id="benchmark-content">
+                    <div class="benchmark-grid">
+                        <div class="benchmark-chart-container">
+                            <canvas id="meanDeviationChart"></canvas>
+                        </div>
+                        <div class="benchmark-chart-container">
+                            <canvas id="stdDeviationChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="user-table-container" style="margin-top: 25px;">
+                         <table class="user-table">
+                             <thead>
+                                 <tr>
+                                     <th>Hospital</th>
+                                     <th>Total OOTs</th>
+                                     <th>Total Warnings</th>
+                                     <th>Data Points (Output)</th>
+                                 </tr>
+                             </thead>
+                             <tbody id="benchmarkTableBody"></tbody>
+                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-section" id="service-efficacy-section" style="display: none;">
+                <h2>Service Efficacy Analysis</h2>
+                <div class="filter-search-container">
+                    <select id="efficacyHospitalSelect" onchange="loadServiceEfficacyData()">
+                        <option value="">-- Select Hospital to Analyze --</option>
+                    </select>
+                </div>
+                <div class="user-table-container">
+                    <table class="efficacy-table">
+                        <thead>
+                            <tr>
+                                <th>Service Event</th>
+                                <th>Std Dev (Before)</th>
+                                <th>Std Dev (After)</th>
+                                <th>Stability Improvement</th>
+                                <th>Trend (Before vs. After)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="efficacyTableBody">
+                            <tr><td colspan="5" class="no-users-message">Please select a hospital.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card-section" id="hospital-data-access-section" style="display: none;">
+                <h2>View Hospital LINAC QA Data</h2>
+                <button onclick="toggleFullWidth()" class="section-action-btn fullscreen-btn" title="Toggle Full Width"><i class="fas fa-expand"></i></button>
+                <div class="filter-search-container" id="hospitalDataControls">
+                    <select id="adminHospitalSelect" onchange="loadHospitalQaData()"><option value="">Select Hospital</option></select>
+                    <select id="adminYearSelect" onchange="loadHospitalQaData()"></select>
+                    <select id="adminMonthSelect" onchange="loadHospitalQaData()"></select>
+                    <select id="adminDataTypeSelect" onchange="loadHospitalQaData()">
+                        <option value="output">Output</option>
+                        <option value="flatness">Flatness</option>
+                        <option value="inline">Inline Symmetry</option>
+                        <option value="crossline">Crossline Symmetry</option>
+                    </select>
+                </div>
+                <div class="user-table-container" id="hospitalQaTableContainer">
+                     <p class="no-users-message">Select a hospital, year, and month to view data.</p>
+                </div>
+            </div>
+
+            <div class="card-section" id="audit-logs-section" style="display: none;">
+                <h2>View Audit Logs</h2>
+                <div class="filter-search-container">
+                    <input type="date" id="auditLogDateFilter" onchange="loadAuditLogs()">
+                    <select id="auditLogHospitalFilter" onchange="loadAuditLogs()"><option value="">All Hospitals</option></select>
+                    <select id="auditLogActionFilter" onchange="loadAuditLogs()">
+                        <option value="">All Actions</option>
+                        <option value="user_login">User Login</option>
+                        <option value="user_logout">User Logout</option>
+                        <option value="user_update">User Update</option>
+                        <option value="user_deletion">User Deletion</option>
+                    </select>
+                    <button onclick="loadAuditLogs()"><i class="fas fa-sync-alt"></i> Refresh Logs</button>
+                    <button onclick="loadAuditLogs(true)" style="background-color: #ffc107; color: #333;">Show All</button>
+                </div>
+                <div class="user-table-container">
+                    <table class="user-table">
+                        <thead><tr><th>Timestamp</th><th>Action</th><th>User</th></tr></thead>
+                        <tbody id="auditLogsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-overlay"></div>
+    
+    <div id="userEditModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeEditModal()">&times;</span>
+            <h3>Edit User Details</h3>
+            <input type="hidden" id="editUserId">
+            <label>Name:</label><input type="text" id="editUserName" readonly>
+            <label>Email:</label><input type="text" id="editUserEmail" readonly>
+            <label>Hospital:</label><select id="editUserHospital"></select>
+            <label>Role:</label><select id="editUserRole"><option value="Medical physicist">Medical physicist</option><option value="RSO">RSO</option><option value="Admin">Admin</option></select>
+            <label>Status:</label><select id="editUserStatus"><option value="pending">Pending</option><option value="active">Active</option><option value="rejected">Rejected</option></select>
+            <div class="modal-buttons">
+                <button class="save-btn" onclick="saveUserChanges()">Save Changes</button>
+                <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <h3 id="confirmationTitle">Confirm Action</h3>
+            <p id="confirmationMessage">Are you sure?</p>
+            <div id="deleteConfirmArea" style="display: none;">
+                <label for="deleteConfirmInput">To confirm, please type the user's name: <strong id="deleteConfirmName"></strong></label>
+                <input type="text" id="deleteConfirmInput" autocomplete="off" placeholder="Type name here...">
+            </div>
+            <div class="modal-buttons">
+                <button id="confirmBtn" class="save-btn">Confirm</button>
+                <button id="cancelBtn" class="cancel-btn" onclick="hideConfirmationModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-check-compat.js"></script>
+<script src="firebase-init.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+<script>
+    const BACKEND_URL = "https://back-end-wrxi.onrender.com";
+    const dataTypesConfig = {
+      output: { tolerance: 2.0, warning: 1.8 },
+      flatness: { tolerance: 1.0, warning: 0.9 },
+      inline: { tolerance: 1.0, warning: 0.9 },
+      crossline: { tolerance: 1.0, warning: 0.9 }
+    };
+    let allUsersData = [];
+    let currentAdminUid = null;
+    let benchmarkCharts = {};
+    let performanceDate = new Date();
+    
+    let auth, db, appCheck;
+    let onConfirmCallback = null;
+
+    function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
+    function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
+
+    function showConfirmationModal(title, message, callback, isDelete = false, name = '') {
+        const modal = document.getElementById('confirmationModal');
+        document.getElementById('confirmationTitle').textContent = title;
+        document.getElementById('confirmationMessage').textContent = message;
+        const deleteConfirmArea = document.getElementById('deleteConfirmArea');
+        const deleteConfirmInput = document.getElementById('deleteConfirmInput');
+        const confirmBtn = document.getElementById('confirmBtn');
+        if (isDelete) {
+            document.getElementById('deleteConfirmName').textContent = name;
+            deleteConfirmArea.style.display = 'block';
+            deleteConfirmInput.value = '';
+            deleteConfirmInput.dataset.expectedName = name;
+            confirmBtn.disabled = true;
+        } else {
+            deleteConfirmArea.style.display = 'none';
+            confirmBtn.disabled = false;
+        }
+        onConfirmCallback = callback;
+        modal.style.display = 'flex';
+    }
+
+    function showAdminSection(sectionId) {
+        document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.section === sectionId));
+        document.querySelectorAll('.content-display-area .card-section').forEach(section => {
+            section.style.display = 'none';
+            section.classList.remove('active-section');
+        });
+        const activeSection = document.getElementById(sectionId);
+        activeSection.style.display = 'block';
+        activeSection.classList.add('active-section');
+        
+        // Hide sidebar after clicking a nav item on mobile
+        if (window.innerWidth <= 768) {
+            document.querySelector('.sidebar-nav').classList.remove('sidebar-visible');
+        }
+        
+        if (sectionId === 'hospital-data-access-section' && document.getElementById('adminYearSelect').options.length === 0) {
+            populateHospitalDataFilters();
+        }
+        if (sectionId === 'audit-logs-section' && !document.getElementById('auditLogDateFilter').value) {
+            populateAuditLogFilters();
+            loadAuditLogs();
+        }
+        if (sectionId === 'hospital-performance-section' && !activeSection.dataset.loaded) {
+            setupPerformanceNav();
+            loadPerformanceData();
+            activeSection.dataset.loaded = 'true';
+        }
+        if (sectionId === 'benchmark-section' && !activeSection.dataset.loaded) {
+            loadBenchmarkData();
+            activeSection.dataset.loaded = 'true';
+        }
+        if (sectionId === 'service-efficacy-section' && !activeSection.dataset.loaded) {
+            const hospitalSelect = document.getElementById('efficacyHospitalSelect');
+            if (hospitalSelect.options.length <= 1) { 
+                const filterSelect = document.getElementById('filterHospital');
+                hospitalSelect.innerHTML = filterSelect.innerHTML.replace('All Hospitals', '-- Select Hospital to Analyze --');
+            }
+            activeSection.dataset.loaded = 'true';
+        }
+    }
+
+    function createSparkline(data) {
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.setAttribute("class", "sparkline");
+        svg.setAttribute("viewBox", "0 0 150 40");
+
+        if (data.length < 2) return svg;
+
+        const maxVal = Math.max(...data.map(d => Math.abs(d)));
+        const minVal = -maxVal;
+        const range = maxVal - minVal === 0 ? 1 : maxVal - minVal;
+
+        const points = data.map((d, i) => {
+            const x = (i / (data.length - 1)) * 150;
+            const y = 38 - ((d - minVal) / range) * 36;
+            return `${x},${y}`;
+        }).join(" ");
+
+        const zeroLine = document.createElementNS(svgNS, "line");
+        const zeroY = 38 - ((0 - minVal) / range) * 36;
+        zeroLine.setAttribute("x1", 0);
+        zeroLine.setAttribute("y1", zeroY);
+        zeroLine.setAttribute("x2", 150);
+        zeroLine.setAttribute("y2", zeroY);
+        zeroLine.setAttribute("class", "sparkline-midline");
+        svg.appendChild(zeroLine);
+        
+        const polyline = document.createElementNS(svgNS, "polyline");
+        polyline.setAttribute("points", points);
+        polyline.setAttribute("class", "sparkline-line");
+        svg.appendChild(polyline);
+
+        return svg;
+    }
+
+    async function loadServiceEfficacyData() {
+        const hospitalId = document.getElementById('efficacyHospitalSelect').value;
+        const tableBody = document.getElementById('efficacyTableBody');
+        if (!hospitalId) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">Please select a hospital.</td></tr>';
+            return;
+        }
+
+        showLoader();
+        tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">Analyzing service data...</td></tr>';
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const response = await fetch(`${BACKEND_URL}/admin/service-impact-analysis?hospitalId=${hospitalId}`, {
+                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
+            });
+            if (!response.ok) throw new Error('Failed to fetch analysis data.');
+            
+            const results = await response.json();
+            tableBody.innerHTML = '';
+
+            if (results.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">No service events found for this hospital.</td></tr>';
+                return;
+            }
+
+            results.forEach(res => {
+                const row = tableBody.insertRow();
+                
+                const improvement = res.stability_improvement_percent;
+                const improvementClass = improvement > 5 ? 'improvement-positive' : (improvement < -5 ? 'improvement-negative' : '');
+                const improvementText = `${improvement > 0 ? '+' : ''}${improvement.toFixed(1)}%`;
+
+                row.innerHTML = `
+                    <td><strong>${res.energy}</strong> on ${res.service_date}</td>
+                    <td>${res.before_metrics.std_deviation.toFixed(3)}</td>
+                    <td>${res.after_metrics.std_deviation.toFixed(3)}</td>
+                    <td class="${improvementClass}">${improvementText}</td>
+                `;
+
+                const sparklineCell = row.insertCell();
+                const combinedData = [...res.before_data, ...res.after_data];
+                if (combinedData.length > 1) {
+                    const sparkline = createSparkline(combinedData);
+                    sparklineCell.appendChild(sparkline);
+                }
+            });
+
+        } catch (error) {
+            console.error("Error loading service efficacy data:", error);
+            tableBody.innerHTML = `<tr><td colspan="5" class="no-users-message" style="color:red;">Error loading analysis.</td></tr>`;
+        } finally {
+            hideLoader();
+        }
+    }
+    
+    async function loadAllUsers() {
+        showLoader();
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckTokenResponse = await appCheck.getToken(false);
+            const response = await fetch(`${BACKEND_URL}/admin/users`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
+            if (!response.ok) throw new Error('Failed to fetch users');
+            allUsersData = await response.json();
+            populateCommonFilters();
+            renderUsers(allUsersData);
+        } catch (error) {
+            console.error("Error loading users:", error);
+            document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="6" class="no-users-message">Error loading users.</td></tr>`;
+        } finally {
+            hideLoader();
+        }
+    }
+
+    function filterUsers() {
+        const searchTerm = document.getElementById('searchUserInput').value.toLowerCase();
+        const status = document.getElementById('filterStatus').value;
+        const hospital = document.getElementById('filterHospital').value;
+        const filtered = allUsersData.filter(user => 
+            (user.name?.toLowerCase().includes(searchTerm) || user.email?.toLowerCase().includes(searchTerm)) &&
+            (status === "" || user.status === status) &&
+            (hospital === "" || user.hospital === hospital)
+        );
+        renderUsers(filtered);
+    }
+    
+    async function logout() {
+        showLoader();
+        try {
+            const user = auth.currentUser;
+            if (user) {
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                await fetch(`${BACKEND_URL}/log_event`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-Firebase-AppCheck": appCheckTokenResponse.token },
+                    body: JSON.stringify({ action: "user_logout", userUid: user.uid })
+                });
+            }
+        } catch (logError) { console.error("Error sending logout log event:", logError); }
+        auth.signOut().then(() => {
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('hospitalName');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('userStatus');
+            window.location.replace("login.html");
+        });
+    }
+
+    async function loadBenchmarkData() {
+        const period = document.getElementById('benchmarkPeriodSelect').value;
+        showLoader();
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const response = await fetch(`${BACKEND_URL}/admin/benchmark-metrics?period=${period}`, {
+                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
+            });
+            if (!response.ok) throw new Error('Failed to load benchmark data.');
+            const data = await response.json();
+            renderBenchmarkCharts(data);
+            renderBenchmarkTable(data);
+        } catch (error) {
+            console.error("Error loading benchmark data:", error);
+            document.getElementById('benchmark-content').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`;
+        } finally {
+            hideLoader();
+        }
+    }
+
+    function updateUserStatus(uid, newStatus) {
+        const user = allUsersData.find(u => u.uid === uid);
+        showConfirmationModal(`Confirm Status Change`, `Set status for ${user.name} to ${newStatus.toUpperCase()}?`, async () => {
+            showLoader();
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                await fetch(`${BACKEND_URL}/admin/update-user-status`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token }, body: JSON.stringify({ uid, status: newStatus, admin_uid: currentAdminUid }) });
+                await loadAllUsers();
+            } catch (error) { console.error("Error updating status:", error); alert("Failed to update user status."); } finally { hideLoader(); }
+        });
+    }
+
+    function deleteUser(uid, name) {
+        showConfirmationModal(`Permanently Delete User`, `This is irreversible. You are about to delete ${name}.`, async () => {
+            showLoader();
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                await fetch(`${BACKEND_URL}/admin/delete-user`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token }, body: JSON.stringify({ uid, admin_uid: currentAdminUid }) });
+                await loadAllUsers();
+            } catch (error) { console.error("Error deleting user:", error); alert("Failed to delete user."); } finally { hideLoader(); }
+        }, true, name);
+    }
+    
+    function openEditModal(uid) {
+        const user = allUsersData.find(u => u.uid === uid);
+        if (!user) return;
+        document.getElementById('editUserId').value = user.uid;
+        document.getElementById('editUserName').value = user.name;
+        document.getElementById('editUserEmail').value = user.email;
+        const hospitalSelect = document.getElementById('filterHospital');
+        const editUserHospital = document.getElementById('editUserHospital');
+        editUserHospital.innerHTML = hospitalSelect.innerHTML;
+        editUserHospital.value = user.hospital;
+        document.getElementById('editUserRole').value = user.role;
+        document.getElementById('editUserStatus').value = user.status;
+        document.getElementById('userEditModal').style.display = 'flex';
+    }
+
+    function closeEditModal() { document.getElementById('userEditModal').style.display = 'none'; }
+    
+    async function saveUserChanges() {
+        showLoader();
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckTokenResponse = await appCheck.getToken(false);
+            await fetch(`${BACKEND_URL}/admin/update-user-status`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token },
+                body: JSON.stringify({ uid: document.getElementById('editUserId').value, hospital: document.getElementById('editUserHospital').value, role: document.getElementById('editUserRole').value, status: document.getElementById('editUserStatus').value, admin_uid: currentAdminUid })
+            });
+            closeEditModal();
+            await loadAllUsers();
+        } catch (error) { console.error("Error saving changes:", error); alert("Failed to save changes."); } finally { hideLoader(); }
+    }
+    
+    async function loadAuditLogs(fetchAll = false) {
+        showLoader();
+        let hospitalId = document.getElementById('auditLogHospitalFilter').value;
+        let action = document.getElementById('auditLogActionFilter').value;
+        let date = document.getElementById('auditLogDateFilter').value;
+        const logsTableBody = document.getElementById('auditLogsTableBody');
+        logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message">Loading logs...</td></tr>`;
+        if (fetchAll) { hospitalId = ''; action = ''; date = ''; }
+        let url = `${BACKEND_URL}/admin/audit-logs?`;
+        if(date) url += `date=${date}&`;
+        if(hospitalId) url += `hospitalId=${hospitalId}&`;
+        if(action) url += `action=${action}&`;
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckTokenResponse = await appCheck.getToken(false);
+            const response = await fetch(url, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
+            if (!response.ok) throw new Error('Failed to fetch logs');
+            const result = await response.json();
+            logsTableBody.innerHTML = '';
+            if(result.logs.length === 0) { logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message">No logs found.</td></tr>`; return; }
+            result.logs.forEach(log => {
+                const row = logsTableBody.insertRow();
+                row.innerHTML = `
+                    <td>${log.timestamp}</td>
+                    <td>${log.action}</td>
+                    <td><pre style="margin: 0; font-family: inherit; font-size: inherit;">${log.user_display || 'N/A'}</pre></td>
+                `;
+            });
+        } catch (error) { console.error("Error loading audit logs:", error); logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message" style="color:red;">Error loading logs.</td></tr>`; } finally { hideLoader(); }
+    }
+
+    async function loadHospitalQaData() {
+        const hospitalId = document.getElementById('adminHospitalSelect').value;
+        const year = document.getElementById('adminYearSelect').value;
+        const month = document.getElementById('adminMonthSelect').value;
+        if (!hospitalId || !year || !month) return;
+        showLoader();
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckTokenResponse = await appCheck.getToken(false);
+            const response = await fetch(`${BACKEND_URL}/admin/hospital-data?hospitalId=${hospitalId}&month=${year}-${month}`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
+            if (!response.ok) throw new Error('Failed to fetch data');
+            const result = await response.json();
+            renderHospitalQaDataTable(result.data, year, month);
+        } catch (error) { console.error("Error loading hospital data:", error); document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`; } finally { hideLoader(); }
+    }
+
+    function renderHospitalQaDataTable(allData, year, month) {
+        const container = document.getElementById('hospitalQaTableContainer');
+        const selectedDataType = document.getElementById('adminDataTypeSelect').value;
+        const dataForTable = allData[selectedDataType]; 
+        const config = dataTypesConfig[selectedDataType]; // Use dynamic config
+        container.innerHTML = '';
+        if (!dataForTable || dataForTable.length === 0 || !config) {
+            container.innerHTML = `<p class="no-users-message">No '${selectedDataType}' data available.</p>`;
+            return;
+        }
+        const numDays = new Date(year, month, 0).getDate();
+        let tableHTML = `<h3 style="text-align:center; margin-top:0;">${selectedDataType.charAt(0).toUpperCase() + selectedDataType.slice(1)} Data</h3><table class="user-table hospital-qa-table"><thead><tr><th>Energy</th>`;
+        for (let i = 1; i <= numDays; i++) { tableHTML += `<th>${i}</th>`; }
+        tableHTML += '</tr></thead><tbody>';
+        dataForTable.forEach(row => {
+            tableHTML += `<tr><td>${row[0]}</td>`;
+            const values = row.slice(1);
+            for (let i = 0; i < numDays; i++) {
+                const value = values[i] || '';
+                const numValue = parseFloat(value);
+                let className = '';
+                if (!isNaN(numValue)) {
+                    // Corrected logic to match upload.html
+                    if (Math.abs(numValue) > config.tolerance) className = 'out';
+                    else if (Math.abs(numValue) >= config.warning) className = 'warning';
+                    else className = 'within';
+                }
+                tableHTML += `<td class="${className}">${value}</td>`;
+            }
+            tableHTML += '</tr>';
+        });
+        tableHTML += '</tbody></table>';
+        container.innerHTML = tableHTML;
+    }
+
+    function toggleFullWidth() {
+        const layout = document.querySelector('.main-admin-layout');
+        const icon = document.querySelector('.fullscreen-btn i');
+        layout.classList.toggle('full-width-mode');
+        icon.classList.toggle('fa-expand', !layout.classList.contains('full-width-mode'));
+        icon.classList.toggle('fa-compress', layout.classList.contains('full-width-mode'));
+    }
+
+    function hideConfirmationModal() {
+        document.getElementById('confirmationModal').style.display = 'none';
+        onConfirmCallback = null;
+    }
+
+    function renderUsers(usersToRender) {
+        const usersTableBody = document.getElementById('usersTableBody');
+        usersTableBody.innerHTML = '';
+        if (!usersToRender || usersToRender.length === 0) {
+            usersTableBody.innerHTML = '<tr><td colspan="6" class="no-users-message">No users found.</td></tr>';
+            return;
+        }
+        usersToRender.forEach(user => {
+            const row = usersTableBody.insertRow();
+            row.innerHTML = `
+                <td>${user.name || 'N/A'}</td>
+                <td>${user.email || 'N/A'}</td>
+                <td>${user.hospital || 'N/A'}</td>
+                <td>${user.role || 'N/A'}</td>
+                <td><span style="font-weight:bold; color:${user.status === 'active' ? 'green' : (user.status === 'pending' ? 'orange' : 'red')}">${user.status?.toUpperCase() || 'N/A'}</span></td>
+                <td class="user-actions-cell">
+                    <button class="approve-btn" onclick="updateUserStatus('${user.uid}', 'active')">Approve</button>
+                    <button class="reject-btn" onclick="updateUserStatus('${user.uid}', 'rejected')">Reject</button>
+                    <button class="edit-btn" onclick="openEditModal('${user.uid}')">Edit</button>
+                    <button class="delete-btn" onclick="deleteUser('${user.uid}', '${user.name || 'this user'}')"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+        });
+    }
+
+    function populateCommonFilters() {
+        const hospitalSet = new Set(allUsersData.map(user => user.hospital).filter(Boolean));
+        const sortedHospitals = [...hospitalSet].sort();
+        const hospitalFilterSelects = [
+            document.getElementById('filterHospital'),
+            document.getElementById('adminHospitalSelect'),
+            document.getElementById('auditLogHospitalFilter')
+        ];
+        hospitalFilterSelects.forEach(select => {
+            if (select) {
+                const currentValue = select.value;
+                let optionsHTML = select.querySelector('option').outerHTML;
+                sortedHospitals.forEach(h => { optionsHTML += `<option value="${h}">${h}</option>`; });
+                select.innerHTML = optionsHTML;
+                select.value = currentValue;
+            }
+        });
+    }
+
+    function populateHospitalDataFilters() {
+        const yearSelect = document.getElementById('adminYearSelect');
+        const monthSelect = document.getElementById('adminMonthSelect');
+        if (yearSelect.options.length > 0) return;
+        const currentYear = new Date().getFullYear();
+        for (let i = currentYear; i >= currentYear - 5; i--) { yearSelect.add(new Option(i, i)); }
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        months.forEach((m, i) => { monthSelect.add(new Option(m, String(i + 1).padStart(2, '0'))); });
+        monthSelect.value = String(new Date().getMonth() + 1).padStart(2, '0');
+    }
+
+    function populateAuditLogFilters() {
+        const dateFilter = document.getElementById('auditLogDateFilter');
+        if(!dateFilter.value) { dateFilter.value = new Date().toISOString().split('T')[0]; }
+    }
+    
+    function setupPerformanceNav() {
+        const performanceYearSelect = document.getElementById('performance-year-select');
+        const performanceMonthSelect = document.getElementById('performance-month-select');
+        const currentYear = new Date().getFullYear();
+        for (let i = currentYear; i >= currentYear - 5; i--) { performanceYearSelect.add(new Option(i, i)); }
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        months.forEach((m, i) => { performanceMonthSelect.add(new Option(m, i + 1)); });
+        performanceYearSelect.value = performanceDate.getFullYear();
+        performanceMonthSelect.value = performanceDate.getMonth() + 1;
+        performanceYearSelect.addEventListener('change', updatePerformanceView);
+        performanceMonthSelect.addEventListener('change', updatePerformanceView);
+    }
+    
+    function updatePerformanceView() {
+        const year = parseInt(document.getElementById('performance-year-select').value);
+        const month = parseInt(document.getElementById('performance-month-select').value) - 1;
+        performanceDate = new Date(year, month, 1);
+        loadPerformanceData();
+    }
+    
+    async function loadPerformanceData() {
+        const performanceTableBody = document.getElementById('performanceTableBody');
+        const year = performanceDate.getFullYear();
+        const month = String(performanceDate.getMonth() + 1).padStart(2, '0');
+        const monthStr = `${year}-${month}`;
+        
+        performanceTableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Loading...</td></tr>';
+        showLoader();
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const url = `${BACKEND_URL}/dashboard-summary?month=${monthStr}`;
+            const response = await fetch(url, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken } });
+            if (!response.ok) throw new Error('Failed to load performance data.');
+            const data = await response.json();
+            
+            performanceTableBody.innerHTML = '';
+            if (data.leaderboard && data.leaderboard.length > 0) {
+                data.leaderboard.forEach(h => {
+                    const row = performanceTableBody.insertRow();
+                    row.innerHTML = `<td>${h.hospital}</td><td>${h.warnings}</td><td>${h.oot}</td>`;
+                });
+            } else {
+                performanceTableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">No performance data available for this period.</td></tr>';
+            }
+        } catch (error) {
+            console.error("Error loading performance data:", error);
+            performanceTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message" style="color:red;">Error loading data.</td></tr>`;
+        } finally {
+            hideLoader();
+        }
+    }
+    
+    function renderBenchmarkCharts(data) {
+        const isDarkMode = document.body.classList.contains('dark');
+        const ticksColor = isDarkMode ? '#ddd' : '#666';
+        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        const labels = data.map(d => d.hospital);
+        
+        const meanDevCtx = document.getElementById('meanDeviationChart').getContext('2d');
+        if (benchmarkCharts.meanDeviation) benchmarkCharts.meanDeviation.destroy();
+        benchmarkCharts.meanDeviation = new Chart(meanDevCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Mean Deviation (Output %)',
+                    data: data.map(d => d.metrics.output.mean_deviation),
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: 'Mean Deviation (Output)', color: ticksColor } }, scales: { y: { ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
+        });
+
+        const stdDevCtx = document.getElementById('stdDeviationChart').getContext('2d');
+        if (benchmarkCharts.stdDeviation) benchmarkCharts.stdDeviation.destroy();
+        benchmarkCharts.stdDeviation = new Chart(stdDevCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Std. Deviation (Output %)',
+                    data: data.map(d => d.metrics.output.std_deviation),
+                    backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: 'Machine Stability (Output Std. Dev.)', color: ticksColor } }, scales: { y: { beginAtZero: true, ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
+        });
+    }
+
+    function renderBenchmarkTable(data) {
+        const tableBody = document.getElementById('benchmarkTableBody');
+        tableBody.innerHTML = '';
+        if (!data || data.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No benchmark data available.</td></tr>`;
+            return;
+        }
+        data.forEach(item => {
+            const row = tableBody.insertRow();
+            row.innerHTML = `<td>${item.hospital}</td><td>${item.oots}</td><td>${item.warnings}</td><td>${item.metrics.output.data_points}</td>`;
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        auth = firebase.auth();
+        db = firebase.firestore();
+        appCheck = firebase.appCheck();
+
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentAdminUid = user.uid;
+                if (localStorage.getItem("userRole") !== "Admin") {
+                    alert("Access Denied.");
+                    logout();
+                } else {
+                    showLoader();
+                    await loadAllUsers();
+                    showAdminSection('manage-users-section');
+                    hideLoader();
+                }
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+        
+        // [NEW] Mobile Menu Toggle
+        document.getElementById('menu-toggle').addEventListener('click', () => {
+            document.querySelector('.sidebar-nav').classList.toggle('sidebar-visible');
+        });
+
+        document.querySelector('.sidebar-nav').addEventListener('click', (event) => {
+            const button = event.target.closest('.nav-btn');
+            if (button) showAdminSection(button.dataset.section);
+        });
+        
+        document.getElementById('confirmBtn').addEventListener('click', () => {
+            if (onConfirmCallback) onConfirmCallback();
+            hideConfirmationModal();
+        });
+
+        document.getElementById('deleteConfirmInput').addEventListener('input', (e) => {
+            document.getElementById('confirmBtn').disabled = e.target.value !== e.target.dataset.expectedName;
+        });
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('userEditModal')) closeEditModal();
+            if (event.target == document.getElementById('confirmationModal')) hideConfirmationModal();
+        };
+    });
+</script>
+</body>
+</html>

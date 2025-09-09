@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | LINAC QA</title>
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* --- Styles for Profile Page Enhancements --- */
+        .profile-card {
+            max-width: 650px; /* Wider card for more space */
+        }
+
+        .profile-card input[type="text"],
+        .profile-card input[type="email"],
+        .profile-card input[type="password"],
+        .profile-card select {
+            padding: 14px;
+            font-size: 1.05em;
+        }
+        
+        .profile-card .button {
+            padding: 14px 28px;
+            font-size: 1.05em;
+        }
+
+        .profile-actions .dashboard-link {
+            background-color: var(--secondary-color);
+            color: var(--text-white);
+        }
+        .profile-actions .dashboard-link:hover {
+            background-color: var(--secondary-dark);
+        }
+    </style>
+</head>
+<body class="centered-content">
+    <div class="profile-card">
+        <h1>User Profile</h1>
+        
+        <div id="profileDisplay">
+            <div id="profileDetails">
+                <p class="loading-message">Loading profile data...</p>
+            </div>
+            <div class="profile-actions">
+                <button id="editProfileBtn" class="button" style="background-color: var(--primary-color); color: white;"><i class="fas fa-pencil-alt"></i> Edit Profile</button>
+            </div>
+        </div>
+
+        <div id="profileEdit" style="display: none;">
+            <div class="form-group">
+                <label for="editName">Full Name</label>
+                <input type="text" id="editName">
+            </div>
+            <div class="form-group">
+                <label for="editEmail">Email (cannot be changed)</label>
+                <input type="email" id="editEmail" readonly disabled>
+            </div>
+            <div class="form-group">
+                <label for="editHospital">Hospital</label>
+                <select id="editHospital"></select>
+            </div>
+            <div class="profile-actions">
+                <button id="saveProfileBtn" class="button" style="background-color: var(--status-success); color: white;"><i class="fas fa-save"></i> Save Changes</button>
+                <button id="cancelEditBtn" class="button" style="background-color: var(--text-secondary); color: white;">Cancel</button>
+            </div>
+        </div>
+
+        <hr style="margin: 30px 0;">
+
+        <div class="change-password-section">
+            <div class="change-password-header" onclick="togglePasswordForm()">
+                <span>Change Password</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <form id="changePasswordForm" class="change-password-form">
+                <div class="form-group">
+                    <label for="currentPassword">Current Password</label>
+                    <input type="password" id="currentPassword" autocomplete="current-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" autocomplete="new-password" required>
+                    <div id="passwordStrength" class="password-strength"></div>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" autocomplete="new-password" required>
+                </div>
+                <div class="profile-actions" style="margin-top: 10px;">
+                    <button id="changePasswordBtn" type="submit" class="button" style="background-color: var(--primary-color); color: white;">Update Password</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="profile-actions" style="margin-top: 30px;">
+            <a href="upload.html" class="button dashboard-link">Go to Dashboard</a>
+        </div>
+    </div>
+
+    <div id="notification-container"></div>
+    <div id="loading-overlay"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-check-compat.js"></script>
+    <script src="firebase-init.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const appCheck = firebase.appCheck();
+        const BACKEND_URL = "https://back-end-wrxi.onrender.com";
+
+        const profileDisplay = document.getElementById('profileDisplay');
+        const profileEdit = document.getElementById('profileEdit');
+        const editProfileBtn = document.getElementById('editProfileBtn');
+        const saveProfileBtn = document.getElementById('saveProfileBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const editName = document.getElementById('editName');
+        const editEmail = document.getElementById('editEmail');
+        const editHospital = document.getElementById('editHospital');
+
+        const changePasswordForm = document.getElementById('changePasswordForm');
+        const newPasswordInput = document.getElementById('newPassword');
+        const passwordStrengthDiv = document.getElementById('passwordStrength');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+
+        let currentUserData = null;
+
+        function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
+        function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
+        function showNotification(message, type = 'info', duration = 3000) {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = `notification-message ${type} show`;
+            notification.textContent = message;
+            container.appendChild(notification);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 500);
+            }, duration);
+        }
+        
+        function populateHospitalDropdown(currentHospital) {
+            const hospitals = [
+                "aoi_aligarh", "aoi_coimbatore", "aoi_guntur", "aoi_gurugram", 
+                "aoi_hisar_2", "aoi_hisar_1", "aoi_imphal", "aoi_jammu", 
+                "aoi_kota", "aoi_ludhiana", "aoi_nagpur", "aoi_raipur", 
+                "aoi_ganganagar", "aoi_vijayawada", "aoi_hyderabad"
+            ];
+            editHospital.innerHTML = '';
+            hospitals.forEach(h => {
+                const option = document.createElement('option');
+                option.value = h;
+                // A simple formatter to make IDs more readable
+                let displayName = h.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                option.textContent = displayName;
+                editHospital.appendChild(option);
+            });
+            editHospital.value = currentHospital;
+        }
+
+        function toggleEditMode(isEdit) {
+            profileDisplay.style.display = isEdit ? 'none' : 'block';
+            profileEdit.style.display = isEdit ? 'block' : 'none';
+            if (isEdit && currentUserData) {
+                editName.value = currentUserData.name;
+                editEmail.value = currentUserData.email;
+                populateHospitalDropdown(currentUserData.hospital);
+            }
+        }
+
+        editProfileBtn.addEventListener('click', () => toggleEditMode(true));
+        cancelEditBtn.addEventListener('click', () => toggleEditMode(false));
+
+        async function loadProfile(uid) {
+            const profileDetailsDiv = document.getElementById('profileDetails');
+            profileDetailsDiv.innerHTML = '<p class="loading-message">Loading...</p>';
+            try {
+                const userDocSnap = await db.collection("users").doc(uid).get();
+
+                if (userDocSnap.exists) {
+                    currentUserData = userDocSnap.data();
+                    profileDetailsDiv.innerHTML = `
+                        <div class="profile-item"><strong>Name:</strong> <span>${currentUserData.name || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Email:</strong> <span>${currentUserData.email || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Hospital:</strong> <span>${currentUserData.hospital || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Role:</strong> <span>${currentUserData.role || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Status:</strong> <span style="font-weight:bold; color:${currentUserData.status === 'active' ? 'var(--status-success)' : 'var(--status-warning)'}">${currentUserData.status?.toUpperCase() || 'N/A'}</span></div>
+                    `;
+                } else {
+                    profileDetailsDiv.innerHTML = '<p class="loading-message" style="color: var(--status-error);">Error: User profile not found.</p>';
+                }
+            } catch (error) {
+                profileDetailsDiv.innerHTML = `<p class="loading-message" style="color: var(--status-error);">Error: Could not load profile data. Check console for details.</p>`;
+            }
+        }
+
+        saveProfileBtn.addEventListener('click', async () => {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const newName = editName.value.trim();
+            const newHospital = editHospital.value;
+
+            if (!newName || !newHospital) {
+                showNotification("Name and hospital cannot be empty.", "warning");
+                return;
+            }
+
+            showLoader();
+            try {
+                const appCheckTokenResponse = await appCheck.getToken(false);
+                const response = await fetch(`${BACKEND_URL}/update-profile`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckTokenResponse.token },
+                    body: JSON.stringify({
+                        uid: user.uid,
+                        name: newName,
+                        hospital: newHospital
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Failed to update profile.');
+
+                showNotification("Profile updated successfully!", "success");
+                await loadProfile(user.uid);
+                toggleEditMode(false);
+            } catch (error) {
+                showNotification(`Error: ${error.message}`, "error");
+            } finally {
+                hideLoader();
+            }
+        });
+
+        function togglePasswordForm() {
+            document.getElementById('changePasswordForm').classList.toggle('open');
+            document.querySelector('.change-password-header').classList.toggle('active');
+        }
+        window.togglePasswordForm = togglePasswordForm;
+        
+        function checkPasswordStrength() {
+            const password = newPasswordInput.value;
+            let strength = 0;
+            let message = '';
+            let type = '';
+            if (password.length > 0) {
+                if (password.length >= 8) strength++;
+                if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+                if (password.match(/\d/)) strength++;
+                if (password.match(/[^a-zA-Z0-9]/)) strength++;
+                if (strength < 2) { message = 'Weak'; type = 'weak'; }
+                else if (strength < 4) { message = 'Intermediate'; type = 'intermediate'; }
+                else { message = 'Strong'; type = 'strong'; }
+            }
+            passwordStrengthDiv.textContent = message;
+            passwordStrengthDiv.className = 'password-strength ' + type;
+        }
+        newPasswordInput.addEventListener('input', checkPasswordStrength);
+
+        changePasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = newPasswordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showNotification("Please fill in all password fields.", "warning");
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                showNotification("New passwords do not match.", "warning");
+                return;
+            }
+            if (passwordStrengthDiv.classList.contains('weak')) {
+                showNotification("Please choose a stronger password.", 'warning');
+                return;
+            }
+
+            showLoader();
+            try {
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
+                await user.reauthenticateWithCredential(credential);
+                await user.updatePassword(newPassword);
+                
+                hideLoader();
+                showNotification("Password updated successfully!", "success");
+                changePasswordForm.reset();
+                passwordStrengthDiv.textContent = '';
+                passwordStrengthDiv.className = 'password-strength';
+                if (document.getElementById('changePasswordForm').classList.contains('open')) {
+                    togglePasswordForm();
+                }
+            } catch (error) {
+                hideLoader();
+                console.error("Password change error:", error);
+                let friendlyMessage = "Failed to update password.";
+                if (error.code === 'auth/wrong-password') {
+                    friendlyMessage = "The current password you entered is incorrect.";
+                } else if (error.code === 'auth/weak-password') {
+                    friendlyMessage = "The new password is too weak.";
+                }
+                showNotification(friendlyMessage, "error");
+            }
+        });
+        
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                loadProfile(user.uid);
+            } else {
+                window.location.replace("login.html");
+            }
+        });
+    });
+    </script>
+</body>
+</html>
