@@ -240,7 +240,7 @@
         <div class="header-spacer-left"></div>
         <h1 id="header"></h1>
         <div id="dailyCheckPanel" class="daily-check-box">
-          <h3>Daily check</h3>
+          <h3><i class="fas fa-thermometer-half"></i> Daily check</h3>
           <div id="selected-date-display">Select a date column</div>
           <div class="daily-check-inputs">
               <div class="form-group">
@@ -313,7 +313,6 @@
         currentDate.setDate(1);
         let lastDataMonth = null; 
         let monthlyEnvData = {};
-        // --- [NEW] Variable to track custom highlighting ---
         let highlightedColumnIndex = -1;
 
         const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
@@ -458,13 +457,12 @@
             }
         }, 1000);
 
-        // --- [BUG FIX] This function now clears custom highlights ---
         function handleGridSelection(col) {
             const dateDisplay = document.getElementById('selected-date-display');
             const tempInput = document.getElementById('daily-temp');
             const pressureInput = document.getElementById('daily-pressure');
             
-            clearColumnHighlight(); // Clear any custom highlight when user clicks the grid
+            clearColumnHighlight();
 
             if (col === 0 || col === -1) {
                 dateDisplay.textContent = 'Select a date column';
@@ -491,7 +489,6 @@
             }
         }
 
-        // --- [MODIFIED] Highlighting is now done by adding/removing a CSS class ---
         function highlightColumnFromPanel() {
             const hot = instances[activeTab].hot;
             if (!hot) return;
@@ -503,7 +500,7 @@
             if (dateIndex !== -1) {
                 const columnIndex = dateIndex + 1;
                 highlightedColumnIndex = columnIndex;
-                hot.render(); // Force re-render to apply new class
+                hot.render();
             }
         }
 
@@ -586,12 +583,10 @@
                     afterSelection: (row, col, row2, col2) => {
                         handleGridSelection(col);
                     },
-                    // [MODIFIED] Cells function now checks for the custom highlight class
                     cells: function (r, c) {
                         const props = { readOnly: false, className: '' };
                         if (c === 0) props.readOnly = true;
                         
-                        // Add custom highlight class if needed
                         if (c === highlightedColumnIndex) {
                             props.className += ' highlighted-col';
                         }
@@ -1341,10 +1336,8 @@
                     document.getElementById('daily-pressure').addEventListener('focus', highlightColumnFromPanel);
                     document.getElementById('daily-temp').addEventListener('input', saveEnvData);
                     document.getElementById('daily-pressure').addEventListener('input', saveEnvData);
-                    // [NEW] Add blur listeners to clear the highlight
                     document.getElementById('daily-temp').addEventListener('blur', clearColumnHighlight);
                     document.getElementById('daily-pressure').addEventListener('blur', clearColumnHighlight);
-
 
                     setupProactiveChatListener(currentUID);
                     
