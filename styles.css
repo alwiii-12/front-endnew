@@ -118,7 +118,7 @@ button:disabled {
 }
 
 /* --- General Input Field Styles --- */
-input[type="text"], input[type="email"], input[type="password"], input[type="date"], select {
+input[type="text"], input[type="email"], input[type="password"], input[type="date"], input[type="number"], select {
   width: 100%;
   padding: 12px;
   border: 1px solid var(--border-color);
@@ -130,12 +130,12 @@ input[type="text"], input[type="email"], input[type="password"], input[type="dat
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-input[type="text"]::placeholder, input[type="email"]::placeholder, input[type="password"]::placeholder {
+input[type="text"]::placeholder, input[type="email"]::placeholder, input[type="password"]::placeholder, input[type="number"]::placeholder {
   color: var(--text-secondary);
   opacity: 1;
 }
 
-input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, input[type="date"]:focus, select:focus {
+input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, input[type="date"]:focus, input[type="number"]:focus, select:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px var(--primary-light);
@@ -715,6 +715,38 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     padding: 20px;
 }
 
+/* --- [NEW] Styles for Daily Vitals Panel --- */
+.daily-vitals-box {
+    width: 300px;
+    min-width: 280px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.daily-vitals-box h3 {
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+#selected-date-display {
+    text-align: center;
+    font-weight: bold;
+    color: var(--primary-color);
+    min-height: 1.2em;
+    margin-bottom: 10px;
+}
+
+.daily-vitals-box .form-group label {
+    font-size: 0.9em;
+}
+
+.daily-vitals-box input {
+    font-size: 1.1em;
+    padding: 10px;
+}
+
 /* Handsontable status colors */
 .within { background-color: var(--ht-within) !important; color: var(--ht-text-within) !important; }
 .warning { background-color: var(--ht-warning) !important; color: var(--ht-text-warning) !important; }
@@ -1002,18 +1034,61 @@ body.dark .handsontable .out {
 /* --- [FINAL] Dark Mode Visibility Fix --- */
 /* This rule ensures all text inside the summary and trend boxes is light in dark mode. */
 body.dark .summary-box,
-body.dark .trend-chart-section {
+body.dark .trend-chart-section,
+body.dark .daily-vitals-box {
     color: #e0e0e0; /* Sets a light base color for p tags and other text */
 }
 
 /* This rule makes all headings (like "Output Summary") light blue, matching "LINAC QA". */
 body.dark .summary-box h3,
-body.dark .trend-chart-section h3 {
+body.dark .trend-chart-section h3,
+body.dark .daily-vitals-box h3 {
+    color: var(--primary-light);
+}
+
+body.dark #selected-date-display {
     color: var(--primary-light);
 }
 
 body.dark .energy-selector-container label {
     color: #e0e0e0; /* Makes the 'Select Energy:' label light */
+}
+
+/* --- [NEW] Styles for Correlation Analysis Table --- */
+.correlation-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.correlation-table th, .correlation-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.correlation-table th {
+    background-color: var(--primary-light);
+}
+
+.interpretation-cell span {
+    font-weight: bold;
+}
+
+.interpretation-cell .positive { color: var(--status-success); }
+.interpretation-cell .negative { color: var(--status-error); }
+.interpretation-cell .neutral { color: var(--text-secondary); }
+.interpretation-cell .significant {
+    border-bottom: 2px dotted;
+}
+
+@media (max-width: 992px) {
+    .upload-page .container {
+        flex-direction: column;
+    }
+    .upload-page .summary-box, .upload-page .daily-vitals-box {
+        width: 100%;
+    }
 }
 
 
@@ -1061,16 +1136,7 @@ body.dark .energy-selector-container label {
         width: 100%;
         padding: 15px;
     }
-
-    /* Stack items on upload page */
-    .upload-page .container {
-        flex-direction: column;
-    }
-    .upload-page .summary-box {
-        width: 100%;
-    }
-
-    /* Stack items on admin page */
+    
     .benchmark-grid {
         grid-template-columns: 1fr;
     }
