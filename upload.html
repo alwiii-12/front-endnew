@@ -294,6 +294,7 @@
         let currentDate = new Date();
         currentDate.setDate(1);
         let lastDataMonth = null; 
+        let monthlyEnvData = {}; // Cache for the month's environmental data
 
         const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
         const dataTypesConfig = {
@@ -326,6 +327,15 @@
             node_id: null
         };
         let proactiveChatListener = null;
+
+        // --- [NEW] Debounce function for auto-saving env data ---
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
 
         function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
         function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
@@ -375,13 +385,28 @@
             return `
                 <div class="container">
                     <div id="table-${dataType}" class="table-container"></div>
-                    <div class="summary-box">
-                        <h3>${config.label} Summary</h3>
-                        <canvas id="summaryChart-${dataType}"></canvas>
-                        <p>Total Entries: <span id="total-${dataType}">0</span></p>
-                        <p>Within Tolerance: <span id="within-${dataType}">0</span></p>
-                        <p>Warning: <span id="warning-${dataType}">0</span></p>
-                        <p>Out of Tolerance: <span id="out-${dataType}">0</span></p>
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div class="summary-box">
+                            <h3>${config.label} Summary</h3>
+                            <canvas id="summaryChart-${dataType}"></canvas>
+                            <p>Total Entries: <span id="total-${dataType}">0</span></p>
+                            <p>Within Tolerance: <span id="within-${dataType}">0</span></p>
+                            <p>Warning: <span id="warning-${dataType}">0</span></p>
+                            <p>Out of Tolerance: <span id="out-${dataType}">0</span></p>
+                        </div>
+                        
+                        <div class="daily-vitals-box summary-box">
+                            <h3>Daily Vitals</h3>
+                            <div id="selected-date-display">Select a date column</div>
+                            <div class="form-group">
+                                <label for="daily-temp">Temperature (°C)</label>
+                                <input type="number" id="daily-temp" placeholder="e.g., 25.5" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label for="daily-pressure">Pressure (hPa)</label>
+                                <input type="number" id="daily-pressure" placeholder="e.g., 1012" disabled>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="actions-section">
@@ -401,6 +426,69 @@
                 </div>
             `;
         }
+        
+        // --- [NEW] Function to handle auto-saving environmental data ---
+        const saveEnvData = debounce(async () => {
+            const dateDisplay = document.getElementById('selected-date-display');
+            const fullDate = dateDisplay.dataset.fullDate;
+            if (!fullDate) return;
+
+            const temp = document.getElementById('daily-temp').value;
+            const pressure = document.getElementById('daily-pressure').value;
+            
+            // Update local cache
+            if (!monthlyEnvData[fullDate]) monthlyEnvData[fullDate] = {};
+            monthlyEnvData[fullDate].temperature_celsius = temp ? parseFloat(temp) : null;
+            monthlyEnvData[fullDate].pressure_hpa = pressure ? parseFloat(pressure) : null;
+            
+            try {
+                const appCheckToken = (await appCheck.getToken(false)).token;
+                await fetch(`${BACKEND_URL}/save-daily-env`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckToken },
+                    body: JSON.stringify({
+                        uid: currentUID,
+                        date: fullDate,
+                        temperature: temp,
+                        pressure: pressure
+                    })
+                });
+                showNotification(`Vitals for ${fullDate} saved.`, 'success', 1500);
+            } catch (error) {
+                console.error("Failed to save environmental data:", error);
+                showNotification(`Failed to save vitals for ${fullDate}.`, 'error');
+            }
+        }, 1000); // Wait 1 second after user stops typing
+
+        // --- [NEW] Function to handle grid selection ---
+        function handleGridSelection(col) {
+            if (col === 0) return; // Ignore energy header column
+            
+            const dateDisplay = document.getElementById('selected-date-display');
+            const tempInput = document.getElementById('daily-temp');
+            const pressureInput = document.getElementById('daily-pressure');
+            
+            const fullDate = getMonthDates(currentDate)[col - 1];
+
+            if (fullDate) {
+                dateDisplay.textContent = `Editing for: ${fullDate}`;
+                dateDisplay.dataset.fullDate = fullDate;
+                
+                const dayData = monthlyEnvData[fullDate] || {};
+                tempInput.value = dayData.temperature_celsius || '';
+                pressureInput.value = dayData.pressure_hpa || '';
+
+                tempInput.disabled = false;
+                pressureInput.disabled = false;
+            } else {
+                dateDisplay.textContent = 'Select a date column';
+                dateDisplay.dataset.fullDate = '';
+                tempInput.value = '';
+                pressureInput.value = '';
+                tempInput.disabled = true;
+                pressureInput.disabled = true;
+            }
+        }
 
         window.switchTab = async function(dataType) {
             activeTab = dataType;
@@ -417,10 +505,12 @@
             showLoader();
             document.getElementById(`tab-content-${dataType}`).innerHTML = generateTabContentHTML(dataType);
             populateTrendEnergySelect(dataType);
-            const trendSelect = document.getElementById(`trendEnergySelect-${dataType}`);
-            if (trendSelect) {
-                trendSelect.addEventListener('change', updateTrendChart);
-            }
+            document.getElementById(`trendEnergySelect-${dataType}`).addEventListener('change', updateTrendChart);
+            
+            // --- [NEW] Add event listeners for the new env inputs ---
+            document.getElementById('daily-temp').addEventListener('input', saveEnvData);
+            document.getElementById('daily-pressure').addEventListener('input', saveEnvData);
+
             await loadDataForTab(dataType);
             dataTypesConfig[dataType].initialized = true;
             hideLoader();
@@ -437,20 +527,20 @@
                 });
                 if (!res.ok) throw new Error(`Server error: ${res.statusText}`);
                 const result = await res.json();
+                
+                monthlyEnvData = result.env_data || {}; // Cache the environmental data
+                
                 const dateCols = getMonthDates(currentDate);
                 let data = Array.isArray(result.data) && result.data.length > 0
                     ? result.data.map(r => r.map(c => c === null || c === "None" ? "" : c))
                     : energyTypes.map(e => [e, ...new Array(dateCols.length).fill('')]);
                 
-                // --- [MODIFIED] DYNAMIC COLUMN CONFIG FOR VALIDATION ---
-                const columnsConfig = [{ type: 'text', readOnly: true }]; // Energy column
+                const columnsConfig = [{ type: 'text', readOnly: true }];
                 for (let i = 0; i < dateCols.length; i++) {
                     columnsConfig.push({
                         type: 'numeric',
-                        numericFormat: {
-                            pattern: '0.00' // Format to 2 decimal places
-                        },
-                        allowInvalid: false, // Prevents non-numeric input
+                        numericFormat: { pattern: '0.00' },
+                        allowInvalid: false,
                         allowEmpty: true
                     });
                 }
@@ -459,13 +549,17 @@
                 if (instances[dataType].hot) instances[dataType].hot.destroy();
                 instances[dataType].hot = new Handsontable(container, {
                     data, rowHeaders: false, stretchH: 'all', height: 500, licenseKey: 'non-commercial-and-evaluation',
-                    colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1] || '',
-                    columns: columnsConfig, // Use the new dynamic config
+                    colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1]?.split('-')[2] || '',
+                    columns: columnsConfig,
                     afterChange: (changes, source) => {
                         if (source !== 'loadData') {
                             updateSummaryAndChart(dataType, instances[dataType].hot.getData());
                             updateTrendChart();
                         }
+                    },
+                    afterSelection: (row, col, row2, col2) => {
+                        // --- [NEW] Call selection handler ---
+                        handleGridSelection(col);
                     },
                     cells: function (r, c) {
                         const props = { readOnly: false, className: '' };
@@ -1202,7 +1296,6 @@
                     toggleDarkMode(true);
                     darkToggle.addEventListener('change', () => toggleDarkMode(false));
                     
-                    // [NEW] Mobile Menu Toggle
                     document.getElementById('menu-toggle').addEventListener('click', () => {
                         document.querySelector('.sidebar').classList.toggle('sidebar-visible');
                     });
