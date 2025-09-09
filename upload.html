@@ -239,6 +239,7 @@
       <div class="main-header-controls">
         <h1 id="header"></h1>
         <div id="dailyCheckPanel" class="daily-check-box">
+          <h3>Daily check</h3>
           <div id="selected-date-display">Select a date column</div>
           <div class="daily-check-inputs">
               <div class="form-group">
@@ -310,7 +311,7 @@
         let currentDate = new Date();
         currentDate.setDate(1);
         let lastDataMonth = null; 
-        let monthlyEnvData = {}; // Cache for the month's environmental data
+        let monthlyEnvData = {};
 
         const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
         const dataTypesConfig = {
@@ -383,11 +384,7 @@
             }
             
             auth.signOut().then(() => {
-                localStorage.removeItem('userName');
-                localStorage.removeItem('userEmail');
-                localStorage.removeItem('hospitalName');
-                localStorage.removeItem('userRole');
-                localStorage.removeItem('userStatus');
+                localStorage.clear();
                 window.location.replace("login.html");
             }).catch(err => {
                 hideLoader();
@@ -397,7 +394,6 @@
 
         function generateTabContentHTML(dataType) {
             const config = dataTypesConfig[dataType];
-            // [MODIFIED] The Daily Check panel has been moved out of this function
             return `
                 <div class="container">
                     <div id="table-${dataType}" class="table-container"></div>
@@ -460,11 +456,21 @@
         }, 1000);
 
         function handleGridSelection(col) {
-            if (col === 0) return;
-            
             const dateDisplay = document.getElementById('selected-date-display');
             const tempInput = document.getElementById('daily-temp');
             const pressureInput = document.getElementById('daily-pressure');
+            const hot = instances[activeTab].hot;
+
+            if (col === 0 || col === -1) { // Also handle reset case
+                if (hot) hot.deselectCell();
+                dateDisplay.textContent = 'Select a date column';
+                dateDisplay.dataset.fullDate = '';
+                tempInput.value = '';
+                pressureInput.value = '';
+                tempInput.disabled = true;
+                pressureInput.disabled = true;
+                return;
+            }
             
             const fullDate = getMonthDates(currentDate)[col - 1];
 
@@ -478,15 +484,30 @@
 
                 tempInput.disabled = false;
                 pressureInput.disabled = false;
-            } else {
-                dateDisplay.textContent = 'Select a date column';
-                dateDisplay.dataset.fullDate = '';
-                tempInput.value = '';
-                pressureInput.value = '';
-                tempInput.disabled = true;
-                pressureInput.disabled = true;
+
+                // [MODIFIED] Highlight the selected column
+                if (hot) {
+                    const lastRow = hot.countRows() - 1;
+                    hot.selectColumns(col);
+                }
             }
         }
+
+        // --- [NEW] Function to highlight column based on input focus ---
+        function highlightColumnFromPanel() {
+            const hot = instances[activeTab].hot;
+            if (!hot) return;
+            const fullDate = document.getElementById('selected-date-display').dataset.fullDate;
+            if (!fullDate) return;
+
+            const dateHeaders = getMonthDates(currentDate);
+            const dateIndex = dateHeaders.indexOf(fullDate);
+            if (dateIndex !== -1) {
+                const columnIndex = dateIndex + 1;
+                hot.selectColumns(columnIndex);
+            }
+        }
+
 
         window.switchTab = async function(dataType) {
             activeTab = dataType;
@@ -542,8 +563,12 @@
                 const container = document.getElementById(`table-${dataType}`);
                 if (instances[dataType].hot) instances[dataType].hot.destroy();
                 instances[dataType].hot = new Handsontable(container, {
-                    data, rowHeaders: false, stretchH: 'all', height: 500, licenseKey: 'non-commercial-and-evaluation',
+                    data, rowHeaders: false, height: 500, licenseKey: 'non-commercial-and-evaluation',
                     colHeaders: i => i === 0 ? 'Energy' : dateCols[i - 1]?.split('-')[2] || '',
+                    // [MODIFIED] Set fixed column widths
+                    colWidths: (index) => {
+                        return index === 0 ? 100 : 65;
+                    },
                     columns: columnsConfig,
                     afterChange: (changes, source) => {
                         if (source !== 'loadData') {
@@ -1221,8 +1246,7 @@
             header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
             highlightActiveMonth();
             Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
-            // [MODIFIED] Reset the daily check panel when month changes
-            handleGridSelection(-1); // Pass invalid column to reset
+            handleGridSelection(-1); 
             switchTab(activeTab);
         }
 
@@ -1231,8 +1255,7 @@
             yearLabel.textContent = currentDate.getFullYear();
             header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
             Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
-            // [MODIFIED] Reset the daily check panel when year changes
-            handleGridSelection(-1); // Pass invalid column to reset
+            handleGridSelection(-1);
             switchTab(activeTab);
         }
 
@@ -1300,7 +1323,9 @@
                     document.getElementById('chat-input').onkeypress = e => { if (e.key === 'Enter' && !diagnosticState.inProgress) sendChatMessage(); };
                     document.getElementById('send-chat-btn').onclick = () => { if(!diagnosticState.inProgress) sendChatMessage(); };
 
-                    // [MODIFIED] Add event listeners to the daily check inputs, which now exist permanently
+                    // [MODIFIED] Add focus listeners to daily check inputs
+                    document.getElementById('daily-temp').addEventListener('focus', highlightColumnFromPanel);
+                    document.getElementById('daily-pressure').addEventListener('focus', highlightColumnFromPanel);
                     document.getElementById('daily-temp').addEventListener('input', saveEnvData);
                     document.getElementById('daily-pressure').addEventListener('input', saveEnvData);
 
