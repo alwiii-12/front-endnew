@@ -188,6 +188,7 @@
             <button class="nav-btn" data-section="hospital-performance-section"><i class="fas fa-trophy"></i> Hospital Performance</button>
             <button class="nav-btn" data-section="benchmark-section"><i class="fas fa-balance-scale"></i> Benchmarking</button>
             <button class="nav-btn" data-section="service-efficacy-section"><i class="fas fa-tools"></i> Service Efficacy</button>
+            <button class="nav-btn" data-section="correlation-section"><i class="fas fa-chart-line"></i> Correlation Analysis</button>
             <button class="nav-btn" data-section="hospital-data-access-section"><i class="fas fa-hospital"></i> View Hospital Data</button>
             <button class="nav-btn" data-section="audit-logs-section"><i class="fas fa-clipboard-list"></i> View Audit Logs</button>
         </div>
@@ -291,6 +292,25 @@
                             <tr><td colspan="5" class="no-users-message">Please select a hospital.</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <div class="card-section" id="correlation-section" style="display: none;">
+                <h2>Environmental Factor Correlation Analysis</h2>
+                <p>Analyze the relationship between daily environmental data and QA performance.</p>
+                <div class="filter-search-container">
+                    <select id="correlationHospitalSelect"><option value="">Select Hospital</option></select>
+                    <select id="correlationDataTypeSelect">
+                        <option value="output">Output</option>
+                        <option value="flatness">Flatness</option>
+                        <option value="inline">Inline Symmetry</option>
+                        <option value="crossline">Crossline Symmetry</option>
+                    </select>
+                    <select id="correlationEnergySelect"></select>
+                    <button onclick="runCorrelationAnalysis()" style="background-color: var(--primary-color); color: white;"><i class="fas fa-cogs"></i> Run Analysis</button>
+                </div>
+                <div id="correlation-results-container">
+                    <p class="no-users-message">Select parameters and run analysis to see results.</p>
                 </div>
             </div>
 
@@ -428,11 +448,11 @@
         activeSection.style.display = 'block';
         activeSection.classList.add('active-section');
         
-        // Hide sidebar after clicking a nav item on mobile
         if (window.innerWidth <= 768) {
             document.querySelector('.sidebar-nav').classList.remove('sidebar-visible');
         }
         
+        // --- [MODIFIED] Initialize new sections when they are first viewed ---
         if (sectionId === 'hospital-data-access-section' && document.getElementById('adminYearSelect').options.length === 0) {
             populateHospitalDataFilters();
         }
@@ -455,6 +475,15 @@
                 const filterSelect = document.getElementById('filterHospital');
                 hospitalSelect.innerHTML = filterSelect.innerHTML.replace('All Hospitals', '-- Select Hospital to Analyze --');
             }
+            activeSection.dataset.loaded = 'true';
+        }
+        if (sectionId === 'correlation-section' && !activeSection.dataset.loaded) {
+            const corrHospitalSelect = document.getElementById('correlationHospitalSelect');
+            if (corrHospitalSelect.options.length <= 1) {
+                const filterSelect = document.getElementById('filterHospital');
+                corrHospitalSelect.innerHTML = filterSelect.innerHTML;
+            }
+            populateCorrelationEnergySelect();
             activeSection.dataset.loaded = 'true';
         }
     }
@@ -624,6 +653,80 @@
         }
     }
 
+    // --- [NEW] Function to run correlation analysis ---
+    async function runCorrelationAnalysis() {
+        const hospitalId = document.getElementById('correlationHospitalSelect').value;
+        const dataType = document.getElementById('correlationDataTypeSelect').value;
+        const energy = document.getElementById('correlationEnergySelect').value;
+        const resultsContainer = document.getElementById('correlation-results-container');
+
+        if (!hospitalId || !dataType || !energy) {
+            alert("Please select a hospital, QA parameter, and energy.");
+            return;
+        }
+
+        showLoader();
+        resultsContainer.innerHTML = `<p class="no-users-message">Running analysis...</p>`;
+
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const url = `${BACKEND_URL}/admin/correlation-analysis?hospitalId=${hospitalId}&dataType=${dataType}&energy=${energy}`;
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Failed to run analysis.');
+            
+            let tableHTML = `<table class="correlation-table">
+                <thead>
+                    <tr>
+                        <th>Environmental Factor</th>
+                        <th>Pearson Correlation</th>
+                        <th>Interpretation</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            for (const factor in result) {
+                const data = result[factor];
+                const corr = data.correlation;
+                const p_value = data.p_value;
+                let strength = "No";
+                let direction = "neutral";
+                let significance = p_value < 0.05 ? `<span class="significant">Statistically Significant (p=${p_value.toFixed(3)})</span>` : `Not Significant (p=${p_value.toFixed(3)})`;
+                
+                if (Math.abs(corr) > 0.7) strength = "Strong";
+                else if (Math.abs(corr) > 0.4) strength = "Moderate";
+                else if (Math.abs(corr) > 0.1) strength = "Weak";
+
+                if (corr > 0.1) direction = "positive";
+                else if (corr < -0.1) direction = "negative";
+
+                const factorName = factor.replace('_celsius', ' (°C)').replace('_hpa', ' (hPa)').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+                tableHTML += `
+                    <tr>
+                        <td>${factorName}</td>
+                        <td>${corr.toFixed(3)}</td>
+                        <td class="interpretation-cell">
+                            <span class="${direction}">${strength} ${direction !== 'neutral' ? (direction === 'positive' ? 'Positive' : 'Negative') : ''} Correlation</span><br>
+                            <small>${significance}</small>
+                        </td>
+                    </tr>
+                `;
+            }
+            tableHTML += `</tbody></table>`;
+            resultsContainer.innerHTML = tableHTML;
+
+        } catch (error) {
+            resultsContainer.innerHTML = `<p class="no-users-message" style="color:red;">Error: ${error.message}</p>`;
+        } finally {
+            hideLoader();
+        }
+    }
+
     function updateUserStatus(uid, newStatus) {
         const user = allUsersData.find(u => u.uid === uid);
         showConfirmationModal(`Confirm Status Change`, `Set status for ${user.name} to ${newStatus.toUpperCase()}?`, async () => {
@@ -731,7 +834,7 @@
         const container = document.getElementById('hospitalQaTableContainer');
         const selectedDataType = document.getElementById('adminDataTypeSelect').value;
         const dataForTable = allData[selectedDataType]; 
-        const config = dataTypesConfig[selectedDataType]; // Use dynamic config
+        const config = dataTypesConfig[selectedDataType];
         container.innerHTML = '';
         if (!dataForTable || dataForTable.length === 0 || !config) {
             container.innerHTML = `<p class="no-users-message">No '${selectedDataType}' data available.</p>`;
@@ -749,7 +852,6 @@
                 const numValue = parseFloat(value);
                 let className = '';
                 if (!isNaN(numValue)) {
-                    // Corrected logic to match upload.html
                     if (Math.abs(numValue) > config.tolerance) className = 'out';
                     else if (Math.abs(numValue) >= config.warning) className = 'warning';
                     else className = 'within';
@@ -835,6 +937,16 @@
         if(!dateFilter.value) { dateFilter.value = new Date().toISOString().split('T')[0]; }
     }
     
+    // --- [NEW] Populate the energy dropdown for the correlation tool ---
+    function populateCorrelationEnergySelect() {
+        const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
+        const select = document.getElementById('correlationEnergySelect');
+        select.innerHTML = '';
+        energyTypes.forEach(e => {
+            select.add(new Option(e, e));
+        });
+    }
+
     function setupPerformanceNav() {
         const performanceYearSelect = document.getElementById('performance-year-select');
         const performanceMonthSelect = document.getElementById('performance-month-select');
@@ -964,7 +1076,6 @@
             }
         });
         
-        // [NEW] Mobile Menu Toggle
         document.getElementById('menu-toggle').addEventListener('click', () => {
             document.querySelector('.sidebar-nav').classList.toggle('sidebar-visible');
         });
