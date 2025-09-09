@@ -541,6 +541,17 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     font-style: italic;
 }
 
+/* --- [MODIFIED] Added rule for the larger Run Analysis button --- */
+#manage-users-section .filter-search-container button,
+#audit-logs-section .filter-search-container button {
+    padding: 12px 22px;
+    font-size: 1em;
+}
+#correlation-section .filter-search-container button {
+    padding: 14px 25px;
+    font-size: 1.05em;
+}
+
 /* --- Modal Styles --- */
 .modal {
     display: none;
@@ -661,7 +672,6 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 
 
 /* --- Data Upload Page (Handsontable, Tabs, Charts) --- */
-/* [MODIFIED] New stable flexbox layout for the header */
 .main-header-controls {
     display: flex;
     justify-content: space-between;
@@ -672,7 +682,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 .main-header-controls h1 {
     margin-bottom: 0;
     flex-grow: 1;
-    text-align: center; /* Center the title */
+    text-align: center;
 }
 .header-spacer-left {
     width: 280px;
@@ -681,7 +691,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 .daily-check-box {
     width: 280px;
     flex-shrink: 0;
-    box-sizing: border-box; /* Ensure padding and border are included in the width */
+    box-sizing: border-box;
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 12px;
@@ -698,11 +708,11 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     font-weight: 600;
     margin: 0 0 5px 0;
     color: var(--primary-dark);
-    display: flex; /* Added for icon alignment */
-    align-items: center; /* Added for icon alignment */
+    display: flex;
+    align-items: center;
 }
 .daily-check-box h3 i {
-    margin-right: 8px; /* Space between icon and text */
+    margin-right: 8px;
 }
 .daily-check-inputs {
     display: flex;
