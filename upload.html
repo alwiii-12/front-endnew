@@ -236,7 +236,23 @@
       <p>© 2025 QA Dashboard</p>
     </div>
     <div class="main">
-      <h1 id="header" style="text-align: center;"></h1>
+      <div class="main-header-controls">
+        <h1 id="header"></h1>
+        <div id="dailyCheckPanel" class="daily-check-box">
+          <div id="selected-date-display">Select a date column</div>
+          <div class="daily-check-inputs">
+              <div class="form-group">
+                  <label for="daily-temp">Temp (°C)</label>
+                  <input type="number" id="daily-temp" placeholder="--" disabled>
+              </div>
+              <div class="form-group">
+                  <label for="daily-pressure">Pressure (hPa)</label>
+                  <input type="number" id="daily-pressure" placeholder="--" disabled>
+              </div>
+          </div>
+        </div>
+      </div>
+
       <div class="tab-nav">
         <button class="tab-nav-button active" onclick="switchTab('output')">Output</button>
         <button class="tab-nav-button" onclick="switchTab('flatness')">Flatness</button>
@@ -328,7 +344,6 @@
         };
         let proactiveChatListener = null;
 
-        // --- [NEW] Debounce function for auto-saving env data ---
         function debounce(func, delay) {
             let timeout;
             return function(...args) {
@@ -382,31 +397,17 @@
 
         function generateTabContentHTML(dataType) {
             const config = dataTypesConfig[dataType];
+            // [MODIFIED] The Daily Check panel has been moved out of this function
             return `
                 <div class="container">
                     <div id="table-${dataType}" class="table-container"></div>
-                    <div style="display: flex; flex-direction: column; gap: 20px;">
-                        <div class="summary-box">
-                            <h3>${config.label} Summary</h3>
-                            <canvas id="summaryChart-${dataType}"></canvas>
-                            <p>Total Entries: <span id="total-${dataType}">0</span></p>
-                            <p>Within Tolerance: <span id="within-${dataType}">0</span></p>
-                            <p>Warning: <span id="warning-${dataType}">0</span></p>
-                            <p>Out of Tolerance: <span id="out-${dataType}">0</span></p>
-                        </div>
-                        
-                        <div class="daily-vitals-box summary-box">
-                            <h3>Daily Vitals</h3>
-                            <div id="selected-date-display">Select a date column</div>
-                            <div class="form-group">
-                                <label for="daily-temp">Temperature (°C)</label>
-                                <input type="number" id="daily-temp" placeholder="e.g., 25.5" disabled>
-                            </div>
-                            <div class="form-group">
-                                <label for="daily-pressure">Pressure (hPa)</label>
-                                <input type="number" id="daily-pressure" placeholder="e.g., 1012" disabled>
-                            </div>
-                        </div>
+                    <div class="summary-box">
+                        <h3>${config.label} Summary</h3>
+                        <canvas id="summaryChart-${dataType}"></canvas>
+                        <p>Total Entries: <span id="total-${dataType}">0</span></p>
+                        <p>Within Tolerance: <span id="within-${dataType}">0</span></p>
+                        <p>Warning: <span id="warning-${dataType}">0</span></p>
+                        <p>Out of Tolerance: <span id="out-${dataType}">0</span></p>
                     </div>
                 </div>
                 <div class="actions-section">
@@ -427,7 +428,6 @@
             `;
         }
         
-        // --- [NEW] Function to handle auto-saving environmental data ---
         const saveEnvData = debounce(async () => {
             const dateDisplay = document.getElementById('selected-date-display');
             const fullDate = dateDisplay.dataset.fullDate;
@@ -436,7 +436,6 @@
             const temp = document.getElementById('daily-temp').value;
             const pressure = document.getElementById('daily-pressure').value;
             
-            // Update local cache
             if (!monthlyEnvData[fullDate]) monthlyEnvData[fullDate] = {};
             monthlyEnvData[fullDate].temperature_celsius = temp ? parseFloat(temp) : null;
             monthlyEnvData[fullDate].pressure_hpa = pressure ? parseFloat(pressure) : null;
@@ -458,11 +457,10 @@
                 console.error("Failed to save environmental data:", error);
                 showNotification(`Failed to save vitals for ${fullDate}.`, 'error');
             }
-        }, 1000); // Wait 1 second after user stops typing
+        }, 1000);
 
-        // --- [NEW] Function to handle grid selection ---
         function handleGridSelection(col) {
-            if (col === 0) return; // Ignore energy header column
+            if (col === 0) return;
             
             const dateDisplay = document.getElementById('selected-date-display');
             const tempInput = document.getElementById('daily-temp');
@@ -507,10 +505,6 @@
             populateTrendEnergySelect(dataType);
             document.getElementById(`trendEnergySelect-${dataType}`).addEventListener('change', updateTrendChart);
             
-            // --- [NEW] Add event listeners for the new env inputs ---
-            document.getElementById('daily-temp').addEventListener('input', saveEnvData);
-            document.getElementById('daily-pressure').addEventListener('input', saveEnvData);
-
             await loadDataForTab(dataType);
             dataTypesConfig[dataType].initialized = true;
             hideLoader();
@@ -528,7 +522,7 @@
                 if (!res.ok) throw new Error(`Server error: ${res.statusText}`);
                 const result = await res.json();
                 
-                monthlyEnvData = result.env_data || {}; // Cache the environmental data
+                monthlyEnvData = result.env_data || {};
                 
                 const dateCols = getMonthDates(currentDate);
                 let data = Array.isArray(result.data) && result.data.length > 0
@@ -558,7 +552,6 @@
                         }
                     },
                     afterSelection: (row, col, row2, col2) => {
-                        // --- [NEW] Call selection handler ---
                         handleGridSelection(col);
                     },
                     cells: function (r, c) {
@@ -1204,7 +1197,6 @@
             proactiveChatListener = proactiveQuery.onSnapshot(snapshot => {
                 snapshot.docChanges().forEach(change => {
                     if (change.type === 'added') {
-                        // Mark as read immediately to prevent re-popping on next load
                         change.doc.ref.update({ read: true });
 
                         const chatData = change.doc.data();
@@ -1216,7 +1208,6 @@
                             if (answer === "Yes, help diagnose") {
                                 sendChatMessage(chatData.topic.replace(/_/g, " "));
                             }
-                            // The update call was moved up to happen immediately
                         });
                     }
                 });
@@ -1230,6 +1221,8 @@
             header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
             highlightActiveMonth();
             Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
+            // [MODIFIED] Reset the daily check panel when month changes
+            handleGridSelection(-1); // Pass invalid column to reset
             switchTab(activeTab);
         }
 
@@ -1238,6 +1231,8 @@
             yearLabel.textContent = currentDate.getFullYear();
             header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
             Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
+            // [MODIFIED] Reset the daily check panel when year changes
+            handleGridSelection(-1); // Pass invalid column to reset
             switchTab(activeTab);
         }
 
@@ -1304,6 +1299,10 @@
                     document.getElementById('close-chat-btn').onclick = () => chatWindow.classList.remove('open');
                     document.getElementById('chat-input').onkeypress = e => { if (e.key === 'Enter' && !diagnosticState.inProgress) sendChatMessage(); };
                     document.getElementById('send-chat-btn').onclick = () => { if(!diagnosticState.inProgress) sendChatMessage(); };
+
+                    // [MODIFIED] Add event listeners to the daily check inputs, which now exist permanently
+                    document.getElementById('daily-temp').addEventListener('input', saveEnvData);
+                    document.getElementById('daily-pressure').addEventListener('input', saveEnvData);
 
                     setupProactiveChatListener(currentUID);
                     
