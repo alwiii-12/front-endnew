@@ -36,24 +36,16 @@
     </div>
     
     <div class="form-group">
-      <label for="hospital">Select Hospital<span class="required">*</span></label>
-      <select id="hospital" required>
-        <option value="">-- Select Hospital --</option>
-        <option value="aoi_aligarh">Aoi Aligarh</option>
-        <option value="aoi_coimbatore">Aoi Coimbatore</option>
-        <option value="aoi_guntur">Aoi Guntur</option>
-        <option value="aoi_gurugram">Aoi Gurugram</option>
-        <option value="aoi_hisar_2">Aoi Hisar ( Sarvesh )</option>
-        <option value="aoi_hisar_1">Aoi Hisar (Sarvodhaya )</option>
-        <option value="aoi_imphal">Aoi Imphal</option>
-        <option value="aoi_jammu">Aoi Jammu</option>
-        <option value="aoi_kota">Aoi Kota</option>
-        <option value="aoi_ludhiana">Aoi Ludhiana</option>
-        <option value="aoi_nagpur">Aoi Nagpur</option>
-        <option value="aoi_raipur">Aoi Raipur</option>
-        <option value="aoi_ganganagar">Aoi Sri Ganganagar</option>
-        <option value="aoi_vijayawada">Aoi Vijayawada (Nagarjuna)</option>
-        <option value="aoi_hyderabad">Aoi Hyderabad</option>
+      <label for="organizationSelect">Select Your Organization<span class="required">*</span></label>
+      <select id="organizationSelect" required>
+        <option value="">-- Loading Organizations --</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label for="hospitalSelect">Select Your Hospital<span class="required">*</span></label>
+      <select id="hospitalSelect" required disabled>
+        <option value="">-- First, select an organization --</option>
       </select>
     </div>
     
@@ -107,10 +99,64 @@
     document.addEventListener('DOMContentLoaded', () => {
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const BACKEND_URL = "https://back-end-wrxi.onrender.com";
 
         const passwordInput = document.getElementById('password');
         const passwordStrengthDiv = document.getElementById('passwordStrength');
         const signupButton = document.getElementById('signupButton');
+        const organizationSelect = document.getElementById('organizationSelect');
+        const hospitalSelect = document.getElementById('hospitalSelect');
+
+        // --- Load Organizations on Page Load ---
+        async function loadOrganizations() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/public/groups`);
+                if (!response.ok) throw new Error("Could not load organizations.");
+                const groups = await response.json();
+                
+                organizationSelect.innerHTML = '<option value="">-- Select Your Organization --</option>';
+                groups.forEach(group => {
+                    const option = document.createElement('option');
+                    option.value = group;
+                    // Format the group ID to be more readable
+                    option.textContent = group.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    organizationSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error(error);
+                organizationSelect.innerHTML = '<option value="">-- Error loading organizations --</option>';
+            }
+        }
+
+        // --- Handle Organization Selection ---
+        organizationSelect.addEventListener('change', async () => {
+            const selectedGroup = organizationSelect.value;
+            hospitalSelect.innerHTML = '<option value="">-- Loading Hospitals --</option>';
+            hospitalSelect.disabled = true;
+
+            if (!selectedGroup) {
+                hospitalSelect.innerHTML = '<option value="">-- First, select an organization --</option>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/public/institutions-by-group?group=${selectedGroup}`);
+                if (!response.ok) throw new Error("Could not load hospitals for this group.");
+                const hospitals = await response.json();
+                
+                hospitalSelect.innerHTML = '<option value="">-- Select Your Hospital --</option>';
+                hospitals.forEach(hospital => {
+                    const option = document.createElement('option');
+                    option.value = hospital.centerId;
+                    option.textContent = hospital.name;
+                    hospitalSelect.appendChild(option);
+                });
+                hospitalSelect.disabled = false;
+            } catch (error) {
+                console.error(error);
+                hospitalSelect.innerHTML = '<option value="">-- Error loading hospitals --</option>';
+            }
+        });
 
         document.querySelectorAll('.toggle-password').forEach(function(toggle) {
             toggle.addEventListener('click', function() {
@@ -154,7 +200,7 @@
           const name = document.getElementById("name").value.trim();
           const email = document.getElementById("email").value.trim();
           const password = document.getElementById("password").value.trim();
-          const hospital = document.getElementById("hospital").value.trim();
+          const hospital = document.getElementById("hospitalSelect").value.trim(); // <-- MODIFIED
           const role = document.getElementById("role").value.trim();
 
           if (!name || !email || !password || !hospital || hospital === "" || !role || role === "") {
@@ -180,8 +226,7 @@
             const appCheck = firebase.appCheck();
             const appCheckTokenResponse = await appCheck.getToken(false);
             const token = appCheckTokenResponse.token;
-
-            const BACKEND_URL = "https://back-end-wrxi.onrender.com";
+            
             const response = await fetch(`${BACKEND_URL}/signup`, {
                 method: "POST",
                 headers: { 
@@ -216,6 +261,9 @@
             signupButton.textContent = 'Sign Up';
           }
         }
+        
+        // --- Initialize the page ---
+        loadOrganizations();
     });
   </script>
 </body>
