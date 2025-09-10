@@ -52,17 +52,32 @@
             width: 240px;
             flex-shrink: 0;
         }
-        /* --- STYLE FIX: Increased icon size and improved alignment --- */
+        /* --- STYLE FIX: Larger sidebar buttons --- */
+        .sidebar-nav .nav-btn {
+            padding: 15px 20px;
+            font-size: 1.1em;
+            text-align: left;
+        }
         .sidebar-nav .nav-btn i {
             font-size: 1.2em;
-            margin-right: 10px;
-            width: 20px;
+            margin-right: 12px;
+            width: 22px;
             text-align: center;
         }
         .content-display-area {
             flex-grow: 1;
-            padding: 25px;
+            padding: 30px;
             overflow-y: auto;
+            background-color: var(--bg-body);
+        }
+        /* --- STYLE FIX: Medium-sized content box --- */
+        .content-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
         }
         .form-grid {
             display: grid;
@@ -104,75 +119,77 @@
         </div>
         
         <div class="content-display-area">
-            
-            <div class="card-section active-section" id="dashboard-section">
-                <div class="card-section" style="padding: 0; border: none; box-shadow: none;">
-                    <h2><i class="fas fa-user-plus"></i> Create New Admin User</h2>
-                    <form id="createAdminForm">
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="adminName">Full Name</label>
-                                <input type="text" id="adminName" required>
+            <div class="content-wrapper">
+                <div class="card-section active-section" id="dashboard-section">
+                    
+                    <div class="card-section" style="padding: 0; border: none; box-shadow: none;">
+                        <h2><i class="fas fa-plus-circle"></i> Add New Institution</h2>
+                        <form id="addInstitutionForm">
+                            <div class="form-grid">
+                               <div class="form-group">
+                                    <label for="newInstitutionName">Institution Name</label>
+                                    <input type="text" id="newInstitutionName" placeholder="e.g., American Oncology - Guntur" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newCenterId">Center ID (Unique)</label>
+                                    <input type="text" id="newCenterId" placeholder="e.g., aoi_guntur" pattern="[a-z0-9_]+" title="Lowercase letters, numbers, and underscores only." required>
+                                </div>
+                                 <div class="form-group">
+                                    <label for="newParentGroup">Parent Group ID</label>
+                                    <input type="text" id="newParentGroup" placeholder="e.g., aoi_south_india" pattern="[a-z0-9_]+" title="Lowercase letters, numbers, and underscores only." required>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="adminEmail">Email</label>
-                                <input type="email" id="adminEmail" required>
+                            <button type="submit" class="button" style="background-color: var(--primary-color); color: white;">Add Institution</button>
+                        </form>
+                    </div>
+
+                    <div class="card-section" style="padding: 0; border: none; box-shadow: none; margin-top: 30px;">
+                        <h2><i class="fas fa-user-plus"></i> Create New Admin User</h2>
+                        <form id="createAdminForm">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="adminName">Full Name</label>
+                                    <input type="text" id="adminName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminEmail">Email</label>
+                                    <input type="email" id="adminEmail" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminPassword">Password</label>
+                                    <input type="password" id="adminPassword" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminGroupSelect">Assign to Group</label>
+                                    <select id="adminGroupSelect" required>
+                                        <option value="">-- Select a Group --</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="adminPassword">Password</label>
-                                <input type="password" id="adminPassword" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="adminGroupSelect">Assign to Group</label>
-                                <select id="adminGroupSelect" required>
-                                    <option value="">-- Select a Group --</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button type="submit" class="button" style="background-color: var(--status-success); color: white;">Create Admin</button>
-                    </form>
+                            <button type="submit" class="button" style="background-color: var(--status-success); color: white;">Create Admin</button>
+                        </form>
+                    </div>
+
                 </div>
 
-                <div class="card-section" style="padding: 0; border: none; box-shadow: none; margin-top: 30px;">
-                    <h2><i class="fas fa-plus-circle"></i> Add New Institution</h2>
-                    <form id="addInstitutionForm">
-                        <div class="form-grid">
-                           <div class="form-group">
-                                <label for="newInstitutionName">Institution Name</label>
-                                <input type="text" id="newInstitutionName" placeholder="e.g., American Oncology - Guntur" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="newCenterId">Center ID (Unique)</label>
-                                <input type="text" id="newCenterId" placeholder="e.g., aoi_guntur" pattern="[a-z0-9_]+" title="Lowercase letters, numbers, and underscores only." required>
-                            </div>
-                             <div class="form-group">
-                                <label for="newParentGroup">Parent Group ID</label>
-                                <input type="text" id="newParentGroup" placeholder="e.g., aoi_south_india" pattern="[a-z0-9_]+" title="Lowercase letters, numbers, and underscores only." required>
-                            </div>
-                        </div>
-                        <button type="submit" class="button" style="background-color: var(--primary-color); color: white;">Add Institution</button>
-                    </form>
+                <div class="card-section" id="manage-institutions-section" style="display: none;">
+                    <h2><i class="fas fa-list-ul"></i> All Institutions</h2>
+                     <div class="user-table-container">
+                        <table class="user-table">
+                            <thead>
+                                <tr>
+                                    <th>Institution Name</th>
+                                    <th>Center ID</th>
+                                    <th>Parent Group ID</th>
+                                </tr>
+                            </thead>
+                            <tbody id="institutionsTableBody">
+                                <tr><td colspan="3" class="no-users-message">Loading institutions...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-
-            <div class="card-section" id="manage-institutions-section" style="display: none;">
-                <h2><i class="fas fa-list-ul"></i> All Institutions</h2>
-                 <div class="user-table-container">
-                    <table class="user-table">
-                        <thead>
-                            <tr>
-                                <th>Institution Name</th>
-                                <th>Center ID</th>
-                                <th>Parent Group ID</th>
-                            </tr>
-                        </thead>
-                        <tbody id="institutionsTableBody">
-                            <tr><td colspan="3" class="no-users-message">Loading institutions...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
         </div>
     </div>
 
@@ -213,13 +230,10 @@
 
         function showAdminSection(sectionId) {
             document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.section === sectionId));
-            
-            // --- JAVASCRIPT FIX: Corrected selector to target only direct children ---
-            document.querySelectorAll('.content-display-area > .card-section').forEach(section => {
+            document.querySelectorAll('.content-wrapper > .card-section').forEach(section => {
                 section.style.display = 'none';
                 section.classList.remove('active-section');
             });
-
             const activeSection = document.getElementById(sectionId);
             if (activeSection) {
                 activeSection.style.display = 'block';
