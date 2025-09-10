@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin | LINAC QA</title>
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        .super-admin-header {
+            width: 100%;
+            background-color: var(--status-error);
+            color: var(--text-white);
+            padding: 15px 30px;
+            text-align: center;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .super-admin-header h1 {
+            color: var(--text-white);
+            margin: 0;
+            font-size: 1.8em;
+        }
+        .super-admin-header .header-btn {
+             background-color: transparent;
+             border: 2px solid var(--text-white);
+        }
+        .super-admin-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 30px auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+        .card-section h2 {
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 10px;
+        }
+        .institution-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+        }
+        .institution-table th, .institution-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .institution-table th {
+            background-color: var(--primary-light);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        #addInstitutionForm {
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+        }
+         #addInstitutionForm .form-group {
+            flex-grow: 1;
+         }
+        @media (max-width: 600px) {
+            .form-grid, #addInstitutionForm {
+                grid-template-columns: 1fr;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="super-admin-header">
+        <h1><i class="fas fa-user-shield"></i> Super Admin Panel</h1>
+        <button onclick="logout()" class="header-btn" title="Logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+
+    <div class="super-admin-container">
+        <div class="card-section">
+            <h2><i class="fas fa-hospital"></i> Manage Institutions</h2>
+            <table class="institution-table">
+                <thead>
+                    <tr>
+                        <th>Institution Name</th>
+                        <th>Center ID</th>
+                    </tr>
+                </thead>
+                <tbody id="institutionsTableBody">
+                    <tr><td colspan="2" class="no-users-message">Loading institutions...</td></tr>
+                </tbody>
+            </table>
+            
+            <h3 style="margin-top: 30px;">Add New Institution</h3>
+            <form id="addInstitutionForm">
+                <div class="form-group">
+                    <label for="newInstitutionName">Institution Name</label>
+                    <input type="text" id="newInstitutionName" placeholder="e.g., American Oncology Institute - Guntur" required>
+                </div>
+                <div class="form-group">
+                    <label for="newCenterId">Center ID</label>
+                    <input type="text" id="newCenterId" placeholder="e.g., aoi_guntur" pattern="[a-z0-9_]+" title="Only lowercase letters, numbers, and underscores are allowed." required>
+                </div>
+                <button type="submit" class="button" style="background-color: var(--primary-color); color: white;">Add Institution</button>
+            </form>
+        </div>
+
+        <div class="card-section">
+            <h2><i class="fas fa-user-plus"></i> Create New Admin User</h2>
+            <form id="createAdminForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="adminName">Full Name</label>
+                        <input type="text" id="adminName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminEmail">Email</label>
+                        <input type="email" id="adminEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminPassword">Password</label>
+                        <input type="password" id="adminPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminHospitalSelect">Assign to Institution</label>
+                        <select id="adminHospitalSelect" required>
+                            <option value="">-- Loading Institutions --</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="button" style="background-color: var(--status-success); color: white; margin-top: 20px; width: 100%; padding: 14px;">Create Admin</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="notification-container"></div>
+    <div id="loading-overlay"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-check-compat.js"></script>
+    <script src="firebase-init.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+    <script>
+        const BACKEND_URL = "https://back-end-wrxi.onrender.com";
+        let auth, db, appCheck;
+        let currentSuperAdminUid = null;
+
+        function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
+        function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
+        function showNotification(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('notification-container');
+            if (!container) return;
+            const notification = document.createElement('div');
+            notification.className = `notification-message ${type} show`;
+            notification.textContent = message;
+            container.appendChild(notification);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 500);
+            }, duration);
+        }
+
+        async function logout() {
+            if (auth) {
+                await auth.signOut();
+            }
+            localStorage.clear();
+            window.location.replace("login.html");
+        }
+
+        async function loadInstitutions() {
+            const tableBody = document.getElementById('institutionsTableBody');
+            const hospitalSelect = document.getElementById('adminHospitalSelect');
+            tableBody.innerHTML = '<tr><td colspan="2" class="no-users-message">Loading...</td></tr>';
+            hospitalSelect.innerHTML = '<option value="">-- Loading --</option>';
+
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
+
+                const response = await fetch(`${BACKEND_URL}/superadmin/institutions`, {
+                    headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch institutions.');
+                const institutions = await response.json();
+
+                tableBody.innerHTML = '';
+                hospitalSelect.innerHTML = '<option value="">-- Select an Institution --</option>';
+                
+                if (institutions.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="2" class="no-users-message">No institutions found. Add one below.</td></tr>';
+                } else {
+                    institutions.forEach(inst => {
+                        const row = tableBody.insertRow();
+                        row.innerHTML = `<td>${inst.name}</td><td>${inst.centerId}</td>`;
+
+                        const option = document.createElement('option');
+                        option.value = inst.centerId;
+                        option.textContent = inst.name;
+                        hospitalSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error("Error loading institutions:", error);
+                tableBody.innerHTML = '<tr><td colspan="2" class="no-users-message" style="color:red;">Error loading data.</td></tr>';
+                hospitalSelect.innerHTML = '<option value="">-- Error --</option>';
+            }
+        }
+
+        document.getElementById('addInstitutionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoader();
+            const name = document.getElementById('newInstitutionName').value.trim();
+            const centerId = document.getElementById('newCenterId').value.trim();
+
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
+                const response = await fetch(`${BACKEND_URL}/superadmin/institutions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
+                    body: JSON.stringify({ name, centerId })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Failed to add institution.');
+                
+                showNotification(result.message, 'success');
+                document.getElementById('addInstitutionForm').reset();
+                await loadInstitutions();
+            } catch (error) {
+                showNotification(error.message, 'error');
+            } finally {
+                hideLoader();
+            }
+        });
+
+        document.getElementById('createAdminForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoader();
+            const name = document.getElementById('adminName').value.trim();
+            const email = document.getElementById('adminEmail').value.trim();
+            const password = document.getElementById('adminPassword').value;
+            const hospital = document.getElementById('adminHospitalSelect').value;
+
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
+                const response = await fetch(`${BACKEND_URL}/superadmin/create-admin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
+                    body: JSON.stringify({ name, email, password, hospital })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Failed to create admin user.');
+                
+                showNotification(result.message, 'success');
+                document.getElementById('createAdminForm').reset();
+            } catch (error) {
+                showNotification(error.message, 'error');
+            } finally {
+                hideLoader();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            auth = firebase.auth();
+            db = firebase.firestore();
+            appCheck = firebase.appCheck();
+
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentSuperAdminUid = user.uid;
+                    const userRole = localStorage.getItem("userRole");
+                    
+                    if (userRole !== "Super Admin") {
+                        alert("Access Denied. You do not have Super Admin privileges.");
+                        // Redirect to a more appropriate page if necessary
+                        window.location.replace(userRole === "Admin" ? "admin_dashboard.html" : "upload.html");
+                    } else {
+                        // User is a Super Admin, proceed to load the page data
+                        loadInstitutions();
+                    }
+                } else {
+                    // Not logged in, redirect to login page
+                    window.location.replace("login.html");
+                }
+            });
+        });
+    </script>
+</body>
+</html>
