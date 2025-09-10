@@ -134,7 +134,10 @@
                 localStorage.setItem("userRole", data.role);
                 localStorage.setItem("userStatus", data.status);
 
-                if (data.role === "Admin") {
+                // --- [MODIFIED] REDIRECTION LOGIC ---
+                if (data.role === "Super Admin") {
+                    window.location.href = "super_admin.html";
+                } else if (data.role === "Admin") {
                     window.location.href = "admin_dashboard.html";
                 } else {
                     window.location.href = "upload.html";
