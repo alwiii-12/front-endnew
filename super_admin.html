@@ -63,6 +63,11 @@
             width: 22px;
             text-align: center;
         }
+        /* [ADDED] Style for the active navigation button */
+        .sidebar-nav .nav-btn.active {
+            background-color: var(--primary-color);
+            color: var(--text-white);
+        }
         .content-display-area {
             flex-grow: 1;
             padding: 30px;
@@ -87,6 +92,21 @@
             font-size: 1.2em;
             width: 100%;
             margin-top: 20px;
+        }
+        /* [ADDED] Styles for clickable table headers */
+        .user-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+        .user-table th.sortable:hover {
+            background-color: #ddebfd;
+        }
+        .user-table th .sort-icon {
+            margin-left: 8px;
+            color: #aaa;
+        }
+        .user-table th.sorted .sort-icon {
+            color: var(--primary-dark);
         }
         @media (max-width: 768px) {
             .form-grid {
@@ -167,9 +187,9 @@
                         <table class="user-table">
                             <thead>
                                 <tr>
-                                    <th>Institution Name</th>
-                                    <th>Center ID</th>
-                                    <th>Parent Group ID</th>
+                                    <th class="sortable" onclick="sortInstitutions('name')">Institution Name<i class="fas fa-sort sort-icon"></i></th>
+                                    <th class="sortable" onclick="sortInstitutions('centerId')">Center ID<i class="fas fa-sort sort-icon"></i></th>
+                                    <th class="sortable" onclick="sortInstitutions('parentGroup')">Parent Group ID<i class="fas fa-sort sort-icon"></i></th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -195,6 +215,8 @@
         const BACKEND_URL = "https://back-end-wrxi.onrender.com";
         let auth, db, appCheck;
         let institutionsCache = [];
+        let sortColumn = 'name';
+        let sortDirection = 'asc';
 
         function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
         function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
@@ -241,7 +263,7 @@
                 if (!response.ok) throw new Error('Failed to fetch institutions.');
                 institutionsCache = await response.json();
                 
-                populateInstitutionTable();
+                sortInstitutions(sortColumn, true); // Perform initial sort
                 populateGroupList();
 
             } catch (error) {
@@ -250,6 +272,27 @@
             } finally {
                 hideLoader();
             }
+        }
+        
+        function sortInstitutions(column, keepDirection = false) {
+            if (!keepDirection) {
+                if (sortColumn === column) {
+                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortColumn = column;
+                    sortDirection = 'asc';
+                }
+            }
+            
+            institutionsCache.sort((a, b) => {
+                const valA = a[sortColumn] ? a[sortColumn].toLowerCase() : '';
+                const valB = b[sortColumn] ? b[sortColumn].toLowerCase() : '';
+                if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+            
+            populateInstitutionTable();
         }
 
         function populateInstitutionTable() {
@@ -272,6 +315,19 @@
                     </td>
                 `;
             });
+            
+            // Update sort icons in header
+            document.querySelectorAll('.user-table th.sortable').forEach(th => {
+                th.classList.remove('sorted');
+                const icon = th.querySelector('.sort-icon');
+                icon.className = 'fas fa-sort sort-icon';
+            });
+            const activeHeader = document.querySelector(`.user-table th[onclick="sortInstitutions('${sortColumn}')"]`);
+            if (activeHeader) {
+                activeHeader.classList.add('sorted');
+                const icon = activeHeader.querySelector('.sort-icon');
+                icon.className = sortDirection === 'asc' ? 'fas fa-sort-up sort-icon' : 'fas fa-sort-down sort-icon';
+            }
         }
         
         async function deleteInstitution(centerId, name) {
