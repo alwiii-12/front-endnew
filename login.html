@@ -133,6 +133,8 @@
                 localStorage.setItem("hospitalName", data.hospital.toUpperCase());
                 localStorage.setItem("userRole", data.role);
                 localStorage.setItem("userStatus", data.status);
+                // --- [ADDED] SAVE THE CENTER ID ---
+                localStorage.setItem("centerId", data.centerId);
 
                 // --- [MODIFIED] REDIRECTION LOGIC ---
                 if (data.role === "Super Admin") {
