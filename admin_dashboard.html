@@ -169,6 +169,17 @@
             color: var(--status-error);
             font-weight: bold;
         }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        #machine-name-inputs {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
 
     </style>
 </head>
@@ -185,6 +196,8 @@
         
         <div class="sidebar-nav">
             <button class="nav-btn active" data-section="manage-users-section"><i class="fas fa-users"></i> Manage Users</button>
+            <button class="nav-btn" data-section="add-machines-section"><i class="fas fa-plus-circle"></i> Add Machines</button>
+            <button class="nav-btn" data-section="manage-machines-section"><i class="fas fa-cogs"></i> Manage Machines</button>
             <button class="nav-btn" data-section="hospital-performance-section"><i class="fas fa-trophy"></i> Hospital Performance</button>
             <button class="nav-btn" data-section="benchmark-section"><i class="fas fa-balance-scale"></i> Benchmarking</button>
             <button class="nav-btn" data-section="service-efficacy-section"><i class="fas fa-tools"></i> Service Efficacy</button>
@@ -206,6 +219,45 @@
                     <table class="user-table">
                         <thead><tr><th>Name</th><th>Email</th><th>Hospital</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
                         <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card-section" id="add-machines-section" style="display: none;">
+                <h2><i class="fas fa-plus-circle"></i> Add New Machines to an Institution</h2>
+                <form id="addMachinesForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="addMachineInstitutionSelect">Select Institution</label>
+                            <select id="addMachineInstitutionSelect" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="numMachinesSelect">Number of Machines to Add</label>
+                            <select id="numMachinesSelect" required>
+                                <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                                <option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
+                            </select>
+                        </div>
+                        <div id="machine-name-inputs"></div>
+                    </div>
+                    <button type="submit" class="button" style="background-color: var(--primary-color);">Add Machines</button>
+                </form>
+            </div>
+
+            <div class="card-section" id="manage-machines-section" style="display: none;">
+                <h2><i class="fas fa-cogs"></i> Manage Existing Machines</h2>
+                <div class="form-group">
+                    <label for="manageMachineInstitutionSelect">Select Institution to View Machines</label>
+                    <select id="manageMachineInstitutionSelect"></select>
+                </div>
+                <div class="user-table-container" style="margin-top: 20px;">
+                    <table class="user-table">
+                        <thead>
+                            <tr><th>Machine Name</th><th>Machine ID</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="machinesTableBody">
+                            <tr><td colspan="3" class="no-users-message">Select an institution to see its machines.</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -377,6 +429,22 @@
         </div>
     </div>
 
+    <div id="editMachineModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>Edit Machine Name</h3>
+            <input type="hidden" id="editMachineId">
+            <div class="form-group">
+                <label for="editMachineNameInput">New Machine Name</label>
+                <input type="text" id="editMachineNameInput" required>
+            </div>
+            <div class="modal-buttons">
+                <button id="saveMachineNameBtn" class="save-btn">Save Changes</button>
+                <button class="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <div id="confirmationModal" class="modal">
         <div class="modal-content">
             <h3 id="confirmationTitle">Confirm Action</h3>
@@ -452,7 +520,6 @@
             document.querySelector('.sidebar-nav').classList.remove('sidebar-visible');
         }
         
-        // --- [MODIFIED] Initialize new sections when they are first viewed ---
         if (sectionId === 'hospital-data-access-section' && document.getElementById('adminYearSelect').options.length === 0) {
             populateHospitalDataFilters();
         }
@@ -484,6 +551,12 @@
                 corrHospitalSelect.innerHTML = filterSelect.innerHTML;
             }
             populateCorrelationEnergySelect();
+            activeSection.dataset.loaded = 'true';
+        }
+        // [NEW] Load machine management dependencies when switching to those tabs
+        if ((sectionId === 'add-machines-section' || sectionId === 'manage-machines-section') && !activeSection.dataset.loaded) {
+            populateMachineManagementDropdowns();
+            if(sectionId === 'add-machines-section') generateMachineNameInputs();
             activeSection.dataset.loaded = 'true';
         }
     }
@@ -623,11 +696,7 @@
             }
         } catch (logError) { console.error("Error sending logout log event:", logError); }
         auth.signOut().then(() => {
-            localStorage.removeItem('userName');
-            localStorage.removeItem('userEmail');
-            localStorage.removeItem('hospitalName');
-            localStorage.removeItem('userRole');
-            localStorage.removeItem('userStatus');
+            localStorage.clear();
             window.location.replace("login.html");
         });
     }
@@ -653,7 +722,6 @@
         }
     }
 
-    // --- [NEW] Function to run correlation analysis ---
     async function runCorrelationAnalysis() {
         const hospitalId = document.getElementById('correlationHospitalSelect').value;
         const dataType = document.getElementById('correlationDataTypeSelect').value;
@@ -679,23 +747,15 @@
 
             if (!response.ok) throw new Error(result.error || 'Failed to run analysis.');
             
-            let tableHTML = `<table class="correlation-table">
-                <thead>
-                    <tr>
-                        <th>Environmental Factor</th>
-                        <th>Pearson Correlation</th>
-                        <th>Interpretation</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-
+            let tableHTML = `<table class="user-table">
+                <thead><tr><th>Environmental Factor</th><th>Pearson Correlation</th><th>Interpretation</th></tr></thead><tbody>`;
             for (const factor in result) {
                 const data = result[factor];
                 const corr = data.correlation;
                 const p_value = data.p_value;
                 let strength = "No";
                 let direction = "neutral";
-                let significance = p_value < 0.05 ? `<span class="significant">Statistically Significant (p=${p_value.toFixed(3)})</span>` : `Not Significant (p=${p_value.toFixed(3)})`;
+                let significance = p_value < 0.05 ? `<span class="significant" style="border-bottom: 2px dotted;">Statistically Significant (p=${p_value.toFixed(3)})</span>` : `Not Significant (p=${p_value.toFixed(3)})`;
                 
                 if (Math.abs(corr) > 0.7) strength = "Strong";
                 else if (Math.abs(corr) > 0.4) strength = "Moderate";
@@ -705,17 +765,8 @@
                 else if (corr < -0.1) direction = "negative";
 
                 const factorName = factor.replace('_celsius', ' (°C)').replace('_hpa', ' (hPa)').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-
-                tableHTML += `
-                    <tr>
-                        <td>${factorName}</td>
-                        <td>${corr.toFixed(3)}</td>
-                        <td class="interpretation-cell">
-                            <span class="${direction}">${strength} ${direction !== 'neutral' ? (direction === 'positive' ? 'Positive' : 'Negative') : ''} Correlation</span><br>
-                            <small>${significance}</small>
-                        </td>
-                    </tr>
-                `;
+                
+                tableHTML += `<tr><td>${factorName}</td><td>${corr.toFixed(3)}</td><td class="interpretation-cell"><span style="font-weight:bold; color: ${direction === 'positive' ? 'green' : (direction === 'negative' ? 'red' : 'inherit')}">${strength} ${direction !== 'neutral' ? (direction === 'positive' ? 'Positive' : 'Negative') : ''} Correlation</span><br><small>${significance}</small></td></tr>`;
             }
             tableHTML += `</tbody></table>`;
             resultsContainer.innerHTML = tableHTML;
@@ -937,7 +988,6 @@
         if(!dateFilter.value) { dateFilter.value = new Date().toISOString().split('T')[0]; }
     }
     
-    // --- [NEW] Populate the energy dropdown for the correlation tool ---
     function populateCorrelationEnergySelect() {
         const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
         const select = document.getElementById('correlationEnergySelect');
@@ -1054,6 +1104,128 @@
         });
     }
 
+    // --- [NEW] Functions for machine management ---
+    function populateMachineManagementDropdowns() {
+        const hospitalSelect = document.getElementById('filterHospital');
+        if (hospitalSelect.options.length <= 1) return;
+
+        const addMachineSelect = document.getElementById('addMachineInstitutionSelect');
+        const manageMachineSelect = document.getElementById('manageMachineInstitutionSelect');
+
+        addMachineSelect.innerHTML = hospitalSelect.innerHTML;
+        manageMachineSelect.innerHTML = hospitalSelect.innerHTML;
+    }
+
+    function generateMachineNameInputs() {
+        const count = document.getElementById('numMachinesSelect').value;
+        const container = document.getElementById('machine-name-inputs');
+        container.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+            const formGroup = document.createElement('div');
+            formGroup.className = 'form-group';
+            formGroup.innerHTML = `
+                <label for="machineName${i}">Machine ${i + 1} Name</label>
+                <input type="text" id="machineName${i}" class="machine-name-input" placeholder="e.g., TrueBeam-1" required>
+            `;
+            container.appendChild(formGroup);
+        }
+    }
+
+    async function loadMachinesForInstitution() {
+        const centerId = document.getElementById('manageMachineInstitutionSelect').value;
+        const tableBody = document.getElementById('machinesTableBody');
+        if (!centerId) {
+            tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Select an institution to see its machines.</td></tr>';
+            return;
+        }
+        tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Loading machines...</td></tr>';
+
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const response = await fetch(`${BACKEND_URL}/admin/machines?centerId=${centerId}`, {
+                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
+            });
+            if (!response.ok) throw new Error('Failed to load machines.');
+            const machines = await response.json();
+            
+            tableBody.innerHTML = '';
+            if (machines.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">No machines found for this institution.</td></tr>';
+                return;
+            }
+            machines.forEach(machine => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${machine.machineName}</td>
+                    <td>${machine.machineId}</td>
+                    <td class="user-actions-cell">
+                        <button class="edit-btn" onclick="openEditMachineModal('${machine.machineId}', '${machine.machineName}')">Edit</button>
+                        <button class="delete-btn" onclick="deleteMachine('${machine.machineId}', '${machine.machineName}')">Delete</button>
+                    </td>
+                `;
+            });
+        } catch (error) {
+            tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message" style="color:red;">Error loading machines.</td></tr>';
+        }
+    }
+    
+    function openEditMachineModal(machineId, currentName) {
+        document.getElementById('editMachineId').value = machineId;
+        document.getElementById('editMachineNameInput').value = currentName;
+        document.getElementById('editMachineModal').style.display = 'flex';
+    }
+
+    async function saveMachineNameChanges() {
+        const machineId = document.getElementById('editMachineId').value;
+        const newName = document.getElementById('editMachineNameInput').value.trim();
+
+        if (!newName) {
+            showNotification('Machine name cannot be empty.', 'warning');
+            return;
+        }
+
+        showLoader();
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const response = await fetch(`${BACKEND_URL}/admin/machine/${machineId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
+                body: JSON.stringify({ machineName: newName })
+            });
+            if (!response.ok) throw new Error('Failed to update machine.');
+            showNotification('Machine name updated successfully.', 'success');
+            document.getElementById('editMachineModal').style.display = 'none';
+            await loadMachinesForInstitution();
+        } catch(error) {
+            showNotification(error.message, 'error');
+        } finally {
+            hideLoader();
+        }
+    }
+
+    async function deleteMachine(machineId, machineName) {
+        if (confirm(`Are you sure you want to delete the machine "${machineName}"?\nThis action cannot be undone.`)) {
+            showLoader();
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
+                const response = await fetch(`${BACKEND_URL}/admin/machine/${machineId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
+                });
+                if (!response.ok) throw new Error('Failed to delete machine.');
+                showNotification('Machine deleted successfully.', 'success');
+                await loadMachinesForInstitution();
+            } catch(error) {
+                showNotification(error.message, 'error');
+            } finally {
+                hideLoader();
+            }
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         auth = firebase.auth();
         db = firebase.firestore();
@@ -1062,7 +1234,8 @@
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentAdminUid = user.uid;
-                if (localStorage.getItem("userRole") !== "Admin") {
+                const userRole = localStorage.getItem("userRole");
+                if (userRole !== "Admin" && userRole !== "Super Admin") {
                     alert("Access Denied.");
                     logout();
                 } else {
@@ -1094,9 +1267,47 @@
             document.getElementById('confirmBtn').disabled = e.target.value !== e.target.dataset.expectedName;
         });
 
+        // --- [NEW] Event Listeners for Machine Management ---
+        document.getElementById('numMachinesSelect').addEventListener('change', generateMachineNameInputs);
+        document.getElementById('manageMachineInstitutionSelect').addEventListener('change', loadMachinesForInstitution);
+        
+        document.getElementById('addMachinesForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoader();
+            const centerId = document.getElementById('addMachineInstitutionSelect').value;
+            const machineNameInputs = document.querySelectorAll('.machine-name-input');
+            const machines = Array.from(machineNameInputs).map(input => input.value.trim());
+
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
+                const response = await fetch(`${BACKEND_URL}/admin/machines`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
+                    body: JSON.stringify({ centerId, machines })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Failed to add machines.');
+                showNotification(result.message, 'success');
+                document.getElementById('addMachinesForm').reset();
+                generateMachineNameInputs();
+            } catch(error) {
+                showNotification(error.message, 'error');
+            } finally {
+                hideLoader();
+            }
+        });
+
+        const editMachineModal = document.getElementById('editMachineModal');
+        document.getElementById('saveMachineNameBtn').addEventListener('click', saveMachineNameChanges);
+        editMachineModal.querySelector('.close-button').addEventListener('click', () => editMachineModal.style.display = 'none');
+        editMachineModal.querySelector('.cancel-btn').addEventListener('click', () => editMachineModal.style.display = 'none');
+
+
         window.onclick = function(event) {
             if (event.target == document.getElementById('userEditModal')) closeEditModal();
             if (event.target == document.getElementById('confirmationModal')) hideConfirmationModal();
+            if (event.target == editMachineModal) editMachineModal.style.display = 'none';
         };
     });
 </script>
