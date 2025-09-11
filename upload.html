@@ -212,8 +212,7 @@
     
     .diagnose-btn:hover { background-color: #ffca2c; }
     .validate-btn:hover { background-color: #138496; }
-
-    /* --- [NEW] Styles for Machine Selection Modal --- */
+    
     #machine-list {
         display: flex; 
         flex-wrap: wrap; 
@@ -249,7 +248,7 @@
         <h2>Select a Machine</h2>
         <p>Please choose a machine to view or enter QA data for this session.</p>
         <div id="machine-list">
-            </div>
+        </div>
     </div>
   </div>
 
@@ -425,7 +424,7 @@
             
             auth.signOut().then(() => {
                 localStorage.clear();
-                sessionStorage.clear(); // [ADDED] Clear session storage on logout
+                sessionStorage.clear();
                 window.location.replace("login.html");
             }).catch(err => {
                 hideLoader();
@@ -1385,8 +1384,7 @@
             document.body.classList.toggle('dark', isDark);
             if(!isInitialLoad) localStorage.setItem('darkMode', isDark);
         }
-
-        // --- [NEW] Function to display the machine selection modal ---
+        
         async function showMachineSelectionModal() {
             const modal = document.getElementById('machine-select-modal');
             const machineListDiv = document.getElementById('machine-list');
@@ -1403,7 +1401,7 @@
                 if (!response.ok) throw new Error('Could not fetch machines.');
                 
                 const userMachines = await response.json();
-                machineListDiv.innerHTML = ''; // Clear loading message
+                machineListDiv.innerHTML = ''; 
 
                 if (userMachines.length > 0) {
                     userMachines.forEach(machine => {
@@ -1422,15 +1420,31 @@
             }
         }
 
-        // --- [NEW] Function to handle the selection of a machine ---
-        function selectMachine(machineId, machineName) {
+        // [MODIFIED] Logic to find last data month is now inside selectMachine
+        async function selectMachine(machineId, machineName) {
             sessionStorage.setItem('selectedMachineId', machineId);
             sessionStorage.setItem('selectedMachineName', machineName);
             
             document.getElementById('machine-select-modal').style.display = 'none';
             document.getElementById('changeMachineBtn').style.display = 'inline-flex';
             
-            // Update header and initialize the page for the selected machine
+            // [NEW] Find the last data month for this specific machine
+            showLoader();
+            try {
+                const monthsRef = db.collection("linac_data").doc(machineId).collection("months");
+                const snapshot = await monthsRef.orderBy(firebase.firestore.FieldPath.documentId(), "desc").limit(1).get();
+                if (!snapshot.empty) {
+                    lastDataMonth = snapshot.docs[0].id.replace("Month_", "");
+                } else {
+                    lastDataMonth = null;
+                }
+            } catch(e) {
+                console.error("Could not fetch last data month for machine", e);
+                lastDataMonth = null;
+            } finally {
+                hideLoader();
+            }
+            
             header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()} - ${machineName}`;
             switchTab(activeTab);
         }
@@ -1475,7 +1489,6 @@
                     document.getElementById('daily-temp').addEventListener('blur', clearColumnHighlight);
                     document.getElementById('daily-pressure').addEventListener('blur', clearColumnHighlight);
 
-                    // --- [NEW] Add event listener for Change Machine button ---
                     document.getElementById('changeMachineBtn').addEventListener('click', () => {
                         sessionStorage.removeItem('selectedMachineId');
                         sessionStorage.removeItem('selectedMachineName');
@@ -1483,13 +1496,12 @@
                     });
 
                     setupProactiveChatListener(currentUID);
-                    await initializeTab('output'); // Initialize tab structure
+                    await initializeTab('output'); 
 
-                    // --- [MODIFIED] Main logic to check for a selected machine or show the modal ---
                     const selectedMachineId = sessionStorage.getItem('selectedMachineId');
                     if (selectedMachineId) {
                         const selectedMachineName = sessionStorage.getItem('selectedMachineName');
-                        selectMachine(selectedMachineId, selectedMachineName);
+                        await selectMachine(selectedMachineId, selectedMachineName);
                     } else {
                         await showMachineSelectionModal();
                     }
