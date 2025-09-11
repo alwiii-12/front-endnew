@@ -212,19 +212,52 @@
     
     .diagnose-btn:hover { background-color: #ffca2c; }
     .validate-btn:hover { background-color: #138496; }
-    
-    /* --- [NEW] Style for the machine selector --- */
-    #machine-selector-container {
-      flex-grow: 1;
-      max-width: 400px;
+
+    /* --- [NEW] Styles for Machine Selection Modal --- */
+    #machine-list {
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 20px; 
+        justify-content: center; 
+        margin-top: 20px;
+    }
+    .machine-card {
+        padding: 25px 35px;
+        font-size: 1.3em;
+        font-weight: 600;
+        background-color: var(--primary-light);
+        color: var(--primary-dark);
+        border-radius: 12px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.2s ease-in-out;
+        min-width: 220px;
+        text-align: center;
+    }
+    .machine-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary-color);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        background-color: #d4e8f7;
     }
   </style>
 </head>
 <body class="upload-page">
+
+  <div id="machine-select-modal" class="modal">
+    <div class="modal-content" style="max-width: 800px; text-align: center;">
+        <h2>Select a Machine</h2>
+        <p>Please choose a machine to view or enter QA data for this session.</p>
+        <div id="machine-list">
+            </div>
+    </div>
+  </div>
+
   <div class="topbar">
     <button id="menu-toggle" class="header-btn menu-toggle-btn"><i class="fas fa-bars"></i></button>
     <div id="hospitalInfoBox" class="hospital-info-box">Hospital: <span id="hospitalName"></span></div>
     <div class="header-buttons">
+        <button id="changeMachineBtn" class="button" style="display: none; background-color: var(--secondary-color); color: white;"><i class="fas fa-exchange-alt"></i> Change Machine</button>
         <a href="my_profile.html" id="myProfileBtn" class="button">My Profile</a>
         <button id="logoutBtn" title="Logout" aria-label="Logout" class="header-btn" style="background-color: var(--status-error); color: white;"><i class="fas fa-sign-out-alt"></i></button>
     </div>
@@ -243,10 +276,6 @@
     </div>
     <div class="main">
       <div class="main-header-controls">
-        <div class="form-group" id="machine-selector-container" style="display: none;">
-            <label for="machine-selector" style="font-weight: bold;">Select Machine</label>
-            <select id="machine-selector"></select>
-        </div>
         <h1 id="header"></h1>
         <div id="dailyCheckPanel" class="daily-check-box">
           <h3><i class="fas fa-thermometer-half"></i> Daily check</h3>
@@ -317,16 +346,12 @@
         const db = firebase.firestore();
         const appCheck = firebase.appCheck();
         const BACKEND_URL = "https://back-end-wrxi.onrender.com";
-        let currentUID, currentHospital, currentCenterId; // --- [MODIFIED] Added currentCenterId
+        let currentUID, currentHospital, currentCenterId;
         let currentDate = new Date();
         currentDate.setDate(1);
         let lastDataMonth = null; 
         let monthlyEnvData = {};
         let highlightedColumnIndex = -1;
-
-        // --- [NEW] Globals for machine selection ---
-        let userMachines = [];
-        let currentMachineId = null;
 
         const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
         const dataTypesConfig = {
@@ -400,6 +425,7 @@
             
             auth.signOut().then(() => {
                 localStorage.clear();
+                sessionStorage.clear(); // [ADDED] Clear session storage on logout
                 window.location.replace("login.html");
             }).catch(err => {
                 hideLoader();
@@ -422,8 +448,8 @@
                     </div>
                 </div>
                 <div class="actions-section">
-                    <button class="save-btn" onclick="manualSave('${dataType}')" disabled>Save ${config.label}</button>
-                    <button class="export-btn" onclick="exportToExcel('${dataType}')" disabled>Export ${config.label}</button>
+                    <button class="save-btn" onclick="manualSave('${dataType}')">Save ${config.label}</button>
+                    <button class="export-btn" onclick="exportToExcel('${dataType}')">Export ${config.label}</button>
                     <span id="lastSaved-${dataType}"></span>
                 </div>
                 <div class="trend-chart-section" id="trend-section-${dataType}">
@@ -440,7 +466,8 @@
         }
         
         const saveEnvData = debounce(async () => {
-            if (!currentMachineId) return; // --- [ADDED] Check
+            const currentMachineId = sessionStorage.getItem('selectedMachineId');
+            if (!currentMachineId) return;
             const dateDisplay = document.getElementById('selected-date-display');
             const fullDate = dateDisplay.dataset.fullDate;
             if (!fullDate) return;
@@ -453,10 +480,11 @@
             monthlyEnvData[fullDate].pressure_hpa = pressure ? parseFloat(pressure) : null;
             
             try {
+                const idToken = await auth.currentUser.getIdToken(true);
                 const appCheckToken = (await appCheck.getToken(false)).token;
                 await fetch(`${BACKEND_URL}/save-daily-env`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckToken },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
                     body: JSON.stringify({
                         uid: currentUID,
                         date: fullDate,
@@ -478,7 +506,8 @@
             
             clearColumnHighlight();
             
-            if (!currentMachineId) { // --- [ADDED] Disable if no machine selected
+            const currentMachineId = sessionStorage.getItem('selectedMachineId');
+            if (!currentMachineId) {
                  tempInput.disabled = true;
                  pressureInput.disabled = true;
                  return;
@@ -510,7 +539,8 @@
         }
 
         function highlightColumnFromPanel() {
-            if (!currentMachineId) return; // --- [ADDED] Check
+            const currentMachineId = sessionStorage.getItem('selectedMachineId');
+            if (!currentMachineId) return;
             const hot = instances[activeTab].hot;
             if (!hot) return;
             const fullDate = document.getElementById('selected-date-display').dataset.fullDate;
@@ -541,10 +571,11 @@
             document.querySelector(`[onclick="switchTab('${dataType}')"]`).classList.add('active');
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             document.getElementById(`tab-content-${dataType}`).classList.add('active');
+            
+            const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!dataTypesConfig[dataType].initialized) {
                 await initializeTab(dataType);
-            }
-            if (currentMachineId) { // --- [ADDED] Reload data for the new tab
+            } else if (currentMachineId) {
                 await loadDataForTab(dataType);
             }
         }
@@ -555,6 +586,7 @@
             populateTrendEnergySelect(dataType);
             document.getElementById(`trendEnergySelect-${dataType}`).addEventListener('change', updateTrendChart);
             
+            const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (currentMachineId) {
                 await loadDataForTab(dataType);
             } else {
@@ -566,7 +598,7 @@
         }
 
         async function loadDataForTab(dataType) {
-            // --- [MODIFIED] Check for machineId before proceeding ---
+            const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!currentMachineId) {
                 showNotification("Please select a machine first.", "warning");
                 return;
@@ -577,7 +609,6 @@
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
                 const appCheckToken = (await appCheck.getToken(false)).token;
-                // --- [MODIFIED] Added machineId to the request URL ---
                 const res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&uid=${currentUID}&dataType=${dataType}&machineId=${currentMachineId}`, {
                     headers: { "Authorization": `Bearer ${idToken}`, "X-Firebase-AppCheck": appCheckToken }
                 });
@@ -651,7 +682,8 @@
         }
 
         async function checkAndSendAlerts(dataType) {
-            if (!currentMachineId) return; // --- [ADDED] Check
+            const currentMachineId = sessionStorage.getItem('selectedMachineId');
+            if (!currentMachineId) return;
             const config = dataTypesConfig[dataType];
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
@@ -674,7 +706,6 @@
                 });
             });
 
-            // --- [MODIFIED] Check if there are any out-of-tolerance values to process ---
             if (outOfToleranceValues.length >= 0) {
                 console.log("Checking alert status...", outOfToleranceValues);
                 try {
@@ -690,7 +721,7 @@
                         },
                         body: JSON.stringify({
                             uid: currentUID,
-                            machineId: currentMachineId, // --- [ADDED] Send machineId
+                            machineId: currentMachineId,
                             hospitalName: currentHospital,
                             month: monthKey,
                             dataType: dataType,
@@ -714,7 +745,8 @@
         }
 
         window.manualSave = async function(dataType) {
-            if (!currentMachineId) return; // --- [ADDED] Check
+            const currentMachineId = sessionStorage.getItem('selectedMachineId');
+            if (!currentMachineId) return;
             const saveButton = document.querySelector(`.actions-section button.save-btn[onclick="manualSave('${dataType}')"]`);
             const config = dataTypesConfig[dataType];
             saveButton.disabled = true;
@@ -726,7 +758,6 @@
                 const appCheckToken = (await appCheck.getToken(false)).token;
                 const saveResponse = await fetch(`${BACKEND_URL}/save`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${idToken}`, "X-Firebase-AppCheck": appCheckToken },
-                    // --- [MODIFIED] Add machineId to request body ---
                     body: JSON.stringify({ data: changedData, month, uid: currentUID, dataType: dataType, machineId: currentMachineId })
                 });
                 if (!saveResponse.ok) { throw new Error(`Save failed: ${await saveResponse.text()}`); }
@@ -747,7 +778,8 @@
         }
         
         window.exportToExcel = async function(dataType) {
-            if (!currentMachineId) return; // --- [ADDED] Check
+            const currentMachineId = sessionStorage.getItem('selectedMachineId');
+            if (!currentMachineId) return;
             showLoader();
             const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             try {
@@ -756,7 +788,6 @@
                 const response = await fetch(`${BACKEND_URL}/export-excel`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${idToken}`, "X-Firebase-AppCheck": appCheckToken },
-                    // --- [MODIFIED] Add machineId to request body ---
                     body: JSON.stringify({ month, uid: currentUID, dataType, machineId: currentMachineId })
                 });
                 if (!response.ok) throw new Error('Failed to generate file.');
@@ -855,6 +886,7 @@
         }
         
         saveAnnotationBtn.addEventListener('click', async () => {
+            const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!currentAnnotationKey || !currentMachineId) return;
             const note = annotationInput.value;
             const isServiceDay = isServiceDayInput.checked;
@@ -888,6 +920,7 @@
         });
 
         deleteAnnotationBtn.addEventListener('click', async () => {
+            const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!currentAnnotationKey || !currentMachineId) return;
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             showLoader();
@@ -908,7 +941,8 @@
         });
         
         window.validatePrediction = async function() {
-            if (!currentMachineId) return; // --- [ADDED] Check
+            const currentMachineId = sessionStorage.getItem('selectedMachineId');
+            if (!currentMachineId) return;
             const dataType = activeTab;
             showLoader();
             const selectedEnergy = document.getElementById(`trendEnergySelect-${dataType}`).value;
@@ -921,7 +955,6 @@
                 const response = await fetch(`${BACKEND_URL}/historical-forecast`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
-                    // --- [MODIFIED] Add machineId to request body ---
                     body: JSON.stringify({ uid: currentUID, month: monthKey, dataType: dataType, energy: selectedEnergy, machineId: currentMachineId })
                 });
                 
@@ -943,7 +976,8 @@
         };
 
         async function updateTrendChart(passedData = null) {
-            if (!currentMachineId) return; // --- [ADDED] Check
+            const currentMachineId = sessionStorage.getItem('selectedMachineId');
+            if (!currentMachineId) return;
             const dataType = activeTab;
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
@@ -993,7 +1027,6 @@
                 try {
                     const idToken = await auth.currentUser.getIdToken(true);
                     const appCheckToken = (await appCheck.getToken(false)).token;
-                    // --- [MODIFIED] Add machineId to request URL ---
                     const res = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}&month=${viewingMonthKey}&machineId=${currentMachineId}`, { 
                         headers: { "Authorization": `Bearer ${idToken}`, "X-Firebase-AppCheck": appCheckToken } 
                     });
@@ -1309,7 +1342,7 @@
         
         function changeMonth(monthIndex) {
             currentDate.setMonth(monthIndex);
-            header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
+            header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()} - ${sessionStorage.getItem('selectedMachineName') || ''}`;
             highlightActiveMonth();
             Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
             handleGridSelection(-1); 
@@ -1319,7 +1352,7 @@
         function changeYear(offset) {
             currentDate.setFullYear(currentDate.getFullYear() + offset);
             yearLabel.textContent = currentDate.getFullYear();
-            header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
+            header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()} - ${sessionStorage.getItem('selectedMachineName') || ''}`;
             Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
             handleGridSelection(-1);
             switchTab(activeTab);
@@ -1352,12 +1385,13 @@
             document.body.classList.toggle('dark', isDark);
             if(!isInitialLoad) localStorage.setItem('darkMode', isDark);
         }
-        
-        // --- [NEW] Function to load machines for the current user ---
-        async function loadUserMachines() {
-            const machineSelector = document.getElementById('machine-selector');
-            const machineContainer = document.getElementById('machine-selector-container');
-            machineSelector.innerHTML = '<option>Loading Machines...</option>';
+
+        // --- [NEW] Function to display the machine selection modal ---
+        async function showMachineSelectionModal() {
+            const modal = document.getElementById('machine-select-modal');
+            const machineListDiv = document.getElementById('machine-list');
+            machineListDiv.innerHTML = '<p>Loading Machines...</p>';
+            modal.style.display = 'flex';
 
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
@@ -1368,23 +1402,37 @@
 
                 if (!response.ok) throw new Error('Could not fetch machines.');
                 
-                userMachines = await response.json();
+                const userMachines = await response.json();
+                machineListDiv.innerHTML = ''; // Clear loading message
 
                 if (userMachines.length > 0) {
-                    machineSelector.innerHTML = '<option value="">-- Select a Machine --</option>';
                     userMachines.forEach(machine => {
-                        const option = new Option(machine.machineName, machine.machineId);
-                        machineSelector.appendChild(option);
+                        const card = document.createElement('button');
+                        card.className = 'machine-card';
+                        card.textContent = machine.machineName;
+                        card.onclick = () => selectMachine(machine.machineId, machine.machineName);
+                        machineListDiv.appendChild(card);
                     });
-                    machineContainer.style.display = 'block';
                 } else {
-                    machineContainer.style.display = 'none';
-                    showNotification("No machines are registered for this institution.", "warning");
+                    machineListDiv.innerHTML = '<p>No machines are registered for this institution. Please contact an administrator.</p>';
                 }
             } catch (error) {
                 console.error("Error loading machines:", error);
-                machineSelector.innerHTML = '<option>Error loading machines</option>';
+                machineListDiv.innerHTML = `<p style="color: red;">Error: Could not load machines. Please try refreshing the page.</p>`;
             }
+        }
+
+        // --- [NEW] Function to handle the selection of a machine ---
+        function selectMachine(machineId, machineName) {
+            sessionStorage.setItem('selectedMachineId', machineId);
+            sessionStorage.setItem('selectedMachineName', machineName);
+            
+            document.getElementById('machine-select-modal').style.display = 'none';
+            document.getElementById('changeMachineBtn').style.display = 'inline-flex';
+            
+            // Update header and initialize the page for the selected machine
+            header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()} - ${machineName}`;
+            switchTab(activeTab);
         }
         
         auth.onAuthStateChanged(async (user) => {
@@ -1392,22 +1440,16 @@
                 if (user) {
                     currentUID = user.uid;
                     currentHospital = localStorage.getItem("hospitalName");
-                    currentCenterId = localStorage.getItem("centerId"); // --- [ADDED] Get centerId
+                    currentCenterId = localStorage.getItem("centerId");
                     document.getElementById("hospitalName").textContent = currentHospital;
 
-                    // --- [MODIFIED] Check for centerId ---
                     if (!currentCenterId) {
                         alert("Your session is invalid (missing Center ID). Please log out and log back in.");
                         logout();
                         return;
                     }
-
-                    // --- [MODIFIED] Data is stored per machine, so this check is no longer needed in the same way.
-                    // We will check for data after a machine is selected.
-                    // const monthsRef = db.collection("linac_data").doc(currentCenterId).collection("months");
                     
                     yearLabel.textContent = currentDate.getFullYear();
-                    header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
                     buildMonthButtons();
                     document.getElementById('prevYearBtn').onclick = () => changeYear(-1);
                     document.getElementById('nextYearBtn').onclick = () => changeYear(1);
@@ -1433,37 +1475,24 @@
                     document.getElementById('daily-temp').addEventListener('blur', clearColumnHighlight);
                     document.getElementById('daily-pressure').addEventListener('blur', clearColumnHighlight);
 
-                    setupProactiveChatListener(currentUID);
-
-                    // --- [MODIFIED] Load machines first, then initialize the first tab ---
-                    await loadUserMachines();
-                    await initializeTab('output'); // Initialize the structure of the first tab
-
-                    // --- [NEW] Event listener for machine selector ---
-                    document.getElementById('machine-selector').addEventListener('change', (e) => {
-                        currentMachineId = e.target.value;
-                        const hasMachine = !!currentMachineId;
-
-                        // Enable/disable action buttons
-                        document.querySelectorAll('.save-btn, .export-btn').forEach(btn => {
-                            btn.disabled = !hasMachine;
-                        });
-
-                        if (hasMachine) {
-                            // Reload data for the currently active tab
-                            switchTab(activeTab);
-                        } else {
-                            // Clear tables if no machine is selected
-                             Object.keys(instances).forEach(dt => {
-                                if (instances[dt].hot) {
-                                     instances[dt].hot.destroy();
-                                     instances[dt].hot = null;
-                                     document.getElementById(`table-${dt}`).innerHTML = '<p class="no-users-message">Please select a machine to begin.</p>';
-                                }
-                             });
-                        }
+                    // --- [NEW] Add event listener for Change Machine button ---
+                    document.getElementById('changeMachineBtn').addEventListener('click', () => {
+                        sessionStorage.removeItem('selectedMachineId');
+                        sessionStorage.removeItem('selectedMachineName');
+                        showMachineSelectionModal();
                     });
 
+                    setupProactiveChatListener(currentUID);
+                    await initializeTab('output'); // Initialize tab structure
+
+                    // --- [MODIFIED] Main logic to check for a selected machine or show the modal ---
+                    const selectedMachineId = sessionStorage.getItem('selectedMachineId');
+                    if (selectedMachineId) {
+                        const selectedMachineName = sessionStorage.getItem('selectedMachineName');
+                        selectMachine(selectedMachineId, selectedMachineName);
+                    } else {
+                        await showMachineSelectionModal();
+                    }
 
                 } else {
                     window.location.replace("login.html");
