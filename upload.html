@@ -212,6 +212,12 @@
     
     .diagnose-btn:hover { background-color: #ffca2c; }
     .validate-btn:hover { background-color: #138496; }
+    
+    /* --- [NEW] Style for the machine selector --- */
+    #machine-selector-container {
+      flex-grow: 1;
+      max-width: 400px;
+    }
   </style>
 </head>
 <body class="upload-page">
@@ -237,7 +243,10 @@
     </div>
     <div class="main">
       <div class="main-header-controls">
-        <div class="header-spacer-left"></div>
+        <div class="form-group" id="machine-selector-container" style="display: none;">
+            <label for="machine-selector" style="font-weight: bold;">Select Machine</label>
+            <select id="machine-selector"></select>
+        </div>
         <h1 id="header"></h1>
         <div id="dailyCheckPanel" class="daily-check-box">
           <h3><i class="fas fa-thermometer-half"></i> Daily check</h3>
@@ -308,12 +317,16 @@
         const db = firebase.firestore();
         const appCheck = firebase.appCheck();
         const BACKEND_URL = "https://back-end-wrxi.onrender.com";
-        let currentUID, currentHospital;
+        let currentUID, currentHospital, currentCenterId; // --- [MODIFIED] Added currentCenterId
         let currentDate = new Date();
         currentDate.setDate(1);
         let lastDataMonth = null; 
         let monthlyEnvData = {};
         let highlightedColumnIndex = -1;
+
+        // --- [NEW] Globals for machine selection ---
+        let userMachines = [];
+        let currentMachineId = null;
 
         const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
         const dataTypesConfig = {
@@ -409,8 +422,8 @@
                     </div>
                 </div>
                 <div class="actions-section">
-                    <button class="save-btn" onclick="manualSave('${dataType}')">Save ${config.label}</button>
-                    <button class="export-btn" onclick="exportToExcel('${dataType}')">Export ${config.label}</button>
+                    <button class="save-btn" onclick="manualSave('${dataType}')" disabled>Save ${config.label}</button>
+                    <button class="export-btn" onclick="exportToExcel('${dataType}')" disabled>Export ${config.label}</button>
                     <span id="lastSaved-${dataType}"></span>
                 </div>
                 <div class="trend-chart-section" id="trend-section-${dataType}">
@@ -427,6 +440,7 @@
         }
         
         const saveEnvData = debounce(async () => {
+            if (!currentMachineId) return; // --- [ADDED] Check
             const dateDisplay = document.getElementById('selected-date-display');
             const fullDate = dateDisplay.dataset.fullDate;
             if (!fullDate) return;
@@ -463,6 +477,12 @@
             const pressureInput = document.getElementById('daily-pressure');
             
             clearColumnHighlight();
+            
+            if (!currentMachineId) { // --- [ADDED] Disable if no machine selected
+                 tempInput.disabled = true;
+                 pressureInput.disabled = true;
+                 return;
+            }
 
             if (col === 0 || col === -1) {
                 dateDisplay.textContent = 'Select a date column';
@@ -490,6 +510,7 @@
         }
 
         function highlightColumnFromPanel() {
+            if (!currentMachineId) return; // --- [ADDED] Check
             const hot = instances[activeTab].hot;
             if (!hot) return;
             const fullDate = document.getElementById('selected-date-display').dataset.fullDate;
@@ -523,6 +544,9 @@
             if (!dataTypesConfig[dataType].initialized) {
                 await initializeTab(dataType);
             }
+            if (currentMachineId) { // --- [ADDED] Reload data for the new tab
+                await loadDataForTab(dataType);
+            }
         }
 
         async function initializeTab(dataType) {
@@ -531,19 +555,31 @@
             populateTrendEnergySelect(dataType);
             document.getElementById(`trendEnergySelect-${dataType}`).addEventListener('change', updateTrendChart);
             
-            await loadDataForTab(dataType);
+            if (currentMachineId) {
+                await loadDataForTab(dataType);
+            } else {
+                 document.getElementById(`table-${dataType}`).innerHTML = '<p class="no-users-message">Please select a machine to begin.</p>';
+            }
+
             dataTypesConfig[dataType].initialized = true;
             hideLoader();
         }
 
         async function loadDataForTab(dataType) {
+            // --- [MODIFIED] Check for machineId before proceeding ---
+            if (!currentMachineId) {
+                showNotification("Please select a machine first.", "warning");
+                return;
+            }
             showLoader();
             const config = dataTypesConfig[dataType];
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
-                const res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&uid=${currentUID}&dataType=${dataType}`, {
-                    headers: { "X-Firebase-AppCheck": appCheckTokenResponse.token }
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
+                // --- [MODIFIED] Added machineId to the request URL ---
+                const res = await fetch(`${BACKEND_URL}/data?month=${monthKey}&uid=${currentUID}&dataType=${dataType}&machineId=${currentMachineId}`, {
+                    headers: { "Authorization": `Bearer ${idToken}`, "X-Firebase-AppCheck": appCheckToken }
                 });
                 if (!res.ok) throw new Error(`Server error: ${res.statusText}`);
                 const result = await res.json();
@@ -615,6 +651,7 @@
         }
 
         async function checkAndSendAlerts(dataType) {
+            if (!currentMachineId) return; // --- [ADDED] Check
             const config = dataTypesConfig[dataType];
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
@@ -637,19 +674,23 @@
                 });
             });
 
-            if (outOfToleranceValues.length > 0) {
-                console.log("Out of tolerance values detected, sending alert...", outOfToleranceValues);
+            // --- [MODIFIED] Check if there are any out-of-tolerance values to process ---
+            if (outOfToleranceValues.length >= 0) {
+                console.log("Checking alert status...", outOfToleranceValues);
                 try {
-                    const appCheckTokenResponse = await appCheck.getToken(false);
+                    const idToken = await auth.currentUser.getIdToken(true);
+                    const appCheckToken = (await appCheck.getToken(false)).token;
                     const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
                     const response = await fetch(`${BACKEND_URL}/send-alert`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-Firebase-AppCheck': appCheckTokenResponse.token
+                            'Authorization': `Bearer ${idToken}`,
+                            'X-Firebase-AppCheck': appCheckToken
                         },
                         body: JSON.stringify({
                             uid: currentUID,
+                            machineId: currentMachineId, // --- [ADDED] Send machineId
                             hospitalName: currentHospital,
                             month: monthKey,
                             dataType: dataType,
@@ -662,17 +703,18 @@
                         showNotification(`Alert sent for ${outOfToleranceValues.length} out-of-tolerance value(s).`, 'success');
                     } else if (result.status === 'no_change') {
                          console.log("Alert status has not changed since last save. No new email sent.");
+                    } else if (result.status === 'no_rso_email') {
+                         showNotification(`Data saved, but no RSO email is configured for this hospital.`, 'warning');
                     }
                 } catch (error) {
                     console.error("Failed to send alert:", error);
                     showNotification("Failed to send alert email.", 'error');
                 }
-            } else {
-                 console.log("No out of tolerance values found.");
             }
         }
 
         window.manualSave = async function(dataType) {
+            if (!currentMachineId) return; // --- [ADDED] Check
             const saveButton = document.querySelector(`.actions-section button.save-btn[onclick="manualSave('${dataType}')"]`);
             const config = dataTypesConfig[dataType];
             saveButton.disabled = true;
@@ -680,11 +722,12 @@
             const changedData = instances[dataType].hot.getData();
             const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
-                const token = appCheckTokenResponse.token;
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
                 const saveResponse = await fetch(`${BACKEND_URL}/save`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": token },
-                    body: JSON.stringify({ data: changedData, month, uid: currentUID, dataType: dataType })
+                    method: 'POST', headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${idToken}`, "X-Firebase-AppCheck": appCheckToken },
+                    // --- [MODIFIED] Add machineId to request body ---
+                    body: JSON.stringify({ data: changedData, month, uid: currentUID, dataType: dataType, machineId: currentMachineId })
                 });
                 if (!saveResponse.ok) { throw new Error(`Save failed: ${await saveResponse.text()}`); }
                 document.getElementById(`lastSaved-${dataType}`).textContent = "Saved: " + new Date().toLocaleTimeString();
@@ -704,14 +747,17 @@
         }
         
         window.exportToExcel = async function(dataType) {
+            if (!currentMachineId) return; // --- [ADDED] Check
             showLoader();
             const month = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
                 const response = await fetch(`${BACKEND_URL}/export-excel`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": appCheckTokenResponse.token },
-                    body: JSON.stringify({ month, uid: currentUID, dataType })
+                    headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${idToken}`, "X-Firebase-AppCheck": appCheckToken },
+                    // --- [MODIFIED] Add machineId to request body ---
+                    body: JSON.stringify({ month, uid: currentUID, dataType, machineId: currentMachineId })
                 });
                 if (!response.ok) throw new Error('Failed to generate file.');
                 const blob = await response.blob();
@@ -809,7 +855,7 @@
         }
         
         saveAnnotationBtn.addEventListener('click', async () => {
-            if (!currentAnnotationKey) return;
+            if (!currentAnnotationKey || !currentMachineId) return;
             const note = annotationInput.value;
             const isServiceDay = isServiceDayInput.checked;
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
@@ -817,10 +863,11 @@
 
             showLoader();
             try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
                 await fetch(`${BACKEND_URL}/save-annotation`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": appCheckTokenResponse.token },
+                    headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${idToken}`, "X-Firebase-AppCheck": appCheckToken },
                     body: JSON.stringify({
                         uid: currentUID,
                         month: monthKey,
@@ -841,14 +888,15 @@
         });
 
         deleteAnnotationBtn.addEventListener('click', async () => {
-            if (!currentAnnotationKey) return;
+            if (!currentAnnotationKey || !currentMachineId) return;
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             showLoader();
             try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
                 await fetch(`${BACKEND_URL}/delete-annotation`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', "X-Firebase-AppCheck": appCheckTokenResponse.token },
+                    headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${idToken}`, "X-Firebase-AppCheck": appCheckToken },
                     body: JSON.stringify({
                         uid: currentUID, month: monthKey, key: currentAnnotationKey
                     })
@@ -860,6 +908,7 @@
         });
         
         window.validatePrediction = async function() {
+            if (!currentMachineId) return; // --- [ADDED] Check
             const dataType = activeTab;
             showLoader();
             const selectedEnergy = document.getElementById(`trendEnergySelect-${dataType}`).value;
@@ -867,11 +916,13 @@
             const button = document.getElementById(`validateBtn-${dataType}`);
             
             try {
-                const appCheckTokenResponse = await appCheck.getToken(false);
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
                 const response = await fetch(`${BACKEND_URL}/historical-forecast`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckTokenResponse.token },
-                    body: JSON.stringify({ uid: currentUID, month: monthKey, dataType: dataType, energy: selectedEnergy })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
+                    // --- [MODIFIED] Add machineId to request body ---
+                    body: JSON.stringify({ uid: currentUID, month: monthKey, dataType: dataType, energy: selectedEnergy, machineId: currentMachineId })
                 });
                 
                 if (!response.ok) {
@@ -892,6 +943,7 @@
         };
 
         async function updateTrendChart(passedData = null) {
+            if (!currentMachineId) return; // --- [ADDED] Check
             const dataType = activeTab;
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
@@ -939,9 +991,12 @@
                 forecastLabel = 'Historical Forecast';
             } else { 
                 try {
-                    const appCheckTokenResponse = await appCheck.getToken(false);
-                    const token = appCheckTokenResponse.token;
-                    const res = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}&month=${viewingMonthKey}`, { headers: { "X-Firebase-AppCheck": token } });
+                    const idToken = await auth.currentUser.getIdToken(true);
+                    const appCheckToken = (await appCheck.getToken(false)).token;
+                    // --- [MODIFIED] Add machineId to request URL ---
+                    const res = await fetch(`${BACKEND_URL}/predictions?uid=${currentUID}&dataType=${dataType}&energy=${selectedEnergy}&month=${viewingMonthKey}&machineId=${currentMachineId}`, { 
+                        headers: { "Authorization": `Bearer ${idToken}`, "X-Firebase-AppCheck": appCheckToken } 
+                    });
                     if (res.ok) {
                         const forecastResult = await res.json();
                         forecastData = forecastResult.forecast || [];
@@ -1162,10 +1217,11 @@
             chatInput.value = '';
             
             try {
+                const idToken = await auth.currentUser.getIdToken(true);
                 const appCheckToken = (await appCheck.getToken(false)).token;
                 const response = await fetch(`${BACKEND_URL}/query-qa-data`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckToken },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
                     body: JSON.stringify({ query_text: queryText })
                 });
                 const data = await response.json();
@@ -1189,10 +1245,11 @@
             if (!diagnosticState.inProgress) return;
             
             try {
+                const idToken = await auth.currentUser.getIdToken(true);
                 const appCheckToken = (await appCheck.getToken(false)).token;
                 const response = await fetch(`${BACKEND_URL}/diagnose-step`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Firebase-AppCheck': appCheckToken },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
                     body: JSON.stringify({ 
                         topic: diagnosticState.topic, 
                         node_id: diagnosticState.node_id, 
@@ -1296,21 +1353,58 @@
             if(!isInitialLoad) localStorage.setItem('darkMode', isDark);
         }
         
+        // --- [NEW] Function to load machines for the current user ---
+        async function loadUserMachines() {
+            const machineSelector = document.getElementById('machine-selector');
+            const machineContainer = document.getElementById('machine-selector-container');
+            machineSelector.innerHTML = '<option>Loading Machines...</option>';
+
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
+                const response = await fetch(`${BACKEND_URL}/user/machines`, {
+                    headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
+                });
+
+                if (!response.ok) throw new Error('Could not fetch machines.');
+                
+                userMachines = await response.json();
+
+                if (userMachines.length > 0) {
+                    machineSelector.innerHTML = '<option value="">-- Select a Machine --</option>';
+                    userMachines.forEach(machine => {
+                        const option = new Option(machine.machineName, machine.machineId);
+                        machineSelector.appendChild(option);
+                    });
+                    machineContainer.style.display = 'block';
+                } else {
+                    machineContainer.style.display = 'none';
+                    showNotification("No machines are registered for this institution.", "warning");
+                }
+            } catch (error) {
+                console.error("Error loading machines:", error);
+                machineSelector.innerHTML = '<option>Error loading machines</option>';
+            }
+        }
+        
         auth.onAuthStateChanged(async (user) => {
             try {
                 if (user) {
                     currentUID = user.uid;
                     currentHospital = localStorage.getItem("hospitalName");
+                    currentCenterId = localStorage.getItem("centerId"); // --- [ADDED] Get centerId
                     document.getElementById("hospitalName").textContent = currentHospital;
 
-                    const centerId = currentHospital?.toLowerCase().replace(/ /g, '_');
-                    if (centerId) {
-                        const monthsRef = db.collection("linac_data").doc(centerId).collection("months");
-                        const snapshot = await monthsRef.orderBy(firebase.firestore.FieldPath.documentId(), "desc").limit(1).get();
-                        if (!snapshot.empty) {
-                            lastDataMonth = snapshot.docs[0].id.replace("Month_", "");
-                        }
+                    // --- [MODIFIED] Check for centerId ---
+                    if (!currentCenterId) {
+                        alert("Your session is invalid (missing Center ID). Please log out and log back in.");
+                        logout();
+                        return;
                     }
+
+                    // --- [MODIFIED] Data is stored per machine, so this check is no longer needed in the same way.
+                    // We will check for data after a machine is selected.
+                    // const monthsRef = db.collection("linac_data").doc(currentCenterId).collection("months");
                     
                     yearLabel.textContent = currentDate.getFullYear();
                     header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()}`;
@@ -1340,8 +1434,36 @@
                     document.getElementById('daily-pressure').addEventListener('blur', clearColumnHighlight);
 
                     setupProactiveChatListener(currentUID);
-                    
-                    switchTab('output');
+
+                    // --- [MODIFIED] Load machines first, then initialize the first tab ---
+                    await loadUserMachines();
+                    await initializeTab('output'); // Initialize the structure of the first tab
+
+                    // --- [NEW] Event listener for machine selector ---
+                    document.getElementById('machine-selector').addEventListener('change', (e) => {
+                        currentMachineId = e.target.value;
+                        const hasMachine = !!currentMachineId;
+
+                        // Enable/disable action buttons
+                        document.querySelectorAll('.save-btn, .export-btn').forEach(btn => {
+                            btn.disabled = !hasMachine;
+                        });
+
+                        if (hasMachine) {
+                            // Reload data for the currently active tab
+                            switchTab(activeTab);
+                        } else {
+                            // Clear tables if no machine is selected
+                             Object.keys(instances).forEach(dt => {
+                                if (instances[dt].hot) {
+                                     instances[dt].hot.destroy();
+                                     instances[dt].hot = null;
+                                     document.getElementById(`table-${dt}`).innerHTML = '<p class="no-users-message">Please select a machine to begin.</p>';
+                                }
+                             });
+                        }
+                    });
+
 
                 } else {
                     window.location.replace("login.html");
