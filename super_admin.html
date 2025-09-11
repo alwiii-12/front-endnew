@@ -88,14 +88,8 @@
             width: 100%;
             margin-top: 20px;
         }
-        #machine-name-inputs {
-            grid-column: 1 / -1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
         @media (max-width: 768px) {
-            .form-grid, #machine-name-inputs {
+            .form-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -112,8 +106,6 @@
         <div class="sidebar-nav">
             <button class="nav-btn active" data-section="dashboard-section"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
             <button class="nav-btn" data-section="manage-institutions-section"><i class="fas fa-sitemap"></i> Manage Institutions</button>
-            <button class="nav-btn" data-section="add-machines-section"><i class="fas fa-plus-circle"></i> Add Machines</button>
-            <button class="nav-btn" data-section="manage-machines-section"><i class="fas fa-cogs"></i> Manage Machines</button>
         </div>
         
         <div class="content-display-area">
@@ -178,48 +170,10 @@
                                     <th>Institution Name</th>
                                     <th>Center ID</th>
                                     <th>Parent Group ID</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="institutionsTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="card-section" id="add-machines-section" style="display: none;">
-                    <h2><i class="fas fa-plus-circle"></i> Add New Machines to an Institution</h2>
-                    <form id="addMachinesForm">
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="addMachineInstitutionSelect">Select Institution</label>
-                                <select id="addMachineInstitutionSelect" required></select>
-                            </div>
-                            <div class="form-group">
-                                <label for="numMachinesSelect">Number of Machines to Add</label>
-                                <select id="numMachinesSelect" required>
-                                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
-                                    <option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
-                                </select>
-                            </div>
-                            <div id="machine-name-inputs"></div>
-                        </div>
-                        <button type="submit" class="button" style="background-color: var(--primary-color);">Add Machines</button>
-                    </form>
-                </div>
-
-                <div class="card-section" id="manage-machines-section" style="display: none;">
-                    <h2><i class="fas fa-cogs"></i> Manage Existing Machines</h2>
-                    <div class="form-group">
-                        <label for="manageMachineInstitutionSelect">Select Institution to View Machines</label>
-                        <select id="manageMachineInstitutionSelect"></select>
-                    </div>
-                    <div class="user-table-container" style="margin-top: 20px;">
-                        <table class="user-table">
-                            <thead>
-                                <tr><th>Machine Name</th><th>Machine ID</th><th>Actions</th></tr>
-                            </thead>
-                            <tbody id="machinesTableBody">
-                                <tr><td colspan="3" class="no-users-message">Select an institution to see its machines.</td></tr>
-                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -287,7 +241,7 @@
                 if (!response.ok) throw new Error('Failed to fetch institutions.');
                 institutionsCache = await response.json();
                 
-                populateInstitutionLists();
+                populateInstitutionTable();
                 populateGroupList();
 
             } catch (error) {
@@ -298,32 +252,52 @@
             }
         }
 
-        function populateInstitutionLists() {
+        function populateInstitutionTable() {
             const tableBody = document.getElementById('institutionsTableBody');
-            const addMachineSelect = document.getElementById('addMachineInstitutionSelect');
-            const manageMachineSelect = document.getElementById('manageMachineInstitutionSelect');
-            
             tableBody.innerHTML = '';
-            addMachineSelect.innerHTML = '<option value="">-- Select an Institution --</option>';
-            manageMachineSelect.innerHTML = '<option value="">-- Select an Institution --</option>';
 
             if (institutionsCache.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">No institutions found.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="4" class="no-users-message">No institutions found.</td></tr>';
                 return;
             }
 
             institutionsCache.forEach(inst => {
                 const row = tableBody.insertRow();
-                row.innerHTML = `<td>${inst.name}</td><td>${inst.centerId}</td><td>${inst.parentGroup}</td>`;
-                
-                const option = document.createElement('option');
-                option.value = inst.centerId;
-                option.textContent = inst.name;
-                addMachineSelect.appendChild(option.cloneNode(true));
-                manageMachineSelect.appendChild(option.cloneNode(true));
+                row.innerHTML = `
+                    <td>${inst.name}</td>
+                    <td>${inst.centerId}</td>
+                    <td>${inst.parentGroup}</td>
+                    <td class="user-actions-cell">
+                        <button class="delete-btn" onclick="deleteInstitution('${inst.centerId}', '${inst.name}')"><i class="fas fa-trash"></i> Delete</button>
+                    </td>
+                `;
             });
         }
         
+        async function deleteInstitution(centerId, name) {
+            if (!confirm(`Are you sure you want to permanently delete the institution "${name}"?\n\nThis action cannot be undone and does NOT automatically delete associated users or machines.`)) {
+                return;
+            }
+            
+            showLoader();
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
+                const response = await fetch(`${BACKEND_URL}/superadmin/institution/${centerId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Failed to delete institution.');
+                showNotification(result.message, 'success');
+                await loadInitialData(); // Refresh the list
+            } catch (error) {
+                showNotification(error.message, 'error');
+            } finally {
+                hideLoader();
+            }
+        }
+
         function populateGroupList() {
             const groupSelect = document.getElementById('adminGroupSelect');
             const uniqueGroups = new Set(institutionsCache.map(inst => inst.parentGroup).filter(Boolean));
@@ -335,105 +309,7 @@
                 groupSelect.appendChild(option);
             });
         }
-
-        function generateMachineNameInputs() {
-            const count = document.getElementById('numMachinesSelect').value;
-            const container = document.getElementById('machine-name-inputs');
-            container.innerHTML = '';
-            for (let i = 0; i < count; i++) {
-                const formGroup = document.createElement('div');
-                formGroup.className = 'form-group';
-                formGroup.innerHTML = `
-                    <label for="machineName${i}">Machine ${i + 1} Name</label>
-                    <input type="text" id="machineName${i}" class="machine-name-input" placeholder="e.g., TrueBeam-1" required>
-                `;
-                container.appendChild(formGroup);
-            }
-        }
         
-        async function loadMachinesForInstitution() {
-            const centerId = document.getElementById('manageMachineInstitutionSelect').value;
-            const tableBody = document.getElementById('machinesTableBody');
-            if (!centerId) {
-                tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Select an institution to see its machines.</td></tr>';
-                return;
-            }
-            tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Loading machines...</td></tr>';
-
-            try {
-                const idToken = await auth.currentUser.getIdToken(true);
-                const appCheckToken = (await appCheck.getToken(false)).token;
-                const response = await fetch(`${BACKEND_URL}/superadmin/machines?centerId=${centerId}`, {
-                    headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-                });
-                if (!response.ok) throw new Error('Failed to load machines.');
-                const machines = await response.json();
-                
-                tableBody.innerHTML = '';
-                if (machines.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">No machines found for this institution.</td></tr>';
-                    return;
-                }
-                machines.forEach(machine => {
-                    const row = tableBody.insertRow();
-                    row.innerHTML = `
-                        <td>${machine.machineName}</td>
-                        <td>${machine.machineId}</td>
-                        <td class="user-actions-cell">
-                            <button class="edit-btn" onclick="editMachine('${machine.machineId}', '${machine.machineName}')">Edit</button>
-                            <button class="delete-btn" onclick="deleteMachine('${machine.machineId}', '${machine.machineName}')">Delete</button>
-                        </td>
-                    `;
-                });
-            } catch (error) {
-                tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message" style="color:red;">Error loading machines.</td></tr>';
-            }
-        }
-
-        async function editMachine(machineId, currentName) {
-            const newName = prompt(`Enter the new name for the machine "${currentName}":`, currentName);
-            if (newName && newName.trim() !== '' && newName !== currentName) {
-                showLoader();
-                try {
-                    const idToken = await auth.currentUser.getIdToken(true);
-                    const appCheckToken = (await appCheck.getToken(false)).token;
-                    const response = await fetch(`${BACKEND_URL}/superadmin/machine/${machineId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
-                        body: JSON.stringify({ machineName: newName.trim() })
-                    });
-                    if (!response.ok) throw new Error('Failed to update machine.');
-                    showNotification('Machine name updated successfully.', 'success');
-                    await loadMachinesForInstitution();
-                } catch(error) {
-                    showNotification(error.message, 'error');
-                } finally {
-                    hideLoader();
-                }
-            }
-        }
-
-        async function deleteMachine(machineId, machineName) {
-            if (confirm(`Are you sure you want to delete the machine "${machineName}"?\nThis action cannot be undone.`)) {
-                showLoader();
-                try {
-                    const idToken = await auth.currentUser.getIdToken(true);
-                    const appCheckToken = (await appCheck.getToken(false)).token;
-                    const response = await fetch(`${BACKEND_URL}/superadmin/machine/${machineId}`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
-                    });
-                    if (!response.ok) throw new Error('Failed to delete machine.');
-                    showNotification('Machine deleted successfully.', 'success');
-                    await loadMachinesForInstitution();
-                } catch(error) {
-                    showNotification(error.message, 'error');
-                } finally {
-                    hideLoader();
-                }
-            }
-        }
-
         // Add Event Listeners
         document.getElementById('addInstitutionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -486,33 +362,6 @@
                 hideLoader();
             }
         });
-
-        document.getElementById('addMachinesForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showLoader();
-            const centerId = document.getElementById('addMachineInstitutionSelect').value;
-            const machineNameInputs = document.querySelectorAll('.machine-name-input');
-            const machines = Array.from(machineNameInputs).map(input => input.value.trim());
-
-            try {
-                const idToken = await auth.currentUser.getIdToken(true);
-                const appCheckToken = (await appCheck.getToken(false)).token;
-                const response = await fetch(`${BACKEND_URL}/superadmin/machines`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
-                    body: JSON.stringify({ centerId, machines })
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message || 'Failed to add machines.');
-                showNotification(result.message, 'success');
-                document.getElementById('addMachinesForm').reset();
-                generateMachineNameInputs();
-            } catch(error) {
-                showNotification(error.message, 'error');
-            } finally {
-                hideLoader();
-            }
-        });
         
         // Initial setup
         document.addEventListener('DOMContentLoaded', () => {
@@ -525,9 +374,6 @@
                 if (button) showAdminSection(button.dataset.section);
             });
 
-            document.getElementById('numMachinesSelect').addEventListener('change', generateMachineNameInputs);
-            document.getElementById('manageMachineInstitutionSelect').addEventListener('change', loadMachinesForInstitution);
-
             auth.onAuthStateChanged(user => {
                 if (user) {
                     if (localStorage.getItem("userRole") !== "Super Admin") {
@@ -535,7 +381,6 @@
                         window.location.replace("login.html");
                     } else {
                         loadInitialData();
-                        generateMachineNameInputs(); // Generate the first input box on load
                     }
                 } else {
                     window.location.replace("login.html");
