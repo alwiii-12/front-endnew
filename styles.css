@@ -42,7 +42,7 @@ html {
     padding: 0;
     width: 100%;
     height: 100%;
-    overflow: hidden; /* Prevent body scroll when flex layout is used */
+    /* [REMOVED] overflow: hidden; was preventing scrolling on tall content */
 }
 
 body {
@@ -61,6 +61,8 @@ body.centered-content {
   justify-content: center;
   align-items: center;
   padding: 20px;
+  /* [ADDED] Allow body to grow if content is taller than screen */
+  height: auto;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -215,7 +217,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 
 /* --- Login & Signup Pages --- */
 .login-container, .signup-container {
-  padding: 40px;
+  padding: 30px; /* [MODIFIED] Reduced padding */
   max-width: 480px;
   width: 90%;
   text-align: center;
@@ -223,24 +225,24 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 
 .login-container h2, .signup-container h2 {
   font-size: 2em;
-  margin-bottom: 30px;
+  margin-bottom: 25px; /* [MODIFIED] Reduced margin */
 }
 
 #loginForm {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px; /* [MODIFIED] Adjusted gap */
 }
 
 .signup-container {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px; /* [MODIFIED] Reduced gap */
 }
 
 #loginForm input, .signup-container input, .signup-container select {
-    padding: 16px;
-    font-size: 1.1rem;
+    padding: 14px; /* [MODIFIED] Adjusted padding */
+    font-size: 1rem;
 }
 
 .form-options {
@@ -342,6 +344,10 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 }
 
 /* --- Main Application Layout (Topbar, Sidebar, Content) --- */
+.upload-page body {
+    overflow: hidden; /* Prevent body scroll for the upload page layout */
+}
+
 .topbar {
     display: flex;
     justify-content: space-between;
@@ -541,7 +547,6 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     font-style: italic;
 }
 
-/* --- [MODIFIED] Added rule for the larger Run Analysis button --- */
 #manage-users-section .filter-search-container button,
 #audit-logs-section .filter-search-container button {
     padding: 12px 22px;
