@@ -271,6 +271,10 @@
                         <option value="180">Last 180 Days</option>
                         <option value="365">Last 365 Days</option>
                     </select>
+                    <label for="benchmarkHospitalSelect">Filter by Hospital:</label>
+                    <select id="benchmarkHospitalSelect" class="hospital-selector" onchange="loadBenchmarkData()">
+                        <option value="">All Hospitals</option>
+                    </select>
                 </div>
                 <div id="benchmark-content">
                     <div class="benchmark-grid">
@@ -302,7 +306,7 @@
                 <div class="filter-search-container">
                     <select id="efficacyHospitalSelect" class="hospital-selector"><option value="">-- Select Hospital --</option></select>
                     <select id="efficacyMachineSelect" class="machine-selector"><option value="">-- Select Machine --</option></select>
-                    <button onclick="loadServiceEfficacyData()" style="background-color: var(--primary-color); color: white;"><i class="fas fa-cogs"></i> Run Analysis</button>
+                    <button onclick="loadServiceEfficacyData()" class="button" style="background-color: var(--primary-color); color: white; padding: 12px 22px; font-size: 1.05em;"><i class="fas fa-cogs"></i> Run Analysis</button>
                 </div>
                 <div class="user-table-container">
                     <table class="efficacy-table">
@@ -605,11 +609,18 @@
 
     async function loadBenchmarkData() {
         const period = document.getElementById('benchmarkPeriodSelect').value;
+        const hospitalId = document.getElementById('benchmarkHospitalSelect').value; // Get the hospital filter
         showLoader();
         try {
             const idToken = await auth.currentUser.getIdToken(true);
             const appCheckToken = (await appCheck.getToken(false)).token;
-            const response = await fetch(`${BACKEND_URL}/admin/benchmark-metrics?period=${period}`, {
+            
+            let url = `${BACKEND_URL}/admin/benchmark-metrics?period=${period}`;
+            if (hospitalId) {
+                url += `&hospitalId=${hospitalId}`; // Append hospitalId if selected
+            }
+            
+            const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
             });
             if (!response.ok) throw new Error('Failed to load benchmark data.');
@@ -687,7 +698,8 @@
         const machineId = document.getElementById('efficacyMachineSelect').value;
         const tableBody = document.getElementById('efficacyTableBody');
         if (!machineId) {
-            tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">Please select a machine.</td></tr>';
+            // Do not show an alert, just clear the table
+            tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">Please select a machine to analyze.</td></tr>';
             return;
         }
 
@@ -1200,16 +1212,14 @@
         editMachineModal.querySelector('.close-button').addEventListener('click', () => editMachineModal.style.display = 'none');
         editMachineModal.querySelector('.cancel-btn').addEventListener('click', () => editMachineModal.style.display = 'none');
 
-        // Setup cascading dropdowns for all relevant sections
         setupCascadingDropdowns(document.getElementById('adminHospitalSelect'), document.getElementById('adminMachineSelect'));
         setupCascadingDropdowns(document.getElementById('efficacyHospitalSelect'), document.getElementById('efficacyMachineSelect'));
         setupCascadingDropdowns(document.getElementById('correlationHospitalSelect'), document.getElementById('correlationMachineSelect'));
 
-        // Add event listeners to reload data when machine or other filters change
-        document.getElementById('adminMachineSelect').addEventListener('change', loadMachineDataView);
-        document.getElementById('adminYearSelect').addEventListener('change', loadMachineDataView);
-        document.getElementById('adminMonthSelect').addEventListener('change', loadMachineDataView);
-        document.getElementById('adminDataTypeSelect').addEventListener('change', loadMachineDataView);
+        // Add event listeners to trigger data loading
+        const dataViewControls = ['adminMachineSelect', 'adminYearSelect', 'adminMonthSelect', 'adminDataTypeSelect'];
+        dataViewControls.forEach(id => document.getElementById(id).addEventListener('change', loadMachineDataView));
+
 
         window.onclick = function(event) {
             if (event.target == document.getElementById('userEditModal')) closeEditModal();
