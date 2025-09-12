@@ -953,7 +953,6 @@
                 const response = await fetch(`${BACKEND_URL}/historical-forecast`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
-                    // [MODIFIED] Removed the UID from the body
                     body: JSON.stringify({ month: monthKey, dataType: dataType, energy: selectedEnergy, machineId: currentMachineId })
                 });
                 
@@ -1013,7 +1012,8 @@
                 forecastData = (passedData.forecast || []).map(p => {
                     if (p && p.ds) {
                         return {
-                            date: p.ds.substr(0, 10),
+                            // [MODIFIED] Corrected from substr to substring
+                            date: p.ds.substring(0, 10),
                             predicted_value: p.yhat,
                             lower_bound: p.yhat_lower,
                             upper_bound: p.yhat_upper
@@ -1477,7 +1477,6 @@
                         document.querySelector('.sidebar').classList.toggle('sidebar-visible');
                     });
                     
-                    // [MODIFIED] Added event listener to close mobile menu on content click
                     document.querySelector('.main').addEventListener('click', () => {
                         document.querySelector('.sidebar').classList.remove('sidebar-visible');
                     });
