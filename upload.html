@@ -1012,7 +1012,6 @@
                 forecastData = (passedData.forecast || []).map(p => {
                     if (p && p.ds) {
                         return {
-                            // [MODIFIED] Corrected from substr to substring
                             date: p.ds.substring(0, 10),
                             predicted_value: p.yhat,
                             lower_bound: p.yhat_lower,
@@ -1530,3 +1529,4 @@
   </script>
 </body>
 </html>
+
