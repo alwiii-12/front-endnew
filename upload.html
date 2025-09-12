@@ -953,7 +953,6 @@
                 const response = await fetch(`${BACKEND_URL}/historical-forecast`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
-                    // [MODIFIED] Removed the UID from the body
                     body: JSON.stringify({ month: monthKey, dataType: dataType, energy: selectedEnergy, machineId: currentMachineId })
                 });
                 
