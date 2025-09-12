@@ -463,7 +463,6 @@
             `;
         }
         
-        // [MODIFIED] Environmental data is now saved per-machine
         const saveEnvData = debounce(async () => {
             const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!currentMachineId) return;
@@ -485,7 +484,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
                     body: JSON.stringify({
-                        machineId: currentMachineId, // <-- ADDED
+                        machineId: currentMachineId, 
                         date: fullDate,
                         temperature: temp,
                         pressure: pressure
@@ -870,7 +869,6 @@
             annotationModalTitle.textContent = `Note for ${energy} on ${date}`;
             annotationInput.value = existingText;
             
-            // [MODIFIED] Path is now machine-centric
             const serviceEventRef = db.collection('linac_data').doc(currentMachineId).collection('service_events').doc(date);
             const serviceEventSnap = await serviceEventRef.get();
             isServiceDayInput.checked = serviceEventSnap.exists;
@@ -888,7 +886,6 @@
             currentAnnotationKey = null;
         }
         
-        // [MODIFIED] Annotation save is now machine-aware
         saveAnnotationBtn.addEventListener('click', async () => {
             const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!currentAnnotationKey || !currentMachineId) return;
@@ -905,7 +902,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${idToken}`, "X-Firebase-AppCheck": appCheckToken },
                     body: JSON.stringify({
-                        machineId: currentMachineId, // <-- ADDED
+                        machineId: currentMachineId, 
                         month: monthKey,
                         key: currentAnnotationKey,
                         data: { 
@@ -923,7 +920,6 @@
             finally { hideLoader(); }
         });
 
-        // [MODIFIED] Annotation delete is now machine-aware
         deleteAnnotationBtn.addEventListener('click', async () => {
             const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!currentAnnotationKey || !currentMachineId) return;
@@ -936,7 +932,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${idToken}`, "X-Firebase-AppCheck": appCheckToken },
                     body: JSON.stringify({
-                        machineId: currentMachineId, // <-- ADDED
+                        machineId: currentMachineId, 
                         month: monthKey, 
                         key: currentAnnotationKey
                     })
@@ -981,8 +977,7 @@
                 hideLoader();
             }
         };
-        
-        // [MODIFIED] Trend chart now fetches annotations and service events per-machine
+
         async function updateTrendChart(passedData = null) {
             const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!currentMachineId) return;
@@ -1018,11 +1013,19 @@
             let validationActuals = [];
             let forecastLabel = 'Forecast';
 
+            // [FIXED] Correctly handle numeric date values from the backend
             if (passedData) {
                 forecastData = (passedData.forecast || []).map(p => {
                     if (p && p.ds) {
+                        // The backend sends 'ds' as milliseconds, so convert it to a Date object first
+                        const dateObj = new Date(p.ds);
+                        const year = dateObj.getFullYear();
+                        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                        const day = String(dateObj.getDate()).padStart(2, '0');
+                        const formattedDate = `${year}-${month}-${day}`;
+                        
                         return {
-                            date: p.ds.substring(0, 10),
+                            date: formattedDate,
                             predicted_value: p.yhat,
                             lower_bound: p.yhat_lower,
                             upper_bound: p.yhat_upper
@@ -1094,7 +1097,6 @@
             let annotations = {};
             annotations['zeroBaseline'] = { type: 'line', yMin: 0, yMax: 0, borderColor: 'rgba(0, 0, 0, 0.8)', borderWidth: 1.5, borderDash: [6, 6] };
             
-            // [MODIFIED] Fetch service events from the machine-specific path
             try {
                 const serviceEventsRef = db.collection('linac_data').doc(currentMachineId).collection('service_events');
                 const querySnapshot = await serviceEventsRef.get();
@@ -1119,7 +1121,6 @@
                 });
             } catch (error) { console.error("Error fetching service events for chart annotations:", error); }
 
-            // [MODIFIED] Fetch annotations from the machine-specific path
             try {
                 const notesSnapshot = await db.collection('linac_data').doc(currentMachineId).collection('annotations').doc(viewingMonthKey).collection('keys')
                     .where('energy', '==', selectedEnergy)
