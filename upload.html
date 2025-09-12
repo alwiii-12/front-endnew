@@ -463,6 +463,7 @@
             `;
         }
         
+        // [MODIFIED] Environmental data is now saved per-machine
         const saveEnvData = debounce(async () => {
             const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!currentMachineId) return;
@@ -484,7 +485,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
                     body: JSON.stringify({
-                        uid: currentUID,
+                        machineId: currentMachineId, // <-- ADDED
                         date: fullDate,
                         temperature: temp,
                         pressure: pressure
@@ -862,11 +863,15 @@
         }
 
         async function showAnnotationModal(key, existingText, energy, date) {
+            const currentMachineId = sessionStorage.getItem('selectedMachineId');
+            if (!currentMachineId) return;
+
             currentAnnotationKey = key;
             annotationModalTitle.textContent = `Note for ${energy} on ${date}`;
             annotationInput.value = existingText;
-
-            const serviceEventRef = db.collection('service_events').doc(currentUID).collection('events').doc(date);
+            
+            // [MODIFIED] Path is now machine-centric
+            const serviceEventRef = db.collection('linac_data').doc(currentMachineId).collection('service_events').doc(date);
             const serviceEventSnap = await serviceEventRef.get();
             isServiceDayInput.checked = serviceEventSnap.exists;
 
@@ -883,6 +888,7 @@
             currentAnnotationKey = null;
         }
         
+        // [MODIFIED] Annotation save is now machine-aware
         saveAnnotationBtn.addEventListener('click', async () => {
             const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!currentAnnotationKey || !currentMachineId) return;
@@ -899,7 +905,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${idToken}`, "X-Firebase-AppCheck": appCheckToken },
                     body: JSON.stringify({
-                        uid: currentUID,
+                        machineId: currentMachineId, // <-- ADDED
                         month: monthKey,
                         key: currentAnnotationKey,
                         data: { 
@@ -917,6 +923,7 @@
             finally { hideLoader(); }
         });
 
+        // [MODIFIED] Annotation delete is now machine-aware
         deleteAnnotationBtn.addEventListener('click', async () => {
             const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!currentAnnotationKey || !currentMachineId) return;
@@ -929,7 +936,9 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${idToken}`, "X-Firebase-AppCheck": appCheckToken },
                     body: JSON.stringify({
-                        uid: currentUID, month: monthKey, key: currentAnnotationKey
+                        machineId: currentMachineId, // <-- ADDED
+                        month: monthKey, 
+                        key: currentAnnotationKey
                     })
                 });
                 hideAnnotationModal();
@@ -972,7 +981,8 @@
                 hideLoader();
             }
         };
-
+        
+        // [MODIFIED] Trend chart now fetches annotations and service events per-machine
         async function updateTrendChart(passedData = null) {
             const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!currentMachineId) return;
@@ -1084,8 +1094,9 @@
             let annotations = {};
             annotations['zeroBaseline'] = { type: 'line', yMin: 0, yMax: 0, borderColor: 'rgba(0, 0, 0, 0.8)', borderWidth: 1.5, borderDash: [6, 6] };
             
+            // [MODIFIED] Fetch service events from the machine-specific path
             try {
-                const serviceEventsRef = db.collection('service_events').doc(currentUID).collection('events');
+                const serviceEventsRef = db.collection('linac_data').doc(currentMachineId).collection('service_events');
                 const querySnapshot = await serviceEventsRef.get();
                 querySnapshot.forEach(doc => {
                     const dateParts = doc.id.split('-');
@@ -1108,8 +1119,9 @@
                 });
             } catch (error) { console.error("Error fetching service events for chart annotations:", error); }
 
+            // [MODIFIED] Fetch annotations from the machine-specific path
             try {
-                const notesSnapshot = await db.collection('annotations').doc(currentUID).collection(viewingMonthKey)
+                const notesSnapshot = await db.collection('linac_data').doc(currentMachineId).collection('annotations').doc(viewingMonthKey).collection('keys')
                     .where('energy', '==', selectedEnergy)
                     .get();
                     
@@ -1205,7 +1217,9 @@
                             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
                             let existingText = '';
                             try {
-                                const annotationRef = db.collection('annotations').doc(currentUID).collection(monthKey).doc(key);
+                                const currentMachineId = sessionStorage.getItem('selectedMachineId');
+                                if (!currentMachineId) return;
+                                const annotationRef = db.collection('linac_data').doc(currentMachineId).collection('annotations').doc(monthKey).collection('keys').doc(key);
                                 const doc = await annotationRef.get();
                                 if (doc.exists) {
                                     existingText = doc.data().text || '';
@@ -1529,4 +1543,3 @@
   </script>
 </body>
 </html>
-
