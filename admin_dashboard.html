@@ -609,7 +609,7 @@
 
     async function loadBenchmarkData() {
         const period = document.getElementById('benchmarkPeriodSelect').value;
-        const hospitalId = document.getElementById('benchmarkHospitalSelect').value; // Get the hospital filter
+        const hospitalId = document.getElementById('benchmarkHospitalSelect').value;
         showLoader();
         try {
             const idToken = await auth.currentUser.getIdToken(true);
@@ -617,7 +617,7 @@
             
             let url = `${BACKEND_URL}/admin/benchmark-metrics?period=${period}`;
             if (hospitalId) {
-                url += `&hospitalId=${hospitalId}`; // Append hospitalId if selected
+                url += `&hospitalId=${hospitalId}`;
             }
             
             const response = await fetch(url, {
@@ -698,7 +698,6 @@
         const machineId = document.getElementById('efficacyMachineSelect').value;
         const tableBody = document.getElementById('efficacyTableBody');
         if (!machineId) {
-            // Do not show an alert, just clear the table
             tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">Please select a machine to analyze.</td></tr>';
             return;
         }
@@ -1163,6 +1162,11 @@
             document.querySelector('.sidebar-nav').classList.toggle('sidebar-visible');
         });
 
+        // [MODIFIED] Added event listener to close mobile menu on content click
+        document.querySelector('.content-display-area').addEventListener('click', () => {
+            document.querySelector('.sidebar-nav').classList.remove('sidebar-visible');
+        });
+
         document.querySelector('.sidebar-nav').addEventListener('click', (event) => {
             const button = event.target.closest('.nav-btn');
             if (button) showAdminSection(button.dataset.section);
@@ -1216,7 +1220,6 @@
         setupCascadingDropdowns(document.getElementById('efficacyHospitalSelect'), document.getElementById('efficacyMachineSelect'));
         setupCascadingDropdowns(document.getElementById('correlationHospitalSelect'), document.getElementById('correlationMachineSelect'));
 
-        // Add event listeners to trigger data loading
         const dataViewControls = ['adminMachineSelect', 'adminYearSelect', 'adminMonthSelect', 'adminDataTypeSelect'];
         dataViewControls.forEach(id => document.getElementById(id).addEventListener('change', loadMachineDataView));
 
