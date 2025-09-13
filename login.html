@@ -58,14 +58,12 @@
         const emailInput = document.getElementById('email');
         const BACKEND_URL = "https://back-end-wrxi.onrender.com";
 
-        // --- [NEW] REMEMBER ME - LOAD EMAIL ---
         const rememberedEmail = localStorage.getItem('rememberedUserEmail');
         if (rememberedEmail) {
             emailInput.value = rememberedEmail;
             document.getElementById('rememberMe').checked = true;
         }
 
-        // --- PASSWORD TOGGLE LOGIC ---
         document.querySelectorAll('.toggle-password').forEach(function(toggle) {
             toggle.addEventListener('click', function() {
                 const passwordInput = document.querySelector(this.getAttribute('toggle'));
@@ -118,7 +116,6 @@
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.message || 'An unknown error occurred.');
                 
-                // --- [NEW] REMEMBER ME - SAVE/CLEAR EMAIL ---
                 const rememberMeCheckbox = document.getElementById('rememberMe');
                 if (rememberMeCheckbox.checked) {
                     localStorage.setItem('rememberedUserEmail', email);
@@ -133,10 +130,8 @@
                 localStorage.setItem("hospitalName", data.hospital.toUpperCase());
                 localStorage.setItem("userRole", data.role);
                 localStorage.setItem("userStatus", data.status);
-                // --- [ADDED] SAVE THE CENTER ID ---
                 localStorage.setItem("centerId", data.centerId);
 
-                // --- [MODIFIED] REDIRECTION LOGIC ---
                 if (data.role === "Super Admin") {
                     window.location.href = "super_admin.html";
                 } else if (data.role === "Admin") {
@@ -146,10 +141,11 @@
                 }
 
             } catch (error) {
+                // [MODIFIED] This block now catches the specific Firebase error for invalid credentials
+                // and displays the user-friendly message you requested.
                 console.error("Login process failed:", error);
-                const credentialErrors = ['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-credential'];
-                if (credentialErrors.includes(error.code)) {
-                    errorMsg.textContent = "Error: Invalid email or password.";
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-login-credentials') {
+                    errorMsg.textContent = "Wrong username or password.";
                 } else {
                     errorMsg.textContent = error.message || "An unknown login error occurred.";
                 }
