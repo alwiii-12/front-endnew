@@ -930,7 +930,7 @@ body.dark input:focus, body.dark select:focus {
 
 /* --- Styles for Index/Welcome Page --- */
 body.index-page {
-    background: url('wave-bg.png') no-repeat center center;
+    background: url('wave-bg.svg') no-repeat center center;
     background-size: cover;
     display: flex;
     justify-content: center;
