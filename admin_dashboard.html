@@ -232,7 +232,7 @@
                         </div>
                         <div class="form-group">
                             <label for="numMachinesSelect">Number of Machines to Add</label>
-                            <select id="numMachinesSelect" onchange="generateMachineNameInputs()" required>
+                            <select id="numMachinesSelect" required>
                                 <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
                                 <option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
                             </select>
@@ -463,23 +463,9 @@
     let auth, db, appCheck;
     let onConfirmCallback = null;
 
-    // FIX: All functions called by onclick or that use 'await' must be in the global scope.
-    // This resolves the Uncaught SyntaxError and ReferenceError.
-    
     function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
     function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
-    function showNotification(message, type = 'info', duration = 3000) {
-        const container = document.getElementById('notification-container');
-        if (!container) return;
-        const notification = document.createElement('div');
-        notification.className = `notification-message ${type} show`;
-        notification.textContent = message;
-        container.appendChild(notification);
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 500);
-        }, duration);
-    }
+
     function showConfirmationModal(title, message, callback, isDelete = false, name = '') {
         const modal = document.getElementById('confirmationModal');
         document.getElementById('confirmationTitle').textContent = title;
@@ -500,6 +486,108 @@
         onConfirmCallback = callback;
         modal.style.display = 'flex';
     }
+
+    function showAdminSection(sectionId) {
+        document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.section === sectionId));
+        document.querySelectorAll('.content-display-area .card-section').forEach(section => {
+            section.style.display = 'none';
+            section.classList.remove('active-section');
+        });
+        const activeSection = document.getElementById(sectionId);
+        activeSection.style.display = 'block';
+        activeSection.classList.add('active-section');
+        
+        if (window.innerWidth <= 768) {
+            document.querySelector('.sidebar-nav').classList.remove('sidebar-visible');
+        }
+        
+        if (sectionId === 'hospital-data-access-section' && document.getElementById('adminYearSelect').options.length === 0) {
+            populateDateFilters();
+        }
+        if (sectionId === 'audit-logs-section' && !document.getElementById('auditLogDateFilter').value) {
+            populateAuditLogFilters();
+            loadAuditLogs();
+        }
+        if (sectionId === 'benchmark-section' && !activeSection.dataset.loaded) {
+            loadBenchmarkData();
+            activeSection.dataset.loaded = 'true';
+        }
+        if (sectionId === 'correlation-section' && !activeSection.dataset.loaded) {
+            populateCorrelationEnergySelect();
+            activeSection.dataset.loaded = 'true';
+        }
+        if ((sectionId === 'add-machines-section' || sectionId === 'manage-machines-section') && !activeSection.dataset.loaded) {
+            populateMachineManagementDropdowns();
+            if(sectionId === 'add-machines-section') generateMachineNameInputs();
+            activeSection.dataset.loaded = 'true';
+        }
+    }
+
+    async function fetchMachinesForHospital(centerId) {
+        if (!centerId) return [];
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const response = await fetch(`${BACKEND_URL}/admin/machines?centerId=${centerId}`, {
+                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
+            });
+            if (!response.ok) throw new Error('Failed to load machines.');
+            return await response.json();
+        } catch (error) {
+            console.error("Error fetching machines:", error);
+            showNotification('Could not load machines for the selected hospital.', 'error');
+            return [];
+        }
+    }
+
+    async function setupCascadingDropdowns(hospitalSelector, machineSelector) {
+        hospitalSelector.addEventListener('change', async () => {
+            const centerId = hospitalSelector.value;
+            machineSelector.innerHTML = '<option value="">-- Select Machine --</option>';
+            machineSelector.disabled = true;
+
+            if (centerId) {
+                const machines = await fetchMachinesForHospital(centerId);
+                if (machines.length > 0) {
+                    machines.forEach(machine => {
+                        machineSelector.add(new Option(machine.machineName, machine.machineId));
+                    });
+                    machineSelector.disabled = false;
+                }
+            }
+        });
+    }
+
+    async function loadAllUsers() {
+        showLoader();
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckTokenResponse = await appCheck.getToken(false);
+            const response = await fetch(`${BACKEND_URL}/admin/users`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
+            if (!response.ok) throw new Error('Failed to fetch users');
+            allUsersData = await response.json();
+            populateCommonFilters();
+            renderUsers(allUsersData);
+        } catch (error) {
+            console.error("Error loading users:", error);
+            document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="6" class="no-users-message">Error loading users.</td></tr>`;
+        } finally {
+            hideLoader();
+        }
+    }
+
+    function filterUsers() {
+        const searchTerm = document.getElementById('searchUserInput').value.toLowerCase();
+        const status = document.getElementById('filterStatus').value;
+        const hospital = document.getElementById('filterHospital').value;
+        const filtered = allUsersData.filter(user => 
+            (user.name?.toLowerCase().includes(searchTerm) || user.email?.toLowerCase().includes(searchTerm)) &&
+            (status === "" || user.status === status) &&
+            (hospital === "" || user.hospital === hospital)
+        );
+        renderUsers(filtered);
+    }
+    
     async function logout() {
         showLoader();
         try {
@@ -518,7 +606,171 @@
             window.location.replace("login.html");
         });
     }
-    async function updateUserStatus(uid, newStatus) {
+
+    async function loadBenchmarkData() {
+        const period = document.getElementById('benchmarkPeriodSelect').value;
+        const hospitalId = document.getElementById('benchmarkHospitalSelect').value;
+        showLoader();
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            
+            let url = `${BACKEND_URL}/admin/benchmark-metrics?period=${period}`;
+            if (hospitalId) {
+                url += `&hospitalId=${hospitalId}`;
+            }
+            
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
+            });
+            if (!response.ok) throw new Error('Failed to load benchmark data.');
+            const data = await response.json();
+            renderBenchmarkCharts(data);
+            renderBenchmarkTable(data);
+        } catch (error) {
+            console.error("Error loading benchmark data:", error);
+            document.getElementById('benchmark-content').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`;
+        } finally {
+            hideLoader();
+        }
+    }
+
+    async function runCorrelationAnalysis() {
+        const machineId = document.getElementById('correlationMachineSelect').value;
+        const dataType = document.getElementById('correlationDataTypeSelect').value;
+        const energy = document.getElementById('correlationEnergySelect').value;
+        const resultsContainer = document.getElementById('correlation-results-container');
+
+        if (!machineId || !dataType || !energy) {
+            alert("Please select a hospital, machine, QA parameter, and energy.");
+            return;
+        }
+
+        showLoader();
+        resultsContainer.innerHTML = `<p class="no-users-message">Running analysis...</p>`;
+
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const url = `${BACKEND_URL}/admin/correlation-analysis?machineId=${machineId}&dataType=${dataType}&energy=${energy}`;
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Failed to run analysis.');
+            
+            let tableHTML = `<table class="user-table">
+                <thead><tr><th>Environmental Factor</th><th>Pearson Correlation</th><th>Interpretation</th></tr></thead><tbody>`;
+            for (const factor in result) {
+                const data = result[factor];
+                const corr = data.correlation;
+                const p_value = data.p_value;
+                let strength = "No";
+                let direction = "neutral";
+                let significance = p_value < 0.05 ? `<span class="significant" style="border-bottom: 2px dotted;">Statistically Significant (p=${p_value.toFixed(3)})</span>` : `Not Significant (p=${p_value.toFixed(3)})`;
+                
+                if (Math.abs(corr) > 0.7) strength = "Strong";
+                else if (Math.abs(corr) > 0.4) strength = "Moderate";
+                else if (Math.abs(corr) > 0.1) strength = "Weak";
+
+                if (corr > 0.1) direction = "positive";
+                else if (corr < -0.1) direction = "negative";
+
+                const factorName = factor.replace('_celsius', ' (°C)').replace('_hpa', ' (hPa)').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                
+                tableHTML += `<tr><td>${factorName}</td><td>${corr.toFixed(3)}</td><td class="interpretation-cell"><span style="font-weight:bold; color: ${direction === 'positive' ? 'green' : (direction === 'negative' ? 'red' : 'inherit')}">${strength} ${direction !== 'neutral' ? (direction === 'positive' ? 'Positive' : 'Negative') : ''} Correlation</span><br><small>${significance}</small></td></tr>`;
+            }
+            tableHTML += `</tbody></table>`;
+            if (Object.keys(result).length === 0) {
+                 tableHTML = `<p class="no-users-message">Analysis ran, but no significant correlation was found with the available data.</p>`;
+            }
+            resultsContainer.innerHTML = tableHTML;
+
+        } catch (error) {
+            resultsContainer.innerHTML = `<p class="no-users-message" style="color:red;">Error: ${error.message}</p>`;
+        } finally {
+            hideLoader();
+        }
+    }
+
+    async function loadServiceEfficacyData() {
+        const machineId = document.getElementById('efficacyMachineSelect').value;
+        const tableBody = document.getElementById('efficacyTableBody');
+        if (!machineId) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">Please select a machine to analyze.</td></tr>';
+            return;
+        }
+
+        showLoader();
+        tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">Analyzing service data...</td></tr>';
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const response = await fetch(`${BACKEND_URL}/admin/service-impact-analysis?machineId=${machineId}`, {
+                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
+            });
+            if (!response.ok) throw new Error('Failed to fetch analysis data.');
+            
+            const results = await response.json();
+            tableBody.innerHTML = '';
+
+            if (results.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">No service events found for this machine.</td></tr>';
+                return;
+            }
+
+            results.forEach(res => {
+                const row = tableBody.insertRow();
+                const improvement = res.stability_improvement_percent;
+                const improvementClass = improvement > 5 ? 'improvement-positive' : (improvement < -5 ? 'improvement-negative' : '');
+                const improvementText = `${improvement > 0 ? '+' : ''}${improvement.toFixed(1)}%`;
+
+                row.innerHTML = `<td><strong>${res.energy}</strong> on ${res.service_date}</td><td>${res.before_metrics.std_deviation.toFixed(3)}</td><td>${res.after_metrics.std_deviation.toFixed(3)}</td><td class="${improvementClass}">${improvementText}</td>`;
+
+                const sparklineCell = row.insertCell();
+                const combinedData = [...res.before_data, ...res.after_data];
+                if (combinedData.length > 1) {
+                    sparklineCell.appendChild(createSparkline(combinedData));
+                }
+            });
+
+        } catch (error) {
+            console.error("Error loading service efficacy data:", error);
+            tableBody.innerHTML = `<tr><td colspan="5" class="no-users-message" style="color:red;">Error loading analysis.</td></tr>`;
+        } finally {
+            hideLoader();
+        }
+    }
+
+    async function loadMachineDataView() {
+        const machineId = document.getElementById('adminMachineSelect').value;
+        if (!machineId) {
+            document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message">Select a machine to view data.</p>`;
+            return;
+        }
+
+        const year = document.getElementById('adminYearSelect').value;
+        const month = document.getElementById('adminMonthSelect').value;
+        const dataType = document.getElementById('adminDataTypeSelect').value;
+
+        showLoader();
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckTokenResponse = await appCheck.getToken(false);
+            const response = await fetch(`${BACKEND_URL}/admin/hospital-data?machineId=${machineId}&month=${year}-${month}`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
+            if (!response.ok) throw new Error('Failed to fetch data');
+            const result = await response.json();
+            renderHospitalQaDataTable(result.data, year, month);
+        } catch (error) {
+            console.error("Error loading hospital data:", error);
+            document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`;
+        } finally {
+            hideLoader();
+        }
+    }
+
+    function updateUserStatus(uid, newStatus) {
         const user = allUsersData.find(u => u.uid === uid);
         showConfirmationModal(`Confirm Status Change`, `Set status for ${user.name} to ${newStatus.toUpperCase()}?`, async () => {
             showLoader();
@@ -530,7 +782,8 @@
             } catch (error) { console.error("Error updating status:", error); alert("Failed to update user status."); } finally { hideLoader(); }
         });
     }
-    async function deleteUser(uid, name) {
+
+    function deleteUser(uid, name) {
         showConfirmationModal(`Permanently Delete User`, `This is irreversible. You are about to delete ${name}.`, async () => {
             showLoader();
             try {
@@ -541,6 +794,7 @@
             } catch (error) { console.error("Error deleting user:", error); alert("Failed to delete user."); } finally { hideLoader(); }
         }, true, name);
     }
+    
     function openEditModal(uid) {
         const user = allUsersData.find(u => u.uid === uid);
         if (!user) return;
@@ -555,7 +809,9 @@
         document.getElementById('editUserStatus').value = user.status;
         document.getElementById('userEditModal').style.display = 'flex';
     }
+
     function closeEditModal() { document.getElementById('userEditModal').style.display = 'none'; }
+    
     async function saveUserChanges() {
         showLoader();
         try {
@@ -569,6 +825,72 @@
             await loadAllUsers();
         } catch (error) { console.error("Error saving changes:", error); alert("Failed to save changes."); } finally { hideLoader(); }
     }
+    
+    async function loadAuditLogs(fetchAll = false) {
+        showLoader();
+        let hospitalId = document.getElementById('auditLogHospitalFilter').value;
+        let action = document.getElementById('auditLogActionFilter').value;
+        let date = document.getElementById('auditLogDateFilter').value;
+        const logsTableBody = document.getElementById('auditLogsTableBody');
+        logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message">Loading logs...</td></tr>`;
+        if (fetchAll) { hospitalId = ''; action = ''; date = ''; document.getElementById('auditLogHospitalFilter').value = ''; document.getElementById('auditLogActionFilter').value = ''; document.getElementById('auditLogDateFilter').value = ''; }
+        let url = `${BACKEND_URL}/admin/audit-logs?`;
+        if(date) url += `date=${date}&`;
+        if(hospitalId) url += `hospitalId=${hospitalId}&`;
+        if(action) url += `action=${action}&`;
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckTokenResponse = await appCheck.getToken(false);
+            const response = await fetch(url, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
+            if (!response.ok) throw new Error('Failed to fetch logs');
+            const result = await response.json();
+            logsTableBody.innerHTML = '';
+            if(result.logs.length === 0) { logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message">No logs found.</td></tr>`; return; }
+            result.logs.forEach(log => {
+                const row = logsTableBody.insertRow();
+                row.innerHTML = `
+                    <td>${log.timestamp}</td>
+                    <td>${log.action}</td>
+                    <td><pre style="margin: 0; font-family: inherit; font-size: inherit;">${log.user_display || 'N/A'}</pre></td>
+                `;
+            });
+        } catch (error) { console.error("Error loading audit logs:", error); logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message" style="color:red;">Error loading logs.</td></tr>`; } finally { hideLoader(); }
+    }
+
+    function renderHospitalQaDataTable(allData, year, month) {
+        const container = document.getElementById('hospitalQaTableContainer');
+        const selectedDataType = document.getElementById('adminDataTypeSelect').value;
+        const dataForTable = allData[selectedDataType]; 
+        const config = dataTypesConfig[selectedDataType];
+        container.innerHTML = '';
+        if (!dataForTable || dataForTable.length === 0 || !config) {
+            container.innerHTML = `<p class="no-users-message">No '${selectedDataType}' data available.</p>`;
+            return;
+        }
+        const numDays = new Date(year, month, 0).getDate();
+        let tableHTML = `<h3 style="text-align:center; margin-top:0;">${selectedDataType.charAt(0).toUpperCase() + selectedDataType.slice(1)} Data</h3><table class="user-table hospital-qa-table"><thead><tr><th>Energy</th>`;
+        for (let i = 1; i <= numDays; i++) { tableHTML += `<th>${i}</th>`; }
+        tableHTML += '</tr></thead><tbody>';
+        dataForTable.forEach(row => {
+            tableHTML += `<tr><td>${row[0]}</td>`;
+            const values = row.slice(1);
+            for (let i = 0; i < numDays; i++) {
+                const value = values[i] || '';
+                const numValue = parseFloat(value);
+                let className = '';
+                if (!isNaN(numValue)) {
+                    if (Math.abs(numValue) > config.tolerance) className = 'out';
+                    else if (Math.abs(numValue) >= config.warning) className = 'warning';
+                    else className = 'within';
+                }
+                tableHTML += `<td class="${className}">${value}</td>`;
+            }
+            tableHTML += '</tr>';
+        });
+        tableHTML += '</tbody></table>';
+        container.innerHTML = tableHTML;
+    }
+
     function toggleFullWidth() {
         const layout = document.querySelector('.main-admin-layout');
         const icon = document.querySelector('.fullscreen-btn i');
@@ -576,10 +898,144 @@
         icon.classList.toggle('fa-expand', !layout.classList.contains('full-width-mode'));
         icon.classList.toggle('fa-compress', layout.classList.contains('full-width-mode'));
     }
+
     function hideConfirmationModal() {
         document.getElementById('confirmationModal').style.display = 'none';
         onConfirmCallback = null;
     }
+
+    function renderUsers(usersToRender) {
+        const usersTableBody = document.getElementById('usersTableBody');
+        usersTableBody.innerHTML = '';
+        if (!usersToRender || usersToRender.length === 0) {
+            usersTableBody.innerHTML = '<tr><td colspan="6" class="no-users-message">No users found.</td></tr>';
+            return;
+        }
+        usersToRender.forEach(user => {
+            const row = usersTableBody.insertRow();
+            row.innerHTML = `
+                <td>${user.name || 'N/A'}</td>
+                <td>${user.email || 'N/A'}</td>
+                <td>${user.hospital || 'N/A'}</td>
+                <td>${user.role || 'N/A'}</td>
+                <td><span style="font-weight:bold; color:${user.status === 'active' ? 'green' : (user.status === 'pending' ? 'orange' : 'red')}">${user.status?.toUpperCase() || 'N/A'}</span></td>
+                <td class="user-actions-cell">
+                    <button class="approve-btn" onclick="updateUserStatus('${user.uid}', 'active')">Approve</button>
+                    <button class="reject-btn" onclick="updateUserStatus('${user.uid}', 'rejected')">Reject</button>
+                    <button class="edit-btn" onclick="openEditModal('${user.uid}')">Edit</button>
+                    <button class="delete-btn" onclick="deleteUser('${user.uid}', '${user.name || 'this user'}')"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+        });
+    }
+
+    function populateCommonFilters() {
+        const hospitalSet = new Set(allUsersData.map(user => user.hospital).filter(Boolean));
+        const sortedHospitals = [...hospitalSet].sort();
+        const hospitalFilterSelects = document.querySelectorAll('.hospital-selector, #filterHospital, #auditLogHospitalFilter');
+        
+        hospitalFilterSelects.forEach(select => {
+            if (select) {
+                const currentValue = select.value;
+                const firstOptionHTML = select.querySelector('option').outerHTML;
+                let optionsHTML = '';
+                sortedHospitals.forEach(h => { optionsHTML += `<option value="${h}">${h}</option>`; });
+                select.innerHTML = firstOptionHTML + optionsHTML;
+                select.value = currentValue;
+            }
+        });
+    }
+
+    function populateDateFilters() {
+        const yearSelect = document.getElementById('adminYearSelect');
+        const monthSelect = document.getElementById('adminMonthSelect');
+        if (yearSelect.options.length > 0) return;
+        const currentYear = new Date().getFullYear();
+        for (let i = currentYear; i >= currentYear - 5; i--) { yearSelect.add(new Option(i, i)); }
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        months.forEach((m, i) => { monthSelect.add(new Option(m, String(i + 1).padStart(2, '0'))); });
+        monthSelect.value = String(new Date().getMonth() + 1).padStart(2, '0');
+    }
+
+    function populateAuditLogFilters() {
+        const dateFilter = document.getElementById('auditLogDateFilter');
+        if(!dateFilter.value) { dateFilter.value = new Date().toISOString().split('T')[0]; }
+    }
+    
+    function populateCorrelationEnergySelect() {
+        const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
+        const select = document.getElementById('correlationEnergySelect');
+        select.innerHTML = '';
+        energyTypes.forEach(e => {
+            select.add(new Option(e, e));
+        });
+    }
+    
+    function renderBenchmarkCharts(data) {
+        const isDarkMode = document.body.classList.contains('dark');
+        const ticksColor = isDarkMode ? '#ddd' : '#666';
+        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        const labels = data.map(d => `${d.machineName} (${d.hospital})`);
+        
+        const meanDevCtx = document.getElementById('meanDeviationChart').getContext('2d');
+        if (benchmarkCharts.meanDeviation) benchmarkCharts.meanDeviation.destroy();
+        benchmarkCharts.meanDeviation = new Chart(meanDevCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Mean Deviation (Output %)',
+                    data: data.map(d => d.metrics.output.mean_deviation),
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: 'Mean Deviation (Output)', color: ticksColor } }, scales: { y: { ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
+        });
+
+        const stdDevCtx = document.getElementById('stdDeviationChart').getContext('2d');
+        if (benchmarkCharts.stdDeviation) benchmarkCharts.stdDeviation.destroy();
+        benchmarkCharts.stdDeviation = new Chart(stdDevCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Std. Deviation (Output %)',
+                    data: data.map(d => d.metrics.output.std_deviation),
+                    backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: 'Machine Stability (Output Std. Dev.)', color: ticksColor } }, scales: { y: { beginAtZero: true, ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
+        });
+    }
+
+    function renderBenchmarkTable(data) {
+        const tableBody = document.getElementById('benchmarkTableBody');
+        tableBody.innerHTML = '';
+        if (!data || data.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No benchmark data available.</td></tr>`;
+            return;
+        }
+        data.forEach(item => {
+            const row = tableBody.insertRow();
+            row.innerHTML = `<td>${item.machineName} (${item.hospital})</td><td>${item.oots}</td><td>${item.warnings}</td><td>${item.metrics.output.data_points}</td>`;
+        });
+    }
+
+    function populateMachineManagementDropdowns() {
+        const hospitalSelect = document.getElementById('filterHospital');
+        if (hospitalSelect.options.length <= 1) return;
+
+        const addMachineSelect = document.getElementById('addMachineInstitutionSelect');
+        const manageMachineSelect = document.getElementById('manageMachineInstitutionSelect');
+
+        addMachineSelect.innerHTML = hospitalSelect.innerHTML;
+        manageMachineSelect.innerHTML = hospitalSelect.innerHTML;
+    }
+
     function generateMachineNameInputs() {
         const count = document.getElementById('numMachinesSelect').value;
         const container = document.getElementById('machine-name-inputs');
@@ -594,6 +1050,70 @@
             container.appendChild(formGroup);
         }
     }
+
+    async function loadMachinesForInstitution() {
+        const centerId = document.getElementById('manageMachineInstitutionSelect').value;
+        const tableBody = document.getElementById('machinesTableBody');
+        if (!centerId) {
+            tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Select an institution to see its machines.</td></tr>';
+            return;
+        }
+        tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Loading machines...</td></tr>';
+        const machines = await fetchMachinesForHospital(centerId);
+        
+        tableBody.innerHTML = '';
+        if (machines.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">No machines found for this institution.</td></tr>';
+            return;
+        }
+        machines.forEach(machine => {
+            const row = tableBody.insertRow();
+            row.innerHTML = `
+                <td>${machine.machineName}</td>
+                <td>${machine.machineId}</td>
+                <td class="user-actions-cell">
+                    <button class="edit-btn" onclick="openEditMachineModal('${machine.machineId}', '${machine.machineName}')">Edit</button>
+                    <button class="delete-btn" onclick="deleteMachine('${machine.machineId}', '${machine.machineName}')">Delete</button>
+                </td>
+            `;
+        });
+    }
+    
+    function openEditMachineModal(machineId, currentName) {
+        document.getElementById('editMachineId').value = machineId;
+        document.getElementById('editMachineNameInput').value = currentName;
+        document.getElementById('editMachineModal').style.display = 'flex';
+    }
+
+    async function saveMachineNameChanges() {
+        const machineId = document.getElementById('editMachineId').value;
+        const newName = document.getElementById('editMachineNameInput').value.trim();
+
+        if (!newName) {
+            showNotification('Machine name cannot be empty.', 'warning');
+            return;
+        }
+
+        showLoader();
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const response = await fetch(`${BACKEND_URL}/admin/machine/${machineId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
+                body: JSON.stringify({ machineName: newName })
+            });
+            if (!response.ok) throw new Error('Failed to update machine.');
+            showNotification('Machine name updated successfully.', 'success');
+            document.getElementById('editMachineModal').style.display = 'none';
+            await loadMachinesForInstitution();
+        } catch(error) {
+            showNotification(error.message, 'error');
+        } finally {
+            hideLoader();
+        }
+    }
+
     async function deleteMachine(machineId, machineName) {
         if (confirm(`Are you sure you want to delete the machine "${machineName}"?\nThis action cannot be undone.`)) {
             showLoader();
@@ -606,7 +1126,7 @@
                 });
                 if (!response.ok) throw new Error('Failed to delete machine.');
                 showNotification('Machine deleted successfully.', 'success');
-                loadMachinesForInstitution();
+                await loadMachinesForInstitution();
             } catch(error) {
                 showNotification(error.message, 'error');
             } finally {
@@ -614,664 +1134,7 @@
             }
         }
     }
-    async function fetchMachinesForHospital(centerId) {
-        if (!centerId) return [];
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckToken = (await appCheck.getToken(false)).token;
-            const response = await fetch(`${BACKEND_URL}/admin/machines?centerId=${centerId}`, {
-                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-            });
-            if (!response.ok) throw new Error('Failed to load machines.');
-            return await response.json();
-        } catch (error) {
-            console.error("Error fetching machines:", error);
-            showNotification('Could not load machines for the selected hospital.', 'error');
-            return [];
-        }
-    }
-    async function loadMachinesForInstitution() {
-        const centerId = document.getElementById('manageMachineInstitutionSelect').value;
-        const tableBody = document.getElementById('machinesTableBody');
-        if (!centerId) {
-            tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Select an institution to see its machines.</td></tr>';
-            return;
-        }
-        tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Loading machines...</td></tr>';
-        const machines = await fetchMachinesForHospital(centerId);
-        
-        tableBody.innerHTML = '';
-        if (machines.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">No machines found for this institution.</td></tr>';
-            return;
-        }
-        machines.forEach(machine => {
-            const row = tableBody.insertRow();
-            row.innerHTML = `
-                <td>${machine.machineName}</td>
-                <td>${machine.machineId}</td>
-                <td class="user-actions-cell">
-                    <button class="edit-btn" onclick="openEditMachineModal('${machine.machineId}', '${machine.machineName}')">Edit</button>
-                    <button class="delete-btn" onclick="deleteMachine('${machine.machineId}', '${machine.machineName}')">Delete</button>
-                </td>
-            `;
-        });
-    }
-    async function loadAllUsers() {
-        showLoader();
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckTokenResponse = await appCheck.getToken(false);
-            const response = await fetch(`${BACKEND_URL}/admin/users`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
-            if (!response.ok) throw new Error('Failed to fetch users');
-            allUsersData = await response.json();
-            populateCommonFilters();
-            renderUsers(allUsersData);
-        } catch (error) {
-            console.error("Error loading users:", error);
-            document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="6" class="no-users-message">Error loading users.</td></tr>`;
-        } finally {
-            hideLoader();
-        }
-    }
-    async function loadBenchmarkData() {
-        const period = document.getElementById('benchmarkPeriodSelect').value;
-        const hospitalId = document.getElementById('benchmarkHospitalSelect').value;
-        showLoader();
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckToken = (await appCheck.getToken(false)).token;
-            
-            let url = `${BACKEND_URL}/admin/benchmark-metrics?period=${period}`;
-            if (hospitalId) {
-                url += `&hospitalId=${hospitalId}`;
-            }
-            
-            const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-            });
-            if (!response.ok) throw new Error('Failed to load benchmark data.');
-            const data = await response.json();
-            renderBenchmarkCharts(data);
-            renderBenchmarkTable(data);
-        } catch (error) {
-            console.error("Error loading benchmark data:", error);
-            document.getElementById('benchmark-content').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`;
-        } finally {
-            hideLoader();
-        }
-    }
-    async function runCorrelationAnalysis() {
-        const machineId = document.getElementById('correlationMachineSelect').value;
-        const dataType = document.getElementById('correlationDataTypeSelect').value;
-        const energy = document.getElementById('correlationEnergySelect').value;
-        const resultsContainer = document.getElementById('correlation-results-container');
 
-        if (!machineId || !dataType || !energy) {
-            alert("Please select a hospital, machine, QA parameter, and energy.");
-            return;
-        }
-
-        showLoader();
-        resultsContainer.innerHTML = `<p class="no-users-message">Running analysis...</p>`;
-
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckToken = (await appCheck.getToken(false)).token;
-            const url = `${BACKEND_URL}/admin/correlation-analysis?machineId=${machineId}&dataType=${dataType}&energy=${energy}`;
-            const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-            });
-            const result = await response.json();
-
-            if (!response.ok) throw new Error(result.error || 'Failed to run analysis.');
-            
-            let tableHTML = `<table class="user-table">
-                <thead><tr><th>Environmental Factor</th><th>Pearson Correlation</th><th>Interpretation</th></tr></thead><tbody>`;
-            for (const factor in result) {
-                const data = result[factor];
-                const corr = data.correlation;
-                const p_value = data.p_value;
-                let strength = "No";
-                let direction = "neutral";
-                let significance = p_value < 0.05 ? `<span class="significant" style="border-bottom: 2px dotted;">Statistically Significant (p=${p_value.toFixed(3)})</span>` : `Not Significant (p=${p_value.toFixed(3)})`;
-                
-                if (Math.abs(corr) > 0.7) strength = "Strong";
-                else if (Math.abs(corr) > 0.4) strength = "Moderate";
-                else if (Math.abs(corr) > 0.1) strength = "Weak";
-
-                if (corr > 0.1) direction = "positive";
-                else if (corr < -0.1) direction = "negative";
-
-                const factorName = factor.replace('_celsius', ' (°C)').replace('_hpa', ' (hPa)').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                
-                tableHTML += `<tr><td>${factorName}</td><td>${corr.toFixed(3)}</td><td class="interpretation-cell"><span style="font-weight:bold; color: ${direction === 'positive' ? 'green' : (direction === 'negative' ? 'red' : 'inherit')}">${strength} ${direction !== 'neutral' ? (direction === 'positive' ? 'Positive' : 'Negative') : ''} Correlation</span><br><small>${significance}</small></td></tr>`;
-            }
-            tableHTML += `</tbody></table>`;
-            if (Object.keys(result).length === 0) {
-                 tableHTML = `<p class="no-users-message">Analysis ran, but no significant correlation was found with the available data.</p>`;
-            }
-            resultsContainer.innerHTML = tableHTML;
-
-        } catch (error) {
-            resultsContainer.innerHTML = `<p class="no-users-message" style="color:red;">Error: ${error.message}</p>`;
-        } finally {
-            hideLoader();
-        }
-    }
-    async function loadServiceEfficacyData() {
-        const machineId = document.getElementById('efficacyMachineSelect').value;
-        const tableBody = document.getElementById('efficacyTableBody');
-        if (!machineId) {
-            tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">Please select a machine to analyze.</td></tr>';
-            return;
-        }
-
-        showLoader();
-        tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">Analyzing service data...</td></tr>';
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckToken = (await appCheck.getToken(false)).token;
-            const response = await fetch(`${BACKEND_URL}/admin/service-impact-analysis?machineId=${machineId}`, {
-                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-            });
-            if (!response.ok) throw new Error('Failed to fetch analysis data.');
-            
-            const results = await response.json();
-            tableBody.innerHTML = '';
-
-            if (results.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">No service events found for this machine.</td></tr>';
-                return;
-            }
-
-            results.forEach(res => {
-                const row = tableBody.insertRow();
-                const improvement = res.stability_improvement_percent;
-                const improvementClass = improvement > 5 ? 'improvement-positive' : (improvement < -5 ? 'improvement-negative' : '');
-                const improvementText = `${improvement > 0 ? '+' : ''}${improvement.toFixed(1)}%`;
-
-                row.innerHTML = `<td><strong>${res.energy}</strong> on ${res.service_date}</td><td>${res.before_metrics.std_deviation.toFixed(3)}</td><td>${res.after_metrics.std_deviation.toFixed(3)}</td><td class="${improvementClass}">${improvementText}</td>`;
-
-                const sparklineCell = row.insertCell();
-                const combinedData = [...res.before_data, ...res.after_data];
-                if (combinedData.length > 1) {
-                    sparklineCell.appendChild(createSparkline(combinedData));
-                }
-            });
-
-        } catch (error) {
-            console.error("Error loading service efficacy data:", error);
-            tableBody.innerHTML = `<tr><td colspan="5" class="no-users-message" style="color:red;">Error loading analysis.</td></tr>`;
-        } finally {
-            hideLoader();
-        }
-    }
-    async function loadMachineDataView() {
-        const machineId = document.getElementById('adminMachineSelect').value;
-        if (!machineId) {
-            document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message">Select a machine to view data.</p>`;
-            return;
-        }
-
-        const year = document.getElementById('adminYearSelect').value;
-        const month = document.getElementById('adminMonthSelect').value;
-        const dataType = document.getElementById('adminDataTypeSelect').value;
-
-        showLoader();
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckTokenResponse = await appCheck.getToken(false);
-            const response = await fetch(`${BACKEND_URL}/admin/hospital-data?machineId=${machineId}&month=${year}-${month}`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
-            if (!response.ok) throw new Error('Failed to fetch data');
-            const result = await response.json();
-            renderHospitalQaDataTable(result.data, year, month);
-        } catch (error) {
-            console.error("Error loading hospital data:", error);
-            document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`;
-        } finally {
-            hideLoader();
-        }
-    }
-    async function loadMachinesForInstitution() {
-        const centerId = document.getElementById('manageMachineInstitutionSelect').value;
-        const tableBody = document.getElementById('machinesTableBody');
-        if (!centerId) {
-            tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Select an institution to see its machines.</td></tr>';
-            return;
-        }
-        tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Loading machines...</td></tr>';
-        const machines = await fetchMachinesForHospital(centerId);
-        
-        tableBody.innerHTML = '';
-        if (machines.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">No machines found for this institution.</td></tr>';
-            return;
-        }
-        machines.forEach(machine => {
-            const row = tableBody.insertRow();
-            row.innerHTML = `
-                <td>${machine.machineName}</td>
-                <td>${machine.machineId}</td>
-                <td class="user-actions-cell">
-                    <button class="edit-btn" onclick="openEditMachineModal('${machine.machineId}', '${machine.machineName}')">Edit</button>
-                    <button class="delete-btn" onclick="deleteMachine('${machine.machineId}', '${machine.machineName}')">Delete</button>
-                </td>
-            `;
-        });
-    }
-    async function fetchMachinesForHospital(centerId) {
-        if (!centerId) return [];
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckToken = (await appCheck.getToken(false)).token;
-            const response = await fetch(`${BACKEND_URL}/admin/machines?centerId=${centerId}`, {
-                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-            });
-            if (!response.ok) throw new Error('Failed to load machines.');
-            return await response.json();
-        } catch (error) {
-            console.error("Error fetching machines:", error);
-            showNotification('Could not load machines for the selected hospital.', 'error');
-            return [];
-        }
-    }
-    async function loadAllUsers() {
-        showLoader();
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckTokenResponse = await appCheck.getToken(false);
-            const response = await fetch(`${BACKEND_URL}/admin/users`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
-            if (!response.ok) throw new Error('Failed to fetch users');
-            allUsersData = await response.json();
-            populateCommonFilters();
-            renderUsers(allUsersData);
-        } catch (error) {
-            console.error("Error loading users:", error);
-            document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="6" class="no-users-message">Error loading users.</td></tr>`;
-        } finally {
-            hideLoader();
-        }
-    }
-    async function loadBenchmarkData() {
-        const period = document.getElementById('benchmarkPeriodSelect').value;
-        const hospitalId = document.getElementById('benchmarkHospitalSelect').value;
-        showLoader();
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckToken = (await appCheck.getToken(false)).token;
-            
-            let url = `${BACKEND_URL}/admin/benchmark-metrics?period=${period}`;
-            if (hospitalId) {
-                url += `&hospitalId=${hospitalId}`;
-            }
-            
-            const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-            });
-            if (!response.ok) throw new Error('Failed to load benchmark data.');
-            const data = await response.json();
-            renderBenchmarkCharts(data);
-            renderBenchmarkTable(data);
-        } catch (error) {
-            console.error("Error loading benchmark data:", error);
-            document.getElementById('benchmark-content').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`;
-        } finally {
-            hideLoader();
-        }
-    }
-    async function runCorrelationAnalysis() {
-        const machineId = document.getElementById('correlationMachineSelect').value;
-        const dataType = document.getElementById('correlationDataTypeSelect').value;
-        const energy = document.getElementById('correlationEnergySelect').value;
-        const resultsContainer = document.getElementById('correlation-results-container');
-
-        if (!machineId || !dataType || !energy) {
-            alert("Please select a hospital, machine, QA parameter, and energy.");
-            return;
-        }
-
-        showLoader();
-        resultsContainer.innerHTML = `<p class="no-users-message">Running analysis...</p>`;
-
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckToken = (await appCheck.getToken(false)).token;
-            const url = `${BACKEND_URL}/admin/correlation-analysis?machineId=${machineId}&dataType=${dataType}&energy=${energy}`;
-            const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-            });
-            const result = await response.json();
-
-            if (!response.ok) throw new Error(result.error || 'Failed to run analysis.');
-            
-            let tableHTML = `<table class="user-table">
-                <thead><tr><th>Environmental Factor</th><th>Pearson Correlation</th><th>Interpretation</th></tr></thead><tbody>`;
-            for (const factor in result) {
-                const data = result[factor];
-                const corr = data.correlation;
-                const p_value = data.p_value;
-                let strength = "No";
-                let direction = "neutral";
-                let significance = p_value < 0.05 ? `<span class="significant" style="border-bottom: 2px dotted;">Statistically Significant (p=${p_value.toFixed(3)})</span>` : `Not Significant (p=${p_value.toFixed(3)})`;
-                
-                if (Math.abs(corr) > 0.7) strength = "Strong";
-                else if (Math.abs(corr) > 0.4) strength = "Moderate";
-                else if (Math.abs(corr) > 0.1) strength = "Weak";
-
-                if (corr > 0.1) direction = "positive";
-                else if (corr < -0.1) direction = "negative";
-
-                const factorName = factor.replace('_celsius', ' (°C)').replace('_hpa', ' (hPa)').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                
-                tableHTML += `<tr><td>${factorName}</td><td>${corr.toFixed(3)}</td><td class="interpretation-cell"><span style="font-weight:bold; color: ${direction === 'positive' ? 'green' : (direction === 'negative' ? 'red' : 'inherit')}">${strength} ${direction !== 'neutral' ? (direction === 'positive' ? 'Positive' : 'Negative') : ''} Correlation</span><br><small>${significance}</small></td></tr>`;
-            }
-            tableHTML += `</tbody></table>`;
-            if (Object.keys(result).length === 0) {
-                 tableHTML = `<p class="no-users-message">Analysis ran, but no significant correlation was found with the available data.</p>`;
-            }
-            resultsContainer.innerHTML = tableHTML;
-
-        } catch (error) {
-            resultsContainer.innerHTML = `<p class="no-users-message" style="color:red;">Error: ${error.message}</p>`;
-        } finally {
-            hideLoader();
-        }
-    }
-    async function loadServiceEfficacyData() {
-        const machineId = document.getElementById('efficacyMachineSelect').value;
-        const tableBody = document.getElementById('efficacyTableBody');
-        if (!machineId) {
-            tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">Please select a machine to analyze.</td></tr>';
-            return;
-        }
-
-        showLoader();
-        tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">Analyzing service data...</td></tr>';
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckToken = (await appCheck.getToken(false)).token;
-            const response = await fetch(`${BACKEND_URL}/admin/service-impact-analysis?machineId=${machineId}`, {
-                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-            });
-            if (!response.ok) throw new Error('Failed to fetch analysis data.');
-            
-            const results = await response.json();
-            tableBody.innerHTML = '';
-
-            if (results.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">No service events found for this machine.</td></tr>';
-                return;
-            }
-
-            results.forEach(res => {
-                const row = tableBody.insertRow();
-                const improvement = res.stability_improvement_percent;
-                const improvementClass = improvement > 5 ? 'improvement-positive' : (improvement < -5 ? 'improvement-negative' : '');
-                const improvementText = `${improvement > 0 ? '+' : ''}${improvement.toFixed(1)}%`;
-
-                row.innerHTML = `<td><strong>${res.energy}</strong> on ${res.service_date}</td><td>${res.before_metrics.std_deviation.toFixed(3)}</td><td>${res.after_metrics.std_deviation.toFixed(3)}</td><td class="${improvementClass}">${improvementText}</td>`;
-
-                const sparklineCell = row.insertCell();
-                const combinedData = [...res.before_data, ...res.after_data];
-                if (combinedData.length > 1) {
-                    sparklineCell.appendChild(createSparkline(combinedData));
-                }
-            });
-
-        } catch (error) {
-            console.error("Error loading service efficacy data:", error);
-            tableBody.innerHTML = `<tr><td colspan="5" class="no-users-message" style="color:red;">Error loading analysis.</td></tr>`;
-        } finally {
-            hideLoader();
-        }
-    }
-    async function loadMachineDataView() {
-        const machineId = document.getElementById('adminMachineSelect').value;
-        if (!machineId) {
-            document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message">Select a machine to view data.</p>`;
-            return;
-        }
-
-        const year = document.getElementById('adminYearSelect').value;
-        const month = document.getElementById('adminMonthSelect').value;
-        const dataType = document.getElementById('adminDataTypeSelect').value;
-
-        showLoader();
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckTokenResponse = await appCheck.getToken(false);
-            const response = await fetch(`${BACKEND_URL}/admin/hospital-data?machineId=${machineId}&month=${year}-${month}`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
-            if (!response.ok) throw new Error('Failed to fetch data');
-            const result = await response.json();
-            renderHospitalQaDataTable(result.data, year, month);
-        } catch (error) {
-            console.error("Error loading hospital data:", error);
-            document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`;
-        } finally {
-            hideLoader();
-        }
-    }
-    async function loadMachinesForInstitution() {
-        const centerId = document.getElementById('manageMachineInstitutionSelect').value;
-        const tableBody = document.getElementById('machinesTableBody');
-        if (!centerId) {
-            tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Select an institution to see its machines.</td></tr>';
-            return;
-        }
-        tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Loading machines...</td></tr>';
-        const machines = await fetchMachinesForHospital(centerId);
-        
-        tableBody.innerHTML = '';
-        if (machines.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">No machines found for this institution.</td></tr>';
-            return;
-        }
-        machines.forEach(machine => {
-            const row = tableBody.insertRow();
-            row.innerHTML = `
-                <td>${machine.machineName}</td>
-                <td>${machine.machineId}</td>
-                <td class="user-actions-cell">
-                    <button class="edit-btn" onclick="openEditMachineModal('${machine.machineId}', '${machine.machineName}')">Edit</button>
-                    <button class="delete-btn" onclick="deleteMachine('${machine.machineId}', '${machine.machineName}')">Delete</button>
-                </td>
-            `;
-        });
-    }
-    async function fetchMachinesForHospital(centerId) {
-        if (!centerId) return [];
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckToken = (await appCheck.getToken(false)).token;
-            const response = await fetch(`${BACKEND_URL}/admin/machines?centerId=${centerId}`, {
-                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-            });
-            if (!response.ok) throw new Error('Failed to load machines.');
-            return await response.json();
-        } catch (error) {
-            console.error("Error fetching machines:", error);
-            showNotification('Could not load machines for the selected hospital.', 'error');
-            return [];
-        }
-    }
-    async function loadAllUsers() {
-        showLoader();
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckTokenResponse = await appCheck.getToken(false);
-            const response = await fetch(`${BACKEND_URL}/admin/users`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
-            if (!response.ok) throw new Error('Failed to fetch users');
-            allUsersData = await response.json();
-            populateCommonFilters();
-            renderUsers(allUsersData);
-        } catch (error) {
-            console.error("Error loading users:", error);
-            document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="6" class="no-users-message">Error loading users.</td></tr>`;
-        } finally {
-            hideLoader();
-        }
-    }
-    async function loadBenchmarkData() {
-        const period = document.getElementById('benchmarkPeriodSelect').value;
-        const hospitalId = document.getElementById('benchmarkHospitalSelect').value;
-        showLoader();
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckToken = (await appCheck.getToken(false)).token;
-            
-            let url = `${BACKEND_URL}/admin/benchmark-metrics?period=${period}`;
-            if (hospitalId) {
-                url += `&hospitalId=${hospitalId}`;
-            }
-            
-            const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-            });
-            if (!response.ok) throw new Error('Failed to load benchmark data.');
-            const data = await response.json();
-            renderBenchmarkCharts(data);
-            renderBenchmarkTable(data);
-        } catch (error) {
-            console.error("Error loading benchmark data:", error);
-            document.getElementById('benchmark-content').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`;
-        } finally {
-            hideLoader();
-        }
-    }
-    async function runCorrelationAnalysis() {
-        const machineId = document.getElementById('correlationMachineSelect').value;
-        const dataType = document.getElementById('correlationDataTypeSelect').value;
-        const energy = document.getElementById('correlationEnergySelect').value;
-        const resultsContainer = document.getElementById('correlation-results-container');
-
-        if (!machineId || !dataType || !energy) {
-            alert("Please select a hospital, machine, QA parameter, and energy.");
-            return;
-        }
-
-        showLoader();
-        resultsContainer.innerHTML = `<p class="no-users-message">Running analysis...</p>`;
-
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckToken = (await appCheck.getToken(false)).token;
-            const url = `${BACKEND_URL}/admin/correlation-analysis?machineId=${machineId}&dataType=${dataType}&energy=${energy}`;
-            const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-            });
-            const result = await response.json();
-
-            if (!response.ok) throw new Error(result.error || 'Failed to run analysis.');
-            
-            let tableHTML = `<table class="user-table">
-                <thead><tr><th>Environmental Factor</th><th>Pearson Correlation</th><th>Interpretation</th></tr></thead><tbody>`;
-            for (const factor in result) {
-                const data = result[factor];
-                const corr = data.correlation;
-                const p_value = data.p_value;
-                let strength = "No";
-                let direction = "neutral";
-                let significance = p_value < 0.05 ? `<span class="significant" style="border-bottom: 2px dotted;">Statistically Significant (p=${p_value.toFixed(3)})</span>` : `Not Significant (p=${p_value.toFixed(3)})`;
-                
-                if (Math.abs(corr) > 0.7) strength = "Strong";
-                else if (Math.abs(corr) > 0.4) strength = "Moderate";
-                else if (Math.abs(corr) > 0.1) strength = "Weak";
-
-                if (corr > 0.1) direction = "positive";
-                else if (corr < -0.1) direction = "negative";
-
-                const factorName = factor.replace('_celsius', ' (°C)').replace('_hpa', ' (hPa)').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                
-                tableHTML += `<tr><td>${factorName}</td><td>${corr.toFixed(3)}</td><td class="interpretation-cell"><span style="font-weight:bold; color: ${direction === 'positive' ? 'green' : (direction === 'negative' ? 'red' : 'inherit')}">${strength} ${direction !== 'neutral' ? (direction === 'positive' ? 'Positive' : 'Negative') : ''} Correlation</span><br><small>${significance}</small></td></tr>`;
-            }
-            tableHTML += `</tbody></table>`;
-            if (Object.keys(result).length === 0) {
-                 tableHTML = `<p class="no-users-message">Analysis ran, but no significant correlation was found with the available data.</p>`;
-            }
-            resultsContainer.innerHTML = tableHTML;
-
-        } catch (error) {
-            resultsContainer.innerHTML = `<p class="no-users-message" style="color:red;">Error: ${error.message}</p>`;
-        } finally {
-            hideLoader();
-        }
-    }
-    async function loadServiceEfficacyData() {
-        const machineId = document.getElementById('efficacyMachineSelect').value;
-        const tableBody = document.getElementById('efficacyTableBody');
-        if (!machineId) {
-            tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">Please select a machine to analyze.</td></tr>';
-            return;
-        }
-
-        showLoader();
-        tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">Analyzing service data...</td></tr>';
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckToken = (await appCheck.getToken(false)).token;
-            const response = await fetch(`${BACKEND_URL}/admin/service-impact-analysis?machineId=${machineId}`, {
-                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-            });
-            if (!response.ok) throw new Error('Failed to fetch analysis data.');
-            
-            const results = await response.json();
-            tableBody.innerHTML = '';
-
-            if (results.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">No service events found for this machine.</td></tr>';
-                return;
-            }
-
-            results.forEach(res => {
-                const row = tableBody.insertRow();
-                const improvement = res.stability_improvement_percent;
-                const improvementClass = improvement > 5 ? 'improvement-positive' : (improvement < -5 ? 'improvement-negative' : '');
-                const improvementText = `${improvement > 0 ? '+' : ''}${improvement.toFixed(1)}%`;
-
-                row.innerHTML = `<td><strong>${res.energy}</strong> on ${res.service_date}</td><td>${res.before_metrics.std_deviation.toFixed(3)}</td><td>${res.after_metrics.std_deviation.toFixed(3)}</td><td class="${improvementClass}">${improvementText}</td>`;
-
-                const sparklineCell = row.insertCell();
-                const combinedData = [...res.before_data, ...res.after_data];
-                if (combinedData.length > 1) {
-                    sparklineCell.appendChild(createSparkline(combinedData));
-                }
-            });
-
-        } catch (error) {
-            console.error("Error loading service efficacy data:", error);
-            tableBody.innerHTML = `<tr><td colspan="5" class="no-users-message" style="color:red;">Error loading analysis.</td></tr>`;
-        } finally {
-            hideLoader();
-        }
-    }
-    async function loadMachineDataView() {
-        const machineId = document.getElementById('adminMachineSelect').value;
-        if (!machineId) {
-            document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message">Select a machine to view data.</p>`;
-            return;
-        }
-
-        const year = document.getElementById('adminYearSelect').value;
-        const month = document.getElementById('adminMonthSelect').value;
-        const dataType = document.getElementById('adminDataTypeSelect').value;
-
-        showLoader();
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckTokenResponse = await appCheck.getToken(false);
-            const response = await fetch(`${BACKEND_URL}/admin/hospital-data?machineId=${machineId}&month=${year}-${month}`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
-            if (!response.ok) throw new Error('Failed to fetch data');
-            const result = await response.json();
-            renderHospitalQaDataTable(result.data, year, month);
-        } catch (error) {
-            console.error("Error loading hospital data:", error);
-            document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message" style="color:red;">Error loading data.</p>`;
-        } finally {
-            hideLoader();
-        }
-    }
-    
     document.addEventListener('DOMContentLoaded', () => {
         auth = firebase.auth();
         db = firebase.firestore();
@@ -1299,6 +1162,7 @@
             document.querySelector('.sidebar-nav').classList.toggle('sidebar-visible');
         });
 
+        // [MODIFIED] Added event listener to close mobile menu on content click
         document.querySelector('.content-display-area').addEventListener('click', () => {
             document.querySelector('.sidebar-nav').classList.remove('sidebar-visible');
         });
@@ -1326,12 +1190,6 @@
             const centerId = document.getElementById('addMachineInstitutionSelect').value;
             const machineNameInputs = document.querySelectorAll('.machine-name-input');
             const machines = Array.from(machineNameInputs).map(input => input.value.trim());
-
-            if (machines.some(name => !name)) {
-                showNotification('Machine names cannot be empty.', 'warning');
-                hideLoader();
-                return;
-            }
 
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
@@ -1364,127 +1222,14 @@
 
         const dataViewControls = ['adminMachineSelect', 'adminYearSelect', 'adminMonthSelect', 'adminDataTypeSelect'];
         dataViewControls.forEach(id => document.getElementById(id).addEventListener('change', loadMachineDataView));
-        
+
+
         window.onclick = function(event) {
             if (event.target == document.getElementById('userEditModal')) closeEditModal();
             if (event.target == document.getElementById('confirmationModal')) hideConfirmationModal();
             if (event.target == editMachineModal) editMachineModal.style.display = 'none';
         };
-
-        // All functions below this point are already correctly defined, as they're not called directly from onclick.
-        function renderUsers(usersToRender) {
-            const usersTableBody = document.getElementById('usersTableBody');
-            usersTableBody.innerHTML = '';
-            if (!usersToRender || usersToRender.length === 0) {
-                usersTableBody.innerHTML = '<tr><td colspan="6" class="no-users-message">No users found.</td></tr>';
-                return;
-            }
-            usersToRender.forEach(user => {
-                const row = usersTableBody.insertRow();
-                row.innerHTML = `
-                    <td>${user.name || 'N/A'}</td>
-                    <td>${user.email || 'N/A'}</td>
-                    <td>${user.hospital || 'N/A'}</td>
-                    <td>${user.role || 'N/A'}</td>
-                    <td><span style="font-weight:bold; color:${user.status === 'active' ? 'green' : (user.status === 'pending' ? 'orange' : 'red')}">${user.status?.toUpperCase() || 'N/A'}</span></td>
-                    <td class="user-actions-cell">
-                        <button class="approve-btn" onclick="updateUserStatus('${user.uid}', 'active')">Approve</button>
-                        <button class="reject-btn" onclick="updateUserStatus('${user.uid}', 'rejected')">Reject</button>
-                        <button class="edit-btn" onclick="openEditModal('${user.uid}')">Edit</button>
-                        <button class="delete-btn" onclick="deleteUser('${user.uid}', '${user.name || 'this user'}')"><i class="fas fa-trash"></i></button>
-                    </td>
-                `;
-            });
-        }
-        function populateCommonFilters() {
-            const hospitalSet = new Set(allUsersData.map(user => user.hospital).filter(Boolean));
-            const sortedHospitals = [...hospitalSet].sort();
-            const hospitalFilterSelects = document.querySelectorAll('.hospital-selector, #filterHospital, #auditLogHospitalFilter');
-            
-            hospitalFilterSelects.forEach(select => {
-                if (select) {
-                    const currentValue = select.value;
-                    const firstOptionHTML = select.querySelector('option').outerHTML;
-                    let optionsHTML = '';
-                    sortedHospitals.forEach(h => { optionsHTML += `<option value="${h}">${h}</option>`; });
-                    select.innerHTML = firstOptionHTML + optionsHTML;
-                    select.value = currentValue;
-                }
-            });
-        }
-        function populateDateFilters() {
-            const yearSelect = document.getElementById('adminYearSelect');
-            const monthSelect = document.getElementById('adminMonthSelect');
-            if (yearSelect.options.length > 0) return;
-            const currentYear = new Date().getFullYear();
-            for (let i = currentYear; i >= currentYear - 5; i--) { yearSelect.add(new Option(i, i)); }
-            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            months.forEach((m, i) => { monthSelect.add(new Option(m, String(i + 1).padStart(2, '0'))); });
-            monthSelect.value = String(new Date().getMonth() + 1).padStart(2, '0');
-        }
-        function populateAuditLogFilters() {
-            const dateFilter = document.getElementById('auditLogDateFilter');
-            if(!dateFilter.value) { dateFilter.value = new Date().toISOString().split('T')[0]; }
-        }
-        function populateCorrelationEnergySelect() {
-            const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
-            const select = document.getElementById('correlationEnergySelect');
-            select.innerHTML = '';
-            energyTypes.forEach(e => {
-                select.add(new Option(e, e));
-            });
-        }
-        function renderBenchmarkCharts(data) {
-            const isDarkMode = document.body.classList.contains('dark');
-            const ticksColor = isDarkMode ? '#ddd' : '#666';
-            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-            const labels = data.map(d => `${d.machineName} (${d.hospital})`);
-            
-            const meanDevCtx = document.getElementById('meanDeviationChart').getContext('2d');
-            if (benchmarkCharts.meanDeviation) benchmarkCharts.meanDeviation.destroy();
-            benchmarkCharts.meanDeviation = new Chart(meanDevCtx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Mean Deviation (Output %)',
-                        data: data.map(d => d.metrics.output.mean_deviation),
-                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: { responsive: true, plugins: { title: { display: true, text: 'Mean Deviation (Output)', color: ticksColor } }, scales: { y: { ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
-            });
-
-            const stdDevCtx = document.getElementById('stdDeviationChart').getContext('2d');
-            if (benchmarkCharts.stdDeviation) benchmarkCharts.stdDeviation.destroy();
-            benchmarkCharts.stdDeviation = new Chart(stdDevCtx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Std. Deviation (Output %)',
-                        data: data.map(d => d.metrics.output.std_deviation),
-                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
-                        borderColor: 'rgba(255, 159, 64, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: { responsive: true, plugins: { title: { display: true, text: 'Machine Stability (Output Std. Dev.)', color: ticksColor } }, scales: { y: { beginAtZero: true, ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
-            });
-        }
-        function renderBenchmarkTable(data) {
-            const tableBody = document.getElementById('benchmarkTableBody');
-            tableBody.innerHTML = '';
-            if (!data || data.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No benchmark data available.</td></tr>`;
-                return;
-            }
-            data.forEach(item => {
-                const row = tableBody.insertRow();
-                row.innerHTML = `<td>${item.machineName} (${item.hospital})</td><td>${item.oots}</td><td>${item.warnings}</td><td>${item.metrics.output.data_points}</td>`;
-            });
-        }
     });
 </script>
+</body>
+</html>
