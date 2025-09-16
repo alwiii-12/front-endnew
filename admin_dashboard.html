@@ -463,7 +463,7 @@
     let auth, db, appCheck;
     let onConfirmCallback = null;
 
-    // FIX: Moved to global scope to be accessible by onclick attributes.
+    // FIX: Moved all of these functions to the global scope and added the `async` keyword where needed.
     function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
     function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
     function showNotification(message, type = 'info', duration = 3000) {
@@ -587,7 +587,7 @@
             formGroup.className = 'form-group';
             formGroup.innerHTML = `
                 <label for="machineName${i}">Machine ${i + 1} Name</label>
-                <input type="text" id="machineName${i}" class="machine-name-input" placeholder="e.g., TrueBeam-1" required>
+                <input type="text" id="machineName${i}" class="machine-name-input" placeholder="e.g., TrueBeam ${i + 1}" required>
             `;
             container.appendChild(formGroup);
         }
@@ -831,281 +831,7 @@
             hideLoader();
         }
     }
-    async function loadMachinesForInstitution() {
-        const centerId = document.getElementById('manageMachineInstitutionSelect').value;
-        const tableBody = document.getElementById('machinesTableBody');
-        if (!centerId) {
-            tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Select an institution to see its machines.</td></tr>';
-            return;
-        }
-        tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Loading machines...</td></tr>';
-        const machines = await fetchMachinesForHospital(centerId);
-        
-        tableBody.innerHTML = '';
-        if (machines.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">No machines found for this institution.</td></tr>';
-            return;
-        }
-        machines.forEach(machine => {
-            const row = tableBody.insertRow();
-            row.innerHTML = `
-                <td>${machine.machineName}</td>
-                <td>${machine.machineId}</td>
-                <td class="user-actions-cell">
-                    <button class="edit-btn" onclick="openEditMachineModal('${machine.machineId}', '${machine.machineName}')">Edit</button>
-                    <button class="delete-btn" onclick="deleteMachine('${machine.machineId}', '${machine.machineName}')">Delete</button>
-                </td>
-            `;
-        });
-    }
-    async function saveMachineNameChanges() {
-        const machineId = document.getElementById('editMachineId').value;
-        const newName = document.getElementById('editMachineNameInput').value.trim();
-
-        if (!newName) {
-            showNotification('Machine name cannot be empty.', 'warning');
-            return;
-        }
-
-        showLoader();
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckToken = (await appCheck.getToken(false)).token;
-            const response = await fetch(`${BACKEND_URL}/admin/machine/${machineId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
-                body: JSON.stringify({ machineName: newName })
-            });
-            if (!response.ok) throw new Error('Failed to update machine.');
-            showNotification('Machine name updated successfully.', 'success');
-            document.getElementById('editMachineModal').style.display = 'none';
-            await loadMachinesForInstitution();
-        } catch(error) {
-            showNotification(error.message, 'error');
-        } finally {
-            hideLoader();
-        }
-    }
-    async function fetchMachinesForHospital(centerId) {
-        if (!centerId) return [];
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckToken = (await appCheck.getToken(false)).token;
-            const response = await fetch(`${BACKEND_URL}/admin/machines?centerId=${centerId}`, {
-                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-            });
-            if (!response.ok) throw new Error('Failed to load machines.');
-            return await response.json();
-        } catch (error) {
-            console.error("Error fetching machines:", error);
-            showNotification('Could not load machines for the selected hospital.', 'error');
-            return [];
-        }
-    }
-    async function loadAllUsers() {
-        showLoader();
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckTokenResponse = await appCheck.getToken(false);
-            const response = await fetch(`${BACKEND_URL}/admin/users`, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
-            if (!response.ok) throw new Error('Failed to fetch users');
-            allUsersData = await response.json();
-            populateCommonFilters();
-            renderUsers(allUsersData);
-        } catch (error) {
-            console.error("Error loading users:", error);
-            document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="6" class="no-users-message">Error loading users.</td></tr>`;
-        } finally {
-            hideLoader();
-        }
-    }
-    async function loadAuditLogs(fetchAll = false) {
-        showLoader();
-        let hospitalId = document.getElementById('auditLogHospitalFilter').value;
-        let action = document.getElementById('auditLogActionFilter').value;
-        let date = document.getElementById('auditLogDateFilter').value;
-        const logsTableBody = document.getElementById('auditLogsTableBody');
-        logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message">Loading logs...</td></tr>`;
-        if (fetchAll) { hospitalId = ''; action = ''; date = ''; document.getElementById('auditLogHospitalFilter').value = ''; document.getElementById('auditLogActionFilter').value = ''; document.getElementById('auditLogDateFilter').value = ''; }
-        let url = `${BACKEND_URL}/admin/audit-logs?`;
-        if(date) url += `date=${date}&`;
-        if(hospitalId) url += `hospitalId=${hospitalId}&`;
-        if(action) url += `action=${action}&`;
-        try {
-            const idToken = await auth.currentUser.getIdToken(true);
-            const appCheckTokenResponse = await appCheck.getToken(false);
-            const response = await fetch(url, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
-            if (!response.ok) throw new Error('Failed to fetch logs');
-            const result = await response.json();
-            logsTableBody.innerHTML = '';
-            if(result.logs.length === 0) { logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message">No logs found.</td></tr>`; return; }
-            result.logs.forEach(log => {
-                const row = logsTableBody.insertRow();
-                row.innerHTML = `
-                    <td>${log.timestamp}</td>
-                    <td>${log.action}</td>
-                    <td><pre style="margin: 0; font-family: inherit; font-size: inherit;">${log.user_display || 'N/A'}</pre></td>
-                `;
-            });
-        } catch (error) { console.error("Error loading audit logs:", error); logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message" style="color:red;">Error loading logs.</td></tr>`; } finally { hideLoader(); }
-    }
-
-
-    // All other functions are correctly defined below.
     
-    function renderHospitalQaDataTable(allData, year, month) {
-        const container = document.getElementById('hospitalQaTableContainer');
-        const selectedDataType = document.getElementById('adminDataTypeSelect').value;
-        const dataForTable = allData[selectedDataType]; 
-        const config = dataTypesConfig[selectedDataType];
-        container.innerHTML = '';
-        if (!dataForTable || dataForTable.length === 0 || !config) {
-            container.innerHTML = `<p class="no-users-message">No '${selectedDataType}' data available.</p>`;
-            return;
-        }
-        const numDays = new Date(year, month, 0).getDate();
-        let tableHTML = `<h3 style="text-align:center; margin-top:0;">${selectedDataType.charAt(0).toUpperCase() + selectedDataType.slice(1)} Data</h3><table class="user-table hospital-qa-table"><thead><tr><th>Energy</th>`;
-        for (let i = 1; i <= numDays; i++) { tableHTML += `<th>${i}</th>`; }
-        tableHTML += '</tr></thead><tbody>';
-        dataForTable.forEach(row => {
-            tableHTML += `<tr><td>${row[0]}</td>`;
-            const values = row.slice(1);
-            for (let i = 0; i < numDays; i++) {
-                const value = values[i] || '';
-                const numValue = parseFloat(value);
-                let className = '';
-                if (!isNaN(numValue)) {
-                    if (Math.abs(numValue) > config.tolerance) className = 'out';
-                    else if (Math.abs(numValue) >= config.warning) className = 'warning';
-                    else className = 'within';
-                }
-                tableHTML += `<td class="${className}">${value}</td>`;
-            }
-            tableHTML += '</tr>';
-        });
-        tableHTML += '</tbody></table>';
-        container.innerHTML = tableHTML;
-    }
-    
-    function filterUsers() {
-        const searchTerm = document.getElementById('searchUserInput').value.toLowerCase();
-        const status = document.getElementById('filterStatus').value;
-        const hospital = document.getElementById('filterHospital').value;
-        const filtered = allUsersData.filter(user => 
-            (user.name?.toLowerCase().includes(searchTerm) || user.email?.toLowerCase().includes(searchTerm)) &&
-            (status === "" || user.status === status) &&
-            (hospital === "" || user.hospital === hospital)
-        );
-        renderUsers(filtered);
-    }
-    
-    function renderBenchmarkCharts(data) {
-        const isDarkMode = document.body.classList.contains('dark');
-        const ticksColor = isDarkMode ? '#ddd' : '#666';
-        const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-        const labels = data.map(d => `${d.machineName} (${d.hospital})`);
-        
-        const meanDevCtx = document.getElementById('meanDeviationChart').getContext('2d');
-        if (benchmarkCharts.meanDeviation) benchmarkCharts.meanDeviation.destroy();
-        benchmarkCharts.meanDeviation = new Chart(meanDevCtx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Mean Deviation (Output %)',
-                    data: data.map(d => d.metrics.output.mean_deviation),
-                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: { responsive: true, plugins: { title: { display: true, text: 'Mean Deviation (Output)', color: ticksColor } }, scales: { y: { ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
-        });
-
-        const stdDevCtx = document.getElementById('stdDeviationChart').getContext('2d');
-        if (benchmarkCharts.stdDeviation) benchmarkCharts.stdDeviation.destroy();
-        benchmarkCharts.stdDeviation = new Chart(stdDevCtx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Std. Deviation (Output %)',
-                    data: data.map(d => d.metrics.output.std_deviation),
-                    backgroundColor: 'rgba(255, 159, 64, 0.6)',
-                    borderColor: 'rgba(255, 159, 64, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: { responsive: true, plugins: { title: { display: true, text: 'Machine Stability (Output Std. Dev.)', color: ticksColor } }, scales: { y: { beginAtZero: true, ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
-        });
-    }
-
-    function renderBenchmarkTable(data) {
-        const tableBody = document.getElementById('benchmarkTableBody');
-        tableBody.innerHTML = '';
-        if (!data || data.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No benchmark data available.</td></tr>`;
-            return;
-        }
-        data.forEach(item => {
-            const row = tableBody.insertRow();
-            row.innerHTML = `<td>${item.machineName} (${item.hospital})</td><td>${item.oots}</td><td>${item.warnings}</td><td>${item.metrics.output.data_points}</td>`;
-        });
-    }
-    
-    function populateCommonFilters() {
-        const hospitalSet = new Set(allUsersData.map(user => user.hospital).filter(Boolean));
-        const sortedHospitals = [...hospitalSet].sort();
-        const hospitalFilterSelects = document.querySelectorAll('.hospital-selector, #filterHospital, #auditLogHospitalFilter');
-        
-        hospitalFilterSelects.forEach(select => {
-            if (select) {
-                const currentValue = select.value;
-                const firstOptionHTML = select.querySelector('option').outerHTML;
-                let optionsHTML = '';
-                sortedHospitals.forEach(h => { optionsHTML += `<option value="${h}">${h}</option>`; });
-                select.innerHTML = firstOptionHTML + optionsHTML;
-                select.value = currentValue;
-            }
-        });
-    }
-
-    function populateDateFilters() {
-        const yearSelect = document.getElementById('adminYearSelect');
-        const monthSelect = document.getElementById('adminMonthSelect');
-        if (yearSelect.options.length > 0) return;
-        const currentYear = new Date().getFullYear();
-        for (let i = currentYear; i >= currentYear - 5; i--) { yearSelect.add(new Option(i, i)); }
-        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        months.forEach((m, i) => { monthSelect.add(new Option(m, String(i + 1).padStart(2, '0'))); });
-        monthSelect.value = String(new Date().getMonth() + 1).padStart(2, '0');
-    }
-
-    function populateAuditLogFilters() {
-        const dateFilter = document.getElementById('auditLogDateFilter');
-        if(!dateFilter.value) { dateFilter.value = new Date().toISOString().split('T')[0]; }
-    }
-    
-    function populateCorrelationEnergySelect() {
-        const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
-        const select = document.getElementById('correlationEnergySelect');
-        select.innerHTML = '';
-        energyTypes.forEach(e => {
-            select.add(new Option(e, e));
-        });
-    }
-
-    function populateMachineManagementDropdowns() {
-        const hospitalSelect = document.getElementById('filterHospital');
-        if (hospitalSelect.options.length <= 1) return;
-
-        const addMachineSelect = document.getElementById('addMachineInstitutionSelect');
-        const manageMachineSelect = document.getElementById('manageMachineInstitutionSelect');
-
-        addMachineSelect.innerHTML = hospitalSelect.innerHTML;
-        manageMachineSelect.innerHTML = hospitalSelect.innerHTML;
-    }
-
     document.addEventListener('DOMContentLoaded', () => {
         auth = firebase.auth();
         db = firebase.firestore();
@@ -1295,36 +1021,6 @@
                 hideLoader();
             }
         }
-        async function loadAuditLogs(fetchAll = false) {
-            showLoader();
-            let hospitalId = document.getElementById('auditLogHospitalFilter').value;
-            let action = document.getElementById('auditLogActionFilter').value;
-            let date = document.getElementById('auditLogDateFilter').value;
-            const logsTableBody = document.getElementById('auditLogsTableBody');
-            logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message">Loading logs...</td></tr>`;
-            if (fetchAll) { hospitalId = ''; action = ''; date = ''; document.getElementById('auditLogHospitalFilter').value = ''; document.getElementById('auditLogActionFilter').value = ''; document.getElementById('auditLogDateFilter').value = ''; }
-            let url = `${BACKEND_URL}/admin/audit-logs?`;
-            if(date) url += `date=${date}&`;
-            if(hospitalId) url += `hospitalId=${hospitalId}&`;
-            if(action) url += `action=${action}&`;
-            try {
-                const idToken = await auth.currentUser.getIdToken(true);
-                const appCheckTokenResponse = await appCheck.getToken(false);
-                const response = await fetch(url, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
-                if (!response.ok) throw new Error('Failed to fetch logs');
-                const result = await response.json();
-                logsTableBody.innerHTML = '';
-                if(result.logs.length === 0) { logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message">No logs found.</td></tr>`; return; }
-                result.logs.forEach(log => {
-                    const row = logsTableBody.insertRow();
-                    row.innerHTML = `
-                        <td>${log.timestamp}</td>
-                        <td>${log.action}</td>
-                        <td><pre style="margin: 0; font-family: inherit; font-size: inherit;">${log.user_display || 'N/A'}</pre></td>
-                    `;
-                });
-            } catch (error) { console.error("Error loading audit logs:", error); logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message" style="color:red;">Error loading logs.</td></tr>`; } finally { hideLoader(); }
-        }
         async function loadBenchmarkData() {
             const period = document.getElementById('benchmarkPeriodSelect').value;
             const hospitalId = document.getElementById('benchmarkHospitalSelect').value;
@@ -1484,179 +1180,6 @@
                 hideLoader();
             }
         }
-    
-    // This block of code is responsible for initializing Firebase and setting up event listeners.
-    document.addEventListener('DOMContentLoaded', () => {
-        auth = firebase.auth();
-        db = firebase.firestore();
-        appCheck = firebase.appCheck();
-
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                currentAdminUid = user.uid;
-                const userRole = localStorage.getItem("userRole");
-                if (userRole !== "Admin" && userRole !== "Super Admin") {
-                    alert("Access Denied.");
-                    logout();
-                } else {
-                    showLoader();
-                    await loadAllUsers();
-                    showAdminSection('manage-users-section');
-                    hideLoader();
-                }
-            } else {
-                window.location.href = "login.html";
-            }
-        });
-        
-        document.getElementById('menu-toggle').addEventListener('click', () => {
-            document.querySelector('.sidebar-nav').classList.toggle('sidebar-visible');
-        });
-
-        document.querySelector('.content-display-area').addEventListener('click', () => {
-            document.querySelector('.sidebar-nav').classList.remove('sidebar-visible');
-        });
-
-        document.querySelector('.sidebar-nav').addEventListener('click', (event) => {
-            const button = event.target.closest('.nav-btn');
-            if (button) showAdminSection(button.dataset.section);
-        });
-        
-        document.getElementById('confirmBtn').addEventListener('click', () => {
-            if (onConfirmCallback) onConfirmCallback();
-            hideConfirmationModal();
-        });
-
-        document.getElementById('deleteConfirmInput').addEventListener('input', (e) => {
-            document.getElementById('confirmBtn').disabled = e.target.value !== e.target.dataset.expectedName;
-        });
-
-        document.getElementById('numMachinesSelect').addEventListener('change', generateMachineNameInputs);
-        document.getElementById('manageMachineInstitutionSelect').addEventListener('change', loadMachinesForInstitution);
-        
-        document.getElementById('addMachinesForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showLoader();
-            const centerId = document.getElementById('addMachineInstitutionSelect').value;
-            const machineNameInputs = document.querySelectorAll('.machine-name-input');
-            const machines = Array.from(machineNameInputs).map(input => input.value.trim());
-
-            if (machines.some(name => !name)) {
-                showNotification('Machine names cannot be empty.', 'warning');
-                hideLoader();
-                return;
-            }
-
-            try {
-                const idToken = await auth.currentUser.getIdToken(true);
-                const appCheckToken = (await appCheck.getToken(false)).token;
-                const response = await fetch(`${BACKEND_URL}/admin/machines`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
-                    body: JSON.stringify({ centerId, machines })
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message || 'Failed to add machines.');
-                showNotification(result.message, 'success');
-                document.getElementById('addMachinesForm').reset();
-                generateMachineNameInputs();
-            } catch(error) {
-                showNotification(error.message, 'error');
-            } finally {
-                hideLoader();
-            }
-        });
-
-        const editMachineModal = document.getElementById('editMachineModal');
-        document.getElementById('saveMachineNameBtn').addEventListener('click', saveMachineNameChanges);
-        editMachineModal.querySelector('.close-button').addEventListener('click', () => editMachineModal.style.display = 'none');
-        editMachineModal.querySelector('.cancel-btn').addEventListener('click', () => editMachineModal.style.display = 'none');
-
-        setupCascadingDropdowns(document.getElementById('adminHospitalSelect'), document.getElementById('adminMachineSelect'));
-        setupCascadingDropdowns(document.getElementById('efficacyHospitalSelect'), document.getElementById('efficacyMachineSelect'));
-        setupCascadingDropdowns(document.getElementById('correlationHospitalSelect'), document.getElementById('correlationMachineSelect'));
-
-        const dataViewControls = ['adminMachineSelect', 'adminYearSelect', 'adminMonthSelect', 'adminDataTypeSelect'];
-        dataViewControls.forEach(id => document.getElementById(id).addEventListener('change', loadMachineDataView));
-
-
-        window.onclick = function(event) {
-            if (event.target == document.getElementById('userEditModal')) closeEditModal();
-            if (event.target == document.getElementById('confirmationModal')) hideConfirmationModal();
-            if (event.target == editMachineModal) editMachineModal.style.display = 'none';
-        };
-
-        async function saveMachineNameChanges() {
-            const machineId = document.getElementById('editMachineId').value;
-            const newName = document.getElementById('editMachineNameInput').value.trim();
-
-            if (!newName) {
-                showNotification('Machine name cannot be empty.', 'warning');
-                return;
-            }
-
-            showLoader();
-            try {
-                const idToken = await auth.currentUser.getIdToken(true);
-                const appCheckToken = (await appCheck.getToken(false)).token;
-                const response = await fetch(`${BACKEND_URL}/admin/machine/${machineId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
-                    body: JSON.stringify({ machineName: newName })
-                });
-                if (!response.ok) throw new Error('Failed to update machine.');
-                showNotification('Machine name updated successfully.', 'success');
-                document.getElementById('editMachineModal').style.display = 'none';
-                await loadMachinesForInstitution();
-            } catch(error) {
-                showNotification(error.message, 'error');
-            } finally {
-                hideLoader();
-            }
-        }
-        async function loadMachinesForInstitution() {
-            const centerId = document.getElementById('manageMachineInstitutionSelect').value;
-            const tableBody = document.getElementById('machinesTableBody');
-            if (!centerId) {
-                tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Select an institution to see its machines.</td></tr>';
-                return;
-            }
-            tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">Loading machines...</td></tr>';
-            const machines = await fetchMachinesForHospital(centerId);
-            
-            tableBody.innerHTML = '';
-            if (machines.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="3" class="no-users-message">No machines found for this institution.</td></tr>';
-                return;
-            }
-            machines.forEach(machine => {
-                const row = tableBody.insertRow();
-                row.innerHTML = `
-                    <td>${machine.machineName}</td>
-                    <td>${machine.machineId}</td>
-                    <td class="user-actions-cell">
-                        <button class="edit-btn" onclick="openEditMachineModal('${machine.machineId}', '${machine.machineName}')">Edit</button>
-                        <button class="delete-btn" onclick="deleteMachine('${machine.machineId}', '${machine.machineName}')">Delete</button>
-                    </td>
-                `;
-            });
-        }
-        async function fetchMachinesForHospital(centerId) {
-            if (!centerId) return [];
-            try {
-                const idToken = await auth.currentUser.getIdToken(true);
-                const appCheckToken = (await appCheck.getToken(false)).token;
-                const response = await fetch(`${BACKEND_URL}/admin/machines?centerId=${centerId}`, {
-                    headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
-                });
-                if (!response.ok) throw new Error('Failed to load machines.');
-                return await response.json();
-            } catch (error) {
-                console.error("Error fetching machines:", error);
-                showNotification('Could not load machines for the selected hospital.', 'error');
-                return [];
-            }
-        }
         function renderUsers(usersToRender) {
             const usersTableBody = document.getElementById('usersTableBody');
             usersTableBody.innerHTML = '';
@@ -1692,50 +1215,6 @@
             );
             renderUsers(filtered);
         }
-        async function loadAuditLogs(fetchAll = false) {
-            showLoader();
-            let hospitalId = document.getElementById('auditLogHospitalFilter').value;
-            let action = document.getElementById('auditLogActionFilter').value;
-            let date = document.getElementById('auditLogDateFilter').value;
-            const logsTableBody = document.getElementById('auditLogsTableBody');
-            logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message">Loading logs...</td></tr>`;
-            if (fetchAll) { hospitalId = ''; action = ''; date = ''; document.getElementById('auditLogHospitalFilter').value = ''; document.getElementById('auditLogActionFilter').value = ''; document.getElementById('auditLogDateFilter').value = ''; }
-            let url = `${BACKEND_URL}/admin/audit-logs?`;
-            if(date) url += `date=${date}&`;
-            if(hospitalId) url += `hospitalId=${hospitalId}&`;
-            if(action) url += `action=${action}&`;
-            try {
-                const idToken = await auth.currentUser.getIdToken(true);
-                const appCheckTokenResponse = await appCheck.getToken(false);
-                const response = await fetch(url, { headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckTokenResponse.token } });
-                if (!response.ok) throw new Error('Failed to fetch logs');
-                const result = await response.json();
-                logsTableBody.innerHTML = '';
-                if(result.logs.length === 0) { logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message">No logs found.</td></tr>`; return; }
-                result.logs.forEach(log => {
-                    const row = logsTableBody.insertRow();
-                    row.innerHTML = `
-                        <td>${log.timestamp}</td>
-                        <td>${log.action}</td>
-                        <td><pre style="margin: 0; font-family: inherit; font-size: inherit;">${log.user_display || 'N/A'}</pre></td>
-                    `;
-                });
-            } catch (error) { console.error("Error loading audit logs:", error); logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message" style="color:red;">Error loading logs.</td></tr>`; } finally { hideLoader(); }
-        }
-        function populateAuditLogFilters() {
-            const dateFilter = document.getElementById('auditLogDateFilter');
-            if(!dateFilter.value) { dateFilter.value = new Date().toISOString().split('T')[0]; }
-        }
-        function populateMachineManagementDropdowns() {
-            const hospitalSelect = document.getElementById('filterHospital');
-            if (hospitalSelect.options.length <= 1) return;
-
-            const addMachineSelect = document.getElementById('addMachineInstitutionSelect');
-            const manageMachineSelect = document.getElementById('manageMachineInstitutionSelect');
-
-            addMachineSelect.innerHTML = hospitalSelect.innerHTML;
-            manageMachineSelect.innerHTML = hospitalSelect.innerHTML;
-        }
         function renderHospitalQaDataTable(allData, year, month) {
             const container = document.getElementById('hospitalQaTableContainer');
             const selectedDataType = document.getElementById('adminDataTypeSelect').value;
@@ -1769,29 +1248,124 @@
             tableHTML += '</tbody></table>';
             container.innerHTML = tableHTML;
         }
-        function renderUsers(usersToRender) {
-            const usersTableBody = document.getElementById('usersTableBody');
-            usersTableBody.innerHTML = '';
-            if (!usersToRender || usersToRender.length === 0) {
-                usersTableBody.innerHTML = '<tr><td colspan="6" class="no-users-message">No users found.</td></tr>';
-                return;
-            }
-            usersToRender.forEach(user => {
-                const row = usersTableBody.insertRow();
-                row.innerHTML = `
-                    <td>${user.name || 'N/A'}</td>
-                    <td>${user.email || 'N/A'}</td>
-                    <td>${user.hospital || 'N/A'}</td>
-                    <td>${user.role || 'N/A'}</td>
-                    <td><span style="font-weight:bold; color:${user.status === 'active' ? 'green' : (user.status === 'pending' ? 'orange' : 'red')}">${user.status?.toUpperCase() || 'N/A'}</span></td>
-                    <td class="user-actions-cell">
-                        <button class="approve-btn" onclick="updateUserStatus('${user.uid}', 'active')">Approve</button>
-                        <button class="reject-btn" onclick="updateUserStatus('${user.uid}', 'rejected')">Reject</button>
-                        <button class="edit-btn" onclick="openEditModal('${user.uid}')">Edit</button>
-                        <button class="delete-btn" onclick="deleteUser('${user.uid}', '${user.name || 'this user'}')"><i class="fas fa-trash"></i></button>
-                    </td>
-                `;
+        function populateCommonFilters() {
+            const hospitalSet = new Set(allUsersData.map(user => user.hospital).filter(Boolean));
+            const sortedHospitals = [...hospitalSet].sort();
+            const hospitalFilterSelects = document.querySelectorAll('.hospital-selector, #filterHospital, #auditLogHospitalFilter');
+            
+            hospitalFilterSelects.forEach(select => {
+                if (select) {
+                    const currentValue = select.value;
+                    const firstOptionHTML = select.querySelector('option').outerHTML;
+                    let optionsHTML = '';
+                    sortedHospitals.forEach(h => { optionsHTML += `<option value="${h}">${h}</option>`; });
+                    select.innerHTML = firstOptionHTML + optionsHTML;
+                    select.value = currentValue;
+                }
             });
         }
+        function populateDateFilters() {
+            const yearSelect = document.getElementById('adminYearSelect');
+            const monthSelect = document.getElementById('adminMonthSelect');
+            if (yearSelect.options.length > 0) return;
+            const currentYear = new Date().getFullYear();
+            for (let i = currentYear; i >= currentYear - 5; i--) { yearSelect.add(new Option(i, i)); }
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            months.forEach((m, i) => { monthSelect.add(new Option(m, String(i + 1).padStart(2, '0'))); });
+            monthSelect.value = String(new Date().getMonth() + 1).padStart(2, '0');
+        }
+        function populateAuditLogFilters() {
+            const dateFilter = document.getElementById('auditLogDateFilter');
+            if(!dateFilter.value) { dateFilter.value = new Date().toISOString().split('T')[0]; }
+        }
+        function populateCorrelationEnergySelect() {
+            const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
+            const select = document.getElementById('correlationEnergySelect');
+            select.innerHTML = '';
+            energyTypes.forEach(e => {
+                select.add(new Option(e, e));
+            });
+        }
+        function renderBenchmarkCharts(data) {
+            const isDarkMode = document.body.classList.contains('dark');
+            const ticksColor = isDarkMode ? '#ddd' : '#666';
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const labels = data.map(d => `${d.machineName} (${d.hospital})`);
+            
+            const meanDevCtx = document.getElementById('meanDeviationChart').getContext('2d');
+            if (benchmarkCharts.meanDeviation) benchmarkCharts.meanDeviation.destroy();
+            benchmarkCharts.meanDeviation = new Chart(meanDevCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Mean Deviation (Output %)',
+                        data: data.map(d => d.metrics.output.mean_deviation),
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: { responsive: true, plugins: { title: { display: true, text: 'Mean Deviation (Output)', color: ticksColor } }, scales: { y: { ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
+            });
+
+            const stdDevCtx = document.getElementById('stdDeviationChart').getContext('2d');
+            if (benchmarkCharts.stdDeviation) benchmarkCharts.stdDeviation.destroy();
+            benchmarkCharts.stdDeviation = new Chart(stdDevCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Std. Deviation (Output %)',
+                        data: data.map(d => d.metrics.output.std_deviation),
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: { responsive: true, plugins: { title: { display: true, text: 'Machine Stability (Output Std. Dev.)', color: ticksColor } }, scales: { y: { beginAtZero: true, ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
+            });
+        }
+        function renderBenchmarkTable(data) {
+            const tableBody = document.getElementById('benchmarkTableBody');
+            tableBody.innerHTML = '';
+            if (!data || data.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="no-users-message">No benchmark data available.</td></tr>`;
+                return;
+            }
+            data.forEach(item => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `<td>${item.machineName} (${item.hospital})</td><td>${item.oots}</td><td>${item.warnings}</td><td>${item.metrics.output.data_points}</td>`;
+            });
+        }
+        async function saveMachineNameChanges() {
+            const machineId = document.getElementById('editMachineId').value;
+            const newName = document.getElementById('editMachineNameInput').value.trim();
+
+            if (!newName) {
+                showNotification('Machine name cannot be empty.', 'warning');
+                return;
+            }
+
+            showLoader();
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
+                const response = await fetch(`${BACKEND_URL}/admin/machine/${machineId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
+                    body: JSON.stringify({ machineName: newName })
+                });
+                if (!response.ok) throw new Error('Failed to update machine.');
+                showNotification('Machine name updated successfully.', 'success');
+                document.getElementById('editMachineModal').style.display = 'none';
+                await loadMachinesForInstitution();
+            } catch(error) {
+                showNotification(error.message, 'error');
+            } finally {
+                hideLoader();
+            }
+        }
+
     });
 </script>
