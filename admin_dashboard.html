@@ -1118,13 +1118,24 @@
         if (confirm(`Are you sure you want to delete the machine "${machineName}"?\nThis action cannot be undone.`)) {
             showLoader();
             try {
+                // Get the user's ID token for authentication
                 const idToken = await auth.currentUser.getIdToken(true);
+                // Get the App Check token for security
                 const appCheckToken = (await appCheck.getToken(false)).token;
+
                 const response = await fetch(`${BACKEND_URL}/admin/machine/${machineId}`, {
                     method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
+                    headers: { 
+                        'Authorization': `Bearer ${idToken}`, 
+                        'X-Firebase-AppCheck': appCheckToken 
+                    },
                 });
-                if (!response.ok) throw new Error('Failed to delete machine.');
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to delete machine.');
+                }
+                
                 showNotification('Machine deleted successfully.', 'success');
                 await loadMachinesForInstitution();
             } catch(error) {
