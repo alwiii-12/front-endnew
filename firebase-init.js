@@ -19,8 +19,9 @@ if (typeof firebase !== 'undefined' && !firebase.apps.length) {
     // Initialize App Check
     const appCheck = firebase.appCheck(app);
     
+    // [CORRECTED] This now uses the reCAPTCHA key that you configured correctly.
     appCheck.activate(
-      '6Ld8EYsrAAAAADcMM6k3d6lQVxjRUVpaowwdk2Lv', // Your reCAPTCHA v3 Site Key
+      '6LdTf4orAAAAAP3dAU652pS-EXTBhGzSxw-hR0dJ', 
       true);
     
     console.log("Firebase App Check Initialized!");
