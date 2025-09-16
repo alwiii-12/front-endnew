@@ -230,14 +230,16 @@
                             <label for="addMachineInstitutionSelect">Select Institution</label>
                             <select id="addMachineInstitutionSelect" required></select>
                         </div>
-                        <div class="form-group">
-                            <label for="numMachinesSelect">Number of Machines to Add</label>
-                            <select id="numMachinesSelect" required>
-                                <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
-                                <option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
-                            </select>
+                        <div id="add-machine-form-content" style="display: none;">
+                            <div class="form-group">
+                                <label for="numMachinesSelect">Number of Machines to Add</label>
+                                <select id="numMachinesSelect" required>
+                                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                                    <option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
+                                </select>
+                            </div>
+                            <div id="machine-name-inputs"></div>
                         </div>
-                        <div id="machine-name-inputs"></div>
                     </div>
                     <button type="submit" class="button" style="background-color: var(--primary-color); width: 100%; padding: 15px; font-size: 1.2em; margin-top: 20px;">Add Machines</button>
                 </form>
@@ -376,7 +378,7 @@
                         <option value="user_login">User Login</option>
                         <option value="user_logout">User Logout</option>
                         <option value="user_update">User Update</option>
-                        <option value="user_deletion">User Deletion</option>
+                        <option value="user_deletion">User D el etion</option>
                     </select>
                     <button onclick="loadAuditLogs()"><i class="fas fa-sync-alt"></i> Refresh Logs</button>
                     <button onclick="loadAuditLogs(true)" style="background-color: #ffc107; color: #333;">Show All</button>
