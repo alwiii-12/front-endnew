@@ -1137,7 +1137,8 @@
                 }
                 
                 showNotification('Machine deleted successfully.', 'success');
-                await loadMachinesForInstitution();
+                // Corrected line: Reload the machines list after a successful deletion
+                await loadMachinesForInstitution(); 
             } catch(error) {
                 showNotification(error.message, 'error');
             } finally {
