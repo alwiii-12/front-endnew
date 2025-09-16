@@ -1,6 +1,6 @@
-// This is the full content for firebase-init.js
+// firebase-init.js
 
-// Your web app's updated Firebase configuration
+// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBtG_xKqhJZFXmEvJ-Y0uqTG3WurrDSRgE",
   authDomain: "linac-qa-project.firebaseapp.com",
@@ -11,12 +11,12 @@ const firebaseConfig = {
   measurementId: "G-ZS97QYYFCQ"
 };
 
-// This line initializes the app using the compat libraries from your HTML files.
+// Initialize Firebase
 if (typeof firebase !== 'undefined' && !firebase.apps.length) {
     const app = firebase.initializeApp(firebaseConfig);
     console.log("Firebase Initialized Successfully!");
 
-    // Initialize App Check with the correct reCAPTCHA v3 provider
+    // Initialize App Check
     const appCheck = firebase.appCheck(app);
     
     appCheck.activate(
