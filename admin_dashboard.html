@@ -1,3 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | LINAC QA</title>
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* --- Styles for Admin Dashboard Enhancements --- */
+        
+        .admin-header {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .admin-header .header-buttons {
+            position: absolute;
+            right: 25px;
+        }
+        .admin-header .header-btn {
+            width: 44px;
+            height: 44px;
+            font-size: 1.2em;
+            background-color: var(--status-error);
+        }
+        .admin-header .header-btn:hover {
+            background-color: #c82333;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+            justify-content: flex-start;
+            background-color: var(--bg-card);
+            box-shadow: 2px 0 8px var(--shadow-light);
+            width: 240px;
+            flex-shrink: 0;
+        }
+        .sidebar-nav .nav-btn {
+            padding: 15px;
+            font-size: 1.05em;
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+        .sidebar-nav .nav-btn:hover:not(.active) {
+            background-color: #ddebfd;
+        }
+        .sidebar-nav .nav-btn.active {
+            background-color: var(--primary-color);
+            color: var(--text-white);
+        }
+
+        .hospital-qa-table th,
+        .hospital-qa-table td {
+            border: 1px solid var(--border-color);
+        }
+        #hospital-data-access-section {
+            position: relative;
+        }
+        .fullscreen-btn {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            width: 40px;
+            height: 40px;
+        }
+
+        #manage-users-section .filter-search-container button,
+        #audit-logs-section .filter-search-container button {
+            padding: 12px 22px;
+            font-size: 1em;
+        }
+
+        .user-actions-cell { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .hospital-qa-table th:first-child, .hospital-qa-table td:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: var(--bg-card); box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
+        .user-table th { z-index: 3; }
+        .hospital-qa-table th:first-child { background-color: var(--primary-light) !important; }
+        #deleteConfirmArea { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); }
+        #deleteConfirmArea label { display: block; margin-bottom: 10px; font-size: 0.95em; }
+        #deleteConfirmInput { width: 100%; }
+        
+        .performance-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .performance-table th, .performance-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .performance-table th {
+            background-color: var(--primary-light);
+        }
+
+        .performance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .performance-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .performance-nav button {
+            padding: 5px 10px;
+        }
+        .performance-nav select {
+            border: 1px solid var(--border-color);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+        .benchmark-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        .benchmark-chart-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        body.dark .benchmark-chart-container {
+             background-color: var(--bg-dark-card);
+        }
+
+        .efficacy-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .efficacy-table th, .efficacy-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .efficacy-table th {
+            background-color: var(--primary-light);
+        }
+        .sparkline {
+            width: 150px;
+            height: 40px;
+        }
+        .sparkline-line {
+            stroke: var(--primary-color);
+            stroke-width: 2;
+            fill: none;
+        }
+        .sparkline-midline {
+            stroke: #ccc;
+            stroke-width: 1;
+            stroke-dasharray: 2,2;
+        }
+        .improvement-positive {
+            color: var(--status-success);
+            font-weight: bold;
+        }
+        .improvement-negative {
+            color: var(--status-error);
+            font-weight: bold;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        #machine-name-inputs {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="admin-header">
+        <button id="menu-toggle" class="header-btn menu-toggle-btn" style="position: absolute; left: 25px;"><i class="fas fa-bars"></i></button>
+        <h1>LINAC QA Admin Portal</h1>
+        <div class="header-buttons">
+            <button onclick="logout()" class="header-btn" title="Logout" aria-label="Logout"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </div>
+    
+    <div class="main-admin-layout">
+        
+        <div class="sidebar-nav">
+            <button class="nav-btn active" data-section="manage-users-section"><i class="fas fa-users"></i> Manage Users</button>
+            <button class="nav-btn" data-section="add-machines-section"><i class="fas fa-plus-circle"></i> Add Machines</button>
+            <button class="nav-btn" data-section="manage-machines-section"><i class="fas fa-cogs"></i> Manage Machines</button>
+            <button class="nav-btn" data-section="benchmark-section"><i class="fas fa-balance-scale"></i> Benchmarking</button>
+            <button class="nav-btn" data-section="service-efficacy-section"><i class="fas fa-tools"></i> Service Efficacy</button>
+            <button class="nav-btn" data-section="correlation-section"><i class="fas fa-chart-line"></i> Correlation Analysis</button>
+            <button class="nav-btn" data-section="hospital-data-access-section"><i class="fas fa-hospital"></i> View Machine Data</button>
+            <button class="nav-btn" data-section="audit-logs-section"><i class="fas fa-clipboard-list"></i> View Audit Logs</button>
+        </div>
+        
+        <div class="content-display-area">
+            <div class="card-section active-section" id="manage-users-section">
+                <h2>Manage User Accounts</h2>
+                <div class="filter-search-container">
+                    <input type="text" id="searchUserInput" placeholder="Search by name or email..." onkeyup="filterUsers()">
+                    <select id="filterStatus" onchange="filterUsers()"><option value="">All Statuses</option><option value="pending">Pending</option><option value="active">Active</option><option value="rejected">Rejected</option></select>
+                    <select id="filterHospital" onchange="filterUsers()"><option value="">All Hospitals</option></select>
+                    <button onclick="loadAllUsers()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
+                <div class="user-table-container">
+                    <table class="user-table">
+                        <thead><tr><th>Name</th><th>Email</th><th>Hospital</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card-section" id="add-machines-section" style="display: none;">
+                <h2><i class="fas fa-plus-circle"></i> Add New Machines to an Institution</h2>
+                <form id="addMachinesForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="addMachineInstitutionSelect">Select Institution</label>
+                            <select id="addMachineInstitutionSelect" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="numMachinesSelect">Number of Machines to Add</label>
+                            <select id="numMachinesSelect" onchange="generateMachineNameInputs()" required>
+                                <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                                <option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
+                            </select>
+                        </div>
+                        <div id="machine-name-inputs"></div>
+                    </div>
+                    <button type="submit" class="button" style="background-color: var(--primary-color); width: 100%; padding: 15px; font-size: 1.2em; margin-top: 20px;">Add Machines</button>
+                </form>
+            </div>
+
+            <div class="card-section" id="manage-machines-section" style="display: none;">
+                <h2><i class="fas fa-cogs"></i> Manage Existing Machines</h2>
+                <div class="form-group">
+                    <label for="manageMachineInstitutionSelect">Select Institution to View Machines</label>
+                    <select id="manageMachineInstitutionSelect"></select>
+                </div>
+                <div class="user-table-container" style="margin-top: 20px;">
+                    <table class="user-table">
+                        <thead>
+                            <tr><th>Machine Name</th><th>Machine ID</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="machinesTableBody">
+                            <tr><td colspan="3" class="no-users-message">Select an institution to see its machines.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="card-section" id="benchmark-section" style="display: none;">
+                <h2>Inter-Machine Benchmarking</h2>
+                <div class="filter-search-container">
+                    <label for="benchmarkPeriodSelect">Time Period:</label>
+                    <select id="benchmarkPeriodSelect" onchange="loadBenchmarkData()">
+                        <option value="30">Last 30 Days</option>
+                        <option value="90" selected>Last 90 Days</option>
+                        <option value="180">Last 180 Days</option>
+                        <option value="365">Last 365 Days</option>
+                    </select>
+                    <label for="benchmarkHospitalSelect">Filter by Hospital:</label>
+                    <select id="benchmarkHospitalSelect" class="hospital-selector" onchange="loadBenchmarkData()">
+                        <option value="">All Hospitals</option>
+                    </select>
+                </div>
+                <div id="benchmark-content">
+                    <div class="benchmark-grid">
+                        <div class="benchmark-chart-container">
+                            <canvas id="meanDeviationChart"></canvas>
+                        </div>
+                        <div class="benchmark-chart-container">
+                            <canvas id="stdDeviationChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="user-table-container" style="margin-top: 25px;">
+                         <table class="user-table">
+                             <thead>
+                                 <tr>
+                                     <th>Machine (Hospital)</th>
+                                     <th>Total OOTs</th>
+                                     <th>Total Warnings</th>
+                                     <th>Data Points (Output)</th>
+                                 </tr>
+                             </thead>
+                             <tbody id="benchmarkTableBody"></tbody>
+                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-section" id="service-efficacy-section" style="display: none;">
+                <h2>Service Efficacy Analysis</h2>
+                <div class="filter-search-container">
+                    <select id="efficacyHospitalSelect" class="hospital-selector"><option value="">-- Select Hospital --</option></select>
+                    <select id="efficacyMachineSelect" class="machine-selector"><option value="">-- Select Machine --</option></select>
+                    <button onclick="loadServiceEfficacyData()" class="button" style="background-color: var(--primary-color); color: white; padding: 12px 22px; font-size: 1.05em;"><i class="fas fa-cogs"></i> Run Analysis</button>
+                </div>
+                <div class="user-table-container">
+                    <table class="efficacy-table">
+                        <thead>
+                            <tr>
+                                <th>Service Event</th>
+                                <th>Std Dev (Before)</th>
+                                <th>Std Dev (After)</th>
+                                <th>Stability Improvement</th>
+                                <th>Trend (Before vs. After)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="efficacyTableBody">
+                            <tr><td colspan="5" class="no-users-message">Please select a machine to analyze.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card-section" id="correlation-section" style="display: none;">
+                <h2>Environmental Factor Correlation Analysis</h2>
+                <p>Analyze the relationship between daily environmental data and QA performance.</p>
+                <div class="filter-search-container">
+                    <select id="correlationHospitalSelect" class="hospital-selector"><option value="">-- Select Hospital --</option></select>
+                    <select id="correlationMachineSelect" class="machine-selector"><option value="">-- Select Machine --</option></select>
+                    <select id="correlationDataTypeSelect">
+                        <option value="output">Output</option>
+                        <option value="flatness">Flatness</option>
+                        <option value="inline">Inline Symmetry</option>
+                        <option value="crossline">Crossline Symmetry</option>
+                    </select>
+                    <select id="correlationEnergySelect"></select>
+                    <button onclick="runCorrelationAnalysis()" style="background-color: var(--primary-color); color: white;"><i class="fas fa-cogs"></i> Run Analysis</button>
+                </div>
+                <div id="correlation-results-container">
+                    <p class="no-users-message">Select parameters and run analysis to see results.</p>
+                </div>
+            </div>
+
+            <div class="card-section" id="hospital-data-access-section" style="display: none;">
+                <h2>View Machine LINAC QA Data</h2>
+                <button onclick="toggleFullWidth()" class="section-action-btn fullscreen-btn" title="Toggle Full Width"><i class="fas fa-expand"></i></button>
+                <div class="filter-search-container" id="hospitalDataControls">
+                    <select id="adminHospitalSelect" class="hospital-selector"><option value="">-- Select Hospital --</option></select>
+                    <select id="adminMachineSelect" class="machine-selector"><option value="">-- Select Machine --</option></select>
+                    <select id="adminYearSelect"></select>
+                    <select id="adminMonthSelect"></select>
+                    <select id="adminDataTypeSelect">
+                        <option value="output">Output</option>
+                        <option value="flatness">Flatness</option>
+                        <option value="inline">Inline Symmetry</option>
+                        <option value="crossline">Crossline Symmetry</option>
+                    </select>
+                </div>
+                <div class="user-table-container" id="hospitalQaTableContainer">
+                     <p class="no-users-message">Select a hospital and machine to view data.</p>
+                </div>
+            </div>
+
+            <div class="card-section" id="audit-logs-section" style="display: none;">
+                <h2>View Audit Logs</h2>
+                <div class="filter-search-container">
+                    <input type="date" id="auditLogDateFilter" onchange="loadAuditLogs()">
+                    <select id="auditLogHospitalFilter"><option value="">All Hospitals</option></select>
+                    <select id="auditLogActionFilter" onchange="loadAuditLogs()">
+                        <option value="">All Actions</option>
+                        <option value="user_login">User Login</option>
+                        <option value="user_logout">User Logout</option>
+                        <option value="user_update">User Update</option>
+                        <option value="user_deletion">User Deletion</option>
+                    </select>
+                    <button onclick="loadAuditLogs()"><i class="fas fa-sync-alt"></i> Refresh Logs</button>
+                    <button onclick="loadAuditLogs(true)" style="background-color: #ffc107; color: #333;">Show All</button>
+                </div>
+                <div class="user-table-container">
+                    <table class="user-table">
+                        <thead><tr><th>Timestamp</th><th>Action</th><th>User</th></tr></thead>
+                        <tbody id="auditLogsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-overlay"></div>
+    
+    <div id="userEditModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeEditModal()">&times;</span>
+            <h3>Edit User Details</h3>
+            <input type="hidden" id="editUserId">
+            <label>Name:</label><input type="text" id="editUserName" readonly>
+            <label>Email:</label><input type="text" id="editUserEmail" readonly>
+            <label>Hospital:</label><select id="editUserHospital"></select>
+            <label>Role:</label><select id="editUserRole"><option value="Medical physicist">Medical physicist</option><option value="RSO">RSO</option><option value="Admin">Admin</option></select>
+            <label>Status:</label><select id="editUserStatus"><option value="pending">Pending</option><option value="active">Active</option><option value="rejected">Rejected</option></select>
+            <div class="modal-buttons">
+                <button class="save-btn" onclick="saveUserChanges()">Save Changes</button>
+                <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editMachineModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>Edit Machine Name</h3>
+            <input type="hidden" id="editMachineId">
+            <div class="form-group">
+                <label for="editMachineNameInput">New Machine Name</label>
+                <input type="text" id="editMachineNameInput" required>
+            </div>
+            <div class="modal-buttons">
+                <button id="saveMachineNameBtn" class="save-btn">Save Changes</button>
+                <button class="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <h3 id="confirmationTitle">Confirm Action</h3>
+            <p id="confirmationMessage">Are you sure?</p>
+            <div id="deleteConfirmArea" style="display: none;">
+                <label for="deleteConfirmInput">To confirm, please type the user's name: <strong id="deleteConfirmName"></strong></label>
+                <input type="text" id="deleteConfirmInput" autocomplete="off" placeholder="Type name here...">
+            </div>
+            <div class="modal-buttons">
+                <button id="confirmBtn" class="save-btn">Confirm</button>
+                <button id="cancelBtn" class="cancel-btn" onclick="hideConfirmationModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-check-compat.js"></script>
+<script src="firebase-init.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
 <script>
     const BACKEND_URL = "https://back-end-wrxi.onrender.com";
     const dataTypesConfig = {
@@ -597,7 +1046,7 @@
             formGroup.className = 'form-group';
             formGroup.innerHTML = `
                 <label for="machineName${i}">Machine ${i + 1} Name</label>
-                <input type="text" id="machineName${i}" class="machine-name-input" placeholder="e.g., TrueBeam ${i+1}" required>
+                <input type="text" id="machineName${i}" class="machine-name-input" placeholder="e.g., TrueBeam ${i + 1}" required>
             `;
             container.appendChild(formGroup);
         }
@@ -732,7 +1181,6 @@
             document.getElementById('confirmBtn').disabled = e.target.value !== e.target.dataset.expectedName;
         });
 
-        // FIXED: Added the event listener back here.
         document.getElementById('numMachinesSelect').addEventListener('change', generateMachineNameInputs);
         document.getElementById('manageMachineInstitutionSelect').addEventListener('change', loadMachinesForInstitution);
         
@@ -742,14 +1190,13 @@
             const centerId = document.getElementById('addMachineInstitutionSelect').value;
             const machineNameInputs = document.querySelectorAll('.machine-name-input');
             const machines = Array.from(machineNameInputs).map(input => input.value.trim());
-            
-            // NEW: Client-side validation for empty names.
+
             if (machines.some(name => !name)) {
                 showNotification('Machine names cannot be empty.', 'warning');
                 hideLoader();
                 return;
             }
-            
+
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
                 const appCheckToken = (await appCheck.getToken(false)).token;
@@ -788,5 +1235,7 @@
             if (event.target == document.getElementById('confirmationModal')) hideConfirmationModal();
             if (event.target == editMachineModal) editMachineModal.style.display = 'none';
         };
+        // Initial call to generate inputs when the page loads
+        generateMachineNameInputs();
     });
 </script>
