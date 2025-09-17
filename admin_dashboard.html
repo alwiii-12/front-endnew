@@ -721,7 +721,7 @@
             }
 
             results.forEach(res => {
-                const row = tableBody.insertRow();
+                const row = tableBody.insert-Row();
                 const improvement = res.stability_improvement_percent;
                 const improvementClass = improvement > 5 ? 'improvement-positive' : (improvement < -5 ? 'improvement-negative' : '');
                 const improvementText = `${improvement > 0 ? '+' : ''}${improvement.toFixed(1)}%`;
@@ -847,7 +847,7 @@
             logsTableBody.innerHTML = '';
             if(result.logs.length === 0) { logsTableBody.innerHTML = `<tr><td colspan="3" class="no-users-message">No logs found.</td></tr>`; return; }
             result.logs.forEach(log => {
-                const row = logsTableBody.insertRow();
+                const row = logsTableBody.insert-Row();
                 row.innerHTML = `
                     <td>${log.timestamp}</td>
                     <td>${log.action}</td>
@@ -912,7 +912,7 @@
             return;
         }
         usersToRender.forEach(user => {
-            const row = usersTableBody.insertRow();
+            const row = usersTableBody.insert-Row();
             row.innerHTML = `
                 <td>${user.name || 'N/A'}</td>
                 <td>${user.email || 'N/A'}</td>
@@ -1020,7 +1020,7 @@
             return;
         }
         data.forEach(item => {
-            const row = tableBody.insertRow();
+            const row = tableBody.insert-Row();
             row.innerHTML = `<td>${item.machineName} (${item.hospital})</td><td>${item.oots}</td><td>${item.warnings}</td><td>${item.metrics.output.data_points}</td>`;
         });
     }
@@ -1067,7 +1067,7 @@
             return;
         }
         machines.forEach(machine => {
-            const row = tableBody.insertRow();
+            const row = tableBody.insert-Row();
             row.innerHTML = `
                 <td>${machine.machineName}</td>
                 <td>${machine.machineId}</td>
