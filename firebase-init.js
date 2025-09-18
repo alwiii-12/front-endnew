@@ -11,17 +11,24 @@ const firebaseConfig = {
   measurementId: "G-ZS97QYYFCQ"
 };
 
-// This line initializes the app using the compat libraries from your HTML files.
-if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-    const app = firebase.initializeApp(firebaseConfig);
-    console.log("Firebase Initialized Successfully!");
+// Use a self-invoking async function to enable await at the top level
+(async () => {
+    try {
+        if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+            const app = firebase.initializeApp(firebaseConfig);
+            console.log("Firebase Initialized Successfully!");
 
-    // Initialize App Check with the correct reCAPTCHA v3 provider
-    const appCheck = firebase.appCheck(app);
-    
-    appCheck.activate(
-      '6Ld8EYsrAAAAADcMM6k3d6lQVxjRUVpaowwdk2Lv', // Your reCAPTCHA v3 Site Key
-      true);
-    
-    console.log("Firebase App Check Initialized!");
-}
+            // Initialize App Check with the correct reCAPTCHA v3 provider
+            const appCheck = firebase.appCheck(app);
+
+            // The await keyword can now be used correctly here
+            await appCheck.activate(
+              '6Ld8EYsrAAAAADcMM6k3d6lQVxjRUVpaowwdk2Lv', // Your reCAPTCHA v3 Site Key
+              true);
+            
+            console.log("Firebase App Check Initialized!");
+        }
+    } catch (error) {
+        console.error("Firebase initialization failed:", error);
+    }
+})();
