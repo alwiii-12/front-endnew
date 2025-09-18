@@ -1209,23 +1209,23 @@
 
         // Wrap the entire initial logic in an async IIFE
         (async () => {
-            auth.onAuthStateChanged(async (user) => {
-                if (user) {
-                    currentAdminUid = user.uid;
-                    const userRole = localStorage.getItem("userRole");
-                    if (userRole !== "Admin" && userRole !== "Super Admin") {
-                        alert("Access Denied.");
-                        logout();
-                    } else {
-                        showLoader();
-                        await loadAllUsers();
-                        showAdminSection('manage-users-section');
-                        hideLoader();
-                    }
+            // Check if there is an existing authenticated user
+            const user = auth.currentUser;
+            if (user) {
+                currentAdminUid = user.uid;
+                const userRole = localStorage.getItem("userRole");
+                if (userRole !== "Admin" && userRole !== "Super Admin") {
+                    alert("Access Denied.");
+                    logout();
                 } else {
-                    window.location.href = "login.html";
+                    showLoader();
+                    await loadAllUsers();
+                    showAdminSection('manage-users-section');
+                    hideLoader();
                 }
-            });
+            } else {
+                window.location.href = "login.html";
+            }
         })();
         
         document.getElementById('menu-toggle').addEventListener('click', () => {
