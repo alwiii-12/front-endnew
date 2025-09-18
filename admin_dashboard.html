@@ -731,7 +731,7 @@
                 const sparklineCell = row.insertCell();
                 const combinedData = [...res.before_data, ...res.after_data];
                 if (combinedData.length > 1) {
-                    sparklineCell.appendChild(createSparkline(combinedData));
+                    sparklineCell.appendChild(createSparklineCanvas(combinedData));
                 }
             });
 
@@ -743,7 +743,62 @@
         }
     }
 
-    async function loadMachineDataView() {
+    function createSparklineCanvas(data) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 150;
+        canvas.height = 40;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return canvas;
+
+        const filteredData = data.filter(d => typeof d === 'number' && !isNaN(d));
+        if (filteredData.length < 2) return canvas;
+
+        const margin = 5;
+        const width = canvas.width - 2 * margin;
+        const height = canvas.height - 2 * margin;
+        const minVal = Math.min(...filteredData);
+        const maxVal = Math.max(...filteredData);
+        const range = maxVal - minVal;
+
+        // Draw middle line at 0
+        const zeroY = margin + height * (1 - (0 - minVal) / range);
+        if (zeroY >= margin && zeroY <= margin + height) {
+            ctx.beginPath();
+            ctx.setLineDash([2, 2]);
+            ctx.strokeStyle = '#ccc';
+            ctx.moveTo(margin, zeroY);
+            ctx.lineTo(margin + width, zeroY);
+            ctx.stroke();
+        }
+
+        ctx.setLineDash([]);
+        ctx.strokeStyle = '#007ACC';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        filteredData.forEach((d, i) => {
+            const x = margin + (i / (filteredData.length - 1)) * width;
+            const y = margin + height * (1 - (d - minVal) / range);
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+        ctx.stroke();
+
+        // Highlight the last point
+        const lastX = margin + (width);
+        const lastY = margin + height * (1 - (filteredData[filteredData.length - 1] - minVal) / range);
+        ctx.beginPath();
+        ctx.arc(lastX, lastY, 3, 0, 2 * Math.PI);
+        ctx.fillStyle = '#007ACC';
+        ctx.fill();
+
+        return canvas;
+    }
+
+    function loadMachineDataView() {
         const machineId = document.getElementById('adminMachineSelect').value;
         if (!machineId) {
             document.getElementById('hospitalQaTableContainer').innerHTML = `<p class="no-users-message">Select a machine to view data.</p>`;
