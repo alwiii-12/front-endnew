@@ -1207,23 +1207,26 @@
         db = firebase.firestore();
         appCheck = firebase.appCheck();
 
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                currentAdminUid = user.uid;
-                const userRole = localStorage.getItem("userRole");
-                if (userRole !== "Admin" && userRole !== "Super Admin") {
-                    alert("Access Denied.");
-                    logout();
+        // Wrap the entire initial logic in an async IIFE
+        (async () => {
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    currentAdminUid = user.uid;
+                    const userRole = localStorage.getItem("userRole");
+                    if (userRole !== "Admin" && userRole !== "Super Admin") {
+                        alert("Access Denied.");
+                        logout();
+                    } else {
+                        showLoader();
+                        await loadAllUsers();
+                        showAdminSection('manage-users-section');
+                        hideLoader();
+                    }
                 } else {
-                    showLoader();
-                    await loadAllUsers();
-                    showAdminSection('manage-users-section');
-                    hideLoader();
+                    window.location.href = "login.html";
                 }
-            } else {
-                window.location.href = "login.html";
-            }
-        });
+            });
+        })();
         
         document.getElementById('menu-toggle').addEventListener('click', () => {
             document.querySelector('.sidebar-nav').classList.toggle('sidebar-visible');
