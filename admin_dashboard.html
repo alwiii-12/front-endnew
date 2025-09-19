@@ -947,7 +947,6 @@
             }
             tableHTML += '</tr>';
         });
-        tableHTML += '</tbody></table>';
         container.innerHTML = tableHTML;
     }
 
@@ -989,9 +988,26 @@
         });
     }
 
-    function populateCommonFilters() {
-        const hospitalSet = new Set(allUsersData.map(user => user.hospital).filter(Boolean));
-        const sortedHospitals = [...hospitalSet].sort();
+    // New function to fetch institutions for the current admin's group
+    async function fetchInstitutionsForAdmin() {
+        try {
+            const idToken = await auth.currentUser.getIdToken(true);
+            const appCheckToken = (await appCheck.getToken(false)).token;
+            const response = await fetch(`${BACKEND_URL}/admin/users`, {
+                headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
+            });
+            if (!response.ok) throw new Error('Failed to fetch admin data.');
+            const users = await response.json();
+            const institutions = [...new Set(users.map(u => u.hospital).filter(h => h))];
+            return institutions.sort();
+        } catch (error) {
+            console.error("Error fetching institutions for admin:", error);
+            return [];
+        }
+    }
+
+    async function populateCommonFilters() {
+        const hospitals = await fetchInstitutionsForAdmin();
         const hospitalFilterSelects = document.querySelectorAll('.hospital-selector, #filterHospital, #auditLogHospitalFilter');
         
         hospitalFilterSelects.forEach(select => {
@@ -999,7 +1015,7 @@
                 const currentValue = select.value;
                 const firstOptionHTML = select.querySelector('option').outerHTML;
                 let optionsHTML = '';
-                sortedHospitals.forEach(h => { optionsHTML += `<option value="${h}">${h}</option>`; });
+                hospitals.forEach(h => { optionsHTML += `<option value="${h}">${h}</option>`; });
                 select.innerHTML = firstOptionHTML + optionsHTML;
                 select.value = currentValue;
             }
