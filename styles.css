@@ -42,7 +42,6 @@ html {
     padding: 0;
     width: 100%;
     height: 100%;
-    /* [REMOVED] overflow: hidden; was preventing scrolling on tall content */
 }
 
 body {
@@ -56,12 +55,10 @@ body {
   color: var(--text-main);
 }
 
-/* Add this class to the <body> tag on login, signup, and awaiting_approval pages */
 body.centered-content {
   justify-content: center;
   align-items: center;
   padding: 20px;
-  /* [ADDED] Allow body to grow if content is taller than screen */
   height: auto;
 }
 
@@ -217,7 +214,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 
 /* --- Login & Signup Pages --- */
 .login-container, .signup-container {
-  padding: 30px; /* [MODIFIED] Reduced padding */
+  padding: 30px; 
   max-width: 480px;
   width: 90%;
   text-align: center;
@@ -225,23 +222,23 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 
 .login-container h2, .signup-container h2 {
   font-size: 2em;
-  margin-bottom: 25px; /* [MODIFIED] Reduced margin */
+  margin-bottom: 25px; 
 }
 
 #loginForm {
   display: flex;
   flex-direction: column;
-  gap: 18px; /* [MODIFIED] Adjusted gap */
+  gap: 18px; 
 }
 
 .signup-container {
     display: flex;
     flex-direction: column;
-    gap: 12px; /* [MODIFIED] Reduced gap */
+    gap: 12px; 
 }
 
 #loginForm input, .signup-container input, .signup-container select {
-    padding: 14px; /* [MODIFIED] Adjusted padding */
+    padding: 14px; 
     font-size: 1rem;
 }
 
@@ -303,7 +300,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     font-size: 1.2em;
     background-color: var(--primary-color);
     color: var(--text-white);
-    margin-top: 10px; /* Add some space above the button */
+    margin-top: 10px;
 }
 
 #loginForm button[type="submit"]:hover,
@@ -345,7 +342,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 
 /* --- Main Application Layout (Topbar, Sidebar, Content) --- */
 .upload-page body {
-    overflow: hidden; /* Prevent body scroll for the upload page layout */
+    overflow: hidden;
 }
 
 .topbar {
@@ -1040,7 +1037,7 @@ body.dark .handsontable .ht_clone_top th {
 body.dark .handsontable .htCore td {
      color: #333333 !important;
      border-color: #ccc !important;
-     background-color: #ffffff; /* Default cell background to white */
+     background-color: #ffffff;
 }
 
 body.dark .handsontable .htCore td:first-child,
@@ -1048,7 +1045,6 @@ body.dark .handsontable .htCore th:first-child {
     background-color: #f0f0f0 !important;
 }
 
-/* Revert the status colors to their original light theme versions */
 body.dark .handsontable .within {
     background-color: var(--ht-within) !important;
     color: var(--ht-text-within) !important;
@@ -1065,7 +1061,7 @@ body.dark .handsontable .out {
 
 /* --- Responsive and Dark Mode Fixes --- */
 .menu-toggle-btn {
-    display: none; /* Hidden by default on desktop */
+    display: none;
     background-color: var(--primary-color);
     color: var(--text-white);
     font-size: 1.2rem;
@@ -1133,7 +1129,7 @@ body.dark .energy-selector-container label {
         text-align: center;
     }
     .header-spacer-left {
-        display: none; /* Hide spacer on smaller screens */
+        display: none;
     }
     .daily-check-box {
         width: 100%;
@@ -1147,14 +1143,14 @@ body.dark .energy-selector-container label {
 
 @media (max-width: 768px) {
     html, body {
-        overflow: auto; /* Allow scrolling on mobile */
+        overflow: auto;
     }
 
     h1 { font-size: 1.8em; }
     h2 { font-size: 1.5em; }
 
     .menu-toggle-btn {
-        display: inline-flex; /* Show on mobile */
+        display: inline-flex;
     }
 
     .topbar {
@@ -1170,18 +1166,18 @@ body.dark .energy-selector-container label {
 
     .sidebar, .sidebar-nav {
         width: 100%;
-        height: 100vh; /* Full screen height */
+        height: 100vh;
         position: fixed;
         top: 0;
-        left: -100%; /* Start off-screen */
+        left: -100%;
         z-index: 5000;
-        padding-top: 80px; /* Space for topbar */
+        padding-top: 80px;
         transition: left 0.3s ease-in-out;
         box-shadow: none;
     }
 
     .sidebar.sidebar-visible, .sidebar-nav.sidebar-visible {
-        left: 0; /* Slide in */
+        left: 0;
         box-shadow: 5px 0 15px rgba(0,0,0,0.2);
     }
     
@@ -1193,4 +1189,11 @@ body.dark .energy-selector-container label {
     .benchmark-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* --- Customization for Settings Modal Buttons --- */
+#settingsModal .modal-buttons button {
+    padding: 12px 28px;
+    font-size: 1.1em;
+    min-width: 120px;
 }
