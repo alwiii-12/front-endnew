@@ -443,7 +443,7 @@
         let highlightedColumnIndex = -1;
 
         const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
-        // [MODIFIED] This is now just the default. It will be updated with machine-specific values.
+        
         let dataTypesConfig = {
           output: { label: 'Output', tolerance: 2.0, warning: 1.8, initialized: false, yAxisMin: -3, yAxisMax: 3 },
           flatness: { label: 'Flatness', tolerance: 1.0, warning: 0.9, initialized: false, yAxisMin: -2, yAxisMax: 2 },
@@ -475,7 +475,6 @@
         };
         let proactiveChatListener = null;
 
-        // [NEW] Settings Modal elements
         const settingsModal = document.getElementById('settingsModal');
         const settingsForm = document.getElementById('settingsForm');
 
@@ -709,7 +708,6 @@
                 if (!res.ok) throw new Error(`Server error: ${res.statusText}`);
                 const result = await res.json();
                 
-                // [MODIFIED] Update local settings config with data from backend
                 if (result.settings) {
                     Object.keys(result.settings).forEach(key => {
                         if (dataTypesConfig[key]) {
@@ -1564,12 +1562,10 @@
             }
             
             header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()} - ${machineName}`;
-            // When a new machine is selected, reset initialization flags and reload the active tab
             Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
             await initializeTab(activeTab);
         }
         
-        // [NEW] Settings Modal Functions
         async function showSettingsModal() {
             const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!currentMachineId) {
@@ -1586,7 +1582,6 @@
                 if (!response.ok) throw new Error("Could not load settings.");
                 const settings = await response.json();
                 
-                // Populate the form
                 for (const type in settings) {
                     document.getElementById(`${type}-warning`).value = settings[type].warning;
                     document.getElementById(`${type}-tolerance`).value = settings[type].tolerance;
@@ -1635,17 +1630,11 @@
                 });
                 if (!response.ok) throw new Error("Failed to save settings.");
 
-                // Update local config immediately
-                Object.assign(dataTypesConfig, newSettings);
-                
                 hideSettingsModal();
-                showNotification("Settings saved successfully!", "success");
+                showNotification("Settings saved successfully! Reloading data...", "success");
 
-                // Re-render the current table to apply new colors
-                if (instances[activeTab].hot) {
-                    instances[activeTab].hot.render();
-                }
-                updateSummaryAndChart(activeTab, instances[activeTab].hot.getData());
+                // [FIXED] Fully reload the tab data to ensure the table renderer uses the new settings.
+                await loadDataForTab(activeTab);
 
             } catch (error) {
                 showNotification(error.message, 'error');
@@ -1702,12 +1691,10 @@
                         sessionStorage.removeItem('selectedMachineId');
                         sessionStorage.removeItem('selectedMachineName');
                         sessionStorage.removeItem('lastDataMonth');
-                        // Reset initialization flags when changing machine
                         Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
                         showMachineSelectionModal();
                     });
 
-                    // [NEW] Add event listener for settings button
                     document.getElementById('settingsBtn').addEventListener('click', showSettingsModal);
 
                     setupProactiveChatListener(currentUID);
@@ -1732,7 +1719,7 @@
 
         window.onclick = function(event) {
             if (event.target == annotationModal) hideAnnotationModal();
-            if (event.target == settingsModal) hideSettingsModal(); // [NEW]
+            if (event.target == settingsModal) hideSettingsModal();
         }
     });
   </script>
