@@ -239,6 +239,33 @@
         box-shadow: 0 8px 15px rgba(0,0,0,0.1);
         background-color: #d4e8f7;
     }
+    /* [NEW] Styles for Settings */
+    .sidebar-footer {
+        margin-top: auto;
+        padding-top: 20px;
+    }
+    .sidebar-footer button {
+        width: 100%;
+        padding: 12px 8px;
+        background-color: var(--text-secondary);
+        color: var(--text-white);
+        font-weight: 500;
+        text-align: left;
+    }
+    #settingsModal .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+    #settingsModal fieldset {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 15px;
+    }
+    #settingsModal legend {
+        font-weight: bold;
+        padding: 0 10px;
+    }
   </style>
 </head>
 <body class="upload-page">
@@ -270,8 +297,11 @@
         <button id="nextYearBtn" aria-label="Next Year">&gt;</button>
     </div>
       <div id="months"></div>
-      <label style="margin-top: auto; padding-top: 20px;"><input type="checkbox" id="darkToggle"> Dark Mode</label>
-      <p>© 2025 QA Dashboard</p>
+      <div class="sidebar-footer">
+          <button id="settingsBtn"><i class="fas fa-cog"></i> Settings</button>
+          <label style="margin-top: 10px;"><input type="checkbox" id="darkToggle"> Dark Mode</label>
+          <p>© 2025 QA Dashboard</p>
+      </div>
     </div>
     <div class="main">
       <div class="main-header-controls">
@@ -330,6 +360,67 @@
     </div>
   </div>
 
+  <div id="settingsModal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+        <span class="close-button" onclick="hideSettingsModal()">&times;</span>
+        <h3>Machine Tolerance Settings</h3>
+        <p>Set the warning and tolerance limits for this machine. These values determine the colors in the data grid and trigger alerts.</p>
+        <form id="settingsForm">
+            <div class="form-grid">
+                <fieldset>
+                    <legend>Output (%)</legend>
+                    <div class="form-group">
+                        <label for="output-warning">Warning Level</label>
+                        <input type="number" id="output-warning" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="output-tolerance">Tolerance Level</label>
+                        <input type="number" id="output-tolerance" step="0.1" required>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Flatness (%)</legend>
+                    <div class="form-group">
+                        <label for="flatness-warning">Warning Level</label>
+                        <input type="number" id="flatness-warning" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="flatness-tolerance">Tolerance Level</label>
+                        <input type="number" id="flatness-tolerance" step="0.1" required>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Inline Symmetry (%)</legend>
+                    <div class="form-group">
+                        <label for="inline-warning">Warning Level</label>
+                        <input type="number" id="inline-warning" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inline-tolerance">Tolerance Level</label>
+                        <input type="number" id="inline-tolerance" step="0.1" required>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Crossline Symmetry (%)</legend>
+                    <div class="form-group">
+                        <label for="crossline-warning">Warning Level</label>
+                        <input type="number" id="crossline-warning" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="crossline-tolerance">Tolerance Level</label>
+                        <input type="number" id="crossline-tolerance" step="0.1" required>
+                    </div>
+                </fieldset>
+            </div>
+            <div class="modal-buttons">
+                <button type="submit" class="save-btn">Save Settings</button>
+                <button type="button" class="cancel-btn" onclick="hideSettingsModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+  </div>
+
+
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
@@ -352,7 +443,8 @@
         let highlightedColumnIndex = -1;
 
         const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
-        const dataTypesConfig = {
+        // [MODIFIED] This is now just the default. It will be updated with machine-specific values.
+        let dataTypesConfig = {
           output: { label: 'Output', tolerance: 2.0, warning: 1.8, initialized: false, yAxisMin: -3, yAxisMax: 3 },
           flatness: { label: 'Flatness', tolerance: 1.0, warning: 0.9, initialized: false, yAxisMin: -2, yAxisMax: 2 },
           inline: { label: 'Inline Symmetry', tolerance: 1.0, warning: 0.9, initialized: false, yAxisMin: -2, yAxisMax: 2 },
@@ -382,6 +474,10 @@
             node_id: null
         };
         let proactiveChatListener = null;
+
+        // [NEW] Settings Modal elements
+        const settingsModal = document.getElementById('settingsModal');
+        const settingsForm = document.getElementById('settingsForm');
 
         function debounce(func, delay) {
             let timeout;
@@ -602,7 +698,7 @@
                 return;
             }
             showLoader();
-            const config = dataTypesConfig[dataType];
+            
             const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             try {
                 const idToken = await auth.currentUser.getIdToken(true);
@@ -613,6 +709,17 @@
                 if (!res.ok) throw new Error(`Server error: ${res.statusText}`);
                 const result = await res.json();
                 
+                // [MODIFIED] Update local settings config with data from backend
+                if (result.settings) {
+                    Object.keys(result.settings).forEach(key => {
+                        if (dataTypesConfig[key]) {
+                            dataTypesConfig[key].warning = result.settings[key].warning;
+                            dataTypesConfig[key].tolerance = result.settings[key].tolerance;
+                        }
+                    });
+                }
+                const config = dataTypesConfig[dataType];
+
                 monthlyEnvData = result.env_data || {};
                 
                 const dateCols = getMonthDates(currentDate);
@@ -723,7 +830,6 @@
                             hospitalName: currentHospital,
                             month: monthKey,
                             dataType: dataType,
-                            tolerance: config.tolerance,
                             outValues: outOfToleranceValues
                         })
                     });
@@ -1013,11 +1119,9 @@
             let validationActuals = [];
             let forecastLabel = 'Forecast';
 
-            // [FIXED] Correctly handle numeric date values from the backend
             if (passedData) {
                 forecastData = (passedData.forecast || []).map(p => {
                     if (p && p.ds) {
-                        // The backend sends 'ds' as milliseconds, so convert it to a Date object first
                         const dateObj = new Date(p.ds);
                         const year = dateObj.getFullYear();
                         const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -1460,9 +1564,96 @@
             }
             
             header.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getFullYear()} - ${machineName}`;
-            switchTab(activeTab);
+            // When a new machine is selected, reset initialization flags and reload the active tab
+            Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
+            await initializeTab(activeTab);
         }
         
+        // [NEW] Settings Modal Functions
+        async function showSettingsModal() {
+            const currentMachineId = sessionStorage.getItem('selectedMachineId');
+            if (!currentMachineId) {
+                showNotification("Please select a machine first.", "warning");
+                return;
+            }
+            showLoader();
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
+                const response = await fetch(`${BACKEND_URL}/settings/${currentMachineId}`, {
+                    headers: { 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken }
+                });
+                if (!response.ok) throw new Error("Could not load settings.");
+                const settings = await response.json();
+                
+                // Populate the form
+                for (const type in settings) {
+                    document.getElementById(`${type}-warning`).value = settings[type].warning;
+                    document.getElementById(`${type}-tolerance`).value = settings[type].tolerance;
+                }
+                settingsModal.style.display = 'flex';
+            } catch (error) {
+                showNotification(error.message, 'error');
+            } finally {
+                hideLoader();
+            }
+        }
+        window.hideSettingsModal = function() {
+            settingsModal.style.display = 'none';
+        }
+
+        settingsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const currentMachineId = sessionStorage.getItem('selectedMachineId');
+            if (!currentMachineId) return;
+
+            const newSettings = {};
+            let isValid = true;
+
+            for (const type in dataTypesConfig) {
+                const warning = parseFloat(document.getElementById(`${type}-warning`).value);
+                const tolerance = parseFloat(document.getElementById(`${type}-tolerance`).value);
+
+                if (isNaN(warning) || isNaN(tolerance) || warning >= tolerance) {
+                    showNotification(`Invalid values for ${type}. Warning must be less than tolerance.`, 'error');
+                    isValid = false;
+                    break;
+                }
+                newSettings[type] = { warning, tolerance };
+            }
+
+            if (!isValid) return;
+
+            showLoader();
+            try {
+                const idToken = await auth.currentUser.getIdToken(true);
+                const appCheckToken = (await appCheck.getToken(false)).token;
+                const response = await fetch(`${BACKEND_URL}/settings/${currentMachineId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
+                    body: JSON.stringify(newSettings)
+                });
+                if (!response.ok) throw new Error("Failed to save settings.");
+
+                // Update local config immediately
+                Object.assign(dataTypesConfig, newSettings);
+                
+                hideSettingsModal();
+                showNotification("Settings saved successfully!", "success");
+
+                // Re-render the current table to apply new colors
+                if (instances[activeTab].hot) {
+                    instances[activeTab].hot.render();
+                }
+                updateSummaryAndChart(activeTab, instances[activeTab].hot.getData());
+
+            } catch (error) {
+                showNotification(error.message, 'error');
+            } finally {
+                hideLoader();
+            }
+        });
+
         auth.onAuthStateChanged(async (user) => {
             try {
                 if (user) {
@@ -1511,12 +1702,16 @@
                         sessionStorage.removeItem('selectedMachineId');
                         sessionStorage.removeItem('selectedMachineName');
                         sessionStorage.removeItem('lastDataMonth');
+                        // Reset initialization flags when changing machine
+                        Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
                         showMachineSelectionModal();
                     });
 
-                    setupProactiveChatListener(currentUID);
-                    await initializeTab('output'); 
+                    // [NEW] Add event listener for settings button
+                    document.getElementById('settingsBtn').addEventListener('click', showSettingsModal);
 
+                    setupProactiveChatListener(currentUID);
+                    
                     const selectedMachineId = sessionStorage.getItem('selectedMachineId');
                     if (selectedMachineId) {
                         const selectedMachineName = sessionStorage.getItem('selectedMachineName');
@@ -1536,9 +1731,8 @@
         });
 
         window.onclick = function(event) {
-            if (event.target == annotationModal) {
-                hideAnnotationModal();
-            }
+            if (event.target == annotationModal) hideAnnotationModal();
+            if (event.target == settingsModal) hideSettingsModal(); // [NEW]
         }
     });
   </script>
