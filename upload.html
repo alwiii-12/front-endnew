@@ -239,7 +239,7 @@
         box-shadow: 0 8px 15px rgba(0,0,0,0.1);
         background-color: #d4e8f7;
     }
-    /* [NEW] Styles for Settings */
+    
     .sidebar-footer {
         margin-top: auto;
         padding-top: 20px;
@@ -252,19 +252,61 @@
         font-weight: 500;
         text-align: left;
     }
-    #settingsModal .form-grid {
+
+    /* --- [NEW] Styles for Settings Modal --- */
+    #settingsModal .modal-content {
+        display: flex;
+        gap: 20px;
+        max-width: 900px;
+    }
+    .settings-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex-shrink: 0;
+        width: 180px;
+    }
+    .settings-nav-btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 1.05em;
+        text-align: left;
+        background-color: var(--primary-light);
+        color: var(--primary-dark);
+    }
+    .settings-nav-btn.active {
+        background-color: var(--primary-color);
+        color: var(--text-white);
+    }
+    .settings-content {
+        flex-grow: 1;
+    }
+    .settings-tab-content {
+        display: none;
+    }
+    .settings-tab-content.active {
+        display: block;
+    }
+    #tolerancesContent .form-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 20px;
     }
-    #settingsModal fieldset {
+    #tolerancesContent fieldset {
         border: 1px solid var(--border-color);
         border-radius: 8px;
         padding: 15px;
     }
-    #settingsModal legend {
+    #tolerancesContent legend {
         font-weight: bold;
         padding: 0 10px;
+    }
+    #energyTypesInput {
+        width: 100%;
+        min-height: 250px;
+        resize: vertical;
+        font-family: monospace;
+        font-size: 1.1em;
     }
   </style>
 </head>
@@ -360,63 +402,57 @@
     </div>
   </div>
 
+  <!-- [MODIFIED] Settings Modal with Tabbed Layout -->
   <div id="settingsModal" class="modal">
-    <div class="modal-content" style="max-width: 700px;">
+    <div class="modal-content">
         <span class="close-button" onclick="hideSettingsModal()">&times;</span>
-        <h3>Machine Tolerance Settings</h3>
-        <p>Set the warning and tolerance limits for this machine. These values determine the colors in the data grid and trigger alerts.</p>
-        <form id="settingsForm">
-            <div class="form-grid">
-                <fieldset>
-                    <legend>Output (%)</legend>
-                    <div class="form-group">
-                        <label for="output-warning">Warning Level</label>
-                        <input type="number" id="output-warning" step="0.1" required>
+        <div class="settings-nav">
+            <h3>Settings</h3>
+            <button class="settings-nav-btn active" id="tolerancesTabBtn" onclick="showSettingsTab('tolerances')"><i class="fas fa-sliders-h"></i> Tolerances</button>
+            <button class="settings-nav-btn" id="energiesTabBtn" onclick="showSettingsTab('energies')"><i class="fas fa-bolt"></i> Energies</button>
+        </div>
+        <div class="settings-content">
+            <form id="settingsForm">
+                <div id="tolerancesContent" class="settings-tab-content active">
+                    <h4>Tolerance Levels</h4>
+                    <p>Set warning and tolerance limits. Values outside tolerance will trigger alerts.</p>
+                    <div class="form-grid">
+                        <fieldset>
+                            <legend>Output (%)</legend>
+                            <div class="form-group"><label for="output-warning">Warning Level</label><input type="number" id="output-warning" step="0.1" required></div>
+                            <div class="form-group"><label for="output-tolerance">Tolerance Level</label><input type="number" id="output-tolerance" step="0.1" required></div>
+                        </fieldset>
+                        <fieldset>
+                            <legend>Flatness (%)</legend>
+                            <div class="form-group"><label for="flatness-warning">Warning Level</label><input type="number" id="flatness-warning" step="0.1" required></div>
+                            <div class="form-group"><label for="flatness-tolerance">Tolerance Level</label><input type="number" id="flatness-tolerance" step="0.1" required></div>
+                        </fieldset>
+                        <fieldset>
+                            <legend>Inline Symmetry (%)</legend>
+                            <div class="form-group"><label for="inline-warning">Warning Level</label><input type="number" id="inline-warning" step="0.1" required></div>
+                            <div class="form-group"><label for="inline-tolerance">Tolerance Level</label><input type="number" id="inline-tolerance" step="0.1" required></div>
+                        </fieldset>
+                        <fieldset>
+                            <legend>Crossline Symmetry (%)</legend>
+                            <div class="form-group"><label for="crossline-warning">Warning Level</label><input type="number" id="crossline-warning" step="0.1" required></div>
+                            <div class="form-group"><label for="crossline-tolerance">Tolerance Level</label><input type="number" id="crossline-tolerance" step="0.1" required></div>
+                        </fieldset>
                     </div>
+                </div>
+                <div id="energiesContent" class="settings-tab-content">
+                    <h4>Energy Configuration</h4>
+                    <p>Define the energy types for this machine. Enter one energy per line. This will update the rows in the data grid.</p>
                     <div class="form-group">
-                        <label for="output-tolerance">Tolerance Level</label>
-                        <input type="number" id="output-tolerance" step="0.1" required>
+                        <label for="energyTypesInput">Energy List</label>
+                        <textarea id="energyTypesInput" rows="10"></textarea>
                     </div>
-                </fieldset>
-                <fieldset>
-                    <legend>Flatness (%)</legend>
-                    <div class="form-group">
-                        <label for="flatness-warning">Warning Level</label>
-                        <input type="number" id="flatness-warning" step="0.1" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="flatness-tolerance">Tolerance Level</label>
-                        <input type="number" id="flatness-tolerance" step="0.1" required>
-                    </div>
-                </fieldset>
-                <fieldset>
-                    <legend>Inline Symmetry (%)</legend>
-                    <div class="form-group">
-                        <label for="inline-warning">Warning Level</label>
-                        <input type="number" id="inline-warning" step="0.1" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="inline-tolerance">Tolerance Level</label>
-                        <input type="number" id="inline-tolerance" step="0.1" required>
-                    </div>
-                </fieldset>
-                <fieldset>
-                    <legend>Crossline Symmetry (%)</legend>
-                    <div class="form-group">
-                        <label for="crossline-warning">Warning Level</label>
-                        <input type="number" id="crossline-warning" step="0.1" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="crossline-tolerance">Tolerance Level</label>
-                        <input type="number" id="crossline-tolerance" step="0.1" required>
-                    </div>
-                </fieldset>
-            </div>
-            <div class="modal-buttons">
-                <button type="submit" class="save-btn">Save Settings</button>
-                <button type="button" class="cancel-btn" onclick="hideSettingsModal()">Cancel</button>
-            </div>
-        </form>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="save-btn">Save All Settings</button>
+                    <button type="button" class="cancel-btn" onclick="hideSettingsModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
     </div>
   </div>
 
@@ -442,13 +478,13 @@
         let monthlyEnvData = {};
         let highlightedColumnIndex = -1;
 
-        const energyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
+        let machineEnergyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
         
         let dataTypesConfig = {
-          output: { label: 'Output', tolerance: 2.0, warning: 1.8, initialized: false, yAxisMin: -3, yAxisMax: 3 },
-          flatness: { label: 'Flatness', tolerance: 1.0, warning: 0.9, initialized: false, yAxisMin: -2, yAxisMax: 2 },
-          inline: { label: 'Inline Symmetry', tolerance: 1.0, warning: 0.9, initialized: false, yAxisMin: -2, yAxisMax: 2 },
-          crossline: { label: 'Crossline Symmetry', tolerance: 1.0, warning: 0.9, initialized: false, yAxisMin: -2, yAxisMax: 2 }
+          output: { label: 'Output', initialized: false, yAxisMin: -3, yAxisMax: 3 },
+          flatness: { label: 'Flatness', initialized: false, yAxisMin: -2, yAxisMax: 2 },
+          inline: { label: 'Inline Symmetry', initialized: false, yAxisMin: -2, yAxisMax: 2 },
+          crossline: { label: 'Crossline Symmetry', initialized: false, yAxisMin: -2, yAxisMax: 2 }
         };
         let instances = { output: {}, flatness: {}, inline: {}, crossline: {} };
         let activeTab = 'output';
@@ -709,12 +745,8 @@
                 const result = await res.json();
                 
                 if (result.settings) {
-                    Object.keys(result.settings).forEach(key => {
-                        if (dataTypesConfig[key]) {
-                            dataTypesConfig[key].warning = result.settings[key].warning;
-                            dataTypesConfig[key].tolerance = result.settings[key].tolerance;
-                        }
-                    });
+                    Object.assign(dataTypesConfig, result.settings.tolerances);
+                    machineEnergyTypes = result.settings.energyTypes || [];
                 }
                 const config = dataTypesConfig[dataType];
 
@@ -723,7 +755,7 @@
                 const dateCols = getMonthDates(currentDate);
                 let data = Array.isArray(result.data) && result.data.length > 0
                     ? result.data.map(r => r.map(c => c === null || c === "None" ? "" : c))
-                    : energyTypes.map(e => [e, ...new Array(dateCols.length).fill('')]);
+                    : machineEnergyTypes.map(e => [e, ...new Array(dateCols.length).fill('')]);
                 
                 const columnsConfig = [{ type: 'text', readOnly: true }];
                 for (let i = 0; i < dateCols.length; i++) {
@@ -779,6 +811,7 @@
                         return props;
                     }
                 });
+                populateTrendEnergySelect(dataType);
                 updateSummaryAndChart(dataType, data);
                 updateTrendChart();
             } catch (e) { console.error(`Error loading data for ${dataType}:`, e); } finally { hideLoader(); }
@@ -956,13 +989,13 @@
             const select = document.getElementById(`trendEnergySelect-${dataType}`);
             if(!select) return;
             select.innerHTML = '';
-            energyTypes.forEach(energy => {
+            machineEnergyTypes.forEach(energy => {
                 const option = document.createElement('option');
                 option.value = energy;
                 option.textContent = energy;
                 select.appendChild(option);
             });
-            if (energyTypes.length > 0) select.value = energyTypes[0];
+            if (machineEnergyTypes.length > 0) select.value = machineEnergyTypes[0];
         }
 
         async function showAnnotationModal(key, existingText, energy, date) {
@@ -1566,6 +1599,13 @@
             await initializeTab(activeTab);
         }
         
+        window.showSettingsTab = function(tabName) {
+            document.querySelectorAll('.settings-nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.settings-tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`${tabName}TabBtn`).classList.add('active');
+            document.getElementById(`${tabName}Content`).classList.add('active');
+        }
+
         async function showSettingsModal() {
             const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!currentMachineId) {
@@ -1582,10 +1622,13 @@
                 if (!response.ok) throw new Error("Could not load settings.");
                 const settings = await response.json();
                 
-                for (const type in settings) {
-                    document.getElementById(`${type}-warning`).value = settings[type].warning;
-                    document.getElementById(`${type}-tolerance`).value = settings[type].tolerance;
+                for (const type in settings.tolerances) {
+                    document.getElementById(`${type}-warning`).value = settings.tolerances[type].warning;
+                    document.getElementById(`${type}-tolerance`).value = settings.tolerances[type].tolerance;
                 }
+                document.getElementById('energyTypesInput').value = settings.energyTypes.join('\n');
+
+                showSettingsTab('tolerances');
                 settingsModal.style.display = 'flex';
             } catch (error) {
                 showNotification(error.message, 'error');
@@ -1602,10 +1645,10 @@
             const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!currentMachineId) return;
 
-            const newSettings = {};
+            const newTolerances = {};
             let isValid = true;
 
-            for (const type in dataTypesConfig) {
+            for (const type of Object.keys(dataTypesConfig)) {
                 const warning = parseFloat(document.getElementById(`${type}-warning`).value);
                 const tolerance = parseFloat(document.getElementById(`${type}-tolerance`).value);
 
@@ -1614,10 +1657,20 @@
                     isValid = false;
                     break;
                 }
-                newSettings[type] = { warning, tolerance };
+                newTolerances[type] = { warning, tolerance };
             }
 
             if (!isValid) return;
+
+            const newEnergyTypes = document.getElementById('energyTypesInput').value
+                .split('\n')
+                .map(e => e.trim())
+                .filter(e => e);
+
+            if (newEnergyTypes.length === 0) {
+                showNotification('Energy list cannot be empty.', 'error');
+                return;
+            }
 
             showLoader();
             try {
@@ -1626,15 +1679,16 @@
                 const response = await fetch(`${BACKEND_URL}/settings/${currentMachineId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}`, 'X-Firebase-AppCheck': appCheckToken },
-                    body: JSON.stringify(newSettings)
+                    body: JSON.stringify({ tolerances: newTolerances, energyTypes: newEnergyTypes })
                 });
                 if (!response.ok) throw new Error("Failed to save settings.");
 
                 hideSettingsModal();
                 showNotification("Settings saved successfully! Reloading data...", "success");
-
-                // [FIXED] Fully reload the tab data to ensure the table renderer uses the new settings.
-                await loadDataForTab(activeTab);
+                
+                // When settings change, all tabs are now out of date.
+                Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
+                await initializeTab(activeTab);
 
             } catch (error) {
                 showNotification(error.message, 'error');
@@ -1725,3 +1779,15 @@
   </script>
 </body>
 </html>
+" code between  and  in the most up-to-date Canvas "LINAC QA Backend" document above and am asking a query about/based on this code below.
+Instructions to follow:
+  * Don't output/edit the document if the query is Direct/Simple. For example, if the query asks for a simple explanation, output a direct answer.
+  * Make sure to **edit** the document if the query shows the intent of editing the document, in which case output the entire edited document, **not just that section or the edits**.
+    * Don't output the same document/empty document and say that you have edited it.
+    * Don't change unrelated code in the document.
+  * Don't output  and  in your final response.
+  * Any references like "this" or "selected code" refers to the code between  and  tags.
+  * Just acknowledge my request in the introduction.
+  * Make sure to refer to the document as "Canvas" in your response.
+
+yes
