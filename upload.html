@@ -253,11 +253,12 @@
         text-align: left;
     }
 
-    /* --- [NEW] Styles for Settings Modal --- */
+    /* --- [MODIFIED] Styles for Settings Modal --- */
     #settingsModal .modal-content {
         display: flex;
         gap: 20px;
-        max-width: 900px;
+        max-width: 900px; /* Increased width */
+        width: 95%;
     }
     .settings-nav {
         display: flex;
@@ -265,6 +266,11 @@
         gap: 10px;
         flex-shrink: 0;
         width: 180px;
+        border-right: 1px solid var(--border-color);
+        padding-right: 20px;
+    }
+    .settings-nav h3 {
+        margin-bottom: 10px;
     }
     .settings-nav-btn {
         width: 100%;
@@ -280,6 +286,7 @@
     }
     .settings-content {
         flex-grow: 1;
+        min-height: 450px; /* Ensure content area has height */
     }
     .settings-tab-content {
         display: none;
@@ -296,14 +303,26 @@
         border: 1px solid var(--border-color);
         border-radius: 8px;
         padding: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
     #tolerancesContent legend {
         font-weight: bold;
         padding: 0 10px;
     }
+    .axis-limit-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .axis-limit-group .form-group {
+        flex: 1;
+        margin-bottom: 0;
+    }
     #energyTypesInput {
         width: 100%;
-        min-height: 250px;
+        min-height: 300px;
         resize: vertical;
         font-family: monospace;
         font-size: 1.1em;
@@ -414,28 +433,44 @@
         <div class="settings-content">
             <form id="settingsForm">
                 <div id="tolerancesContent" class="settings-tab-content active">
-                    <h4>Tolerance Levels</h4>
-                    <p>Set warning and tolerance limits. Values outside tolerance will trigger alerts.</p>
+                    <h4>Tolerance & Axis Levels</h4>
+                    <p>Set warning/tolerance limits and the fixed visual range for trend charts.</p>
                     <div class="form-grid">
                         <fieldset>
                             <legend>Output (%)</legend>
-                            <div class="form-group"><label for="output-warning">Warning Level</label><input type="number" id="output-warning" step="0.1" required></div>
-                            <div class="form-group"><label for="output-tolerance">Tolerance Level</label><input type="number" id="output-tolerance" step="0.1" required></div>
+                            <div class="form-group"><label for="output-warning">Warning</label><input type="number" id="output-warning" step="0.1" required></div>
+                            <div class="form-group"><label for="output-tolerance">Tolerance</label><input type="number" id="output-tolerance" step="0.1" required></div>
+                            <div class="axis-limit-group">
+                                <div class="form-group"><label for="output-yAxisMin">Y-Axis Min</label><input type="number" id="output-yAxisMin" step="0.1" required></div>
+                                <div class="form-group"><label for="output-yAxisMax">Y-Axis Max</label><input type="number" id="output-yAxisMax" step="0.1" required></div>
+                            </div>
                         </fieldset>
                         <fieldset>
                             <legend>Flatness (%)</legend>
-                            <div class="form-group"><label for="flatness-warning">Warning Level</label><input type="number" id="flatness-warning" step="0.1" required></div>
-                            <div class="form-group"><label for="flatness-tolerance">Tolerance Level</label><input type="number" id="flatness-tolerance" step="0.1" required></div>
+                            <div class="form-group"><label for="flatness-warning">Warning</label><input type="number" id="flatness-warning" step="0.1" required></div>
+                            <div class="form-group"><label for="flatness-tolerance">Tolerance</label><input type="number" id="flatness-tolerance" step="0.1" required></div>
+                            <div class="axis-limit-group">
+                                <div class="form-group"><label for="flatness-yAxisMin">Y-Axis Min</label><input type="number" id="flatness-yAxisMin" step="0.1" required></div>
+                                <div class="form-group"><label for="flatness-yAxisMax">Y-Axis Max</label><input type="number" id="flatness-yAxisMax" step="0.1" required></div>
+                            </div>
                         </fieldset>
                         <fieldset>
                             <legend>Inline Symmetry (%)</legend>
-                            <div class="form-group"><label for="inline-warning">Warning Level</label><input type="number" id="inline-warning" step="0.1" required></div>
-                            <div class="form-group"><label for="inline-tolerance">Tolerance Level</label><input type="number" id="inline-tolerance" step="0.1" required></div>
+                            <div class="form-group"><label for="inline-warning">Warning</label><input type="number" id="inline-warning" step="0.1" required></div>
+                            <div class="form-group"><label for="inline-tolerance">Tolerance</label><input type="number" id="inline-tolerance" step="0.1" required></div>
+                            <div class="axis-limit-group">
+                                <div class="form-group"><label for="inline-yAxisMin">Y-Axis Min</label><input type="number" id="inline-yAxisMin" step="0.1" required></div>
+                                <div class="form-group"><label for="inline-yAxisMax">Y-Axis Max</label><input type="number" id="inline-yAxisMax" step="0.1" required></div>
+                            </div>
                         </fieldset>
                         <fieldset>
                             <legend>Crossline Symmetry (%)</legend>
-                            <div class="form-group"><label for="crossline-warning">Warning Level</label><input type="number" id="crossline-warning" step="0.1" required></div>
-                            <div class="form-group"><label for="crossline-tolerance">Tolerance Level</label><input type="number" id="crossline-tolerance" step="0.1" required></div>
+                            <div class="form-group"><label for="crossline-warning">Warning</label><input type="number" id="crossline-warning" step="0.1" required></div>
+                            <div class="form-group"><label for="crossline-tolerance">Tolerance</label><input type="number" id="crossline-tolerance" step="0.1" required></div>
+                            <div class="axis-limit-group">
+                                <div class="form-group"><label for="crossline-yAxisMin">Y-Axis Min</label><input type="number" id="crossline-yAxisMin" step="0.1" required></div>
+                                <div class="form-group"><label for="crossline-yAxisMax">Y-Axis Max</label><input type="number" id="crossline-yAxisMax" step="0.1" required></div>
+                            </div>
                         </fieldset>
                     </div>
                 </div>
@@ -478,13 +513,13 @@
         let monthlyEnvData = {};
         let highlightedColumnIndex = -1;
 
-        let machineEnergyTypes = ["6X", "10X", "15X", "6X FFF", "10X FFF", "6E", "9E", "12E", "15E", "18E"];
+        let machineEnergyTypes = [];
         
         let dataTypesConfig = {
-          output: { label: 'Output', initialized: false, yAxisMin: -3, yAxisMax: 3 },
-          flatness: { label: 'Flatness', initialized: false, yAxisMin: -2, yAxisMax: 2 },
-          inline: { label: 'Inline Symmetry', initialized: false, yAxisMin: -2, yAxisMax: 2 },
-          crossline: { label: 'Crossline Symmetry', initialized: false, yAxisMin: -2, yAxisMax: 2 }
+          output: { label: 'Output', initialized: false },
+          flatness: { label: 'Flatness', initialized: false },
+          inline: { label: 'Inline Symmetry', initialized: false },
+          crossline: { label: 'Crossline Symmetry', initialized: false }
         };
         let instances = { output: {}, flatness: {}, inline: {}, crossline: {} };
         let activeTab = 'output';
@@ -712,7 +747,6 @@
         async function initializeTab(dataType) {
             showLoader();
             document.getElementById(`tab-content-${dataType}`).innerHTML = generateTabContentHTML(dataType);
-            populateTrendEnergySelect(dataType);
             document.getElementById(`trendEnergySelect-${dataType}`).addEventListener('change', updateTrendChart);
             
             const currentMachineId = sessionStorage.getItem('selectedMachineId');
@@ -1316,7 +1350,13 @@
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: {
-                        y: { min: config.yAxisMin, max: config.yAxisMax, title: { display: true, text: 'Deviation (%)', color: ticksColor }, grid: { color: gridColor }, ticks: { color: ticksColor } },
+                        y: { 
+                            min: config.yAxisMin, 
+                            max: config.yAxisMax, 
+                            title: { display: true, text: 'Deviation (%)', color: ticksColor }, 
+                            grid: { color: gridColor }, 
+                            ticks: { color: ticksColor } 
+                        },
                         x: { title: { display: true, text: `Day of Month`, color: ticksColor }, grid: { color: gridColor }, ticks: { color: ticksColor } }
                     },
                     plugins: {
@@ -1625,6 +1665,8 @@
                 for (const type in settings.tolerances) {
                     document.getElementById(`${type}-warning`).value = settings.tolerances[type].warning;
                     document.getElementById(`${type}-tolerance`).value = settings.tolerances[type].tolerance;
+                    document.getElementById(`${type}-yAxisMin`).value = settings.tolerances[type].yAxisMin;
+                    document.getElementById(`${type}-yAxisMax`).value = settings.tolerances[type].yAxisMax;
                 }
                 document.getElementById('energyTypesInput').value = settings.energyTypes.join('\n');
 
@@ -1651,13 +1693,15 @@
             for (const type of Object.keys(dataTypesConfig)) {
                 const warning = parseFloat(document.getElementById(`${type}-warning`).value);
                 const tolerance = parseFloat(document.getElementById(`${type}-tolerance`).value);
+                const yAxisMin = parseFloat(document.getElementById(`${type}-yAxisMin`).value);
+                const yAxisMax = parseFloat(document.getElementById(`${type}-yAxisMax`).value);
 
-                if (isNaN(warning) || isNaN(tolerance) || warning >= tolerance) {
-                    showNotification(`Invalid values for ${type}. Warning must be less than tolerance.`, 'error');
+                if (isNaN(warning) || isNaN(tolerance) || warning >= tolerance || isNaN(yAxisMin) || isNaN(yAxisMax) || yAxisMin >= yAxisMax) {
+                    showNotification(`Invalid values for ${type}. Check that warning < tolerance and min < max.`, 'error');
                     isValid = false;
                     break;
                 }
-                newTolerances[type] = { warning, tolerance };
+                newTolerances[type] = { warning, tolerance, yAxisMin, yAxisMax };
             }
 
             if (!isValid) return;
@@ -1686,7 +1730,6 @@
                 hideSettingsModal();
                 showNotification("Settings saved successfully! Reloading data...", "success");
                 
-                // When settings change, all tabs are now out of date.
                 Object.keys(dataTypesConfig).forEach(k => dataTypesConfig[k].initialized = false);
                 await initializeTab(activeTab);
 
@@ -1779,3 +1822,4 @@
   </script>
 </body>
 </html>
+
