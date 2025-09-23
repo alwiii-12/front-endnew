@@ -515,12 +515,17 @@
 
         let machineEnergyTypes = [];
         
-        let dataTypesConfig = {
+        // This object now only holds static labels. The dynamic values (warning, tolerance, etc.)
+        // will be stored in a separate machineSettings object.
+        const dataTypesConfig = {
           output: { label: 'Output', initialized: false },
           flatness: { label: 'Flatness', initialized: false },
           inline: { label: 'Inline Symmetry', initialized: false },
           crossline: { label: 'Crossline Symmetry', initialized: false }
         };
+        // This will hold the dynamic settings fetched from the backend
+        let machineSettings = {};
+
         let instances = { output: {}, flatness: {}, inline: {}, crossline: {} };
         let activeTab = 'output';
         const yearLabel = document.getElementById('year');
@@ -598,12 +603,13 @@
         window.logout = logout;
 
         function generateTabContentHTML(dataType) {
-            const config = dataTypesConfig[dataType];
+            // [FIXED] Use the static config label, not a dynamic one that might be undefined
+            const label = dataTypesConfig[dataType].label;
             return `
                 <div class="container">
                     <div id="table-${dataType}" class="table-container"></div>
                     <div class="summary-box">
-                        <h3>${config.label} Summary</h3>
+                        <h3>${label} Summary</h3>
                         <canvas id="summaryChart-${dataType}"></canvas>
                         <p>Total Entries: <span id="total-${dataType}">0</span></p>
                         <p>Within Tolerance: <span id="within-${dataType}">0</span></p>
@@ -612,12 +618,12 @@
                     </div>
                 </div>
                 <div class="actions-section">
-                    <button class="save-btn" onclick="manualSave('${dataType}')">Save ${config.label}</button>
-                    <button class="export-btn" onclick="exportToExcel('${dataType}')">Export ${config.label}</button>
+                    <button class="save-btn" onclick="manualSave('${dataType}')">Save ${label}</button>
+                    <button class="export-btn" onclick="exportToExcel('${dataType}')">Export ${label}</button>
                     <span id="lastSaved-${dataType}"></span>
                 </div>
                 <div class="trend-chart-section" id="trend-section-${dataType}">
-                    <h3>${config.label} Trend Analysis</h3>
+                    <h3>${label} Trend Analysis</h3>
                     <div class="energy-selector-container">
                         <label>Select Energy:</label>
                         <select id="trendEnergySelect-${dataType}"></select>
@@ -779,16 +785,16 @@
                 const result = await res.json();
                 
                 if (result.settings) {
-                    Object.assign(dataTypesConfig, result.settings.tolerances);
+                    machineSettings = result.settings;
                     machineEnergyTypes = result.settings.energyTypes || [];
                 }
-                const config = dataTypesConfig[dataType];
+                const config = machineSettings.tolerances[dataType];
 
                 monthlyEnvData = result.env_data || {};
                 
                 const dateCols = getMonthDates(currentDate);
                 let data = Array.isArray(result.data) && result.data.length > 0
-                    ? result.data.map(r => r.map(c => c === null || c === "None" ? "" : c))
+                    ? result.data
                     : machineEnergyTypes.map(e => [e, ...new Array(dateCols.length).fill('')]);
                 
                 const columnsConfig = [{ type: 'text', readOnly: true }];
@@ -854,7 +860,7 @@
         async function checkAndSendAlerts(dataType) {
             const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!currentMachineId) return;
-            const config = dataTypesConfig[dataType];
+            const config = machineSettings.tolerances[dataType];
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
 
@@ -917,7 +923,7 @@
             const currentMachineId = sessionStorage.getItem('selectedMachineId');
             if (!currentMachineId) return;
             const saveButton = document.querySelector(`.actions-section button.save-btn[onclick="manualSave('${dataType}')"]`);
-            const config = dataTypesConfig[dataType];
+            const label = dataTypesConfig[dataType].label;
             saveButton.disabled = true;
             saveButton.textContent = 'Saving...';
             const changedData = instances[dataType].hot.getData();
@@ -942,7 +948,7 @@
                 document.getElementById(`lastSaved-${dataType}`).textContent = "Save Failed!";
             } finally {
                 saveButton.disabled = false;
-                saveButton.textContent = `Save ${config.label}`;
+                saveButton.textContent = `Save ${label}`;
             }
         }
         
@@ -977,7 +983,8 @@
         }
         
         function updateSummaryAndChart(dataType, data) {
-            const config = dataTypesConfig[dataType];
+            const config = machineSettings.tolerances[dataType];
+            if (!config) return;
             let total = 0, within = 0, warning = 0, out = 0;
             data.forEach(row => {
                 row.slice(1).forEach(value => {
@@ -1155,6 +1162,9 @@
             const dataType = activeTab;
             const hotInstance = instances[dataType].hot;
             if (!hotInstance) return;
+            
+            const config = machineSettings.tolerances[dataType];
+            if (!config) return;
 
             const data = hotInstance.getData();
             const selectElement = document.getElementById(`trendEnergySelect-${dataType}`);
@@ -1337,7 +1347,6 @@
             }
 
             const canvasElement = document.getElementById(`trendChart-${dataType}`);
-            const config = dataTypesConfig[dataType];
             const ctx = canvasElement.getContext('2d');
             if (instances[dataType].trendChart) instances[dataType].trendChart.destroy();
             
