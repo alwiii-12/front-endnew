@@ -180,6 +180,7 @@
                                     <th>Institution Name</th>
                                     <th>Center ID</th>
                                     <th>Parent Group ID</th>
+                                    <th>Associated Admin Email</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -286,7 +287,7 @@
                 : institutionsCache;
 
             if (institutionsToDisplay.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4" class="no-users-message">No institutions found for this filter.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="5" class="no-users-message">No institutions found for this filter.</td></tr>';
                 return;
             }
 
@@ -299,6 +300,7 @@
                     <td>${inst.name}</td>
                     <td>${inst.centerId}</td>
                     <td>${inst.parentGroup}</td>
+                    <td>${inst.adminEmail || 'N/A'}</td>
                     <td class="user-actions-cell">
                         <button class="delete-btn" onclick="deleteInstitution('${inst.centerId}', '${inst.name}')"><i class="fas fa-trash"></i> Delete</button>
                     </td>
