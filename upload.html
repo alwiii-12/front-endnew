@@ -327,6 +327,37 @@
         font-family: monospace;
         font-size: 1.1em;
     }
+
+    /* [NEW] Styles for Go to Top button and Save Flash */
+    #goToTopBtn {
+        display: none;
+        position: fixed;
+        bottom: 90px;
+        right: 25px;
+        z-index: 1001;
+        border: none;
+        outline: none;
+        background-color: var(--primary-color);
+        color: white;
+        cursor: pointer;
+        padding: 0;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        font-size: 1.5em;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    #goToTopBtn:hover {
+        background-color: var(--primary-dark);
+    }
+
+    @keyframes saveFlash {
+        0% { background-color: rgba(40, 167, 69, 0.3); }
+        100% { background-color: transparent; }
+    }
+    .save-flash-animation {
+        animation: saveFlash 1.5s ease-out;
+    }
   </style>
 </head>
 <body class="upload-page">
@@ -421,7 +452,6 @@
     </div>
   </div>
 
-  <!-- [MODIFIED] Settings Modal with Tabbed Layout -->
   <div id="settingsModal" class="modal">
     <div class="modal-content">
         <span class="close-button" onclick="hideSettingsModal()">&times;</span>
@@ -489,8 +519,8 @@
             </form>
         </div>
     </div>
-  </div>
 
+    <button id="goToTopBtn" title="Go to top"><i class="fas fa-arrow-up"></i></button>
 
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -515,15 +545,12 @@
 
         let machineEnergyTypes = [];
         
-        // This object now only holds static labels. The dynamic values (warning, tolerance, etc.)
-        // will be stored in a separate machineSettings object.
         const dataTypesConfig = {
           output: { label: 'Output', initialized: false },
           flatness: { label: 'Flatness', initialized: false },
           inline: { label: 'Inline Symmetry', initialized: false },
           crossline: { label: 'Crossline Symmetry', initialized: false }
         };
-        // This will hold the dynamic settings fetched from the backend
         let machineSettings = {};
 
         let instances = { output: {}, flatness: {}, inline: {}, crossline: {} };
@@ -603,7 +630,6 @@
         window.logout = logout;
 
         function generateTabContentHTML(dataType) {
-            // [FIXED] Use the static config label, not a dynamic one that might be undefined
             const label = dataTypesConfig[dataType].label;
             return `
                 <div class="container">
@@ -936,6 +962,14 @@
                     body: JSON.stringify({ data: changedData, month, uid: currentUID, dataType: dataType, machineId: currentMachineId })
                 });
                 if (!saveResponse.ok) { throw new Error(`Save failed: ${await saveResponse.text()}`); }
+
+                // [NEW] Visual Flash on Save
+                const tableContainer = document.getElementById(`table-${dataType}`);
+                if (tableContainer) {
+                    tableContainer.classList.add('save-flash-animation');
+                    setTimeout(() => tableContainer.classList.remove('save-flash-animation'), 1500);
+                }
+
                 document.getElementById(`lastSaved-${dataType}`).textContent = "Saved: " + new Date().toLocaleTimeString();
                 
                 sessionStorage.setItem('lastDataMonth', month);
@@ -1749,6 +1783,22 @@
             }
         });
 
+        // [NEW] Go to Top button logic
+        const goToTopBtn = document.getElementById('goToTopBtn');
+        const mainContent = document.querySelector('.main');
+        
+        mainContent.addEventListener('scroll', () => {
+            if (mainContent.scrollTop > 200) {
+                goToTopBtn.style.display = "block";
+            } else {
+                goToTopBtn.style.display = "none";
+            }
+        });
+
+        goToTopBtn.addEventListener('click', () => {
+            mainContent.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        
         auth.onAuthStateChanged(async (user) => {
             try {
                 if (user) {
@@ -1831,4 +1881,3 @@
   </script>
 </body>
 </html>
-
