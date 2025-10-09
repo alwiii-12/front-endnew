@@ -130,6 +130,7 @@
         const confirmPasswordInput = document.getElementById('confirmPassword');
 
         let currentUserData = null;
+        let allInstitutions = [];
 
         function showLoader() { document.getElementById('loading-overlay').style.display = 'flex'; }
         function hideLoader() { document.getElementById('loading-overlay').style.display = 'none'; }
@@ -145,31 +146,43 @@
             }, duration);
         }
         
-        function populateHospitalDropdown(currentHospital) {
-            const hospitals = [
-                "aoi_aligarh", "aoi_coimbatore", "aoi_guntur", "aoi_gurugram", 
-                "aoi_hisar_2", "aoi_hisar_1", "aoi_imphal", "aoi_jammu", 
-                "aoi_kota", "aoi_ludhiana", "aoi_nagpur", "aoi_raipur", 
-                "aoi_ganganagar", "aoi_vijayawada", "aoi_hyderabad"
-            ];
-            editHospital.innerHTML = '';
-            hospitals.forEach(h => {
-                const option = document.createElement('option');
-                option.value = h;
-                // A simple formatter to make IDs more readable
-                let displayName = h.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                option.textContent = displayName;
-                editHospital.appendChild(option);
-            });
-            editHospital.value = currentHospital;
+        // [MODIFIED] Fetches all institutions from the backend
+        async function loadAllInstitutions() {
+            if (allInstitutions.length > 0) return; // Don't fetch if already loaded
+            try {
+                const response = await fetch(`${BACKEND_URL}/public/all-institutions`);
+                if (!response.ok) throw new Error('Could not load institutions list.');
+                allInstitutions = await response.json();
+            } catch (error) {
+                console.error("Error loading institutions:", error);
+                showNotification(error.message, 'error');
+            }
         }
 
-        function toggleEditMode(isEdit) {
+        // [MODIFIED] Populates the dropdown from the fetched data
+        function populateHospitalDropdown(currentHospitalId) {
+            editHospital.innerHTML = '';
+            if (allInstitutions.length === 0) {
+                editHospital.innerHTML = '<option value="">-- No hospitals found --</option>';
+                return;
+            }
+            allInstitutions.forEach(inst => {
+                const option = document.createElement('option');
+                option.value = inst.centerId;
+                option.textContent = inst.name;
+                editHospital.appendChild(option);
+            });
+            editHospital.value = currentHospitalId;
+        }
+
+        async function toggleEditMode(isEdit) {
             profileDisplay.style.display = isEdit ? 'none' : 'block';
             profileEdit.style.display = isEdit ? 'block' : 'none';
             if (isEdit && currentUserData) {
                 editName.value = currentUserData.name;
                 editEmail.value = currentUserData.email;
+                // [MODIFIED] Call the dynamic population function
+                await loadAllInstitutions(); // Ensure the list is loaded
                 populateHospitalDropdown(currentUserData.hospital);
             }
         }
@@ -185,10 +198,12 @@
 
                 if (userDocSnap.exists) {
                     currentUserData = userDocSnap.data();
+                    const institutionName = allInstitutions.find(inst => inst.centerId === currentUserData.hospital)?.name || currentUserData.hospital;
+
                     profileDetailsDiv.innerHTML = `
                         <div class="profile-item"><strong>Name:</strong> <span>${currentUserData.name || 'N/A'}</span></div>
                         <div class="profile-item"><strong>Email:</strong> <span>${currentUserData.email || 'N/A'}</span></div>
-                        <div class="profile-item"><strong>Hospital:</strong> <span>${currentUserData.hospital || 'N/A'}</span></div>
+                        <div class="profile-item"><strong>Hospital:</strong> <span>${institutionName}</span></div>
                         <div class="profile-item"><strong>Role:</strong> <span>${currentUserData.role || 'N/A'}</span></div>
                         <div class="profile-item"><strong>Status:</strong> <span style="font-weight:bold; color:${currentUserData.status === 'active' ? 'var(--status-success)' : 'var(--status-warning)'}">${currentUserData.status?.toUpperCase() || 'N/A'}</span></div>
                     `;
@@ -227,6 +242,12 @@
 
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.message || 'Failed to update profile.');
+
+                // [NEW] Update local storage with new hospital name for immediate UI consistency
+                const selectedHospital = allInstitutions.find(inst => inst.centerId === newHospital);
+                if (selectedHospital) {
+                    localStorage.setItem("hospitalName", selectedHospital.name.toUpperCase());
+                }
 
                 showNotification("Profile updated successfully!", "success");
                 await loadProfile(user.uid);
@@ -312,9 +333,11 @@
             }
         });
         
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(async (user) => {
             if (user) {
-                loadProfile(user.uid);
+                // [MODIFIED] Load institutions before loading profile to display names correctly
+                await loadAllInstitutions();
+                await loadProfile(user.uid);
             } else {
                 window.location.replace("login.html");
             }
