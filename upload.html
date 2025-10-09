@@ -328,12 +328,12 @@
         font-size: 1.1em;
     }
 
-    /* [NEW] Styles for Go to Top button and Save Flash */
+    /* [MODIFIED] Styles for Go to Top button and Save Flash */
     #goToTopBtn {
         display: none;
         position: fixed;
-        bottom: 90px;
-        right: 25px;
+        bottom: 95px; /* Positioned above the chat bubble */
+        right: 20px; /* Aligned with the chat bubble */
         z-index: 1001;
         border: none;
         outline: none;
@@ -346,9 +346,11 @@
         height: 50px;
         font-size: 1.5em;
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        opacity: 0.8;
+        transition: opacity 0.2s ease-in-out;
     }
     #goToTopBtn:hover {
-        background-color: var(--primary-dark);
+        opacity: 1;
     }
 
     @keyframes saveFlash {
