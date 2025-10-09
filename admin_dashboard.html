@@ -118,10 +118,17 @@
             border-radius: 6px;
             font-size: 0.95em;
         }
+
+        /* [MODIFIED] Styles for scrolling chart container */
+        .scrolling-chart-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 15px;
+        }
         .benchmark-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex; /* Changed from grid to flex */
             gap: 25px;
+            width: max-content; /* Allow the container to grow */
             margin-bottom: 25px;
         }
         .benchmark-chart-container {
@@ -129,6 +136,8 @@
             padding: 20px;
             border-radius: 12px;
             border: 1px solid var(--border-color);
+            width: 800px; /* Give charts a fixed wide width */
+            flex-shrink: 0; /* Prevent charts from shrinking */
         }
         body.dark .benchmark-chart-container {
              background-color: var(--bg-dark-card);
@@ -277,12 +286,15 @@
                     </select>
                 </div>
                 <div id="benchmark-content">
-                    <div class="benchmark-grid">
-                        <div class="benchmark-chart-container">
-                            <canvas id="meanDeviationChart"></canvas>
-                        </div>
-                        <div class="benchmark-chart-container">
-                            <canvas id="stdDeviationChart"></canvas>
+                    <!-- [MODIFIED] Wrapper for horizontal scrolling -->
+                    <div class="scrolling-chart-wrapper">
+                        <div class="benchmark-grid">
+                            <div class="benchmark-chart-container">
+                                <canvas id="meanDeviationChart"></canvas>
+                            </div>
+                            <div class="benchmark-chart-container">
+                                <canvas id="stdDeviationChart"></canvas>
+                            </div>
                         </div>
                     </div>
                     <div class="user-table-container" style="margin-top: 25px;">
