@@ -118,29 +118,69 @@
             border-radius: 6px;
             font-size: 0.95em;
         }
-
-        /* [MODIFIED] Styles for scrolling chart container */
-        .scrolling-chart-wrapper {
-            width: 100%;
-            overflow-x: auto;
-            padding-bottom: 15px;
-        }
+        
+        /* [MODIFIED] Styles for individual chart scrolling */
         .benchmark-grid {
-            display: flex; /* Changed from grid to flex */
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 25px;
-            width: max-content; /* Allow the container to grow */
             margin-bottom: 25px;
+        }
+        .benchmark-chart-wrapper {
+            position: relative;
         }
         .benchmark-chart-container {
             background-color: #fff;
             padding: 20px;
             border-radius: 12px;
             border: 1px solid var(--border-color);
-            width: 800px; /* Give charts a fixed wide width */
-            flex-shrink: 0; /* Prevent charts from shrinking */
+            overflow-x: auto;
+            /* Hide the default scrollbar */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE and Edge */
+        }
+        .benchmark-chart-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, and Opera */
+        }
+        .chart-scroll-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .chart-scroll-btn:hover {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        .chart-scroll-btn:disabled {
+            background-color: rgba(0, 0, 0, 0.2);
+            cursor: not-allowed;
+        }
+        .chart-scroll-btn.left {
+            left: 5px;
+        }
+        .chart-scroll-btn.right {
+            right: 5px;
+        }
+        .chart-canvas-container {
+            width: 1200px; /* Force a wide width for the canvas */
+            height: 400px;
         }
         body.dark .benchmark-chart-container {
              background-color: var(--bg-dark-card);
+        }
+        @media (max-width: 1200px) {
+            .benchmark-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         .efficacy-table {
@@ -286,15 +326,24 @@
                     </select>
                 </div>
                 <div id="benchmark-content">
-                    <!-- [MODIFIED] Wrapper for horizontal scrolling -->
-                    <div class="scrolling-chart-wrapper">
-                        <div class="benchmark-grid">
-                            <div class="benchmark-chart-container">
-                                <canvas id="meanDeviationChart"></canvas>
+                    <div class="benchmark-grid">
+                        <div class="benchmark-chart-wrapper">
+                            <div class="benchmark-chart-container" id="meanDeviationScroll">
+                                <div class="chart-canvas-container">
+                                    <canvas id="meanDeviationChart"></canvas>
+                                </div>
                             </div>
-                            <div class="benchmark-chart-container">
-                                <canvas id="stdDeviationChart"></canvas>
+                            <button class="chart-scroll-btn left" id="meanDevScrollLeft"><i class="fas fa-chevron-left"></i></button>
+                            <button class="chart-scroll-btn right" id="meanDevScrollRight"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <div class="benchmark-chart-wrapper">
+                            <div class="benchmark-chart-container" id="stdDeviationScroll">
+                                <div class="chart-canvas-container">
+                                    <canvas id="stdDeviationChart"></canvas>
+                                </div>
                             </div>
+                            <button class="chart-scroll-btn left" id="stdDevScrollLeft"><i class="fas fa-chevron-left"></i></button>
+                            <button class="chart-scroll-btn right" id="stdDevScrollRight"><i class="fas fa-chevron-right"></i></button>
                         </div>
                     </div>
                     <div class="user-table-container" style="margin-top: 25px;">
@@ -952,8 +1001,8 @@
                 let className = '';
                 if (!isNaN(numValue)) {
                     if (Math.abs(numValue) > config.tolerance) className = 'out';
-                    else if (Math.abs(numValue) >= config.warning) className = 'warning';
-                    else className = 'within';
+                    else if (Math.abs(numValue) >= config.warning) className = 'within';
+                    else className = 'warning';
                 }
                 tableHTML += `<td class="${className}">${value}</td>`;
             }
@@ -1079,7 +1128,7 @@
                     borderWidth: 1
                 }]
             },
-            options: { responsive: true, plugins: { title: { display: true, text: 'Mean Deviation (Output)', color: ticksColor } }, scales: { y: { ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Mean Deviation (Output)', color: ticksColor } }, scales: { y: { ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
         });
 
         const stdDevCtx = document.getElementById('stdDeviationChart').getContext('2d');
@@ -1096,8 +1145,12 @@
                     borderWidth: 1
                 }]
             },
-            options: { responsive: true, plugins: { title: { display: true, text: 'Machine Stability (Output Std. Dev.)', color: ticksColor } }, scales: { y: { beginAtZero: true, ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Machine Stability (Output Std. Dev.)', color: ticksColor } }, scales: { y: { beginAtZero: true, ticks: { color: ticksColor }, grid: { color: gridColor } }, x: { ticks: { color: ticksColor }, grid: { color: gridColor } } } }
         });
+
+        // [NEW] Initialize scroll buttons after rendering charts
+        setupChartScroll('meanDev');
+        setupChartScroll('stdDev');
     }
 
     function renderBenchmarkTable(data) {
@@ -1233,6 +1286,30 @@
                 hideLoader();
             }
         }
+    }
+
+    // [NEW] Function to set up scrolling for a chart
+    function setupChartScroll(chartPrefix) {
+        const scrollContainer = document.getElementById(`${chartPrefix}Scroll`);
+        const scrollLeftBtn = document.getElementById(`${chartPrefix}ScrollLeft`);
+        const scrollRightBtn = document.getElementById(`${chartPrefix}ScrollRight`);
+        const scrollAmount = 300;
+
+        function updateButtons() {
+            scrollLeftBtn.disabled = scrollContainer.scrollLeft <= 0;
+            scrollRightBtn.disabled = scrollContainer.scrollLeft >= (scrollContainer.scrollWidth - scrollContainer.clientWidth);
+        }
+
+        scrollLeftBtn.addEventListener('click', () => {
+            scrollContainer.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        });
+        scrollRightBtn.addEventListener('click', () => {
+            scrollContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        });
+        scrollContainer.addEventListener('scroll', updateButtons);
+        
+        // Initial check
+        updateButtons();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
