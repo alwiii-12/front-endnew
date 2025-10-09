@@ -454,6 +454,7 @@
     </div>
   </div>
 
+  <!-- [MODIFIED] Settings Modal with Tabbed Layout -->
   <div id="settingsModal" class="modal">
     <div class="modal-content">
         <span class="close-button" onclick="hideSettingsModal()">&times;</span>
@@ -522,6 +523,7 @@
         </div>
     </div>
 
+    <!-- [NEW] Go to Top Button -->
     <button id="goToTopBtn" title="Go to top"><i class="fas fa-arrow-up"></i></button>
 
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
@@ -1785,7 +1787,7 @@
             }
         });
 
-        // [NEW] Go to Top button logic
+        // [MODIFIED] Go to Top button logic
         const goToTopBtn = document.getElementById('goToTopBtn');
         const mainContent = document.querySelector('.main');
         
@@ -1883,3 +1885,4 @@
   </script>
 </body>
 </html>
+
