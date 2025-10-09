@@ -1295,6 +1295,12 @@
         const scrollRightBtn = document.getElementById(`${chartPrefix}ScrollRight`);
         const scrollAmount = 300;
 
+        // [FIX] Add a null check to prevent errors if elements don't exist
+        if (!scrollContainer || !scrollLeftBtn || !scrollRightBtn) {
+            console.warn(`Scrolling elements for chart prefix "${chartPrefix}" not found.`);
+            return;
+        }
+
         function updateButtons() {
             scrollLeftBtn.disabled = scrollContainer.scrollLeft <= 0;
             scrollRightBtn.disabled = scrollContainer.scrollLeft >= (scrollContainer.scrollWidth - scrollContainer.clientWidth);
