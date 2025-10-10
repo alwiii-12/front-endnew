@@ -328,7 +328,8 @@
                 <div id="benchmark-content">
                     <div class="benchmark-grid">
                         <div class="benchmark-chart-wrapper">
-                            <div class="benchmark-chart-container" id="meanDevScroll"> <div class="chart-canvas-container">
+                            <div class="benchmark-chart-container" id="meanDevScroll">
+                                <div class="chart-canvas-container">
                                     <canvas id="meanDeviationChart"></canvas>
                                 </div>
                             </div>
@@ -336,7 +337,8 @@
                             <button class="chart-scroll-btn right" id="meanDevScrollRight"><i class="fas fa-chevron-right"></i></button>
                         </div>
                         <div class="benchmark-chart-wrapper">
-                            <div class="benchmark-chart-container" id="stdDevScroll"> <div class="chart-canvas-container">
+                            <div class="benchmark-chart-container" id="stdDevScroll">
+                                <div class="chart-canvas-container">
                                     <canvas id="stdDeviationChart"></canvas>
                                 </div>
                             </div>
@@ -1293,15 +1295,15 @@
         const scrollRightBtn = document.getElementById(`${chartPrefix}ScrollRight`);
         const scrollAmount = 300;
 
-        // [FIX] Add a null check to prevent errors if elements don't exist
         if (!scrollContainer || !scrollLeftBtn || !scrollRightBtn) {
             console.warn(`Scrolling elements for chart prefix "${chartPrefix}" not found.`);
             return;
         }
 
         function updateButtons() {
-            scrollLeftBtn.disabled = scrollContainer.scrollLeft <= 0;
-            scrollRightBtn.disabled = scrollContainer.scrollLeft >= (scrollContainer.scrollWidth - scrollContainer.clientWidth);
+            // FIX: Added 1px tolerance to prevent flickering
+            scrollLeftBtn.disabled = scrollContainer.scrollLeft <= 1;
+            scrollRightBtn.disabled = scrollContainer.scrollLeft >= (scrollContainer.scrollWidth - scrollContainer.clientWidth) - 1;
         }
 
         scrollLeftBtn.addEventListener('click', () => {
