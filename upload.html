@@ -454,7 +454,6 @@
     </div>
   </div>
 
-  <!-- [MODIFIED] Settings Modal with Tabbed Layout -->
   <div id="settingsModal" class="modal">
     <div class="modal-content">
         <span class="close-button" onclick="hideSettingsModal()">&times;</span>
@@ -522,8 +521,8 @@
             </form>
         </div>
     </div>
+  </div>
 
-    <!-- [NEW] Go to Top Button -->
     <button id="goToTopBtn" title="Go to top"><i class="fas fa-arrow-up"></i></button>
 
   <script src="https://cdn.jsdelivr.net/npm/handsontable@13.0.0/dist/handsontable.full.min.js"></script>
@@ -1701,6 +1700,9 @@
             }
             showLoader();
             try {
+                // --- FIX: Hide Go-To-Top button when modal opens ---
+                document.getElementById('goToTopBtn').style.display = 'none';
+
                 const idToken = await auth.currentUser.getIdToken(true);
                 const appCheckToken = (await appCheck.getToken(false)).token;
                 const response = await fetch(`${BACKEND_URL}/settings/${currentMachineId}`, {
@@ -1725,8 +1727,14 @@
                 hideLoader();
             }
         }
+        
         window.hideSettingsModal = function() {
             settingsModal.style.display = 'none';
+            // --- FIX: Re-evaluate Go-To-Top button on modal close ---
+            const mainContent = document.querySelector('.main');
+            if (mainContent.scrollTop > 200) {
+                document.getElementById('goToTopBtn').style.display = 'block';
+            }
         }
 
         settingsForm.addEventListener('submit', async (e) => {
@@ -1787,7 +1795,6 @@
             }
         });
 
-        // [MODIFIED] Go to Top button logic
         const goToTopBtn = document.getElementById('goToTopBtn');
         const mainContent = document.querySelector('.main');
         
@@ -1885,4 +1892,3 @@
   </script>
 </body>
 </html>
-
