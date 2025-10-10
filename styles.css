@@ -478,6 +478,13 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     overflow-y: auto;
 }
 
+/* ---- MODIFICATION FOR ADMIN DASHBOARD ---- */
+.benchmark-chart-wrapper {
+    position: relative;
+    min-width: 0; /* Prevents grid item from overflowing */
+}
+/* ---- END MODIFICATION ---- */
+
 .card-section.active-section {
     display: block;
 }
