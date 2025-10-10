@@ -1288,7 +1288,6 @@
         }
     }
 
-    // [NEW] Function to set up scrolling for a chart
     function setupChartScroll(chartPrefix) {
         const scrollContainer = document.getElementById(`${chartPrefix}Scroll`);
         const scrollLeftBtn = document.getElementById(`${chartPrefix}ScrollLeft`);
@@ -1301,9 +1300,12 @@
         }
 
         function updateButtons() {
-            // FIX: Added 1px tolerance to prevent flickering
-            scrollLeftBtn.disabled = scrollContainer.scrollLeft <= 1;
-            scrollRightBtn.disabled = scrollContainer.scrollLeft >= (scrollContainer.scrollWidth - scrollContainer.clientWidth) - 1;
+            // ROBUST FIX: Round values to prevent fractional pixel flickering
+            const scrollLeft = Math.round(scrollContainer.scrollLeft);
+            const scrollEnd = Math.round(scrollContainer.scrollWidth - scrollContainer.clientWidth);
+
+            scrollLeftBtn.disabled = scrollLeft <= 0;
+            scrollRightBtn.disabled = scrollLeft >= scrollEnd;
         }
 
         scrollLeftBtn.addEventListener('click', () => {
